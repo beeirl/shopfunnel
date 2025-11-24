@@ -6,10 +6,12 @@ export namespace Identifier {
     account: 'acc',
     auth: 'aut',
     billing: 'bil',
+    field: 'fld',
     file: 'fil',
+    form: 'frm',
+    submission: 'sub',
     usage: 'usg',
     user: 'usr',
-    video: 'vid',
     workspace: 'wrk',
   } as const
 

@@ -18,8 +18,8 @@ export const SubmissionAnswerTable = pgTable(
     ...timestampColumns,
     workspaceID: id('workspace_id').notNull(),
     submissionID: id('submission_id').notNull(),
-    questionID: id('question_id').notNull(),
+    fieldID: id('field_id').notNull(),
     value: jsonb('value').$type<string | number | boolean | any[]>(),
   },
-  (table) => [primaryKey({ columns: [table.workspaceID, table.submissionID, table.questionID] })],
+  (table) => [primaryKey({ columns: [table.workspaceID, table.submissionID, table.fieldID] })],
 )
