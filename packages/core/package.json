@@ -1,0 +1,38 @@
+{
+  "$schema": "https://json.schemastore.org/package.json",
+  "name": "@quizfunnel/core",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    "./*": "./src/*.ts"
+  },
+  "scripts": {
+    "db": "sst shell drizzle-kit",
+    "dev:db": "sst shell --stage dev -- drizzle-kit",
+    "prod:db": "sst shell --stage production -- drizzle-kit",
+    "shell": "sst shell -- bun",
+    "dev:shell": "sst shell --stage dev -- bun",
+    "prod:shell": "sst shell --stage production -- bun",
+    "typecheck": "tsgo --noEmit"
+  },
+  "dependencies": {
+    "@quizfunnel/resource": "workspace:*",
+    "@planetscale/database": "1.19.0",
+    "drizzle-orm": "catalog:",
+    "luxon": "catalog:",
+    "postgres": "3.4.7",
+    "remeda": "catalog:",
+    "stripe": "18.0.0",
+    "ulid": "catalog:",
+    "zod": "catalog:"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "catalog:",
+    "@tsconfig/node22": "catalog:",
+    "@types/luxon": "catalog:",
+    "@types/node": "catalog:",
+    "drizzle-kit": "catalog:",
+    "typescript": "catalog:"
+  }
+}

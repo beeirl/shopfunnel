@@ -1,0 +1,13 @@
+node_modules
+dist
+.DS_Store
+.env*
+.remotion
+.cursor
+.sst
+.astro
+.npmrc
+.idea
+.tanstack
+.claude
+.vscode

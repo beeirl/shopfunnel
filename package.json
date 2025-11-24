@@ -1,0 +1,47 @@
+{
+  "name": "postfully",
+  "type": "module",
+  "private": true,
+  "workspaces": {
+    "packages": [
+      "packages/*"
+    ],
+    "catalog": {
+      "@beeirl/ui": "0.51.44",
+      "@cloudflare/workers-types": "4.20250522.0",
+      "@hono/zod-validator": "0.4.2",
+      "@openauthjs/openauth": "0.0.0-20250322224806",
+      "@tailwindcss/vite": "4.1.17",
+      "@tsconfig/node22": "22.0.2",
+      "@types/bun": "1.2.21",
+      "@types/luxon": "3.4.2",
+      "@types/node": "22.13.9",
+      "@types/react": "19.2.3",
+      "@types/react-dom": "19.2.2",
+      "@vitejs/plugin-react": "5.1.0",
+      "drizzle-kit": "0.30.5",
+      "drizzle-orm": "0.41.0",
+      "hono": "4.7.10",
+      "luxon": "3.6.1",
+      "react": "19.2.0",
+      "react-dom": "19.2.0",
+      "remeda": "2.26.0",
+      "tailwindcss": "4.1.17",
+      "typescript": "5.8.2",
+      "ulid": "3.0.1",
+      "vite": "7.2.2",
+      "zod": "4.1.8"
+    }
+  },
+  "scripts": {
+    "dev": "sst dev",
+    "sso": "aws sso login --sso-session=5head"
+  },
+  "devDependencies": {
+    "@tsconfig/bun": "1.0.8",
+    "prettier": "3.6.2",
+    "prettier-plugin-organize-imports": "4.2.0",
+    "prettier-plugin-tailwindcss": "0.7.1",
+    "sst": "3.17.23"
+  }
+}

@@ -1,0 +1,38 @@
+{
+  "name": "@quizfunnel/web",
+  "type": "module",
+  "private": true,
+  "version": "0.0.0",
+  "scripts": {
+    "dev": "vite dev",
+    "build": "vite build",
+    "start": "node .output/server/index.mjs"
+  },
+  "dependencies": {
+    "@beeirl/ui": "catalog:",
+    "@openauthjs/openauth": "catalog:",
+    "@quizfunnel/core": "workspace:*",
+    "@quizfunnel/resource": "workspace:*",
+    "@tanstack/react-query": "5.90.10",
+    "@tanstack/react-router": "1.139.0",
+    "@tanstack/react-router-ssr-query": "1.139.0",
+    "@tanstack/react-start": "1.139.0",
+    "@vitejs/plugin-react": "catalog:",
+    "drizzle-orm": "catalog:",
+    "react": "catalog:",
+    "react-dom": "catalog:",
+    "vite": "catalog:"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "catalog:",
+    "@tailwindcss/vite": "catalog:",
+    "@tsconfig/node22": "catalog:",
+    "@types/node": "catalog:",
+    "@types/react": "catalog:",
+    "@types/react-dom": "catalog:",
+    "nitro": "3.0.1-alpha.1",
+    "tailwindcss": "catalog:",
+    "typescript": "catalog:",
+    "vite-tsconfig-paths": "5.1.4"
+  }
+}
