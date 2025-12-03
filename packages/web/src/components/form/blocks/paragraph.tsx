@@ -1,11 +1,7 @@
-import type { FormBlock } from '../../types'
+import type { FormBlock } from '../types'
 
 export function ParagraphBlock({ block }: ParagraphBlock.Props) {
-  return (
-    <p className="text-lg leading-relaxed text-neutral-600 dark:text-neutral-400">
-      {block.properties.text}
-    </p>
-  )
+  return <p className="text-center font-semibold text-gray-500">{block.properties.text}</p>
 }
 
 export namespace ParagraphBlock {
@@ -13,4 +9,3 @@ export namespace ParagraphBlock {
     block: Extract<FormBlock, { type: 'paragraph' }>
   }
 }
-

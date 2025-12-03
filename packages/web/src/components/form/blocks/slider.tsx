@@ -1,5 +1,5 @@
 import * as React from 'react'
-import type { FormBlock } from '../../types'
+import type { FormBlock } from '../types'
 
 export function SliderBlock({ block, value: valueProp, onValueChange }: SliderBlock.Props) {
   const min = block.properties.minValue ?? 0
@@ -67,4 +67,3 @@ export namespace SliderBlock {
     onValueChange: (value: number) => void
   }
 }
-

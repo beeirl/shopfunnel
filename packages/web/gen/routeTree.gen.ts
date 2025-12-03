@@ -11,10 +11,10 @@
 import { Route as rootRouteImport } from './../src/routes/__root'
 import { Route as WorkspacesRouteImport } from './../src/routes/workspaces'
 import { Route as AuthIndexRouteImport } from './../src/routes/auth/index'
+import { Route as SIdRouteImport } from './../src/routes/s/$id'
 import { Route as AuthCallbackRouteImport } from './../src/routes/auth/callback'
 import { Route as AuthAuthorizeRouteImport } from './../src/routes/auth/authorize'
 import { Route as WorkspacesWorkspaceIDIndexRouteImport } from './../src/routes/workspaces/$workspaceID/index'
-import { Route as WorkspacesWorkspaceIDFormsFormShortIDRouteImport } from './../src/routes/workspaces/$workspaceID/forms/$formShortID'
 
 const WorkspacesRoute = WorkspacesRouteImport.update({
   id: '/workspaces',
@@ -24,6 +24,11 @@ const WorkspacesRoute = WorkspacesRouteImport.update({
 const AuthIndexRoute = AuthIndexRouteImport.update({
   id: '/auth/',
   path: '/auth/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SIdRoute = SIdRouteImport.update({
+  id: '/s/$id',
+  path: '/s/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthCallbackRoute = AuthCallbackRouteImport.update({
@@ -42,37 +47,31 @@ const WorkspacesWorkspaceIDIndexRoute =
     path: '/$workspaceID/',
     getParentRoute: () => WorkspacesRoute,
   } as any)
-const WorkspacesWorkspaceIDFormsFormShortIDRoute =
-  WorkspacesWorkspaceIDFormsFormShortIDRouteImport.update({
-    id: '/$workspaceID/forms/$formShortID',
-    path: '/$workspaceID/forms/$formShortID',
-    getParentRoute: () => WorkspacesRoute,
-  } as any)
 
 export interface FileRoutesByFullPath {
   '/workspaces': typeof WorkspacesRouteWithChildren
   '/auth/authorize': typeof AuthAuthorizeRoute
   '/auth/callback': typeof AuthCallbackRoute
+  '/s/$id': typeof SIdRoute
   '/auth': typeof AuthIndexRoute
   '/workspaces/$workspaceID': typeof WorkspacesWorkspaceIDIndexRoute
-  '/workspaces/$workspaceID/forms/$formShortID': typeof WorkspacesWorkspaceIDFormsFormShortIDRoute
 }
 export interface FileRoutesByTo {
   '/workspaces': typeof WorkspacesRouteWithChildren
   '/auth/authorize': typeof AuthAuthorizeRoute
   '/auth/callback': typeof AuthCallbackRoute
+  '/s/$id': typeof SIdRoute
   '/auth': typeof AuthIndexRoute
   '/workspaces/$workspaceID': typeof WorkspacesWorkspaceIDIndexRoute
-  '/workspaces/$workspaceID/forms/$formShortID': typeof WorkspacesWorkspaceIDFormsFormShortIDRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/workspaces': typeof WorkspacesRouteWithChildren
   '/auth/authorize': typeof AuthAuthorizeRoute
   '/auth/callback': typeof AuthCallbackRoute
+  '/s/$id': typeof SIdRoute
   '/auth/': typeof AuthIndexRoute
   '/workspaces/$workspaceID/': typeof WorkspacesWorkspaceIDIndexRoute
-  '/workspaces/$workspaceID/forms/$formShortID': typeof WorkspacesWorkspaceIDFormsFormShortIDRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -80,31 +79,32 @@ export interface FileRouteTypes {
     | '/workspaces'
     | '/auth/authorize'
     | '/auth/callback'
+    | '/s/$id'
     | '/auth'
     | '/workspaces/$workspaceID'
-    | '/workspaces/$workspaceID/forms/$formShortID'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/workspaces'
     | '/auth/authorize'
     | '/auth/callback'
+    | '/s/$id'
     | '/auth'
     | '/workspaces/$workspaceID'
-    | '/workspaces/$workspaceID/forms/$formShortID'
   id:
     | '__root__'
     | '/workspaces'
     | '/auth/authorize'
     | '/auth/callback'
+    | '/s/$id'
     | '/auth/'
     | '/workspaces/$workspaceID/'
-    | '/workspaces/$workspaceID/forms/$formShortID'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   WorkspacesRoute: typeof WorkspacesRouteWithChildren
   AuthAuthorizeRoute: typeof AuthAuthorizeRoute
   AuthCallbackRoute: typeof AuthCallbackRoute
+  SIdRoute: typeof SIdRoute
   AuthIndexRoute: typeof AuthIndexRoute
 }
 
@@ -122,6 +122,13 @@ declare module '@tanstack/react-router' {
       path: '/auth'
       fullPath: '/auth'
       preLoaderRoute: typeof AuthIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/s/$id': {
+      id: '/s/$id'
+      path: '/s/$id'
+      fullPath: '/s/$id'
+      preLoaderRoute: typeof SIdRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/auth/callback': {
@@ -145,25 +152,15 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof WorkspacesWorkspaceIDIndexRouteImport
       parentRoute: typeof WorkspacesRoute
     }
-    '/workspaces/$workspaceID/forms/$formShortID': {
-      id: '/workspaces/$workspaceID/forms/$formShortID'
-      path: '/$workspaceID/forms/$formShortID'
-      fullPath: '/workspaces/$workspaceID/forms/$formShortID'
-      preLoaderRoute: typeof WorkspacesWorkspaceIDFormsFormShortIDRouteImport
-      parentRoute: typeof WorkspacesRoute
-    }
   }
 }
 
 interface WorkspacesRouteChildren {
   WorkspacesWorkspaceIDIndexRoute: typeof WorkspacesWorkspaceIDIndexRoute
-  WorkspacesWorkspaceIDFormsFormShortIDRoute: typeof WorkspacesWorkspaceIDFormsFormShortIDRoute
 }
 
 const WorkspacesRouteChildren: WorkspacesRouteChildren = {
   WorkspacesWorkspaceIDIndexRoute: WorkspacesWorkspaceIDIndexRoute,
-  WorkspacesWorkspaceIDFormsFormShortIDRoute:
-    WorkspacesWorkspaceIDFormsFormShortIDRoute,
 }
 
 const WorkspacesRouteWithChildren = WorkspacesRoute._addFileChildren(
@@ -174,6 +171,7 @@ const rootRouteChildren: RootRouteChildren = {
   WorkspacesRoute: WorkspacesRouteWithChildren,
   AuthAuthorizeRoute: AuthAuthorizeRoute,
   AuthCallbackRoute: AuthCallbackRoute,
+  SIdRoute: SIdRoute,
   AuthIndexRoute: AuthIndexRoute,
 }
 export const routeTree = rootRouteImport

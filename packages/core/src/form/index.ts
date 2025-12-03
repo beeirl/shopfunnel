@@ -1,18 +1,14 @@
 import z from 'zod'
-import { FormPage, FormRules, FormVariables } from './types'
+import { FormSchema } from './schema'
 
 export namespace Form {
+  export type Schema = FormSchema
+
   export const Info = z.object({
     id: z.string(),
     shortID: z.string(),
     title: z.string(),
-    pages: z.array(z.record(z.string(), z.any())).optional(),
-    rules: z.array(z.record(z.string(), z.any())).optional(),
-    variables: z.record(z.string(), z.any()).optional(),
+    schema: z.record(z.string(), z.any()),
   })
-  export type Info = z.infer<typeof Info> & {
-    pages: FormPage[]
-    rules: FormRules[]
-    variables: FormVariables
-  }
+  export type Info = z.infer<typeof Info> & { schema: Schema }
 }
