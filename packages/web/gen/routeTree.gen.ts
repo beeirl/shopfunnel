@@ -15,6 +15,7 @@ import { Route as SIdRouteImport } from './../src/routes/s/$id'
 import { Route as AuthCallbackRouteImport } from './../src/routes/auth/callback'
 import { Route as AuthAuthorizeRouteImport } from './../src/routes/auth/authorize'
 import { Route as WorkspacesWorkspaceIDIndexRouteImport } from './../src/routes/workspaces/$workspaceID/index'
+import { Route as WorkspacesWorkspaceIDFormsFormIdRouteImport } from './../src/routes/workspaces/$workspaceID/forms/$formId'
 
 const WorkspacesRoute = WorkspacesRouteImport.update({
   id: '/workspaces',
@@ -47,6 +48,12 @@ const WorkspacesWorkspaceIDIndexRoute =
     path: '/$workspaceID/',
     getParentRoute: () => WorkspacesRoute,
   } as any)
+const WorkspacesWorkspaceIDFormsFormIdRoute =
+  WorkspacesWorkspaceIDFormsFormIdRouteImport.update({
+    id: '/$workspaceID/forms/$formId',
+    path: '/$workspaceID/forms/$formId',
+    getParentRoute: () => WorkspacesRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/workspaces': typeof WorkspacesRouteWithChildren
@@ -55,6 +62,7 @@ export interface FileRoutesByFullPath {
   '/s/$id': typeof SIdRoute
   '/auth': typeof AuthIndexRoute
   '/workspaces/$workspaceID': typeof WorkspacesWorkspaceIDIndexRoute
+  '/workspaces/$workspaceID/forms/$formId': typeof WorkspacesWorkspaceIDFormsFormIdRoute
 }
 export interface FileRoutesByTo {
   '/workspaces': typeof WorkspacesRouteWithChildren
@@ -63,6 +71,7 @@ export interface FileRoutesByTo {
   '/s/$id': typeof SIdRoute
   '/auth': typeof AuthIndexRoute
   '/workspaces/$workspaceID': typeof WorkspacesWorkspaceIDIndexRoute
+  '/workspaces/$workspaceID/forms/$formId': typeof WorkspacesWorkspaceIDFormsFormIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -72,6 +81,7 @@ export interface FileRoutesById {
   '/s/$id': typeof SIdRoute
   '/auth/': typeof AuthIndexRoute
   '/workspaces/$workspaceID/': typeof WorkspacesWorkspaceIDIndexRoute
+  '/workspaces/$workspaceID/forms/$formId': typeof WorkspacesWorkspaceIDFormsFormIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -82,6 +92,7 @@ export interface FileRouteTypes {
     | '/s/$id'
     | '/auth'
     | '/workspaces/$workspaceID'
+    | '/workspaces/$workspaceID/forms/$formId'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/workspaces'
@@ -90,6 +101,7 @@ export interface FileRouteTypes {
     | '/s/$id'
     | '/auth'
     | '/workspaces/$workspaceID'
+    | '/workspaces/$workspaceID/forms/$formId'
   id:
     | '__root__'
     | '/workspaces'
@@ -98,6 +110,7 @@ export interface FileRouteTypes {
     | '/s/$id'
     | '/auth/'
     | '/workspaces/$workspaceID/'
+    | '/workspaces/$workspaceID/forms/$formId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -152,15 +165,24 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof WorkspacesWorkspaceIDIndexRouteImport
       parentRoute: typeof WorkspacesRoute
     }
+    '/workspaces/$workspaceID/forms/$formId': {
+      id: '/workspaces/$workspaceID/forms/$formId'
+      path: '/$workspaceID/forms/$formId'
+      fullPath: '/workspaces/$workspaceID/forms/$formId'
+      preLoaderRoute: typeof WorkspacesWorkspaceIDFormsFormIdRouteImport
+      parentRoute: typeof WorkspacesRoute
+    }
   }
 }
 
 interface WorkspacesRouteChildren {
   WorkspacesWorkspaceIDIndexRoute: typeof WorkspacesWorkspaceIDIndexRoute
+  WorkspacesWorkspaceIDFormsFormIdRoute: typeof WorkspacesWorkspaceIDFormsFormIdRoute
 }
 
 const WorkspacesRouteChildren: WorkspacesRouteChildren = {
   WorkspacesWorkspaceIDIndexRoute: WorkspacesWorkspaceIDIndexRoute,
+  WorkspacesWorkspaceIDFormsFormIdRoute: WorkspacesWorkspaceIDFormsFormIdRoute,
 }
 
 const WorkspacesRouteWithChildren = WorkspacesRoute._addFileChildren(

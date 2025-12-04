@@ -21,7 +21,10 @@ export const Route = createRootRouteWithContext<{
         title: 'TanStack Start Starter',
       },
     ],
-    links: [{ rel: 'stylesheet', href: styles }],
+    links: [
+      { rel: 'stylesheet', href: 'https://rsms.me/inter/inter.css' },
+      { rel: 'stylesheet', href: styles },
+    ],
   }),
   component: RootComponent,
 })
@@ -40,7 +43,7 @@ function RootDocument({ children }: Readonly<{ children: ReactNode }>) {
       <head>
         <HeadContent />
       </head>
-      <body className="font-medium antialiased" data-accent-color="orange" data-gray-color="zinc">
+      <body className="font-medium antialiased" data-accent-color="azure" data-gray-color="zinc">
         {children}
         <Scripts />
       </body>

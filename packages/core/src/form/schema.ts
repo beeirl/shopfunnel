@@ -58,6 +58,8 @@ export namespace FormSchema {
     id: string
     type: 'slider'
     properties: {
+      label: string
+      description?: string
       step?: number
       defaultValue?: number
       minValue?: number
@@ -90,7 +92,6 @@ export namespace FormSchema {
       maxValue?: number
       step?: number
       value: string
-      label?: string
     }
   }
   interface StatCardsFormBlock {

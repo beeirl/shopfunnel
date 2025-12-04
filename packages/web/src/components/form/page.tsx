@@ -12,12 +12,12 @@ import type { FormBlock, FormErrors, FormValues } from './types'
 
 export interface FormPageProps {
   blocks: FormBlock[]
-  values: FormValues
-  errors: FormErrors
-  showNextButton: boolean
-  setValue: (blockID: string, value: FormValues[string]) => void
-  onNext: () => void
-  onPrev: () => void
+  values?: FormValues
+  errors?: FormErrors
+  showNextButton?: boolean
+  setValue?: (blockID: string, value: FormValues[string]) => void
+  onNext?: () => void
+  onPrev?: () => void
 }
 
 export function FormPage({ blocks, values, errors, showNextButton, setValue, onNext }: FormPageProps) {
@@ -34,8 +34,8 @@ export function FormPage({ blocks, values, errors, showNextButton, setValue, onN
           <TextInputBlock
             key={block.id}
             block={block}
-            defaultValue={values[block.id] as string | undefined}
-            onValueChange={(value) => setValue(block.id, value)}
+            defaultValue={values?.[block.id] as string | undefined}
+            onValueChange={(value) => setValue?.(block.id, value)}
           />
         )
 
@@ -44,8 +44,8 @@ export function FormPage({ blocks, values, errors, showNextButton, setValue, onN
           <MultipleChoiceBlock
             key={block.id}
             block={block}
-            value={values[block.id] as string | string[] | undefined}
-            onValueChange={(value) => setValue(block.id, value)}
+            value={values?.[block.id] as string | string[] | undefined}
+            onValueChange={(value) => setValue?.(block.id, value)}
           />
         )
 
@@ -54,8 +54,8 @@ export function FormPage({ blocks, values, errors, showNextButton, setValue, onN
           <DropdownBlock
             key={block.id}
             block={block}
-            value={values[block.id] as string | undefined}
-            onValueChange={(value) => setValue(block.id, value)}
+            value={values?.[block.id] as string | undefined}
+            onValueChange={(value) => setValue?.(block.id, value)}
           />
         )
 
@@ -64,8 +64,8 @@ export function FormPage({ blocks, values, errors, showNextButton, setValue, onN
           <SliderBlock
             key={block.id}
             block={block}
-            value={values[block.id] as number | undefined}
-            onValueChange={(value) => setValue(block.id, value)}
+            value={values?.[block.id] as number | undefined}
+            onValueChange={(value) => setValue?.(block.id, value)}
           />
         )
 
