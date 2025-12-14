@@ -34,9 +34,9 @@ export function ShortTextConfig({ block, onUpdate }: ShortTextConfigProps) {
           <Input
             value={block.properties.description ?? ''}
             placeholder="Enter description..."
-            onChange={(e) =>
+            onValueChange={(value) =>
               onUpdate({
-                properties: { ...block.properties, description: e.target.value || undefined },
+                properties: { ...block.properties, description: value || undefined },
               })
             }
           />
@@ -78,10 +78,12 @@ export function ShortTextConfig({ block, onUpdate }: ShortTextConfigProps) {
               <Input
                 value={block.validations.maxLength?.toString() ?? ''}
                 placeholder="No limit"
-                onChange={(e) => {
-                  const maxLength = e.target.value ? parseInt(e.target.value, 10) : undefined
+                onValueChange={(value) => {
                   onUpdate({
-                    validations: { ...block.validations, maxLength: isNaN(maxLength!) ? undefined : maxLength },
+                    validations: {
+                      ...block.validations,
+                      maxLength: isNaN(parseInt(value, 10)) ? undefined : parseInt(value, 10),
+                    },
                   })
                 }}
               />

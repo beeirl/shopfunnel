@@ -7,7 +7,7 @@ import { move } from '@dnd-kit/helpers'
 import { DragDropProvider } from '@dnd-kit/react'
 import { useSortable } from '@dnd-kit/react/sortable'
 import type { Block, Page } from '@shopfunnel/core/funnel/schema'
-import { PlusIcon, Trash2Icon } from 'lucide-react'
+import { IconPlus as PlusIcon, IconTrash as TrashIcon } from '@tabler/icons-react'
 import { AddBlockDialog } from './add-block-dialog'
 import { PaneContent, PaneHeader, PaneRoot, PaneTitle } from './panel'
 
@@ -31,7 +31,7 @@ function SortablePageItem({
       ref={ref}
       onClick={onSelect}
       className={cn(
-        'group -mx-1.5 flex cursor-grab gap-3 rounded-xl px-3 py-2 transition-all hover:bg-secondary',
+        'group -mx-1.5 flex cursor-grab gap-3 rounded-xl p-2 pl-3 transition-all hover:bg-secondary',
         selected && 'bg-secondary',
       )}
     >
@@ -54,7 +54,7 @@ function SortablePageItem({
               />
             }
           >
-            <Trash2Icon />
+            <TrashIcon />
           </AlertDialog.Trigger>
           <AlertDialog.Content size="sm">
             <AlertDialog.Header>

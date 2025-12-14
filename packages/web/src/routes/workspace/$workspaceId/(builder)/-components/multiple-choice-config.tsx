@@ -4,7 +4,7 @@ import { move } from '@dnd-kit/helpers'
 import { DragDropProvider, PointerSensor } from '@dnd-kit/react'
 import { useSortable } from '@dnd-kit/react/sortable'
 import type { MultipleChoiceBlock } from '@shopfunnel/core/funnel/schema'
-import { PlusIcon, Trash2Icon } from 'lucide-react'
+import { IconPlus as PlusIcon, IconTrash as TrashIcon } from '@tabler/icons-react'
 import * as React from 'react'
 import { ulid } from 'ulid'
 import { Field } from './field'
@@ -44,7 +44,7 @@ function ChoiceItem({
         autoFocus={autoFocus}
       />
       <Button size="icon-sm" variant="secondary" onClick={onDelete} onPointerDown={(e) => e.stopPropagation()}>
-        <Trash2Icon />
+        <TrashIcon />
       </Button>
     </div>
   )
@@ -107,9 +107,9 @@ export function MultipleChoiceConfig({ block, onUpdate }: MultipleChoiceConfigPr
           <Input
             value={block.properties.label}
             placeholder="Your question here..."
-            onChange={(e) =>
+            onValueChange={(value) =>
               onUpdate({
-                properties: { ...block.properties, label: e.target.value },
+                properties: { ...block.properties, label: value },
               })
             }
           />
@@ -124,9 +124,9 @@ export function MultipleChoiceConfig({ block, onUpdate }: MultipleChoiceConfigPr
           <Input
             value={block.properties.description ?? ''}
             placeholder="Enter description..."
-            onChange={(e) =>
+            onValueChange={(value) =>
               onUpdate({
-                properties: { ...block.properties, description: e.target.value || undefined },
+                properties: { ...block.properties, description: value || undefined },
               })
             }
           />

@@ -1,6 +1,5 @@
 import { Block } from '@/block'
 import { blockRegistry, blockTypes } from '@/block/registry'
-import { Icon } from '@/components/icon'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Dialog } from '@/components/ui/dialog'
@@ -8,6 +7,7 @@ import { Empty } from '@/components/ui/empty'
 import { cn } from '@/utils/cn'
 import { Combobox } from '@base-ui-components/react/combobox'
 import type { Block as BlockData, BlockOfType, BlockType } from '@shopfunnel/core/funnel/schema'
+import { IconSearch as SearchIcon, IconSearchOff as SearchOffIcon } from '@tabler/icons-react'
 import * as React from 'react'
 import { ulid } from 'ulid'
 
@@ -235,7 +235,7 @@ function AddBlockDialogPopup() {
       >
         <div className="flex flex-col">
           <div className="relative flex h-12 shrink-0 items-center border-b border-border">
-            <Icon name="search" className="pointer-events-none absolute left-4.5 size-4 text-muted-foreground" />
+            <SearchIcon className="pointer-events-none absolute left-4.5 size-4 text-muted-foreground" />
             <Combobox.Input
               className="h-full flex-1 bg-transparent pl-10.5 text-sm outline-none placeholder:text-muted-foreground"
               placeholder="Find questions, input fields and layout options..."
@@ -296,13 +296,15 @@ function AddBlockDialogPopup() {
             )}
             <Combobox.Empty className="flex size-full overflow-y-auto empty:size-0">
               <Empty.Root className="m-auto shrink-0">
-                <Empty.Media variant="icon" className="shrink-0">
-                  <Icon name="search_cross" />
-                </Empty.Media>
-                <Empty.Title>No results</Empty.Title>
-                <Empty.Description>
-                  No content blocks match your search. Retry with a different keyword.
-                </Empty.Description>
+                <Empty.Header>
+                  <Empty.Media variant="icon">
+                    <SearchOffIcon />
+                  </Empty.Media>
+                  <Empty.Title>No results</Empty.Title>
+                  <Empty.Description>
+                    No content blocks match your search. Retry with a different keyword.
+                  </Empty.Description>
+                </Empty.Header>
               </Empty.Root>
             </Combobox.Empty>
           </div>

@@ -1,15 +1,15 @@
 import type { BlockType } from '@shopfunnel/core/funnel/schema'
 import {
-  Activity as ActivityIcon,
-  AlignLeft as AlignLeftIcon,
-  ChevronDown as ChevronDownIcon,
-  CircleDot as CircleDotIcon,
-  Gauge as GaugeIcon,
-  Heading as HeadingIcon,
-  List as ListIcon,
-  SlidersHorizontal as SlidersHorizontalIcon,
-  Type as TypeIcon,
-} from 'lucide-react'
+  IconAdjustmentsHorizontal as AdjustmentsHorizontalIcon,
+  IconChevronDown as ChevronDownIcon,
+  IconDots as DotsIcon,
+  IconGauge as GaugeIcon,
+  IconHeading as HeadingIcon,
+  IconLetterCase as LetterCaseIcon,
+  IconListDetails as ListDetailsIcon,
+  IconListLetters as ListLettersIcon,
+  IconMenu as MenuIcon,
+} from '@tabler/icons-react'
 
 import { Dropdown } from './components/dropdown'
 import { Gauge } from './components/gauge'
@@ -36,7 +36,7 @@ export const blockRegistry: Record<BlockType, BlockRegistryItem> = {
     name: 'Short Text',
     description:
       'Use this to insert a question combined with a short text answer. Add an answer label or placeholder text for guidance.',
-    icon: TypeIcon,
+    icon: MenuIcon,
     component: ShortText,
   },
   multiple_choice: {
@@ -44,7 +44,7 @@ export const blockRegistry: Record<BlockType, BlockRegistryItem> = {
     name: 'Multiple Choice',
     description:
       'Use this to insert a question combined with multiple choice answers. Add an answer label or placeholder text for guidance.',
-    icon: CircleDotIcon,
+    icon: ListLettersIcon,
     component: MultipleChoice,
   },
   dropdown: {
@@ -58,7 +58,7 @@ export const blockRegistry: Record<BlockType, BlockRegistryItem> = {
     type: 'slider',
     name: 'Slider',
     description: 'Allow users to select a value within a range using a slider.',
-    icon: SlidersHorizontalIcon,
+    icon: AdjustmentsHorizontalIcon,
     component: Slider,
   },
   heading: {
@@ -72,7 +72,7 @@ export const blockRegistry: Record<BlockType, BlockRegistryItem> = {
     type: 'paragraph',
     name: 'Paragraph',
     description: 'Add descriptive text to provide context or instructions.',
-    icon: AlignLeftIcon,
+    icon: LetterCaseIcon,
     component: Paragraph,
   },
   gauge: {
@@ -86,14 +86,14 @@ export const blockRegistry: Record<BlockType, BlockRegistryItem> = {
     type: 'list',
     name: 'List',
     description: 'Display a list of items with icons and text. Great for showing features or benefits.',
-    icon: ListIcon,
+    icon: ListDetailsIcon,
     component: List,
   },
   progress: {
     type: 'progress',
     name: 'Progress',
     description: 'Show users how far along they are in completing the form.',
-    icon: ActivityIcon,
+    icon: DotsIcon,
     component: Progress,
   },
 }
