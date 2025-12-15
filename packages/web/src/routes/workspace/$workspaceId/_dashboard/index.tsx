@@ -1,13 +1,17 @@
-import { withActor } from '@/context/auth.withActor'
-import { AppLayout } from '@beeirl/ui/app-layout'
-import { Button } from '@beeirl/ui/button'
-import { EmptyState } from '@beeirl/ui/empty-state'
-import { FileTextIcon } from '@beeirl/ui/line-icons'
-import { Funnel } from '@shopfunnel/core/funnel/index'
-import { Identifier } from '@shopfunnel/core/identifier'
+import { IconFileText as FileTextIcon } from '@tabler/icons-react'
 import { mutationOptions, queryOptions, useMutation, useQueryClient, useSuspenseQuery } from '@tanstack/react-query'
 import { createFileRoute, Link } from '@tanstack/react-router'
 import { createServerFn } from '@tanstack/react-start'
+
+import { Button } from '@/components/ui/button'
+import { Empty } from '@/components/ui/empty'
+import { Item } from '@/components/ui/item'
+import { withActor } from '@/context/auth.withActor'
+
+import { Heading } from './-components/heading'
+
+import { Funnel } from '@shopfunnel/core/funnel/index'
+import { Identifier } from '@shopfunnel/core/identifier'
 
 const listFunnels = createServerFn()
   .inputValidator(Identifier.schema('workspace'))
@@ -53,51 +57,50 @@ function RouteComponent() {
   async function handleFunnelCreate() {
     const id = await createFunnelMutation.mutateAsync()
     queryClient.invalidateQueries(listFunnelsQueryOptions(params.workspaceId))
-    navigate({ to: 'funnels/$funnelId', params: { funnelId: id } })
+    navigate({ to: 'funnels/$id/edit', params: { id } })
+  }
+
+  if (funnels.length === 0) {
+    return (
+      <div className="flex h-full w-full flex-1 items-center justify-center">
+        <Empty.Root>
+          <Empty.Header>
+            <Empty.Media variant="icon">
+              <FileTextIcon />
+            </Empty.Media>
+            <Empty.Title>No funnels yet</Empty.Title>
+            <Empty.Description>Create your first funnel to get started.</Empty.Description>
+          </Empty.Header>
+          <Button onClick={handleFunnelCreate}>Create funnel</Button>
+        </Empty.Root>
+      </div>
+    )
   }
 
   return (
-    <AppLayout.Content>
-      <AppLayout.Body className="overflow-auto">
-        <div className="mx-auto h-full max-w-2xl pb-12">
-          <AppLayout.Section className="h-full">
-            <AppLayout.Heading className="flex flex-row items-center justify-between">
-              <div className="flex flex-col">
-                <AppLayout.Title>Funnels</AppLayout.Title>
-                <AppLayout.Description>View, create, and manage your funnels.</AppLayout.Description>
-              </div>
-              {funnels.length > 0 && (
-                <Button color="gray" variant="surface" onClick={handleFunnelCreate}>
-                  Create
-                </Button>
-              )}
-            </AppLayout.Heading>
-            {funnels.length > 0 ? (
-              <div className="mt-4 flex flex-col gap-2">
-                {funnels.map((funnel) => (
-                  <Link
-                    key={funnel.id}
-                    className="flex items-center rounded-lg-plus border border-gray-200 px-4 py-3 text-sm font-medium transition-colors hover:bg-gray-50"
-                    to="/workspaces/$workspaceId/funnels/$funnelId"
-                    params={{ workspaceId: params.workspaceId, funnelId: funnel.id }}
-                  >
-                    {funnel.title}
-                  </Link>
-                ))}
-              </div>
-            ) : (
-              <EmptyState.Root className="flex-1 justify-center">
-                <EmptyState.Icon>
-                  <FileTextIcon />
-                </EmptyState.Icon>
-                <EmptyState.Title>No funnels yet</EmptyState.Title>
-                <EmptyState.Description>Create your first funnel to get started.</EmptyState.Description>
-                <Button onClick={handleFunnelCreate}>Create funnel</Button>
-              </EmptyState.Root>
-            )}
-          </AppLayout.Section>
-        </div>
-      </AppLayout.Body>
-    </AppLayout.Content>
+    <div className="flex h-full w-full flex-col p-6">
+      <Heading.Root>
+        <Heading.Content>
+          <Heading.Title>Funnels</Heading.Title>
+        </Heading.Content>
+        <Heading.Actions>
+          <Button onClick={handleFunnelCreate}>Create</Button>
+        </Heading.Actions>
+      </Heading.Root>
+
+      <Item.Group className="mt-6">
+        {funnels.map((funnel) => (
+          <Item.Root
+            key={funnel.id}
+            variant="outline"
+            render={<Link from={Route.fullPath} to="funnels/$id/edit" params={{ id: funnel.id }} />}
+          >
+            <Item.Content>
+              <Item.Title>{funnel.title}</Item.Title>
+            </Item.Content>
+          </Item.Root>
+        ))}
+      </Item.Group>
+    </div>
   )
 }

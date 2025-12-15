@@ -146,6 +146,21 @@
 </div>
 ```
 
+## File Structure
+
+- **Never use barrel files** (index.ts files that re-export from other files)
+- Always import directly from the source file:
+
+  ```tsx
+  // Correct
+  import { Button } from '@/components/ui/button'
+  import { useAuth } from '@/context/auth'
+
+  // Incorrect - barrel file
+  import { Button, Dialog, Input } from '@/components/ui'
+  import { useAuth, useSession } from '@/context'
+  ```
+
 ## Imports (Web Package)
 
 - Always use the `@` path alias for local imports in the web package:

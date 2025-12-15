@@ -5,15 +5,15 @@ import { Database } from '../database'
 import { Identifier } from '../identifier'
 import { fn } from '../utils/fn'
 import { FunnelTable } from './index.sql'
-import type { Page, Rule, Variables } from './schema'
+import { COLORS, RADII, STYLES, type Page, type Rule, type Theme, type Variables } from './schema'
 
 export namespace Funnel {
-  export const Info = z.object({
-    id: z.string(),
-    shortId: z.string(),
-    title: z.string(),
-    schema: z.record(z.string(), z.any()),
-  })
+  const DEFAULT_THEME: Theme = {
+    color: COLORS.find((color) => color.name === 'blue')!,
+    radius: RADII.find((radius) => radius.name === 'medium')!,
+    style: STYLES.find((style) => style.name === 'standard')!,
+  }
+
   export type Info = {
     id: string
     shortId: string
@@ -21,6 +21,8 @@ export namespace Funnel {
     pages: Page[]
     rules: Rule[]
     variables: Variables
+    theme: Theme
+    createdAt: Date
   }
 
   export const fromId = fn(Identifier.schema('funnel'), async (id) =>
@@ -67,6 +69,7 @@ export namespace Funnel {
         pages: [],
         rules: [],
         variables: {},
+        theme: DEFAULT_THEME,
       }),
     )
     return id

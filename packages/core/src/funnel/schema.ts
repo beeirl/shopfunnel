@@ -116,10 +116,6 @@ export interface ProgressBlock {
   type: 'progress'
 }
 
-// ============================================
-// Block Union Types
-// ============================================
-
 export type Block =
   | ShortTextBlock
   | MultipleChoiceBlock
@@ -133,10 +129,8 @@ export type Block =
 
 export type BlockType = Block['type']
 
-// Helper to extract block by type
 export type BlockOfType<T extends BlockType> = Extract<Block, { type: T }>
 
-// Input vs Display blocks
 export type InputBlock = ShortTextBlock | MultipleChoiceBlock | DropdownBlock | SliderBlock
 export type DisplayBlock = HeadingBlock | ParagraphBlock | GaugeBlock | ListBlock | ProgressBlock
 
@@ -202,14 +196,63 @@ export interface Rule {
 }
 
 // ============================================
-// Funnel Schema
+// Theme
 // ============================================
 
-export interface FunnelSchema {
-  id: string
-  shortId: string
-  title: string
-  pages: Page[]
-  rules: Rule[]
-  variables: Variables
+export const COLORS = [
+  {
+    name: 'blue',
+    value: {
+      light: {
+        primary: 'oklch(0.488 0.243 264.376)',
+        primaryForeground: 'oklch(0.97 0.014 254.604)',
+        secondary: 'oklch(0.97 0.014 254.604)',
+        secondaryForeground: 'oklch(0.21 0.006 285.885)',
+      },
+    },
+  },
+] as const
+
+export type Color = (typeof COLORS)[number]
+export type ColorName = Color['name']
+export type ColorValue = Color['value']
+
+export const FONTS = [
+  {
+    name: 'Inter',
+    value: 'inter',
+  },
+] as const
+
+export type Font = (typeof FONTS)[number]
+export type FontName = Font['name']
+export type FontValue = Font['value']
+
+export const RADII = [
+  { name: 'none', value: '0' },
+  { name: 'small', value: '0.45rem' },
+  { name: 'medium', value: '0.625rem' },
+  { name: 'large', value: '0.875rem' },
+] as const
+
+export type Radius = (typeof RADII)[number]
+export type RadiusName = Radius['name']
+export type RadiusValue = Radius['value']
+
+export const STYLES = [
+  {
+    name: 'standard',
+  },
+  {
+    name: 'compact',
+  },
+] as const
+
+export type Style = (typeof STYLES)[number]
+export type StyleName = Style['name']
+
+export interface Theme {
+  color: Color
+  radius: Radius
+  style: Style
 }

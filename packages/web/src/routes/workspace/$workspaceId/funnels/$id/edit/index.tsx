@@ -67,7 +67,7 @@ const updateFunnelMutationOptions = (workspaceId: string, funnelId: string) =>
 
 export const Route = createFileRoute('/workspace/$workspaceId/funnels/$id/edit/')({
   component: RouteComponent,
-  ssr: 'data-only',
+  ssr: false,
   loader: async ({ context, params }) => {
     await context.queryClient.ensureQueryData(getFunnelQueryOptions(params.workspaceId, params.id))
   },
@@ -196,7 +196,7 @@ function RouteComponent() {
                 onBlockAdd={handleBlockAdd}
               />
             ) : (
-              <ThemePanel />
+              <ThemePanel theme={funnel.theme} />
             )}
             <Preview page={selectedPage} selectedBlockId={selectedBlockId} onBlockSelect={handleBlockSelect} />
             <InspectorPanel block={selectedBlock} onBlockUpdate={handleBlockUpdate} />

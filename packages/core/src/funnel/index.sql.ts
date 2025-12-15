@@ -1,6 +1,6 @@
 import { json, mysqlTable, uniqueIndex, varchar } from 'drizzle-orm/mysql-core'
 import { timestampColumns, workspaceColumns, workspaceIndexes } from '../database/types'
-import type { Page, Rule, Variables } from './schema'
+import type { Page, Rule, Theme, Variables } from './schema'
 
 export const FunnelTable = mysqlTable(
   'funnel',
@@ -13,6 +13,7 @@ export const FunnelTable = mysqlTable(
     pages: json('pages').$type<Page[]>().notNull(),
     rules: json('rules').$type<Rule[]>().notNull(),
     variables: json('variables').$type<Variables>().notNull(),
+    theme: json('theme').$type<Theme>().notNull(),
   },
   (table) => [...workspaceIndexes(table), uniqueIndex('short_id').on(table.shortId)],
 )

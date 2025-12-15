@@ -26,7 +26,7 @@ export namespace User {
     ),
   )
 
-  export const fromID = fn(z.string(), (id) =>
+  export const fromId = fn(z.string(), (id) =>
     Database.use(async (tx) =>
       tx
         .select()

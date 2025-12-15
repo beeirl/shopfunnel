@@ -1,15 +1,8 @@
 import { Button } from '@/components/ui/button'
 import { Block as BlockComponent } from '@/funnel/block'
 import { Form } from '@base-ui-components/react'
-import type {
-  Block,
-  ComparisonCondition,
-  Condition,
-  FunnelSchema,
-  InputBlock,
-  Page,
-  Variables,
-} from '@shopfunnel/core/funnel/schema'
+import { Funnel as FunnelModule } from '@shopfunnel/core/funnel/index'
+import type { Block, ComparisonCondition, Condition, InputBlock, Page, Variables } from '@shopfunnel/core/funnel/schema'
 import { AnimatePresence, motion } from 'motion/react'
 import * as React from 'react'
 
@@ -46,7 +39,7 @@ interface RuleEvaluationResult {
 // Funnel Component
 // ============================================
 
-export function Funnel({ funnel, mode = 'live' }: { funnel: FunnelSchema; mode?: 'preview' | 'live' }) {
+export function Funnel({ funnel, mode = 'live' }: { funnel: FunnelModule.Info; mode?: 'preview' | 'live' }) {
   const storageKey = `funnel-${funnel.id}-values`
 
   const stateRef = React.useRef<State>({
@@ -273,7 +266,7 @@ const evaluateCondition = (condition: Condition, state: State): boolean => {
   }
 }
 
-const evaluatePageRules = (pageId: string, schema: FunnelSchema, state: State): RuleEvaluationResult => {
+const evaluatePageRules = (pageId: string, schema: FunnelModule.Info, state: State): RuleEvaluationResult => {
   let jumpTo: string | undefined
   const hiddenBlockIds = new Set<string>()
   let variables = { ...state.variables }
