@@ -8,27 +8,16 @@
 // You should NOT make any changes in this file as it will be overwritten.
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
-import { createFileRoute } from '@tanstack/react-router'
-
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as AuthIndexRouteImport } from './routes/auth/index'
 import { Route as AuthCallbackRouteImport } from './routes/auth/callback'
 import { Route as AuthAuthorizeRouteImport } from './routes/auth/authorize'
-import { Route as funnelFIdRouteImport } from './routes/(funnel)/f/$id'
+import { Route as formFIdRouteImport } from './routes/(form)/f/$id'
 import { Route as WorkspaceWorkspaceIdDashboardRouteRouteImport } from './routes/workspace/$workspaceId/_dashboard/route'
 import { Route as WorkspaceWorkspaceIdDashboardIndexRouteImport } from './routes/workspace/$workspaceId/_dashboard/index'
-import { Route as WorkspaceWorkspaceIdFunnelsIdPreviewIndexRouteImport } from './routes/workspace/$workspaceId/funnels/$id/preview/index'
-import { Route as WorkspaceWorkspaceIdFunnelsIdEditIndexRouteImport } from './routes/workspace/$workspaceId/funnels/$id/edit/index'
+import { Route as WorkspaceWorkspaceIdFormsIdPreviewIndexRouteImport } from './routes/workspace/$workspaceId/forms/$id/preview/index'
+import { Route as WorkspaceWorkspaceIdFormsIdEditIndexRouteImport } from './routes/workspace/$workspaceId/forms/$id/edit/index'
 
-const WorkspaceWorkspaceIdRouteImport = createFileRoute(
-  '/workspace/$workspaceId',
-)()
-
-const WorkspaceWorkspaceIdRoute = WorkspaceWorkspaceIdRouteImport.update({
-  id: '/workspace/$workspaceId',
-  path: '/workspace/$workspaceId',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const AuthIndexRoute = AuthIndexRouteImport.update({
   id: '/auth/',
   path: '/auth/',
@@ -44,8 +33,8 @@ const AuthAuthorizeRoute = AuthAuthorizeRouteImport.update({
   path: '/auth/authorize',
   getParentRoute: () => rootRouteImport,
 } as any)
-const funnelFIdRoute = funnelFIdRouteImport.update({
-  id: '/(funnel)/f/$id',
+const formFIdRoute = formFIdRouteImport.update({
+  id: '/(form)/f/$id',
   path: '/f/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
@@ -60,17 +49,17 @@ const WorkspaceWorkspaceIdDashboardIndexRoute =
     path: '/',
     getParentRoute: () => WorkspaceWorkspaceIdDashboardRouteRoute,
   } as any)
-const WorkspaceWorkspaceIdFunnelsIdPreviewIndexRoute =
-  WorkspaceWorkspaceIdFunnelsIdPreviewIndexRouteImport.update({
-    id: '/funnels/$id/preview/',
-    path: '/funnels/$id/preview/',
-    getParentRoute: () => WorkspaceWorkspaceIdRoute,
+const WorkspaceWorkspaceIdFormsIdPreviewIndexRoute =
+  WorkspaceWorkspaceIdFormsIdPreviewIndexRouteImport.update({
+    id: '/workspace/$workspaceId/forms/$id/preview/',
+    path: '/workspace/$workspaceId/forms/$id/preview/',
+    getParentRoute: () => rootRouteImport,
   } as any)
-const WorkspaceWorkspaceIdFunnelsIdEditIndexRoute =
-  WorkspaceWorkspaceIdFunnelsIdEditIndexRouteImport.update({
-    id: '/funnels/$id/edit/',
-    path: '/funnels/$id/edit/',
-    getParentRoute: () => WorkspaceWorkspaceIdRoute,
+const WorkspaceWorkspaceIdFormsIdEditIndexRoute =
+  WorkspaceWorkspaceIdFormsIdEditIndexRouteImport.update({
+    id: '/workspace/$workspaceId/forms/$id/edit/',
+    path: '/workspace/$workspaceId/forms/$id/edit/',
+    getParentRoute: () => rootRouteImport,
   } as any)
 
 export interface FileRoutesByFullPath {
@@ -78,31 +67,30 @@ export interface FileRoutesByFullPath {
   '/auth/callback': typeof AuthCallbackRoute
   '/auth': typeof AuthIndexRoute
   '/workspace/$workspaceId': typeof WorkspaceWorkspaceIdDashboardRouteRouteWithChildren
-  '/f/$id': typeof funnelFIdRoute
+  '/f/$id': typeof formFIdRoute
   '/workspace/$workspaceId/': typeof WorkspaceWorkspaceIdDashboardIndexRoute
-  '/workspace/$workspaceId/funnels/$id/edit': typeof WorkspaceWorkspaceIdFunnelsIdEditIndexRoute
-  '/workspace/$workspaceId/funnels/$id/preview': typeof WorkspaceWorkspaceIdFunnelsIdPreviewIndexRoute
+  '/workspace/$workspaceId/forms/$id/edit': typeof WorkspaceWorkspaceIdFormsIdEditIndexRoute
+  '/workspace/$workspaceId/forms/$id/preview': typeof WorkspaceWorkspaceIdFormsIdPreviewIndexRoute
 }
 export interface FileRoutesByTo {
   '/auth/authorize': typeof AuthAuthorizeRoute
   '/auth/callback': typeof AuthCallbackRoute
   '/auth': typeof AuthIndexRoute
+  '/f/$id': typeof formFIdRoute
   '/workspace/$workspaceId': typeof WorkspaceWorkspaceIdDashboardIndexRoute
-  '/f/$id': typeof funnelFIdRoute
-  '/workspace/$workspaceId/funnels/$id/edit': typeof WorkspaceWorkspaceIdFunnelsIdEditIndexRoute
-  '/workspace/$workspaceId/funnels/$id/preview': typeof WorkspaceWorkspaceIdFunnelsIdPreviewIndexRoute
+  '/workspace/$workspaceId/forms/$id/edit': typeof WorkspaceWorkspaceIdFormsIdEditIndexRoute
+  '/workspace/$workspaceId/forms/$id/preview': typeof WorkspaceWorkspaceIdFormsIdPreviewIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/auth/authorize': typeof AuthAuthorizeRoute
   '/auth/callback': typeof AuthCallbackRoute
   '/auth/': typeof AuthIndexRoute
-  '/workspace/$workspaceId': typeof WorkspaceWorkspaceIdRouteWithChildren
   '/workspace/$workspaceId/_dashboard': typeof WorkspaceWorkspaceIdDashboardRouteRouteWithChildren
-  '/(funnel)/f/$id': typeof funnelFIdRoute
+  '/(form)/f/$id': typeof formFIdRoute
   '/workspace/$workspaceId/_dashboard/': typeof WorkspaceWorkspaceIdDashboardIndexRoute
-  '/workspace/$workspaceId/funnels/$id/edit/': typeof WorkspaceWorkspaceIdFunnelsIdEditIndexRoute
-  '/workspace/$workspaceId/funnels/$id/preview/': typeof WorkspaceWorkspaceIdFunnelsIdPreviewIndexRoute
+  '/workspace/$workspaceId/forms/$id/edit/': typeof WorkspaceWorkspaceIdFormsIdEditIndexRoute
+  '/workspace/$workspaceId/forms/$id/preview/': typeof WorkspaceWorkspaceIdFormsIdPreviewIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -113,47 +101,40 @@ export interface FileRouteTypes {
     | '/workspace/$workspaceId'
     | '/f/$id'
     | '/workspace/$workspaceId/'
-    | '/workspace/$workspaceId/funnels/$id/edit'
-    | '/workspace/$workspaceId/funnels/$id/preview'
+    | '/workspace/$workspaceId/forms/$id/edit'
+    | '/workspace/$workspaceId/forms/$id/preview'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/auth/authorize'
     | '/auth/callback'
     | '/auth'
-    | '/workspace/$workspaceId'
     | '/f/$id'
-    | '/workspace/$workspaceId/funnels/$id/edit'
-    | '/workspace/$workspaceId/funnels/$id/preview'
+    | '/workspace/$workspaceId'
+    | '/workspace/$workspaceId/forms/$id/edit'
+    | '/workspace/$workspaceId/forms/$id/preview'
   id:
     | '__root__'
     | '/auth/authorize'
     | '/auth/callback'
     | '/auth/'
-    | '/workspace/$workspaceId'
     | '/workspace/$workspaceId/_dashboard'
-    | '/(funnel)/f/$id'
+    | '/(form)/f/$id'
     | '/workspace/$workspaceId/_dashboard/'
-    | '/workspace/$workspaceId/funnels/$id/edit/'
-    | '/workspace/$workspaceId/funnels/$id/preview/'
+    | '/workspace/$workspaceId/forms/$id/edit/'
+    | '/workspace/$workspaceId/forms/$id/preview/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   AuthAuthorizeRoute: typeof AuthAuthorizeRoute
   AuthCallbackRoute: typeof AuthCallbackRoute
   AuthIndexRoute: typeof AuthIndexRoute
-  WorkspaceWorkspaceIdRoute: typeof WorkspaceWorkspaceIdRouteWithChildren
-  funnelFIdRoute: typeof funnelFIdRoute
+  formFIdRoute: typeof formFIdRoute
+  WorkspaceWorkspaceIdFormsIdEditIndexRoute: typeof WorkspaceWorkspaceIdFormsIdEditIndexRoute
+  WorkspaceWorkspaceIdFormsIdPreviewIndexRoute: typeof WorkspaceWorkspaceIdFormsIdPreviewIndexRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/workspace/$workspaceId': {
-      id: '/workspace/$workspaceId'
-      path: '/workspace/$workspaceId'
-      fullPath: '/workspace/$workspaceId'
-      preLoaderRoute: typeof WorkspaceWorkspaceIdRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/auth/': {
       id: '/auth/'
       path: '/auth'
@@ -175,16 +156,16 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthAuthorizeRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/(funnel)/f/$id': {
-      id: '/(funnel)/f/$id'
+    '/(form)/f/$id': {
+      id: '/(form)/f/$id'
       path: '/f/$id'
       fullPath: '/f/$id'
-      preLoaderRoute: typeof funnelFIdRouteImport
+      preLoaderRoute: typeof formFIdRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/workspace/$workspaceId/_dashboard': {
       id: '/workspace/$workspaceId/_dashboard'
-      path: '/workspace/$workspaceId'
+      path: ''
       fullPath: '/workspace/$workspaceId'
       preLoaderRoute: typeof WorkspaceWorkspaceIdDashboardRouteRouteImport
       parentRoute: typeof WorkspaceWorkspaceIdRoute
@@ -196,62 +177,32 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof WorkspaceWorkspaceIdDashboardIndexRouteImport
       parentRoute: typeof WorkspaceWorkspaceIdDashboardRouteRoute
     }
-    '/workspace/$workspaceId/funnels/$id/preview/': {
-      id: '/workspace/$workspaceId/funnels/$id/preview/'
-      path: '/funnels/$id/preview'
-      fullPath: '/workspace/$workspaceId/funnels/$id/preview'
-      preLoaderRoute: typeof WorkspaceWorkspaceIdFunnelsIdPreviewIndexRouteImport
-      parentRoute: typeof WorkspaceWorkspaceIdRoute
+    '/workspace/$workspaceId/forms/$id/preview/': {
+      id: '/workspace/$workspaceId/forms/$id/preview/'
+      path: '/workspace/$workspaceId/forms/$id/preview'
+      fullPath: '/workspace/$workspaceId/forms/$id/preview'
+      preLoaderRoute: typeof WorkspaceWorkspaceIdFormsIdPreviewIndexRouteImport
+      parentRoute: typeof rootRouteImport
     }
-    '/workspace/$workspaceId/funnels/$id/edit/': {
-      id: '/workspace/$workspaceId/funnels/$id/edit/'
-      path: '/funnels/$id/edit'
-      fullPath: '/workspace/$workspaceId/funnels/$id/edit'
-      preLoaderRoute: typeof WorkspaceWorkspaceIdFunnelsIdEditIndexRouteImport
-      parentRoute: typeof WorkspaceWorkspaceIdRoute
+    '/workspace/$workspaceId/forms/$id/edit/': {
+      id: '/workspace/$workspaceId/forms/$id/edit/'
+      path: '/workspace/$workspaceId/forms/$id/edit'
+      fullPath: '/workspace/$workspaceId/forms/$id/edit'
+      preLoaderRoute: typeof WorkspaceWorkspaceIdFormsIdEditIndexRouteImport
+      parentRoute: typeof rootRouteImport
     }
   }
 }
-
-interface WorkspaceWorkspaceIdDashboardRouteRouteChildren {
-  WorkspaceWorkspaceIdDashboardIndexRoute: typeof WorkspaceWorkspaceIdDashboardIndexRoute
-}
-
-const WorkspaceWorkspaceIdDashboardRouteRouteChildren: WorkspaceWorkspaceIdDashboardRouteRouteChildren =
-  {
-    WorkspaceWorkspaceIdDashboardIndexRoute:
-      WorkspaceWorkspaceIdDashboardIndexRoute,
-  }
-
-const WorkspaceWorkspaceIdDashboardRouteRouteWithChildren =
-  WorkspaceWorkspaceIdDashboardRouteRoute._addFileChildren(
-    WorkspaceWorkspaceIdDashboardRouteRouteChildren,
-  )
-
-interface WorkspaceWorkspaceIdRouteChildren {
-  WorkspaceWorkspaceIdDashboardRouteRoute: typeof WorkspaceWorkspaceIdDashboardRouteRouteWithChildren
-  WorkspaceWorkspaceIdFunnelsIdEditIndexRoute: typeof WorkspaceWorkspaceIdFunnelsIdEditIndexRoute
-  WorkspaceWorkspaceIdFunnelsIdPreviewIndexRoute: typeof WorkspaceWorkspaceIdFunnelsIdPreviewIndexRoute
-}
-
-const WorkspaceWorkspaceIdRouteChildren: WorkspaceWorkspaceIdRouteChildren = {
-  WorkspaceWorkspaceIdDashboardRouteRoute:
-    WorkspaceWorkspaceIdDashboardRouteRouteWithChildren,
-  WorkspaceWorkspaceIdFunnelsIdEditIndexRoute:
-    WorkspaceWorkspaceIdFunnelsIdEditIndexRoute,
-  WorkspaceWorkspaceIdFunnelsIdPreviewIndexRoute:
-    WorkspaceWorkspaceIdFunnelsIdPreviewIndexRoute,
-}
-
-const WorkspaceWorkspaceIdRouteWithChildren =
-  WorkspaceWorkspaceIdRoute._addFileChildren(WorkspaceWorkspaceIdRouteChildren)
 
 const rootRouteChildren: RootRouteChildren = {
   AuthAuthorizeRoute: AuthAuthorizeRoute,
   AuthCallbackRoute: AuthCallbackRoute,
   AuthIndexRoute: AuthIndexRoute,
-  WorkspaceWorkspaceIdRoute: WorkspaceWorkspaceIdRouteWithChildren,
-  funnelFIdRoute: funnelFIdRoute,
+  formFIdRoute: formFIdRoute,
+  WorkspaceWorkspaceIdFormsIdEditIndexRoute:
+    WorkspaceWorkspaceIdFormsIdEditIndexRoute,
+  WorkspaceWorkspaceIdFormsIdPreviewIndexRoute:
+    WorkspaceWorkspaceIdFormsIdPreviewIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

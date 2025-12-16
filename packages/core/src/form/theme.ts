@@ -1,0 +1,355 @@
+// ============================================
+// Colors
+// ============================================
+
+export const COLORS = [
+  {
+    name: 'amber',
+    value: {
+      light: {
+        primary: 'oklch(0.67 0.16 58)',
+        primaryForeground: 'oklch(0.99 0.02 95)',
+        secondary: 'oklch(0.967 0.001 286.375)',
+        secondaryForeground: 'oklch(0.21 0.006 285.885)',
+      },
+      dark: {
+        primary: 'oklch(0.77 0.16 70)',
+        primaryForeground: 'oklch(0.28 0.07 46)',
+        secondary: 'oklch(0.274 0.006 286.033)',
+        secondaryForeground: 'oklch(0.985 0 0)',
+      },
+    },
+  },
+  {
+    name: 'blue',
+    value: {
+      light: {
+        primary: 'oklch(0.488 0.243 264.376)',
+        primaryForeground: 'oklch(0.97 0.014 254.604)',
+        secondary: 'oklch(0.967 0.001 286.375)',
+        secondaryForeground: 'oklch(0.21 0.006 285.885)',
+      },
+      dark: {
+        primary: 'oklch(0.42 0.18 266)',
+        primaryForeground: 'oklch(0.97 0.014 254.604)',
+        secondary: 'oklch(0.274 0.006 286.033)',
+        secondaryForeground: 'oklch(0.985 0 0)',
+      },
+    },
+  },
+  {
+    name: 'cyan',
+    value: {
+      light: {
+        primary: 'oklch(0.61 0.11 222)',
+        primaryForeground: 'oklch(0.98 0.02 201)',
+        secondary: 'oklch(0.967 0.001 286.375)',
+        secondaryForeground: 'oklch(0.21 0.006 285.885)',
+      },
+      dark: {
+        primary: 'oklch(0.71 0.13 215)',
+        primaryForeground: 'oklch(0.30 0.05 230)',
+        secondary: 'oklch(0.274 0.006 286.033)',
+        secondaryForeground: 'oklch(0.985 0 0)',
+      },
+    },
+  },
+  {
+    name: 'emerald',
+    value: {
+      light: {
+        primary: 'oklch(0.60 0.13 163)',
+        primaryForeground: 'oklch(0.98 0.02 166)',
+        secondary: 'oklch(0.967 0.001 286.375)',
+        secondaryForeground: 'oklch(0.21 0.006 285.885)',
+      },
+      dark: {
+        primary: 'oklch(0.70 0.15 162)',
+        primaryForeground: 'oklch(0.26 0.05 173)',
+        secondary: 'oklch(0.274 0.006 286.033)',
+        secondaryForeground: 'oklch(0.985 0 0)',
+      },
+    },
+  },
+  {
+    name: 'fuchsia',
+    value: {
+      light: {
+        primary: 'oklch(0.59 0.26 323)',
+        primaryForeground: 'oklch(0.98 0.02 320)',
+        secondary: 'oklch(0.967 0.001 286.375)',
+        secondaryForeground: 'oklch(0.21 0.006 285.885)',
+      },
+      dark: {
+        primary: 'oklch(0.67 0.26 322)',
+        primaryForeground: 'oklch(0.98 0.02 320)',
+        secondary: 'oklch(0.274 0.006 286.033)',
+        secondaryForeground: 'oklch(0.985 0 0)',
+      },
+    },
+  },
+  {
+    name: 'green',
+    value: {
+      light: {
+        primary: 'oklch(0.648 0.2 131.684)',
+        primaryForeground: 'oklch(0.986 0.031 120.757)',
+        secondary: 'oklch(0.967 0.001 286.375)',
+        secondaryForeground: 'oklch(0.21 0.006 285.885)',
+      },
+      dark: {
+        primary: 'oklch(0.648 0.2 131.684)',
+        primaryForeground: 'oklch(0.986 0.031 120.757)',
+        secondary: 'oklch(0.274 0.006 286.033)',
+        secondaryForeground: 'oklch(0.985 0 0)',
+      },
+    },
+  },
+  {
+    name: 'indigo',
+    value: {
+      light: {
+        primary: 'oklch(0.51 0.23 277)',
+        primaryForeground: 'oklch(0.96 0.02 272)',
+        secondary: 'oklch(0.967 0.001 286.375)',
+        secondaryForeground: 'oklch(0.21 0.006 285.885)',
+      },
+      dark: {
+        primary: 'oklch(0.59 0.20 277)',
+        primaryForeground: 'oklch(0.96 0.02 272)',
+        secondary: 'oklch(0.274 0.006 286.033)',
+        secondaryForeground: 'oklch(0.985 0 0)',
+      },
+    },
+  },
+  {
+    name: 'lime',
+    value: {
+      light: {
+        primary: 'oklch(0.65 0.18 132)',
+        primaryForeground: 'oklch(0.99 0.03 121)',
+        secondary: 'oklch(0.967 0.001 286.375)',
+        secondaryForeground: 'oklch(0.21 0.006 285.885)',
+      },
+      dark: {
+        primary: 'oklch(0.77 0.20 131)',
+        primaryForeground: 'oklch(0.27 0.07 132)',
+        secondary: 'oklch(0.274 0.006 286.033)',
+        secondaryForeground: 'oklch(0.985 0 0)',
+      },
+    },
+  },
+  {
+    name: 'orange',
+    value: {
+      light: {
+        primary: 'oklch(0.646 0.222 41.116)',
+        primaryForeground: 'oklch(0.98 0.016 73.684)',
+        secondary: 'oklch(0.967 0.001 286.375)',
+        secondaryForeground: 'oklch(0.21 0.006 285.885)',
+      },
+      dark: {
+        primary: 'oklch(0.705 0.213 47.604)',
+        primaryForeground: 'oklch(0.98 0.016 73.684)',
+        secondary: 'oklch(0.274 0.006 286.033)',
+        secondaryForeground: 'oklch(0.985 0 0)',
+      },
+    },
+  },
+  {
+    name: 'pink',
+    value: {
+      light: {
+        primary: 'oklch(0.59 0.22 1)',
+        primaryForeground: 'oklch(0.97 0.01 343)',
+        secondary: 'oklch(0.967 0.001 286.375)',
+        secondaryForeground: 'oklch(0.21 0.006 285.885)',
+      },
+      dark: {
+        primary: 'oklch(0.66 0.21 354)',
+        primaryForeground: 'oklch(0.97 0.01 343)',
+        secondary: 'oklch(0.274 0.006 286.033)',
+        secondaryForeground: 'oklch(0.985 0 0)',
+      },
+    },
+  },
+  {
+    name: 'purple',
+    value: {
+      light: {
+        primary: 'oklch(0.56 0.25 302)',
+        primaryForeground: 'oklch(0.98 0.01 308)',
+        secondary: 'oklch(0.967 0.001 286.375)',
+        secondaryForeground: 'oklch(0.21 0.006 285.885)',
+      },
+      dark: {
+        primary: 'oklch(0.63 0.23 304)',
+        primaryForeground: 'oklch(0.98 0.01 308)',
+        secondary: 'oklch(0.274 0.006 286.033)',
+        secondaryForeground: 'oklch(0.985 0 0)',
+      },
+    },
+  },
+  {
+    name: 'red',
+    value: {
+      light: {
+        primary: 'oklch(0.577 0.245 27.325)',
+        primaryForeground: 'oklch(0.971 0.013 17.38)',
+        secondary: 'oklch(0.967 0.001 286.375)',
+        secondaryForeground: 'oklch(0.21 0.006 285.885)',
+      },
+      dark: {
+        primary: 'oklch(0.637 0.237 25.331)',
+        primaryForeground: 'oklch(0.971 0.013 17.38)',
+        secondary: 'oklch(0.274 0.006 286.033)',
+        secondaryForeground: 'oklch(0.985 0 0)',
+      },
+    },
+  },
+  {
+    name: 'rose',
+    value: {
+      light: {
+        primary: 'oklch(0.586 0.253 17.585)',
+        primaryForeground: 'oklch(0.969 0.015 12.422)',
+        secondary: 'oklch(0.967 0.001 286.375)',
+        secondaryForeground: 'oklch(0.21 0.006 285.885)',
+      },
+      dark: {
+        primary: 'oklch(0.645 0.246 16.439)',
+        primaryForeground: 'oklch(0.969 0.015 12.422)',
+        secondary: 'oklch(0.274 0.006 286.033)',
+        secondaryForeground: 'oklch(0.985 0 0)',
+      },
+    },
+  },
+  {
+    name: 'sky',
+    value: {
+      light: {
+        primary: 'oklch(0.59 0.14 242)',
+        primaryForeground: 'oklch(0.98 0.01 237)',
+        secondary: 'oklch(0.967 0.001 286.375)',
+        secondaryForeground: 'oklch(0.21 0.006 285.885)',
+      },
+      dark: {
+        primary: 'oklch(0.68 0.15 237)',
+        primaryForeground: 'oklch(0.29 0.06 243)',
+        secondary: 'oklch(0.274 0.006 286.033)',
+        secondaryForeground: 'oklch(0.985 0 0)',
+      },
+    },
+  },
+  {
+    name: 'teal',
+    value: {
+      light: {
+        primary: 'oklch(0.60 0.10 185)',
+        primaryForeground: 'oklch(0.98 0.01 181)',
+        secondary: 'oklch(0.967 0.001 286.375)',
+        secondaryForeground: 'oklch(0.21 0.006 285.885)',
+      },
+      dark: {
+        primary: 'oklch(0.70 0.12 183)',
+        primaryForeground: 'oklch(0.28 0.04 193)',
+        secondary: 'oklch(0.274 0.006 286.033)',
+        secondaryForeground: 'oklch(0.985 0 0)',
+      },
+    },
+  },
+  {
+    name: 'violet',
+    value: {
+      light: {
+        primary: 'oklch(0.541 0.281 293.009)',
+        primaryForeground: 'oklch(0.969 0.016 293.756)',
+        secondary: 'oklch(0.967 0.001 286.375)',
+        secondaryForeground: 'oklch(0.21 0.006 285.885)',
+      },
+      dark: {
+        primary: 'oklch(0.606 0.25 292.717)',
+        primaryForeground: 'oklch(0.969 0.016 293.756)',
+        secondary: 'oklch(0.274 0.006 286.033)',
+        secondaryForeground: 'oklch(0.985 0 0)',
+      },
+    },
+  },
+  {
+    name: 'yellow',
+    value: {
+      light: {
+        primary: 'oklch(0.852 0.199 91.936)',
+        primaryForeground: 'oklch(0.421 0.095 57.708)',
+        secondary: 'oklch(0.967 0.001 286.375)',
+        secondaryForeground: 'oklch(0.21 0.006 285.885)',
+      },
+      dark: {
+        primary: 'oklch(0.795 0.184 86.047)',
+        primaryForeground: 'oklch(0.421 0.095 57.708)',
+        secondary: 'oklch(0.274 0.006 286.033)',
+        secondaryForeground: 'oklch(0.985 0 0)',
+      },
+    },
+  },
+] as const
+
+export type Color = (typeof COLORS)[number]
+export type ColorName = Color['name']
+export type ColorValue = Color['value']
+
+// ============================================
+// Fonts
+// ============================================
+
+export const FONTS = [
+  {
+    name: 'Inter',
+    value: 'inter',
+  },
+] as const
+
+export type Font = (typeof FONTS)[number]
+export type FontName = Font['name']
+export type FontValue = Font['value']
+
+// ============================================
+// Radii
+// ============================================
+
+export const RADII = [
+  { name: 'none', value: '0' },
+  { name: 'small', value: '0.45rem' },
+  { name: 'medium', value: '0.625rem' },
+  { name: 'large', value: '0.875rem' },
+] as const
+
+export type Radius = (typeof RADII)[number]
+export type RadiusName = Radius['name']
+export type RadiusValue = Radius['value']
+
+// ============================================
+// Styles
+// ============================================
+
+export const STYLES = [
+  {
+    name: 'standard',
+  },
+  {
+    name: 'compact',
+  },
+] as const
+
+export type Style = (typeof STYLES)[number]
+export type StyleName = Style['name']
+
+// ============================================
+// Form Theme
+// ============================================
+
+export interface FormTheme {
+  color: Color
+  radius: Radius
+  style: Style
+}
