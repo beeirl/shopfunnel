@@ -1,5 +1,5 @@
-import { Button } from '@/components/ui/button'
 import { Block as BlockComponent } from '@/funnel/block'
+import { Button } from '@/funnel/components/button'
 import { Form } from '@base-ui-components/react'
 import { Funnel as FunnelModule } from '@shopfunnel/core/funnel/index'
 import type { Block, ComparisonCondition, Condition, InputBlock, Page, Variables } from '@shopfunnel/core/funnel/schema'

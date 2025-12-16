@@ -5,13 +5,14 @@ interface FieldProps {
   children: React.ReactNode
   className?: string
   mode?: 'preview' | 'live'
+  name?: string
   label?: string
   description?: string
 }
 
-export function Field({ mode = 'live', label, description, children, className }: FieldProps) {
+export function Field({ mode = 'live', name, label, description, children, className }: FieldProps) {
   return (
-    <BaseField.Root className={cn('flex flex-col', className)}>
+    <BaseField.Root className={cn('flex flex-col', className)} name={name}>
       {label && <BaseField.Label className="text-lg font-bold text-foreground">{label}</BaseField.Label>}
       {description && (
         <BaseField.Description className="mt-1 text-sm text-muted-foreground">{description}</BaseField.Description>

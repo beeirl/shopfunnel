@@ -1,4 +1,4 @@
-import { IconFileText as FileTextIcon } from '@tabler/icons-react'
+import { IconFileText as FileTextIcon, IconPlus as PlusIcon } from '@tabler/icons-react'
 import { mutationOptions, queryOptions, useMutation, useQueryClient, useSuspenseQuery } from '@tanstack/react-query'
 import { createFileRoute, Link } from '@tanstack/react-router'
 import { createServerFn } from '@tanstack/react-start'
@@ -7,11 +7,9 @@ import { Button } from '@/components/ui/button'
 import { Empty } from '@/components/ui/empty'
 import { Item } from '@/components/ui/item'
 import { withActor } from '@/context/auth.withActor'
-
-import { Heading } from './-components/heading'
-
 import { Funnel } from '@shopfunnel/core/funnel/index'
 import { Identifier } from '@shopfunnel/core/identifier'
+import { Heading } from './-components/heading'
 
 const listFunnels = createServerFn()
   .inputValidator(Identifier.schema('workspace'))
@@ -78,17 +76,20 @@ function RouteComponent() {
   }
 
   return (
-    <div className="flex h-full w-full flex-col p-6">
+    <div className="flex h-full w-full flex-col gap-4">
       <Heading.Root>
         <Heading.Content>
           <Heading.Title>Funnels</Heading.Title>
         </Heading.Content>
         <Heading.Actions>
-          <Button onClick={handleFunnelCreate}>Create</Button>
+          <Button onClick={handleFunnelCreate}>
+            <PlusIcon />
+            Create
+          </Button>
         </Heading.Actions>
       </Heading.Root>
 
-      <Item.Group className="mt-6">
+      <Item.Group>
         {funnels.map((funnel) => (
           <Item.Root
             key={funnel.id}

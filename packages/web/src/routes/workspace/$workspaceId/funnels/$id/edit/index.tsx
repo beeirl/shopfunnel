@@ -1,3 +1,4 @@
+import { Button } from '@/components/ui/button'
 import { withActor } from '@/context/auth.withActor'
 import { InspectorPanel } from '@/routes/workspace/$workspaceId/funnels/$id/edit/-components/inspector-panel'
 import { LayersPanel } from '@/routes/workspace/$workspaceId/funnels/$id/edit/-components/layers-panel'
@@ -9,7 +10,7 @@ import type { Block, Page, Rule, Theme, Variables } from '@shopfunnel/core/funne
 import { Identifier } from '@shopfunnel/core/identifier'
 import { useDebouncer } from '@tanstack/react-pacer'
 import { mutationOptions, queryOptions, useMutation, useSuspenseQuery } from '@tanstack/react-query'
-import { createFileRoute, notFound } from '@tanstack/react-router'
+import { createFileRoute, Link, notFound } from '@tanstack/react-router'
 import { createServerFn } from '@tanstack/react-start'
 import * as React from 'react'
 import { ulid } from 'ulid'
@@ -193,8 +194,18 @@ function RouteComponent() {
       <div className="relative flex h-full min-h-32 w-full flex-col">
         <div className="relative z-10 flex h-full w-full flex-1 flex-col bg-muted">
           <div className="flex h-12 w-full shrink-0 items-center gap-2 border-b bg-background px-4">
-            <div className="flex w-56 items-center gap-2"></div>
-            <div className="ml-auto flex w-56 items-center justify-end gap-2"></div>
+            <div className="flex w-56 items-center gap-2">
+              <span className="truncate text-sm font-medium">{funnel.title}</span>
+            </div>
+            <div className="-mr-2 ml-auto flex items-center justify-end gap-2">
+              <Button
+                variant="ghost"
+                size="sm"
+                render={<Link to="/workspace/$workspaceId/funnels/$id/preview" params={params} target="_blank" />}
+              >
+                Preview
+              </Button>
+            </div>
           </div>
           <div className="flex flex-1 overflow-hidden">
             <Navbar activeTab={activeTab} onTabChange={setActiveTab} />

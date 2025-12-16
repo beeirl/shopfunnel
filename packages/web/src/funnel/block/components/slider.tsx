@@ -1,6 +1,6 @@
 import type { SliderBlock } from '@shopfunnel/core/funnel/schema'
 
-import { Field } from './field'
+import { Field } from '@/funnel/components/field'
 
 export type SliderProps =
   | {

@@ -3,7 +3,7 @@ import { CheckIcon, ChevronDownIcon } from '@beeirl/ui/line-icons'
 import { cn } from '@beeirl/ui/styles'
 import type { DropdownBlock } from '@shopfunnel/core/funnel/schema'
 
-import { Field } from './field'
+import { Field } from '@/funnel/components/field'
 
 export type DropdownProps =
   | {

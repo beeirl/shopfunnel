@@ -2,8 +2,24 @@ import { type ColorName, COLORS } from '@shopfunnel/core/funnel/schema'
 import * as React from 'react'
 import { Picker } from './picker'
 
-const COLOR_TITLES = {
+const COLOR_TITLES: Record<ColorName, string> = {
+  amber: 'Amber',
   blue: 'Blue',
+  cyan: 'Cyan',
+  emerald: 'Emerald',
+  fuchsia: 'Fuchsia',
+  green: 'Green',
+  indigo: 'Indigo',
+  lime: 'Lime',
+  orange: 'Orange',
+  pink: 'Pink',
+  purple: 'Purple',
+  red: 'Red',
+  rose: 'Rose',
+  sky: 'Sky',
+  teal: 'Teal',
+  violet: 'Violet',
+  yellow: 'Yellow',
 }
 
 const colors = COLORS.map((color) => ({

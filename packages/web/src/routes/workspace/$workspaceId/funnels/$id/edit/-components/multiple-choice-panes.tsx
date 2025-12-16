@@ -177,7 +177,7 @@ export function MultipleChoicePane({ block, onUpdate }: MultipleChoicePaneProps)
         <PaneHeader>
           <PaneTitle>Validation</PaneTitle>
         </PaneHeader>
-        <PaneContent>
+        <PaneContent className="gap-2">
           <Field.Root orientation="horizontal">
             <Field.Label htmlFor={`${block.id}-multiple`}>Multiple selection</Field.Label>
             <Switch

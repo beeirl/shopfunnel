@@ -135,77 +135,93 @@ export function LayersPanel({
   const blocks = selectedPage?.blocks ?? []
   return (
     <div className="flex w-[250px] flex-col border-r border-border bg-background">
-      <Resizable.PanelGroup direction="vertical">
-        <Resizable.Panel defaultSize={40} minSize={10}>
-          <PaneRoot className="flex h-full flex-col">
-            <PaneHeader>
-              <PaneTitle>Pages</PaneTitle>
-              <Button className="-mr-2" size="icon-sm" variant="ghost" onClick={onPageAdd}>
-                <PlusIcon />
-              </Button>
-            </PaneHeader>
-            <PaneContent className="flex-1 overflow-y-auto">
-              <DragDropProvider
-                onDragEnd={(event) => {
-                  onPagesReorder(move(pages, event))
-                }}
-              >
-                <div className="flex flex-col gap-1">
-                  {pages.map((page, index) => (
-                    <SortablePageItem
-                      key={page.id}
-                      page={page}
-                      index={index}
-                      selected={selectedPageId === page.id}
-                      onSelect={() => onPageSelect(page.id)}
-                      onDelete={() => onPageDelete(page.id)}
-                    />
-                  ))}
-                </div>
-              </DragDropProvider>
-            </PaneContent>
-          </PaneRoot>
-        </Resizable.Panel>
-        <Resizable.Handle />
-        <Resizable.Panel defaultSize={60} minSize={10}>
-          <PaneRoot className="flex h-full flex-col">
-            <PaneHeader>
-              <PaneTitle>Blocks</PaneTitle>
-              <AddBlockDialog.Root onBlockAdd={onBlockAdd}>
-                <AddBlockDialog.Trigger render={<Button className="-mr-2" size="icon-sm" variant="ghost" />}>
+      {selectedPageId ? (
+        <Resizable.PanelGroup direction="vertical">
+          <Resizable.Panel defaultSize={40} minSize={10}>
+            <PaneRoot className="flex h-full flex-col">
+              <PaneHeader>
+                <PaneTitle>Pages</PaneTitle>
+                <Button className="-mr-2" size="icon-sm" variant="ghost" onClick={onPageAdd}>
                   <PlusIcon />
-                </AddBlockDialog.Trigger>
-                <AddBlockDialog.Popup />
-              </AddBlockDialog.Root>
-            </PaneHeader>
-            <PaneContent className="flex-1 overflow-y-auto">
-              {blocks.length === 0 ? (
-                <div className="flex flex-col items-center justify-center py-8 text-center">
-                  <span className="text-sm text-muted-foreground">No blocks yet</span>
-                </div>
-              ) : (
+                </Button>
+              </PaneHeader>
+              <PaneContent className="flex-1 overflow-y-auto">
                 <DragDropProvider
                   onDragEnd={(event) => {
-                    onBlocksReorder(move(blocks, event))
+                    onPagesReorder(move(pages, event))
                   }}
                 >
-                  <div className="flex flex-col gap-0.5">
-                    {blocks.map((block, index) => (
-                      <SortableBlockItem
-                        key={block.id}
-                        block={block}
+                  <div className="flex flex-col gap-1">
+                    {pages.map((page, index) => (
+                      <SortablePageItem
+                        key={page.id}
+                        page={page}
                         index={index}
-                        selected={selectedBlockId === block.id}
-                        onSelect={() => onBlockSelect(block.id)}
+                        selected={selectedPageId === page.id}
+                        onSelect={() => onPageSelect(page.id)}
+                        onDelete={() => onPageDelete(page.id)}
                       />
                     ))}
                   </div>
                 </DragDropProvider>
-              )}
-            </PaneContent>
-          </PaneRoot>
-        </Resizable.Panel>
-      </Resizable.PanelGroup>
+              </PaneContent>
+            </PaneRoot>
+          </Resizable.Panel>
+          <Resizable.Handle />
+          <Resizable.Panel defaultSize={60} minSize={10}>
+            <PaneRoot className="flex h-full flex-col">
+              <PaneHeader>
+                <PaneTitle>Blocks</PaneTitle>
+                <AddBlockDialog.Root onBlockAdd={onBlockAdd}>
+                  <AddBlockDialog.Trigger render={<Button className="-mr-2" size="icon-sm" variant="ghost" />}>
+                    <PlusIcon />
+                  </AddBlockDialog.Trigger>
+                  <AddBlockDialog.Popup />
+                </AddBlockDialog.Root>
+              </PaneHeader>
+              <PaneContent className="flex-1 overflow-y-auto">
+                {blocks.length === 0 ? (
+                  <div className="flex flex-col items-center justify-center py-8 text-center">
+                    <span className="text-sm text-muted-foreground">No blocks yet</span>
+                  </div>
+                ) : (
+                  <DragDropProvider
+                    onDragEnd={(event) => {
+                      onBlocksReorder(move(blocks, event))
+                    }}
+                  >
+                    <div className="flex flex-col gap-0.5">
+                      {blocks.map((block, index) => (
+                        <SortableBlockItem
+                          key={block.id}
+                          block={block}
+                          index={index}
+                          selected={selectedBlockId === block.id}
+                          onSelect={() => onBlockSelect(block.id)}
+                        />
+                      ))}
+                    </div>
+                  </DragDropProvider>
+                )}
+              </PaneContent>
+            </PaneRoot>
+          </Resizable.Panel>
+        </Resizable.PanelGroup>
+      ) : (
+        <PaneRoot className="flex h-full flex-col">
+          <PaneHeader>
+            <PaneTitle>Pages</PaneTitle>
+            <Button className="-mr-2" size="icon-sm" variant="ghost" onClick={onPageAdd}>
+              <PlusIcon />
+            </Button>
+          </PaneHeader>
+          <PaneContent className="flex-1 overflow-y-auto">
+            <div className="flex flex-col items-center justify-center py-8 text-center">
+              <span className="text-sm text-muted-foreground">No pages yet</span>
+            </div>
+          </PaneContent>
+        </PaneRoot>
+      )}
     </div>
   )
 }

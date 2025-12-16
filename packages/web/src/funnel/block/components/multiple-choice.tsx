@@ -2,7 +2,7 @@ import { cn } from '@beeirl/ui/styles'
 import type { MultipleChoiceBlock } from '@shopfunnel/core/funnel/schema'
 import { ListBox as ReactAriaListbox, ListBoxItem as ReactAriaListboxItem } from 'react-aria-components'
 
-import { Field } from './field'
+import { Field } from '@/funnel/components/field'
 
 export type MultipleChoiceProps =
   | {
@@ -29,7 +29,12 @@ export function MultipleChoice(props: MultipleChoiceProps) {
   }))
 
   return (
-    <Field mode={props.mode} label={props.block.properties.label} description={props.block.properties.description}>
+    <Field
+      mode={props.mode}
+      name={props.block.id}
+      label={props.block.properties.label}
+      description={props.block.properties.description}
+    >
       <ReactAriaListbox
         className="flex flex-col gap-2"
         disallowEmptySelection={props.mode === 'preview' ? false : !props.block.properties.multiple}

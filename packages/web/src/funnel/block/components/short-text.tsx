@@ -2,7 +2,7 @@ import { Input as BaseInput } from '@base-ui-components/react/input'
 import { cn } from '@beeirl/ui/styles'
 import type { ShortTextBlock } from '@shopfunnel/core/funnel/schema'
 
-import { Field } from './field'
+import { Field } from '@/funnel/components/field'
 
 export type ShortTextProps =
   | {
@@ -18,10 +18,15 @@ export type ShortTextProps =
 
 export function ShortText(props: ShortTextProps) {
   return (
-    <Field mode={props.mode} label={props.block.properties.label} description={props.block.properties.description}>
+    <Field
+      mode={props.mode}
+      name={props.block.id}
+      label={props.block.properties.label}
+      description={props.block.properties.description}
+    >
       <BaseInput
         className={cn(
-          'w-full rounded-[var(--radius)] border-2 border-border bg-background px-4 py-2.5 text-base text-foreground transition-colors placeholder:text-muted-foreground',
+          'w-full rounded-(--radius) border-2 border-border bg-background px-4 py-2.5 text-base text-foreground transition-colors placeholder:text-muted-foreground',
           'focus:border-primary focus:outline-none',
           'data-invalid:border-destructive',
           props.mode === 'preview' && 'pointer-events-none',

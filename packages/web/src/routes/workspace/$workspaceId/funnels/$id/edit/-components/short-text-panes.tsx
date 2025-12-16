@@ -21,7 +21,11 @@ export function ShortTextPane({ block, onUpdate }: ShortTextPaneProps) {
         </PaneHeader>
         <PaneContent>
           <Field.Root>
-            <Input placeholder="Your question here..." />
+            <Input
+              placeholder="Your question here..."
+              value={block.properties.label}
+              onValueChange={(value) => onUpdate({ properties: { ...block.properties, label: value } })}
+            />
           </Field.Root>
         </PaneContent>
       </PaneRoot>
@@ -32,8 +36,8 @@ export function ShortTextPane({ block, onUpdate }: ShortTextPaneProps) {
         </PaneHeader>
         <PaneContent>
           <Input
-            value={block.properties.description ?? ''}
             placeholder="Enter description..."
+            value={block.properties.description ?? ''}
             onValueChange={(value) =>
               onUpdate({
                 properties: { ...block.properties, description: value || undefined },
@@ -47,7 +51,7 @@ export function ShortTextPane({ block, onUpdate }: ShortTextPaneProps) {
         <PaneHeader>
           <PaneTitle>Validation</PaneTitle>
         </PaneHeader>
-        <PaneContent>
+        <PaneContent className="gap-2">
           <Field.Root orientation="horizontal">
             <Field.Label htmlFor={`${block.id}-required`}>Required</Field.Label>
             <Switch
