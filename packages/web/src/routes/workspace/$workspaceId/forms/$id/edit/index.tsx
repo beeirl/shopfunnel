@@ -1,9 +1,8 @@
 import { Button } from '@/components/ui/button'
 import { withActor } from '@/context/auth.withActor'
 import { LeftPanel } from '@/routes/workspace/$workspaceId/forms/$id/edit/-components/left-panel'
-import { type NavbarTab } from '@/routes/workspace/$workspaceId/forms/$id/edit/-components/navbar'
 import { Preview } from '@/routes/workspace/$workspaceId/forms/$id/edit/-components/preview'
-import { ThemePanel } from '@/routes/workspace/$workspaceId/forms/$id/edit/-components/theme-panel'
+
 import { Form } from '@shopfunnel/core/form/index'
 import type { Block, FormSchema, Page } from '@shopfunnel/core/form/schema'
 import type { FormTheme } from '@shopfunnel/core/form/theme'
@@ -16,6 +15,7 @@ import * as React from 'react'
 import { ulid } from 'ulid'
 import { z } from 'zod'
 import { RightPanel } from './-components/right-panel'
+import { ThemePopover } from './-components/theme-popover'
 
 const getForm = createServerFn()
   .inputValidator(
@@ -97,7 +97,6 @@ function RouteComponent() {
   const [form, setForm] = React.useState<Form.Info>(() => formQuery.data)
   const [selectedPageId, setSelectedPageId] = React.useState(() => form.schema.pages[0]?.id ?? null)
   const [selectedBlockId, setSelectedBlockId] = React.useState(() => form.schema.pages[0]?.blocks[0]?.id ?? null)
-  const [activeTab, setActiveTab] = React.useState<NavbarTab>('explorer')
 
   const updateFormMutation = useMutation(updateFormMutationOptions(params.workspaceId, params.id))
   const publishFormMutation = useMutation(publishFormMutationOptions(params.workspaceId, params.id))
@@ -213,7 +212,10 @@ function RouteComponent() {
               <span className="truncate text-sm font-medium">{form.title}</span>
             </div>
             <div className="ml-auto flex items-center justify-end gap-1">
-              <Button variant="ghost">Design</Button>
+              <ThemePopover.Root>
+                <ThemePopover.Trigger render={<Button variant="ghost" />}>Theme</ThemePopover.Trigger>
+                <ThemePopover.Content align="end" theme={form.theme} onThemeUpdate={handleThemeUpdate} />
+              </ThemePopover.Root>
               <Button
                 variant="ghost"
                 render={<Link to="/workspace/$workspaceId/forms/$id/preview" params={params} target="_blank" />}
@@ -236,22 +238,18 @@ function RouteComponent() {
             </div>
           </div>
           <div className="flex flex-1 overflow-hidden">
-            {activeTab === 'explorer' ? (
-              <LeftPanel
-                pages={form.schema.pages}
-                selectedPageId={selectedPageId}
-                onPageSelect={handlePageSelect}
-                onPagesReorder={handlePagesReorder}
-                onPageAdd={handlePageAdd}
-                onPageDelete={handlePageDelete}
-                selectedBlockId={selectedBlockId}
-                onBlockSelect={handleBlockSelect}
-                onBlocksReorder={handleBlocksReorder}
-                onBlockAdd={handleBlockAdd}
-              />
-            ) : (
-              <ThemePanel theme={form.theme} onThemeUpdate={handleThemeUpdate} />
-            )}
+            <LeftPanel
+              pages={form.schema.pages}
+              selectedPageId={selectedPageId}
+              onPageSelect={handlePageSelect}
+              onPagesReorder={handlePagesReorder}
+              onPageAdd={handlePageAdd}
+              onPageDelete={handlePageDelete}
+              selectedBlockId={selectedBlockId}
+              onBlockSelect={handleBlockSelect}
+              onBlocksReorder={handleBlocksReorder}
+              onBlockAdd={handleBlockAdd}
+            />
             <Preview
               page={selectedPage}
               theme={form.theme}

@@ -8,10 +8,10 @@ interface ThemeProps {
 
 export function Theme({ theme, children }: ThemeProps) {
   const style = {
-    '--primary': theme.color.value.light.primary,
-    '--primary-foreground': theme.color.value.light.primaryForeground,
-    '--secondary': theme.color.value.light.secondary,
-    '--secondary-foreground': theme.color.value.light.secondaryForeground,
+    '--color-primary': theme.colors.primary,
+    '--color-primary-foreground': theme.colors.primaryForeground,
+    '--color-background': theme.colors.background,
+    '--color-foreground': theme.colors.foreground,
     '--radius': theme.radius.value,
   } as React.CSSProperties
 

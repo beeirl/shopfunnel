@@ -1,5 +1,8 @@
-function FieldRoot({ children }: { children: React.ReactNode }) {
-  return <div className="flex min-h-[40px] w-full justify-between gap-4 py-1 pl-3.5">{children}</div>
+import { cn } from '@/lib/utils'
+import * as React from 'react'
+
+function FieldRoot({ className, children }: React.ComponentProps<'div'>) {
+  return <div className={cn('flex min-h-[40px] w-full justify-between gap-4 py-1 pl-3.5', className)}>{children}</div>
 }
 
 function FieldLabel({ children }: { children: React.ReactNode }) {
