@@ -1,5 +1,5 @@
-import { Input as BaseInput } from '@base-ui-components/react/input'
-import { cn } from '@beeirl/ui/styles'
+import { cn } from '@/lib/utils'
+import { Input as BaseInput } from '@base-ui/react/input'
 import type { ShortTextBlock } from '@shopfunnel/core/form/schema'
 
 import { Field } from '@/form/components/field'

@@ -1,11 +1,21 @@
-import { Field as BaseField } from '@/components/ui/field'
-import { cn } from '@/utils/cn'
+function FieldRoot({ children }: { children: React.ReactNode }) {
+  return <div className="flex min-h-[40px] w-full justify-between gap-4 py-1 pl-3.5">{children}</div>
+}
 
-function FieldLabel({ className, ...props }: React.ComponentProps<typeof BaseField.Label>) {
-  return <BaseField.Label className={cn('text-xs text-muted-foreground', className)} {...props} />
+function FieldLabel({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="flex h-fit min-h-[32px] flex-1 grow items-center">
+      <span className="text-xm text-muted-foreground">{children}</span>
+    </div>
+  )
+}
+
+function FieldControl({ children }: { children: React.ReactNode }) {
+  return <div className="flex flex-1 grow-2 items-center gap-1">{children}</div>
 }
 
 export const Field = {
-  ...BaseField,
+  Root: FieldRoot,
   Label: FieldLabel,
+  Control: FieldControl,
 }

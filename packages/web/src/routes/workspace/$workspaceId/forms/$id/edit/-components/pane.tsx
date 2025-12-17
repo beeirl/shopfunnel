@@ -1,44 +1,32 @@
-import { cn } from '@/utils/cn'
+import { cn } from '@/lib/utils'
 import * as React from 'react'
 
-interface PaneRootProps extends React.ComponentProps<'div'> {}
-
-function PaneRoot({ children, className, ...props }: PaneRootProps) {
+function PaneRoot({ children, className, ...props }: React.ComponentProps<'div'>) {
   return (
-    <div className={cn('not-first:border-t not-first:border-gray-200', className)} {...props}>
+    <div className={cn('flex flex-col pb-3.5 not-first:border-t not-first:border-border', className)} {...props}>
       {children}
     </div>
   )
 }
 
-interface PaneHeaderProps extends React.ComponentProps<'div'> {}
-
-function PaneHeader({ children, className, ...props }: PaneHeaderProps) {
+function PaneHeader({ children, className, ...props }: React.ComponentProps<'div'>) {
   return (
-    <div className={cn('flex h-10 items-center justify-between px-4', className)} {...props}>
+    <div className={cn('flex h-11 items-center justify-between', className)} {...props}>
       {children}
     </div>
   )
 }
 
-interface PaneTitleProps extends React.ComponentProps<'span'> {}
-
-function PaneTitle({ children, className, ...props }: PaneTitleProps) {
+function PaneTitle({ children, className, ...props }: React.ComponentProps<'span'>) {
   return (
-    <span className={cn('text-xs font-semibold', className)} {...props}>
+    <span className={cn('text-xm font-medium', className)} {...props}>
       {children}
     </span>
   )
 }
 
-interface PaneContentProps extends React.ComponentProps<'div'> {}
-
-function PaneContent({ children, className, ...props }: PaneContentProps) {
-  return (
-    <div className={cn('flex flex-col px-4 pb-4', className)} {...props}>
-      {children}
-    </div>
-  )
+export const Pane = {
+  Header: PaneHeader,
+  Root: PaneRoot,
+  Title: PaneTitle,
 }
-
-export { PaneContent, PaneHeader, PaneRoot, PaneTitle }

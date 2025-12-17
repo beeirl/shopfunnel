@@ -27,7 +27,7 @@
   ```tsx
   // Correct
   import { Button } from '@/components/ui/button'
-  import { cn } from '@/utils/cn'
+  import { cn } from '@/lib/utils'
 
   // Incorrect
   import { Button } from '../components/ui/button'
@@ -168,7 +168,7 @@
   ```tsx
   // Correct
   import { Button } from '@/components/ui/button'
-  import { cn } from '@/utils/cn'
+  import { cn } from '@/lib/utils'
 
   // Incorrect
   import { Button } from '../components/ui/button'

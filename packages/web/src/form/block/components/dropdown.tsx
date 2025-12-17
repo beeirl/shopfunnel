@@ -1,9 +1,9 @@
-import { Select as BaseSelect } from '@base-ui-components/react/select'
-import { CheckIcon, ChevronDownIcon } from '@beeirl/ui/line-icons'
-import { cn } from '@beeirl/ui/styles'
+import { Select as BaseSelect } from '@base-ui/react/select'
 import type { DropdownBlock } from '@shopfunnel/core/form/schema'
+import { IconCheck as CheckIcon, IconChevronDown as ChevronDownIcon } from '@tabler/icons-react'
 
 import { Field } from '@/form/components/field'
+import { cn } from '@/lib/utils'
 
 export type DropdownProps =
   | {
@@ -49,7 +49,7 @@ export function Dropdown(props: DropdownProps) {
           </BaseSelect.Trigger>
           <BaseSelect.Portal>
             <BaseSelect.Positioner className="z-50 outline-none" sideOffset={4} alignItemWithTrigger={false}>
-              <BaseSelect.Popup className="group max-h-(--available-height) min-w-(--anchor-width) origin-(--transform-origin) overflow-y-auto rounded-[var(--radius)] border border-border bg-background bg-clip-padding py-1 text-foreground shadow-lg shadow-border transition-[transform,scale,opacity]">
+              <BaseSelect.Popup className="group max-h-(--available-height) min-w-(--anchor-width) origin-(--transform-origin) overflow-y-auto rounded-(--radius) border border-border bg-background bg-clip-padding py-1 text-foreground shadow-lg shadow-border transition-[transform,scale,opacity]">
                 <BaseSelect.List className="max-h-60 overflow-y-auto">
                   {options.map((option) => (
                     <BaseSelect.Item

@@ -1,7 +1,6 @@
+import { cn } from '@/lib/utils'
 import * as React from 'react'
 import * as ResizablePrimitive from 'react-resizable-panels'
-
-import { cn } from '@/utils/cn'
 
 function ResizablePanelGroup({ className, ...props }: React.ComponentProps<typeof ResizablePrimitive.PanelGroup>) {
   return (

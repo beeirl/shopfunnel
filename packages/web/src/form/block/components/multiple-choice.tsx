@@ -1,4 +1,4 @@
-import { cn } from '@beeirl/ui/styles'
+import { cn } from '@/lib/utils'
 import type { MultipleChoiceBlock } from '@shopfunnel/core/form/schema'
 import { ListBox as ReactAriaListbox, ListBoxItem as ReactAriaListboxItem } from 'react-aria-components'
 

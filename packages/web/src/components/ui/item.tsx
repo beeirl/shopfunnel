@@ -1,17 +1,45 @@
 import { Separator } from '@/components/ui/separator'
-import { cn } from '@/utils/cn'
+import { cn, cva } from '@/lib/utils'
 import { mergeProps } from '@base-ui/react/merge-props'
 import { useRender } from '@base-ui/react/use-render'
-import { cva, type VariantProps } from 'class-variance-authority'
+import { type VariantProps } from 'cva'
 import * as React from 'react'
 
-function ItemGroup({ className, ...props }: React.ComponentProps<'div'>) {
+const itemGroupVariants = cva({
+  base: 'group/item-group flex w-full flex-col bg-background',
+  variants: {
+    variant: {
+      default: 'gap-4 has-data-[size=sm]:gap-2.5 has-data-[size=xs]:gap-2',
+      outline: 'divide-y divide-border rounded-lg border border-border p-0.5',
+    },
+  },
+})
+
+function ItemGroup({
+  className,
+  variant = 'outline',
+  ...props
+}: React.ComponentProps<'div'> & {
+  variant?: 'default' | 'outline'
+}) {
   return (
     <div
       role="list"
       data-slot="item-group"
+      data-variant={variant}
+      className={cn(itemGroupVariants({ variant, className }))}
+      {...props}
+    />
+  )
+}
+
+function ItemSeparator({ className, ...props }: React.ComponentProps<typeof Separator>) {
+  return (
+    <Separator
+      data-slot="item-separator"
+      orientation="horizontal"
       className={cn(
-        'group/item-group flex w-full flex-col gap-4 has-data-[size=sm]:gap-2.5 has-data-[size=xs]:gap-2',
+        'my-2 group-data-[variant=outline]/item-group:mx-1.5 group-data-[variant=outline]/item-group:my-0.5',
         className,
       )}
       {...props}
@@ -19,31 +47,25 @@ function ItemGroup({ className, ...props }: React.ComponentProps<'div'>) {
   )
 }
 
-function ItemSeparator({ className, ...props }: React.ComponentProps<typeof Separator>) {
-  return <Separator data-slot="item-separator" orientation="horizontal" className={cn('my-2', className)} {...props} />
-}
-
-const itemVariants = cva(
-  '[a]:hover:bg-muted rounded-lg border text-sm w-full group/item focus-visible:border-ring focus-visible:ring-ring/50 flex items-center flex-wrap outline-none transition-colors duration-100 focus-visible:ring-[3px] [a]:transition-colors',
-  {
-    variants: {
-      variant: {
-        default: 'border-transparent',
-        outline: 'border-border',
-        muted: 'bg-muted/50 border-transparent',
-      },
-      size: {
-        default: 'gap-2.5 px-3 py-2.5',
-        sm: 'gap-2.5 px-3 py-2.5',
-        xs: 'gap-2 px-2.5 py-2 [[data-slot=dropdown-menu-content]_&]:p-0',
-      },
+const itemVariants = cva({
+  base: 'group/item flex min-h-9 w-full flex-wrap items-center rounded-lg border text-start text-xm transition-colors duration-100 outline-none group-data-[variant=outline]/item-group:rounded-md focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 [a]:hover:bg-muted [button]:hover:bg-muted [label]:hover:bg-muted',
+  variants: {
+    variant: {
+      default: 'border-transparent',
+      outline: 'border-border',
+      muted: 'border-transparent bg-muted/50',
     },
-    defaultVariants: {
-      variant: 'default',
-      size: 'default',
+    size: {
+      default: 'gap-2.5 p-2',
+      sm: 'gap-2.5 p-2',
+      xs: 'gap-2 px-1.5 [[data-slot=dropdown-menu-content]_&]:p-0',
     },
   },
-)
+  defaultVariants: {
+    variant: 'default',
+    size: 'default',
+  },
+})
 
 function ItemRoot({
   className,
@@ -69,22 +91,20 @@ function ItemRoot({
   })
 }
 
-const itemMediaVariants = cva(
-  'gap-2 group-has-[[data-slot=item-description]]/item:translate-y-0.5 group-has-[[data-slot=item-description]]/item:self-start flex shrink-0 items-center justify-center [&_svg]:pointer-events-none',
-  {
-    variants: {
-      variant: {
-        default: 'bg-transparent',
-        icon: "[&_svg:not([class*='size-'])]:size-4",
-        image:
-          'size-10 overflow-hidden rounded-sm group-data-[size=sm]/item:size-8 group-data-[size=xs]/item:size-6 [&_img]:size-full [&_img]:object-cover',
-      },
-    },
-    defaultVariants: {
-      variant: 'default',
+const itemMediaVariants = cva({
+  base: 'flex shrink-0 items-center justify-center gap-2 group-has-[[data-slot=item-description]]/item:translate-y-0.5 group-has-[[data-slot=item-description]]/item:self-start [&_svg]:pointer-events-none',
+  variants: {
+    variant: {
+      default: 'bg-transparent',
+      icon: "[&_svg:not([class*='size-'])]:size-4",
+      image:
+        'size-10 overflow-hidden rounded-sm group-data-[size=sm]/item:size-8 group-data-[size=xs]/item:size-6 [&_img]:size-full [&_img]:object-cover',
     },
   },
-)
+  defaultVariants: {
+    variant: 'default',
+  },
+})
 
 function ItemMedia({
   className,

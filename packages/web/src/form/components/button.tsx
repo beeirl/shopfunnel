@@ -1,4 +1,4 @@
-import { cn } from '@/utils/cn'
+import { cn } from '@/lib/utils'
 import { Button as ButtonPrimitive } from '@base-ui/react/button'
 
 export function Button({ className, ...props }: ButtonPrimitive.Props) {

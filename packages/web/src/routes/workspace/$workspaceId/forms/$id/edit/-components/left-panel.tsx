@@ -2,16 +2,17 @@ import { AlertDialog } from '@/components/ui/alert-dialog'
 import { Button } from '@/components/ui/button'
 import { Resizable } from '@/components/ui/resizable'
 import { blockRegistry } from '@/form/block/registry'
-import { cn } from '@/utils/cn'
+import { cn } from '@/lib/utils'
 import { move } from '@dnd-kit/helpers'
 import { DragDropProvider } from '@dnd-kit/react'
 import { useSortable } from '@dnd-kit/react/sortable'
 import type { Block, Page } from '@shopfunnel/core/form/schema'
 import { IconPlus as PlusIcon, IconTrash as TrashIcon } from '@tabler/icons-react'
 import { AddBlockDialog } from './add-block-dialog'
-import { PaneContent, PaneHeader, PaneRoot, PaneTitle } from './pane'
+import { Pane } from './pane'
+import { Panel } from './panel'
 
-function SortablePageItem({
+function PageItem({
   page,
   index,
   selected,
@@ -30,32 +31,25 @@ function SortablePageItem({
     <div
       ref={ref}
       onClick={onSelect}
-      className={cn(
-        'group -mx-1.5 flex cursor-grab gap-3 rounded-xl p-2 pl-3 transition-all hover:bg-secondary',
-        selected && 'bg-secondary',
-      )}
+      className={cn('group flex cursor-grab flex-col rounded-lg border border-b bg-background')}
     >
-      <span className="text-sm font-medium text-muted-foreground">{index + 1}</span>
-      <div className="relative flex aspect-video flex-1 items-start justify-start overflow-hidden rounded-lg border border-border bg-card p-3 transition-all active:scale-[1.02] active:cursor-grabbing">
-        <div className="pointer-events-none flex flex-col gap-0.5">
+      <div className="px-1 pt-1">
+        <div className="flex aspect-video items-center justify-center rounded-md bg-muted">
           <span className="text-xs font-semibold text-card-foreground">
             {page.blocks.length} {page.blocks.length === 1 ? 'block' : 'blocks'}
           </span>
-          <span className="text-[10px] text-muted-foreground">Page {index + 1}</span>
         </div>
+      </div>
+      <div className="flex items-center justify-between px-2.5 py-1">
+        <span className="text-xs">Page {index + 1}</span>
         <AlertDialog.Root>
           <AlertDialog.Trigger
             render={
-              <Button
-                size="icon-xs"
-                variant="destructive"
-                className="absolute top-1.5 right-1.5 opacity-0 transition-opacity group-hover:opacity-100"
-                onClick={(e) => e.stopPropagation()}
-              />
+              <Button size="icon-sm" variant="ghost">
+                <TrashIcon />
+              </Button>
             }
-          >
-            <TrashIcon />
-          </AlertDialog.Trigger>
+          />
           <AlertDialog.Content size="sm">
             <AlertDialog.Header>
               <AlertDialog.Title>Delete page?</AlertDialog.Title>
@@ -74,7 +68,7 @@ function SortablePageItem({
   )
 }
 
-function SortableBlockItem({
+function BlockItem({
   block,
   index,
   selected,
@@ -93,33 +87,18 @@ function SortableBlockItem({
     <div
       ref={ref}
       className={cn(
-        'flex h-8 cursor-grab items-center gap-2.5 rounded-md px-2.5 transition-all hover:bg-accent hover:text-accent-foreground',
-        selected && 'bg-accent text-accent-foreground',
+        'bg-backround flex h-9 cursor-grab items-center gap-2.5 rounded-lg border border-border px-2.5 transition-all hover:bg-accent',
+        selected && 'bg-muted',
       )}
       onClick={onSelect}
     >
       <IconComponent className="size-4 text-muted-foreground" />
-      <span className="flex-1 truncate text-sm font-medium">{item.name}</span>
+      <span className="flex-1 truncate text-xm font-medium">{item.name}</span>
     </div>
   )
 }
 
-interface LayersPanelProps {
-  // Pages
-  pages: Page[]
-  selectedPageId: string | null
-  onPageSelect: (pageId: string) => void
-  onPagesReorder: (pages: Page[]) => void
-  onPageAdd: () => void
-  onPageDelete: (pageId: string) => void
-  // Blocks
-  selectedBlockId: string | null
-  onBlockSelect: (blockId: string | null) => void
-  onBlocksReorder: (blocks: Block[]) => void
-  onBlockAdd: (block: Block) => void
-}
-
-export function LayersPanel({
+export function LeftPanel({
   pages,
   selectedPageId,
   onPageSelect,
@@ -130,30 +109,42 @@ export function LayersPanel({
   onBlockSelect,
   onBlocksReorder,
   onBlockAdd,
-}: LayersPanelProps) {
+}: {
+  pages: Page[]
+  selectedPageId: string | null
+  onPageSelect: (pageId: string) => void
+  onPagesReorder: (pages: Page[]) => void
+  onPageAdd: () => void
+  onPageDelete: (pageId: string) => void
+
+  selectedBlockId: string | null
+  onBlockSelect: (blockId: string | null) => void
+  onBlocksReorder: (blocks: Block[]) => void
+  onBlockAdd: (block: Block) => void
+}) {
   const selectedPage = pages.find((p) => p.id === selectedPageId)
   const blocks = selectedPage?.blocks ?? []
   return (
-    <div className="flex w-[250px] flex-col border-r border-border bg-background">
+    <Panel.Root className="w-[250px]">
       {selectedPageId ? (
         <Resizable.PanelGroup direction="vertical">
-          <Resizable.Panel defaultSize={40} minSize={10}>
-            <PaneRoot className="flex h-full flex-col">
-              <PaneHeader>
-                <PaneTitle>Pages</PaneTitle>
+          <Resizable.Panel defaultSize={40} minSize={20}>
+            <div className="flex flex-1 flex-col">
+              <Panel.Header>
+                <Panel.Title>Pages</Panel.Title>
                 <Button className="-mr-2" size="icon-sm" variant="ghost" onClick={onPageAdd}>
                   <PlusIcon />
                 </Button>
-              </PaneHeader>
-              <PaneContent className="flex-1 overflow-y-auto">
+              </Panel.Header>
+              <Panel.Content className="flex-1 overflow-y-auto">
                 <DragDropProvider
                   onDragEnd={(event) => {
                     onPagesReorder(move(pages, event))
                   }}
                 >
-                  <div className="flex flex-col gap-1">
+                  <div className="flex flex-col gap-1.5 py-3.5">
                     {pages.map((page, index) => (
-                      <SortablePageItem
+                      <PageItem
                         key={page.id}
                         page={page}
                         index={index}
@@ -164,22 +155,22 @@ export function LayersPanel({
                     ))}
                   </div>
                 </DragDropProvider>
-              </PaneContent>
-            </PaneRoot>
+              </Panel.Content>
+            </div>
           </Resizable.Panel>
           <Resizable.Handle />
-          <Resizable.Panel defaultSize={60} minSize={10}>
-            <PaneRoot className="flex h-full flex-col">
-              <PaneHeader>
-                <PaneTitle>Blocks</PaneTitle>
+          <Resizable.Panel defaultSize={60} minSize={20}>
+            <div className="flex flex-1 flex-col">
+              <Panel.Header>
+                <Panel.Title>Blocks</Panel.Title>
                 <AddBlockDialog.Root onBlockAdd={onBlockAdd}>
                   <AddBlockDialog.Trigger render={<Button className="-mr-2" size="icon-sm" variant="ghost" />}>
                     <PlusIcon />
                   </AddBlockDialog.Trigger>
                   <AddBlockDialog.Popup />
                 </AddBlockDialog.Root>
-              </PaneHeader>
-              <PaneContent className="flex-1 overflow-y-auto">
+              </Panel.Header>
+              <Panel.Content className="flex-1 overflow-y-auto">
                 {blocks.length === 0 ? (
                   <div className="flex flex-col items-center justify-center py-8 text-center">
                     <span className="text-sm text-muted-foreground">No blocks yet</span>
@@ -190,9 +181,9 @@ export function LayersPanel({
                       onBlocksReorder(move(blocks, event))
                     }}
                   >
-                    <div className="flex flex-col gap-0.5">
+                    <div className="flex flex-col gap-1.5 py-3.5">
                       {blocks.map((block, index) => (
-                        <SortableBlockItem
+                        <BlockItem
                           key={block.id}
                           block={block}
                           index={index}
@@ -203,25 +194,25 @@ export function LayersPanel({
                     </div>
                   </DragDropProvider>
                 )}
-              </PaneContent>
-            </PaneRoot>
+              </Panel.Content>
+            </div>
           </Resizable.Panel>
         </Resizable.PanelGroup>
       ) : (
-        <PaneRoot className="flex h-full flex-col">
-          <PaneHeader>
-            <PaneTitle>Pages</PaneTitle>
+        <div className="flex h-full flex-col">
+          <Panel.Header>
+            <Pane.Title>Pages</Pane.Title>
             <Button className="-mr-2" size="icon-sm" variant="ghost" onClick={onPageAdd}>
               <PlusIcon />
             </Button>
-          </PaneHeader>
-          <PaneContent className="flex-1 overflow-y-auto">
+          </Panel.Header>
+          <Panel.Content className="flex-1 overflow-y-auto">
             <div className="flex flex-col items-center justify-center py-8 text-center">
               <span className="text-sm text-muted-foreground">No pages yet</span>
             </div>
-          </PaneContent>
-        </PaneRoot>
+          </Panel.Content>
+        </div>
       )}
-    </div>
+    </Panel.Root>
   )
 }

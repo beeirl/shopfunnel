@@ -1,6 +1,6 @@
 import { COLORS, RADII, STYLES, type FormTheme } from '@shopfunnel/core/form/theme'
 import { ColorPicker } from './color-picker'
-import { PaneContent, PaneHeader, PaneRoot, PaneTitle } from './pane'
+import { Pane } from './pane'
 import { RadiusPicker } from './radius-picker'
 import { StylePicker } from './style-picker'
 
@@ -12,11 +12,11 @@ interface ThemePanelProps {
 export function ThemePanel({ theme, onThemeUpdate }: ThemePanelProps) {
   return (
     <div className="flex w-[250px] flex-col border-r border-border bg-background">
-      <PaneRoot className="flex h-full flex-col">
-        <PaneHeader>
-          <PaneTitle>Theme</PaneTitle>
-        </PaneHeader>
-        <PaneContent className="flex flex-1 flex-col px-2">
+      <Pane.Root className="flex h-full flex-col">
+        <Pane.Header>
+          <Pane.Title>Theme</Pane.Title>
+        </Pane.Header>
+        <Pane.Content className="flex flex-1 flex-col px-2">
           <StylePicker
             selectedStyleName={theme.style.name}
             onStyleChange={(styleName) => {
@@ -38,8 +38,8 @@ export function ThemePanel({ theme, onThemeUpdate }: ThemePanelProps) {
               if (radius) onThemeUpdate({ radius })
             }}
           />
-        </PaneContent>
-      </PaneRoot>
+        </Pane.Content>
+      </Pane.Root>
     </div>
   )
 }

@@ -21,9 +21,7 @@ export const Route = createRootRouteWithContext<{
         title: 'Shopfunnel',
       },
     ],
-    links: [
-      { rel: 'stylesheet', href: styles },
-    ],
+    links: [{ rel: 'stylesheet', href: styles }],
   }),
   component: RootComponent,
 })
@@ -42,7 +40,7 @@ function RootDocument({ children }: Readonly<{ children: ReactNode }>) {
       <head>
         <HeadContent />
       </head>
-      <body className="font-medium antialiased" data-accent-color="azure" data-gray-color="zinc">
+      <body className="bg-background antialiased" data-accent-color="azure" data-gray-color="zinc">
         {children}
         <Scripts />
       </body>

@@ -1,6 +1,6 @@
 import { Block as BlockComponent } from '@/form/block'
 import { Button } from '@/form/components/button'
-import { Form as BaseForm } from '@base-ui-components/react'
+import { Form as BaseForm } from '@base-ui/react'
 import { Form as FormModule } from '@shopfunnel/core/form/index'
 import type { Block, ComparisonCondition, Condition, InputBlock, Page, Variables } from '@shopfunnel/core/form/schema'
 import { AnimatePresence, motion } from 'motion/react'

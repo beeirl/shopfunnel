@@ -1,4 +1,4 @@
-import { cn } from '@/utils/cn'
+import { cn } from '@/lib/utils'
 import { Menu as MenuPrimitive } from '@base-ui/react/menu'
 import { IconCheck as CheckIcon, IconChevronRight as ChevronRightIcon } from '@tabler/icons-react'
 import * as React from 'react'

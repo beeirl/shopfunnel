@@ -1,8 +1,7 @@
 import { Button } from '@/components/ui/button'
 import { withActor } from '@/context/auth.withActor'
-import { InspectorPanel } from '@/routes/workspace/$workspaceId/forms/$id/edit/-components/inspector-panel'
-import { LayersPanel } from '@/routes/workspace/$workspaceId/forms/$id/edit/-components/layers-panel'
-import { Navbar, type NavbarTab } from '@/routes/workspace/$workspaceId/forms/$id/edit/-components/navbar'
+import { LeftPanel } from '@/routes/workspace/$workspaceId/forms/$id/edit/-components/left-panel'
+import { type NavbarTab } from '@/routes/workspace/$workspaceId/forms/$id/edit/-components/navbar'
 import { Preview } from '@/routes/workspace/$workspaceId/forms/$id/edit/-components/preview'
 import { ThemePanel } from '@/routes/workspace/$workspaceId/forms/$id/edit/-components/theme-panel'
 import { Form } from '@shopfunnel/core/form/index'
@@ -16,6 +15,7 @@ import { createServerFn } from '@tanstack/react-start'
 import * as React from 'react'
 import { ulid } from 'ulid'
 import { z } from 'zod'
+import { RightPanel } from './-components/right-panel'
 
 const getForm = createServerFn()
   .inputValidator(
@@ -207,21 +207,20 @@ function RouteComponent() {
   return (
     <div className="flex h-screen w-screen">
       <div className="relative flex h-full min-h-32 w-full flex-col">
-        <div className="relative z-10 flex h-full w-full flex-1 flex-col bg-muted">
-          <div className="flex h-12 w-full shrink-0 items-center gap-2 border-b bg-background px-4">
+        <div className="relative z-10 flex h-full w-full flex-1 flex-col">
+          <div className="flex h-12 w-full shrink-0 items-center gap-2 border-b px-4">
             <div className="flex w-56 items-center gap-2">
               <span className="truncate text-sm font-medium">{form.title}</span>
             </div>
-            <div className="-mr-2 ml-auto flex items-center justify-end gap-2">
+            <div className="ml-auto flex items-center justify-end gap-1">
+              <Button variant="ghost">Design</Button>
               <Button
                 variant="ghost"
-                size="sm"
                 render={<Link to="/workspace/$workspaceId/forms/$id/preview" params={params} target="_blank" />}
               >
                 Preview
               </Button>
               <Button
-                size="sm"
                 disabled={form.published || publishFormMutation.isPending}
                 variant={form.published ? 'ghost' : 'default'}
                 onClick={() => {
@@ -237,9 +236,8 @@ function RouteComponent() {
             </div>
           </div>
           <div className="flex flex-1 overflow-hidden">
-            <Navbar activeTab={activeTab} onTabChange={setActiveTab} />
             {activeTab === 'explorer' ? (
-              <LayersPanel
+              <LeftPanel
                 pages={form.schema.pages}
                 selectedPageId={selectedPageId}
                 onPageSelect={handlePageSelect}
@@ -260,7 +258,7 @@ function RouteComponent() {
               selectedBlockId={selectedBlockId}
               onBlockSelect={handleBlockSelect}
             />
-            <InspectorPanel block={selectedBlock} onBlockUpdate={handleBlockUpdate} />
+            <RightPanel block={selectedBlock} onBlockUpdate={handleBlockUpdate} />
           </div>
         </div>
       </div>

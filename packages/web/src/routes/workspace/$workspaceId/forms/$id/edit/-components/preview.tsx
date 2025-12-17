@@ -1,6 +1,6 @@
 import { Block } from '@/form/block'
 import { Theme as ThemeComponent } from '@/form/theme'
-import { cn } from '@/utils/cn'
+import { cn } from '@/lib/utils'
 import type { Page } from '@shopfunnel/core/form/schema'
 import type { FormTheme } from '@shopfunnel/core/form/theme'
 

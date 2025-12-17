@@ -1,5 +1,5 @@
 import { Button } from '@/components/ui/button'
-import { cn } from '@/utils/cn'
+import { cn } from '@/lib/utils'
 import { IconTableDashed as TableDashedIcon, IconPalette as ThemeIcon } from '@tabler/icons-react'
 
 export type NavbarTab = 'explorer' | 'theme'

@@ -1,5 +1,5 @@
-import { Field as BaseField } from '@base-ui-components/react/field'
-import { cn } from '@beeirl/ui/styles'
+import { cn } from '@/lib/utils'
+import { Field as BaseField } from '@base-ui/react/field'
 
 interface FieldProps {
   children: React.ReactNode
