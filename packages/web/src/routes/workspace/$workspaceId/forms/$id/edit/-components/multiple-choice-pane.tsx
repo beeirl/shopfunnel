@@ -1,14 +1,16 @@
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { InputGroup } from '@/components/ui/input-group'
 import { SegmentedControl } from '@/components/ui/segmented-control'
 import { move } from '@dnd-kit/helpers'
 import { DragDropProvider, PointerSensor } from '@dnd-kit/react'
 import { useSortable } from '@dnd-kit/react/sortable'
 import type { MultipleChoiceBlock } from '@shopfunnel/core/form/schema'
-import { IconPlus as PlusIcon, IconTrash as TrashIcon } from '@tabler/icons-react'
+import { IconPhoto as PhotoIcon, IconPlus as PlusIcon, IconTrash as TrashIcon } from '@tabler/icons-react'
 import * as React from 'react'
 import { ulid } from 'ulid'
 import { Field } from './field'
+import { MediaPicker } from './media-picker'
 import { Pane } from './pane'
 
 type Choice = MultipleChoiceBlock['properties']['choices'][number]
@@ -16,29 +18,47 @@ type Choice = MultipleChoiceBlock['properties']['choices'][number]
 function ChoiceItem({
   choice,
   index,
+  inputRef,
   onUpdate,
   onDelete,
-  autoFocus,
 }: {
   choice: Choice
   index: number
+  inputRef: (el: HTMLInputElement | null) => void
   onUpdate: (updates: Partial<Choice>) => void
   onDelete: () => void
-  autoFocus?: boolean
 }) {
   const { ref } = useSortable({ id: choice.id, index })
+  const inputGroupRef = React.useRef<HTMLDivElement>(null)
 
   return (
     <div ref={ref} className="flex items-center gap-1">
-      <Input
-        className="flex-1"
-        autoFocus={autoFocus}
-        size="sm"
-        placeholder="Choice label..."
-        value={choice.label}
-        onValueChange={(value) => onUpdate({ label: value })}
-        onMouseDown={(e) => e.stopPropagation()}
-      />
+      <InputGroup.Root className="flex-1" ref={inputGroupRef}>
+        <InputGroup.Addon>
+          <MediaPicker.Root>
+            <MediaPicker.Trigger
+              render={
+                <InputGroup.Button size="icon-xs">
+                  {choice.media ? choice.media.value : <PhotoIcon />}
+                </InputGroup.Button>
+              }
+            />
+            <MediaPicker.Content
+              anchor={inputGroupRef}
+              side="left"
+              align="start"
+              onEmojiSelect={(emoji) => onUpdate({ media: { type: 'emoji', value: emoji } })}
+            />
+          </MediaPicker.Root>
+        </InputGroup.Addon>
+        <InputGroup.Input
+          ref={inputRef}
+          placeholder="Choice label..."
+          value={choice.label}
+          onValueChange={(value) => onUpdate({ label: value })}
+          onMouseDown={(e) => e.stopPropagation()}
+        />
+      </InputGroup.Root>
       <Button size="icon" variant="ghost" onClick={onDelete} onPointerDown={(e) => e.stopPropagation()}>
         <TrashIcon />
       </Button>
@@ -55,7 +75,7 @@ export function MultipleChoicePane({
 }) {
   const choices = block.properties.choices
 
-  const [focusChoiceId, setFocusChoiceId] = React.useState<string | null>(null)
+  const choiceInputRefs = React.useRef<Map<string, HTMLInputElement>>(new Map())
 
   const handleChoiceUpdate = (choiceId: string, updates: Partial<Choice>) => {
     onUpdate({
@@ -77,16 +97,22 @@ export function MultipleChoicePane({
 
   const handleChoiceAdd = () => {
     const id = ulid()
-    const newChoice: Choice = {
-      id,
-      label: `Choice ${choices.length + 1}`,
-    }
-    setFocusChoiceId(id)
     onUpdate({
       properties: {
         ...block.properties,
-        choices: [...choices, newChoice],
+        choices: [
+          ...choices,
+          {
+            id,
+            label: `Choice ${choices.length + 1}`,
+          },
+        ],
       },
+    })
+    requestAnimationFrame(() => {
+      const input = choiceInputRefs.current.get(id)
+      input?.focus()
+      input?.select()
     })
   }
 
@@ -106,7 +132,6 @@ export function MultipleChoicePane({
           <Pane.Title>Question</Pane.Title>
         </Pane.Header>
         <Input
-          size="sm"
           placeholder="Your question here..."
           value={block.properties.label}
           onValueChange={(value) => onUpdate({ properties: { ...block.properties, label: value } })}
@@ -117,7 +142,6 @@ export function MultipleChoicePane({
           <Pane.Title>Description</Pane.Title>
         </Pane.Header>
         <Input
-          size="sm"
           placeholder="Enter description..."
           value={block.properties.description ?? ''}
           onValueChange={(value) =>
@@ -153,9 +177,12 @@ export function MultipleChoicePane({
                 key={choice.id}
                 choice={choice}
                 index={index}
+                inputRef={(el) => {
+                  if (el) choiceInputRefs.current.set(choice.id, el)
+                  else choiceInputRefs.current.delete(choice.id)
+                }}
                 onUpdate={(updates) => handleChoiceUpdate(choice.id, updates)}
                 onDelete={() => handleChoiceDelete(choice.id)}
-                autoFocus={choice.id === focusChoiceId}
               />
             ))}
           </div>

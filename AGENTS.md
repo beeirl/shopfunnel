@@ -10,6 +10,12 @@
 
 ## Web Package
 
+### React Version
+
+- Using **React 19** - do not use deprecated patterns:
+  - No `forwardRef` - use `ref` as a regular prop instead
+  - No `useContext` - use `use(Context)` instead
+
 ### Imports
 
 - Always import React using namespace import:
@@ -54,6 +60,18 @@
   ```tsx
   import { Button } from '@/components/ui/button'
   import { Dialog } from '@/components/ui/dialog'
+  ```
+- Components are built on **Base UI** (not Radix). Use **render props** instead of `asChild`:
+
+  ```tsx
+  // Correct - Base UI render props
+  <Dialog.Trigger render={<Button />}>Open Dialog</Dialog.Trigger>
+  <Tooltip.Trigger render={<IconButton />} />
+
+  // Incorrect - Radix asChild pattern
+  <Dialog.Trigger asChild>
+    <Button>Open Dialog</Button>
+  </Dialog.Trigger>
   ```
 
 ### Styling

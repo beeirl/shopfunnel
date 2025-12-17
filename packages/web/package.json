@@ -28,6 +28,7 @@
     "clsx": "2.1.1",
     "cva": "1.0.0-beta.4",
     "drizzle-orm": "catalog:",
+    "frimousse": "0.3.0",
     "motion": "12.23.25",
     "react": "catalog:",
     "react-aria-components": "1.13.0",

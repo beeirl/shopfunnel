@@ -1,7 +1,10 @@
 import { cn } from '@/lib/utils'
 import { Input as InputPrimitive } from '@base-ui/react/input'
+import * as React from 'react'
 
-function Input({ className, ...props }: InputPrimitive.Props) {
+type InputProps = InputPrimitive.Props & React.RefAttributes<HTMLInputElement>
+
+function Input({ className, ...props }: InputProps) {
   return (
     <InputPrimitive
       data-slot="input"
@@ -14,4 +17,4 @@ function Input({ className, ...props }: InputPrimitive.Props) {
   )
 }
 
-export { Input }
+export { Input, type InputProps }
