@@ -15,7 +15,10 @@ function PanelRoot({ className, ...props }: React.ComponentProps<'div'>) {
 
 function PanelHeader({ children, className, ...props }: React.ComponentProps<'div'>) {
   return (
-    <div className={cn('flex h-11 items-center justify-between border-b border-border px-3.5', className)} {...props}>
+    <div
+      className={cn('flex h-11 shrink-0 items-center justify-between border-b border-border px-3.5', className)}
+      {...props}
+    >
       {children}
     </div>
   )
@@ -31,7 +34,7 @@ function PanelTitle({ children, className, ...props }: React.ComponentProps<'spa
 
 function PanelContent({ children, className, ...props }: React.ComponentProps<'div'>) {
   return (
-    <div className={cn('flex flex-col gap-2 px-3.5', className)} {...props}>
+    <div className={cn('flex flex-1 flex-col gap-2 overflow-y-auto px-3.5', className)} {...props}>
       {children}
     </div>
   )

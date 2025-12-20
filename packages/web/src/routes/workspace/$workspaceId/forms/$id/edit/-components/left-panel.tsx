@@ -129,7 +129,7 @@ export function LeftPanel({
       {selectedPageId ? (
         <Resizable.PanelGroup direction="vertical">
           <Resizable.Panel defaultSize={40} minSize={20}>
-            <div className="flex flex-1 flex-col">
+            <div className="flex h-full min-h-0 flex-col">
               <Panel.Header>
                 <Panel.Title>Pages</Panel.Title>
                 <Button className="-mr-2" size="icon-sm" variant="ghost" onClick={onPageAdd}>
@@ -160,7 +160,7 @@ export function LeftPanel({
           </Resizable.Panel>
           <Resizable.Handle />
           <Resizable.Panel defaultSize={60} minSize={20}>
-            <div className="flex flex-1 flex-col">
+            <div className="flex h-full min-h-0 flex-col">
               <Panel.Header>
                 <Panel.Title>Blocks</Panel.Title>
                 <AddBlockDialog.Root onBlockAdd={onBlockAdd}>
