@@ -3,6 +3,7 @@ import { withActor } from '@/context/auth.withActor'
 import { Actor } from '@shopfunnel/core/actor'
 import { Identifier } from '@shopfunnel/core/identifier'
 import { User } from '@shopfunnel/core/user/index'
+import { IconUser as UserIcon } from '@tabler/icons-react'
 import { queryOptions, useSuspenseQuery } from '@tanstack/react-query'
 import { createFileRoute, Link, Outlet } from '@tanstack/react-router'
 import { createServerFn } from '@tanstack/react-start'
@@ -47,7 +48,9 @@ function DashboardLayoutRoute() {
         </div>
         <div className="flex">
           <Avatar.Root>
-            <Avatar.Fallback>{user.name[0]}</Avatar.Fallback>
+            <Avatar.GroupCount>
+              <UserIcon />
+            </Avatar.GroupCount>
           </Avatar.Root>
         </div>
       </nav>

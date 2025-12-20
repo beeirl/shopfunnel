@@ -1,5 +1,6 @@
 /// <reference types="vite/client" />
 
+import esbuildPolyfill from '@/esbuild-polyfill?raw'
 import styles from '@/styles.css?url'
 import { QueryClient } from '@tanstack/react-query'
 import { createRootRouteWithContext, HeadContent, Outlet, Scripts } from '@tanstack/react-router'
@@ -38,6 +39,7 @@ function RootDocument({ children }: Readonly<{ children: ReactNode }>) {
   return (
     <html>
       <head>
+        <script dangerouslySetInnerHTML={{ __html: esbuildPolyfill }} />
         <HeadContent />
       </head>
       <body className="bg-background antialiased" data-accent-color="azure" data-gray-color="zinc">

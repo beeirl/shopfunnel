@@ -5,41 +5,13 @@ import { useRender } from '@base-ui/react/use-render'
 import { type VariantProps } from 'cva'
 import * as React from 'react'
 
-const itemGroupVariants = cva({
-  base: 'group/item-group flex w-full flex-col bg-background',
-  variants: {
-    variant: {
-      default: 'gap-4 has-data-[size=sm]:gap-2.5 has-data-[size=xs]:gap-2',
-      outline: 'divide-y divide-border rounded-lg border border-border p-0.5',
-    },
-  },
-})
-
-function ItemGroup({
-  className,
-  variant = 'outline',
-  ...props
-}: React.ComponentProps<'div'> & {
-  variant?: 'default' | 'outline'
-}) {
+function ItemGroup({ className, ...props }: React.ComponentProps<'div'>) {
   return (
     <div
       role="list"
       data-slot="item-group"
-      data-variant={variant}
-      className={cn(itemGroupVariants({ variant, className }))}
-      {...props}
-    />
-  )
-}
-
-function ItemSeparator({ className, ...props }: React.ComponentProps<typeof Separator>) {
-  return (
-    <Separator
-      data-slot="item-separator"
-      orientation="horizontal"
       className={cn(
-        'my-2 group-data-[variant=outline]/item-group:mx-1.5 group-data-[variant=outline]/item-group:my-0.5',
+        'group/item-group flex w-full flex-col gap-4 has-data-[size=sm]:gap-2.5 has-data-[size=xs]:gap-2',
         className,
       )}
       {...props}
@@ -47,8 +19,12 @@ function ItemSeparator({ className, ...props }: React.ComponentProps<typeof Sepa
   )
 }
 
+function ItemSeparator({ className, ...props }: React.ComponentProps<typeof Separator>) {
+  return <Separator data-slot="item-separator" orientation="horizontal" className={cn('my-2', className)} {...props} />
+}
+
 const itemVariants = cva({
-  base: 'group/item flex min-h-9 w-full flex-wrap items-center rounded-lg border text-start text-xm transition-colors duration-100 outline-none group-data-[variant=outline]/item-group:rounded-md focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 [a]:hover:bg-muted [button]:hover:bg-muted [label]:hover:bg-muted',
+  base: 'group/item flex w-full flex-wrap items-center rounded-lg border text-sm transition-colors duration-100 outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 [a]:transition-colors [a]:hover:bg-muted',
   variants: {
     variant: {
       default: 'border-transparent',
@@ -56,9 +32,9 @@ const itemVariants = cva({
       muted: 'border-transparent bg-muted/50',
     },
     size: {
-      default: 'gap-2.5 p-2',
-      sm: 'gap-2.5 p-2',
-      xs: 'gap-2 px-1.5 [[data-slot=dropdown-menu-content]_&]:p-0',
+      default: 'gap-2.5 px-3 py-2.5',
+      sm: 'gap-2.5 px-3 py-2.5',
+      xs: 'gap-2 px-2.5 py-2 [[data-slot=dropdown-menu-content]_&]:p-0',
     },
   },
   defaultVariants: {
@@ -185,14 +161,14 @@ function ItemFooter({ className, ...props }: React.ComponentProps<'div'>) {
 }
 
 export const Item = {
-  Group: ItemGroup,
-  Separator: ItemSeparator,
   Root: ItemRoot,
   Actions: ItemActions,
   Content: ItemContent,
   Description: ItemDescription,
   Footer: ItemFooter,
+  Group: ItemGroup,
   Header: ItemHeader,
   Media: ItemMedia,
+  Separator: ItemSeparator,
   Title: ItemTitle,
 }

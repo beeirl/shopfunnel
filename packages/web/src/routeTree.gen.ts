@@ -9,7 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as TestRouteImport } from './routes/test'
+import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthIndexRouteImport } from './routes/auth/index'
 import { Route as AuthCallbackRouteImport } from './routes/auth/callback'
 import { Route as AuthAuthorizeRouteImport } from './routes/auth/authorize'
@@ -20,9 +20,9 @@ import { Route as WorkspaceWorkspaceIdDashboardIndexRouteImport } from './routes
 import { Route as WorkspaceWorkspaceIdFormsIdPreviewIndexRouteImport } from './routes/workspace/$workspaceId/forms/$id/preview/index'
 import { Route as WorkspaceWorkspaceIdFormsIdEditIndexRouteImport } from './routes/workspace/$workspaceId/forms/$id/edit/index'
 
-const TestRoute = TestRouteImport.update({
-  id: '/test',
-  path: '/test',
+const IndexRoute = IndexRouteImport.update({
+  id: '/',
+  path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthIndexRoute = AuthIndexRouteImport.update({
@@ -76,7 +76,7 @@ const WorkspaceWorkspaceIdFormsIdEditIndexRoute =
   } as any)
 
 export interface FileRoutesByFullPath {
-  '/test': typeof TestRoute
+  '/': typeof IndexRoute
   '/workspace/$workspaceId': typeof WorkspaceWorkspaceIdDashboardRouteRouteWithChildren
   '/auth/authorize': typeof AuthAuthorizeRoute
   '/auth/callback': typeof AuthCallbackRoute
@@ -87,7 +87,7 @@ export interface FileRoutesByFullPath {
   '/workspace/$workspaceId/forms/$id/preview': typeof WorkspaceWorkspaceIdFormsIdPreviewIndexRoute
 }
 export interface FileRoutesByTo {
-  '/test': typeof TestRoute
+  '/': typeof IndexRoute
   '/workspace/$workspaceId': typeof WorkspaceWorkspaceIdDashboardIndexRoute
   '/auth/authorize': typeof AuthAuthorizeRoute
   '/auth/callback': typeof AuthCallbackRoute
@@ -98,7 +98,7 @@ export interface FileRoutesByTo {
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
-  '/test': typeof TestRoute
+  '/': typeof IndexRoute
   '/workspace/$workspaceId': typeof WorkspaceWorkspaceIdRouteRouteWithChildren
   '/auth/authorize': typeof AuthAuthorizeRoute
   '/auth/callback': typeof AuthCallbackRoute
@@ -112,7 +112,7 @@ export interface FileRoutesById {
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
-    | '/test'
+    | '/'
     | '/workspace/$workspaceId'
     | '/auth/authorize'
     | '/auth/callback'
@@ -123,7 +123,7 @@ export interface FileRouteTypes {
     | '/workspace/$workspaceId/forms/$id/preview'
   fileRoutesByTo: FileRoutesByTo
   to:
-    | '/test'
+    | '/'
     | '/workspace/$workspaceId'
     | '/auth/authorize'
     | '/auth/callback'
@@ -133,7 +133,7 @@ export interface FileRouteTypes {
     | '/workspace/$workspaceId/forms/$id/preview'
   id:
     | '__root__'
-    | '/test'
+    | '/'
     | '/workspace/$workspaceId'
     | '/auth/authorize'
     | '/auth/callback'
@@ -146,7 +146,7 @@ export interface FileRouteTypes {
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
-  TestRoute: typeof TestRoute
+  IndexRoute: typeof IndexRoute
   WorkspaceWorkspaceIdRouteRoute: typeof WorkspaceWorkspaceIdRouteRouteWithChildren
   AuthAuthorizeRoute: typeof AuthAuthorizeRoute
   AuthCallbackRoute: typeof AuthCallbackRoute
@@ -156,11 +156,11 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/test': {
-      id: '/test'
-      path: '/test'
-      fullPath: '/test'
-      preLoaderRoute: typeof TestRouteImport
+    '/': {
+      id: '/'
+      path: '/'
+      fullPath: '/'
+      preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/auth/': {
@@ -266,7 +266,7 @@ const WorkspaceWorkspaceIdRouteRouteWithChildren =
   )
 
 const rootRouteChildren: RootRouteChildren = {
-  TestRoute: TestRoute,
+  IndexRoute: IndexRoute,
   WorkspaceWorkspaceIdRouteRoute: WorkspaceWorkspaceIdRouteRouteWithChildren,
   AuthAuthorizeRoute: AuthAuthorizeRoute,
   AuthCallbackRoute: AuthCallbackRoute,

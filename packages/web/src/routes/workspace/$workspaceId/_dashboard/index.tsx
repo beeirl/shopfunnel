@@ -54,8 +54,8 @@ function RouteComponent() {
 
   async function handleFormCreate() {
     const id = await createFormMutation.mutateAsync()
+    await navigate({ to: 'forms/$id/edit', params: { id } })
     queryClient.invalidateQueries(listFormsQueryOptions(params.workspaceId))
-    navigate({ to: 'forms/$id/edit', params: { id } })
   }
 
   if (forms.length === 0) {
