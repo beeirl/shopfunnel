@@ -29,3 +29,14 @@ export const FormVersionTable = mysqlTable(
   },
   (table) => [primaryKey({ columns: [table.workspaceId, table.formId, table.version] })],
 )
+
+export const FormFileTable = mysqlTable(
+  'form_file',
+  {
+    ...timestampColumns,
+    workspaceId: id('workspace_id').notNull(),
+    formId: id('form_id').notNull(),
+    fileId: id('file_id').notNull(),
+  },
+  (table) => [primaryKey({ columns: [table.workspaceId, table.formId, table.fileId] })],
+)

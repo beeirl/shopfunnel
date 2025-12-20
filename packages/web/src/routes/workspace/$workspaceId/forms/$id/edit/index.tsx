@@ -83,6 +83,37 @@ const publishFormMutationOptions = (workspaceId: string, formId: string) =>
     mutationFn: () => publishForm({ data: { workspaceId, formId } }),
   })
 
+const uploadFormFile = createServerFn({ method: 'POST' })
+  .inputValidator((input: unknown) => {
+    if (!(input instanceof FormData)) {
+      throw new Error('Expected FormData')
+    }
+    const file = input.get('file') as File
+    const workspaceId = input.get('workspaceId') as string
+    const formId = input.get('formId') as string
+
+    if (!file || !workspaceId || !formId) {
+      throw new Error('Missing required fields')
+    }
+
+    return { file, workspaceId, formId }
+  })
+  .handler(async ({ data }) => {
+    const arrayBuffer = await data.file.arrayBuffer()
+    const buffer = Buffer.from(arrayBuffer)
+
+    return withActor(async () => {
+      const result = await Form.createFile({
+        formId: data.formId,
+        contentType: data.file.type,
+        data: buffer,
+        name: data.file.name,
+        size: data.file.size,
+      })
+      return result.url
+    }, data.workspaceId)
+  })
+
 export const Route = createFileRoute('/workspace/$workspaceId/forms/$id/edit/')({
   component: RouteComponent,
   ssr: false,
@@ -206,6 +237,15 @@ function RouteComponent() {
     })
   }
 
+  const handleUploadImage = async (file: globalThis.File): Promise<string> => {
+    const formData = new FormData()
+    formData.append('file', file)
+    formData.append('workspaceId', params.workspaceId)
+    formData.append('formId', params.id)
+
+    return uploadFormFile({ data: formData })
+  }
+
   return (
     <div className="flex h-screen w-screen">
       <div className="relative flex h-full min-h-32 w-full flex-col">
@@ -275,7 +315,7 @@ function RouteComponent() {
               selectedBlockId={selectedBlockId}
               onBlockSelect={handleBlockSelect}
             />
-            <RightPanel block={selectedBlock} onBlockUpdate={handleBlockUpdate} />
+            <RightPanel block={selectedBlock} onBlockUpdate={handleBlockUpdate} onUploadImage={handleUploadImage} />
           </Tabs.Content>
           <Tabs.Content value="logic" className="flex flex-1 items-center justify-center text-muted-foreground">
             Funnel logic

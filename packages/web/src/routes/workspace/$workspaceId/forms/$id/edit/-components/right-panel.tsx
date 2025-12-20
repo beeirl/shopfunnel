@@ -7,9 +7,11 @@ import { ShortTextPane } from './short-text-pane'
 export function RightPanel({
   block,
   onBlockUpdate,
+  onUploadImage,
 }: {
   block: Block | null
   onBlockUpdate: (blockId: string, updates: Partial<Block>) => void
+  onUploadImage: (file: File) => Promise<string>
 }) {
   if (!block) return null
 
@@ -28,6 +30,7 @@ export function RightPanel({
           <MultipleChoicePane
             block={block}
             onUpdate={handleUpdate as (updates: Partial<MultipleChoiceBlock>) => void}
+            onUploadImage={onUploadImage}
           />
         )
       default:

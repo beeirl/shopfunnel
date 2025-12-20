@@ -1,7 +1,12 @@
 import { Popover } from '@/components/ui/popover'
 import { Tabs } from '@/components/ui/tabs'
 import { cn } from '@/lib/utils'
-import { IconMoodSmile as MoodSmileIcon, IconPhoto as PhotoIcon, IconUpload as UploadIcon } from '@tabler/icons-react'
+import {
+  IconLoader2 as LoaderIcon,
+  IconMoodSmile as MoodSmileIcon,
+  IconPhoto as PhotoIcon,
+  IconUpload as UploadIcon,
+} from '@tabler/icons-react'
 import { EmojiPicker } from 'frimousse'
 import * as React from 'react'
 
@@ -10,12 +15,14 @@ const ACCEPTED_FORMATS = ['image/jpeg', 'image/png', 'image/gif', 'image/webp']
 const ACCEPTED_EXTENSIONS = '.jpg,.jpeg,.png,.gif,.webp'
 
 interface ImageDropzoneProps {
-  onImageSelect?: (file: File) => void
+  onImageUpload?: (file: File) => Promise<void>
 }
 
-function ImageDropzone({ onImageSelect }: ImageDropzoneProps) {
+function ImageDropzone({ onImageUpload }: ImageDropzoneProps) {
   const [isDragging, setIsDragging] = React.useState(false)
   const [error, setError] = React.useState<string | null>(null)
+  const [previewUrl, setPreviewUrl] = React.useState<string | null>(null)
+  const [isUploading, setIsUploading] = React.useState(false)
   const inputRef = React.useRef<HTMLInputElement>(null)
 
   const validateFile = (file: File): string | null => {
@@ -28,14 +35,28 @@ function ImageDropzone({ onImageSelect }: ImageDropzoneProps) {
     return null
   }
 
-  const handleFile = (file: File) => {
+  const handleFile = async (file: File) => {
     const validationError = validateFile(file)
     if (validationError) {
       setError(validationError)
       return
     }
     setError(null)
-    onImageSelect?.(file)
+
+    // Create preview URL
+    const url = URL.createObjectURL(file)
+    setPreviewUrl(url)
+    setIsUploading(true)
+
+    try {
+      await onImageUpload?.(file)
+    } catch {
+      setError('Upload failed. Please try again.')
+      setPreviewUrl(null)
+    } finally {
+      setIsUploading(false)
+      URL.revokeObjectURL(url)
+    }
   }
 
   const handleDragOver = (e: React.DragEvent) => {
@@ -72,6 +93,23 @@ function ImageDropzone({ onImageSelect }: ImageDropzoneProps) {
     }
   }
 
+  // Show preview with spinner during upload
+  if (previewUrl) {
+    return (
+      <div className="flex flex-col gap-2 p-2">
+        <div className="relative flex h-[200px] items-center justify-center rounded-lg bg-muted">
+          <img src={previewUrl} alt="Preview" className="max-h-full max-w-full rounded-lg object-contain" />
+          {isUploading && (
+            <div className="absolute inset-0 flex items-center justify-center rounded-lg bg-background/50">
+              <LoaderIcon className="size-8 animate-spin text-primary" />
+            </div>
+          )}
+        </div>
+        {error && <p className="text-xs text-destructive">{error}</p>}
+      </div>
+    )
+  }
+
   return (
     <div className="flex flex-col gap-2 p-2">
       <div
@@ -105,24 +143,24 @@ function ImageDropzone({ onImageSelect }: ImageDropzoneProps) {
 
 interface MediaPickerContentProps extends React.ComponentProps<typeof Popover.Content> {
   onEmojiSelect?: (emoji: string) => void
-  onImageSelect?: (file: File) => void
+  onImageUpload?: (file: File) => Promise<void>
   onOpenChange?: (open: boolean) => void
 }
 
-function MediaPickerContent({ onEmojiSelect, onImageSelect, onOpenChange, ...props }: MediaPickerContentProps) {
+function MediaPickerContent({ onEmojiSelect, onImageUpload, onOpenChange, ...props }: MediaPickerContentProps) {
   const handleEmojiSelect = (emoji: string) => {
     onEmojiSelect?.(emoji)
     onOpenChange?.(false)
   }
 
-  const handleImageSelect = (file: File) => {
-    onImageSelect?.(file)
+  const handleImageUpload = async (file: File) => {
+    await onImageUpload?.(file)
     onOpenChange?.(false)
   }
 
   return (
     <Popover.Content className="w-[320px] px-2 pt-2 pb-0" {...props}>
-      <Tabs.Root defaultValue="emoji">
+      <Tabs.Root className="gap-2" defaultValue="emoji">
         <Tabs.List className="w-full">
           <Tabs.Trigger value="emoji">
             <MoodSmileIcon />
@@ -179,7 +217,7 @@ function MediaPickerContent({ onEmojiSelect, onImageSelect, onOpenChange, ...pro
           </EmojiPicker.Root>
         </Tabs.Content>
         <Tabs.Content value="image" className="outline-none">
-          <ImageDropzone onImageSelect={handleImageSelect} />
+          <ImageDropzone onImageUpload={handleImageUpload} />
         </Tabs.Content>
       </Tabs.Root>
     </Popover.Content>

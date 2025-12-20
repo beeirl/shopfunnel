@@ -21,12 +21,14 @@ function ChoiceItem({
   inputRef,
   onUpdate,
   onDelete,
+  onImageUpload,
 }: {
   choice: Choice
   index: number
   inputRef: (el: HTMLInputElement | null) => void
   onUpdate: (updates: Partial<Choice>) => void
   onDelete: () => void
+  onImageUpload: (file: File) => Promise<string>
 }) {
   const { ref } = useSortable({ id: choice.id, index })
   const inputGroupRef = React.useRef<HTMLDivElement>(null)
@@ -39,7 +41,15 @@ function ChoiceItem({
             <MediaPicker.Trigger
               render={
                 <InputGroup.Button size="icon-xs">
-                  {choice.media ? choice.media.value : <PhotoIcon />}
+                  {choice.media ? (
+                    choice.media.type === 'emoji' ? (
+                      choice.media.value
+                    ) : (
+                      <img src={choice.media.value} alt="" className="size-full rounded object-cover" />
+                    )
+                  ) : (
+                    <PhotoIcon />
+                  )}
                 </InputGroup.Button>
               }
             />
@@ -48,6 +58,10 @@ function ChoiceItem({
               side="left"
               align="start"
               onEmojiSelect={(emoji) => onUpdate({ media: { type: 'emoji', value: emoji } })}
+              onImageUpload={async (file) => {
+                const url = await onImageUpload(file)
+                onUpdate({ media: { type: 'image', value: url } })
+              }}
             />
           </MediaPicker.Root>
         </InputGroup.Addon>
@@ -69,9 +83,11 @@ function ChoiceItem({
 export function MultipleChoicePane({
   block,
   onUpdate,
+  onUploadImage,
 }: {
   block: MultipleChoiceBlock
   onUpdate: (updates: Partial<MultipleChoiceBlock>) => void
+  onUploadImage: (file: File) => Promise<string>
 }) {
   const choices = block.properties.choices
 
@@ -183,6 +199,7 @@ export function MultipleChoicePane({
                 }}
                 onUpdate={(updates) => handleChoiceUpdate(choice.id, updates)}
                 onDelete={() => handleChoiceDelete(choice.id)}
+                onImageUpload={onUploadImage}
               />
             ))}
           </div>

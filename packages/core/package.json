@@ -17,8 +17,6 @@
     "typecheck": "tsgo --noEmit"
   },
   "dependencies": {
-    "@aws-sdk/client-s3": "3.954.0",
-    "@aws-sdk/s3-request-presigner": "3.954.0",
     "@planetscale/database": "1.19.0",
     "@shopfunnel/resource": "workspace:*",
     "drizzle-orm": "catalog:",

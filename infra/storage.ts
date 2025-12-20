@@ -1,33 +1,17 @@
-import { secret } from './secret'
+import { domain } from './stage'
 
-export const storageBucket = new sst.cloudflare.Bucket('Bucket')
+export const storage = new sst.cloudflare.Bucket('Storage')
 
-const storageManagedDomain = new cloudflare.R2ManagedDomain('StorageManagedDomain', {
-  accountId: sst.cloudflare.DEFAULT_ACCOUNT_ID,
-  bucketName: storageBucket.name,
-  enabled: true,
-}).domain
-
-new cloudflare.R2BucketCors('StorageBucketCors', {
-  accountId: sst.cloudflare.DEFAULT_ACCOUNT_ID,
-  bucketName: storageBucket.name,
-  rules: [
-    {
-      allowed: {
-        headers: ['*'],
-        methods: ['GET', 'PUT', 'POST', 'DELETE', 'HEAD'],
-        origins: ['http://localhost:5173'],
+export const storageWorker = new sst.cloudflare.Worker('StorageWorker', {
+  handler: 'packages/function/src/storage.ts',
+  url: true,
+  domain: `storage.${domain}`,
+  link: [storage],
+  transform: {
+    worker: {
+      observability: {
+        enabled: true,
       },
     },
-  ],
-})
-
-export const storage = new sst.Linkable('Storage', {
-  properties: {
-    name: storageBucket.name,
-    url: $interpolate`https://${storageManagedDomain}`,
-    endpoint: `https://${sst.cloudflare.DEFAULT_ACCOUNT_ID}.r2.cloudflarestorage.com`,
-    accessKeyId: secret.CLOUDFLARE_R2_ACCESS_KEY_ID.value,
-    secretAccessKey: secret.CLOUDFLARE_R2_SECRET_ACCESS_KEY.value,
   },
 })

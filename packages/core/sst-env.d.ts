@@ -34,14 +34,6 @@ declare module "sst" {
       "type": "sst.sst.Secret"
       "value": string
     }
-    "Storage": {
-      "accessKeyId": string
-      "endpoint": string
-      "name": string
-      "secretAccessKey": string
-      "type": "sst.sst.Linkable"
-      "url": string
-    }
     "Web": {
       "type": "sst.cloudflare.SolidStart"
       "url": string
@@ -54,7 +46,8 @@ declare module "sst" {
   export interface Resource {
     "AuthApi": cloudflare.Service
     "AuthStorage": cloudflare.KVNamespace
-    "Bucket": cloudflare.R2Bucket
+    "Storage": cloudflare.R2Bucket
+    "StorageWorker": cloudflare.Service
   }
 }
 

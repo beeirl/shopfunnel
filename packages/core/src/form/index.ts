@@ -3,9 +3,10 @@ import { groupBy, map, pipe, values } from 'remeda'
 import z from 'zod'
 import { Actor } from '../actor'
 import { Database } from '../database'
+import { File } from '../file'
 import { Identifier } from '../identifier'
 import { fn } from '../utils/fn'
-import { FormTable, FormVersionTable } from './index.sql'
+import { FormFileTable, FormTable, FormVersionTable } from './index.sql'
 import type { FormSchema } from './schema'
 import { RADII, type FormTheme } from './theme'
 
@@ -111,6 +112,32 @@ export namespace Form {
 
     return id
   }
+
+  export const createFile = fn(
+    z.object({
+      formId: Identifier.schema('form'),
+      contentType: z.string(),
+      data: z.instanceof(Buffer),
+      name: z.string(),
+      size: z.number(),
+    }),
+    async (input) => {
+      const file = await File.create({
+        contentType: input.contentType,
+        data: input.data,
+        name: input.name,
+        size: input.size,
+      })
+      await Database.use((tx) =>
+        tx.insert(FormFileTable).values({
+          workspaceId: Actor.workspace(),
+          formId: input.formId,
+          fileId: file.id,
+        }),
+      )
+      return file
+    },
+  )
 
   export const update = fn(
     z.object({

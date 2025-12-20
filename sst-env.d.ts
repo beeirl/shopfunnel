@@ -13,10 +13,6 @@ declare module "sst" {
       "namespaceId": string
       "type": "sst.cloudflare.Kv"
     }
-    "Bucket": {
-      "name": string
-      "type": "sst.cloudflare.Bucket"
-    }
     "CLOUDFLARE_API_TOKEN": {
       "type": "sst.sst.Secret"
       "value": string
@@ -46,11 +42,11 @@ declare module "sst" {
       "value": string
     }
     "Storage": {
-      "accessKeyId": string
-      "endpoint": string
       "name": string
-      "secretAccessKey": string
-      "type": "sst.sst.Linkable"
+      "type": "sst.cloudflare.Bucket"
+    }
+    "StorageWorker": {
+      "type": "sst.cloudflare.Worker"
       "url": string
     }
     "Web": {
