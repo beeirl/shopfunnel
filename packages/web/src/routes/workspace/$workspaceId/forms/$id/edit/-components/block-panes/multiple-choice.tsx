@@ -4,10 +4,15 @@ import { InputGroup } from '@/components/ui/input-group'
 import { SegmentedControl } from '@/components/ui/segmented-control'
 import { getBlock } from '@/form/block'
 import { move } from '@dnd-kit/helpers'
-import { DragDropProvider, PointerSensor } from '@dnd-kit/react'
+import { DragDropProvider } from '@dnd-kit/react'
 import { useSortable } from '@dnd-kit/react/sortable'
 import type { MultipleChoiceBlock as MultipleChoiceBlockSchema } from '@shopfunnel/core/form/schema'
-import { IconPhoto as PhotoIcon, IconPlus as PlusIcon, IconTrash as TrashIcon } from '@tabler/icons-react'
+import {
+  IconGripVertical as GripVerticalIcon,
+  IconPhoto as PhotoIcon,
+  IconPlus as PlusIcon,
+  IconTrash as TrashIcon,
+} from '@tabler/icons-react'
 import * as React from 'react'
 import { ulid } from 'ulid'
 import { Field } from '../field'
@@ -31,11 +36,18 @@ function ChoiceItem({
   onDelete: () => void
   onImageUpload: (file: File) => Promise<string>
 }) {
-  const { ref } = useSortable({ id: choice.id, index })
+  const { ref, handleRef } = useSortable({ id: choice.id, index })
   const inputGroupRef = React.useRef<HTMLDivElement>(null)
 
   return (
     <div ref={ref} className="flex items-center gap-1">
+      <button
+        ref={handleRef}
+        type="button"
+        className="cursor-grab touch-none text-muted-foreground hover:text-foreground"
+      >
+        <GripVerticalIcon className="size-4" />
+      </button>
       <InputGroup.Root className="flex-1" ref={inputGroupRef}>
         <InputGroup.Addon>
           <MediaPicker.Root>
@@ -182,19 +194,7 @@ export function MultipleChoiceBlockPane({
               <PlusIcon />
             </Button>
           </Pane.GroupHeader>
-          <DragDropProvider
-            sensors={[
-              PointerSensor.configure({
-                activationConstraints: {
-                  delay: {
-                    value: 100,
-                    tolerance: 5,
-                  },
-                },
-              }),
-            ]}
-            onDragEnd={(event) => handleChoicesReorder(move(choices, event))}
-          >
+          <DragDropProvider onDragEnd={(event) => handleChoicesReorder(move(choices, event))}>
             <div className="flex flex-col gap-1">
               {choices.map((choice, index) => (
                 <ChoiceItem

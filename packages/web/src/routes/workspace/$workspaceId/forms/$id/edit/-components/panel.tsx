@@ -6,7 +6,7 @@ export function Panel({ className, ...props }: React.ComponentProps<'div'>) {
     <div
       data-slot="panel"
       className={cn(
-        'flex w-[300px] flex-col border-border bg-[hsl(0,0%,99%)]/95 first:border-r last:border-l',
+        'flex h-full w-[300px] flex-col border-border bg-[hsl(0,0%,99%)]/95 first:border-r last:border-l',
         className,
       )}
       {...props}

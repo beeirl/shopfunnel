@@ -3,7 +3,7 @@ import * as React from 'react'
 
 function PaneRoot({ children, className, ...props }: React.ComponentProps<'div'>) {
   return (
-    <div data-slot="pane-root" className={cn('flex flex-col', className)} {...props}>
+    <div data-slot="pane-root" className={cn('flex h-full flex-col', className)} {...props}>
       {children}
     </div>
   )
