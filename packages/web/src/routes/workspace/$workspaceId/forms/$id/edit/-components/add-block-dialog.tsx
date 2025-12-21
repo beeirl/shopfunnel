@@ -8,6 +8,173 @@ import { Combobox } from '@base-ui/react/combobox'
 import type { Block as BlockData, BlockType } from '@shopfunnel/core/form/schema'
 import { IconSearch as SearchIcon, IconSearchOff as SearchOffIcon } from '@tabler/icons-react'
 import * as React from 'react'
+import { ulid } from 'ulid'
+
+const ADD_SCHEMAS = {
+  short_text: {
+    type: 'short_text',
+    properties: {
+      label: 'Your question here',
+      placeholder: '',
+    },
+    validations: {
+      required: false,
+    },
+  },
+  multiple_choice: {
+    type: 'multiple_choice',
+    properties: {
+      label: 'Your question here',
+      choices: [{ id: ulid(), label: 'Choice 1' }],
+    },
+    validations: {
+      required: false,
+    },
+  },
+  dropdown: {
+    type: 'dropdown',
+    properties: {
+      label: 'Your question here',
+      options: [{ id: ulid(), label: 'Option 1' }],
+    },
+    validations: {
+      required: false,
+    },
+  },
+  slider: {
+    type: 'slider',
+    properties: {
+      label: 'Your question here',
+      minValue: 0,
+      maxValue: 100,
+      step: 1,
+    },
+  },
+  heading: {
+    type: 'heading',
+    properties: {
+      text: 'Your heading here',
+    },
+  },
+  paragraph: {
+    type: 'paragraph',
+    properties: {
+      text: 'Your text here',
+    },
+  },
+  gauge: {
+    type: 'gauge',
+    properties: {
+      value: '50',
+      minValue: 0,
+      maxValue: 100,
+    },
+  },
+  list: {
+    type: 'list',
+    properties: {
+      orientation: 'vertical' as const,
+      textPlacement: 'right' as const,
+      size: 'sm' as const,
+      items: [{ id: ulid(), title: 'Item', media: { type: 'emoji' as const, value: '✓' } }],
+    },
+  },
+  progress: {
+    type: 'progress',
+    properties: {},
+  },
+}
+
+const PREVIEW_SCHEMAS: Record<BlockType, BlockData> = {
+  short_text: {
+    id: '',
+    type: 'short_text',
+    properties: {
+      label: 'What is your name?',
+      placeholder: 'Enter your name...',
+    },
+    validations: {},
+  },
+  multiple_choice: {
+    id: '',
+    type: 'multiple_choice',
+    properties: {
+      label: 'Where are you from?',
+      choices: [
+        { id: '1', label: 'United States' },
+        { id: '2', label: 'Canada' },
+        { id: '3', label: 'United Kingdom' },
+      ],
+    },
+    validations: {},
+  },
+  dropdown: {
+    id: '',
+    type: 'dropdown',
+    properties: {
+      label: 'Select your country',
+      options: [
+        { id: '1', label: 'United States' },
+        { id: '2', label: 'Canada' },
+        { id: '3', label: 'United Kingdom' },
+      ],
+    },
+    validations: {},
+  },
+  slider: {
+    id: '',
+    type: 'slider',
+    properties: {
+      label: 'How satisfied are you?',
+      minValue: 0,
+      maxValue: 100,
+      step: 1,
+      defaultValue: 50,
+    },
+  },
+  heading: {
+    id: '',
+    type: 'heading',
+    properties: {
+      text: 'Welcome to our form',
+    },
+  },
+  paragraph: {
+    id: '',
+    type: 'paragraph',
+    properties: {
+      text: 'This is a paragraph block with some descriptive text.',
+    },
+  },
+  gauge: {
+    id: '',
+    type: 'gauge',
+    properties: {
+      value: '50',
+      minValue: 0,
+      maxValue: 100,
+    },
+  },
+  list: {
+    id: '',
+    type: 'list',
+    properties: {
+      orientation: 'vertical' as const,
+      textPlacement: 'right' as const,
+      size: 'sm' as const,
+      items: [
+        { id: '1', title: 'First item', media: { type: 'emoji' as const, value: '✓' } },
+        { id: '2', title: 'Second item', media: { type: 'emoji' as const, value: '✓' } },
+        { id: '3', title: 'Third item', media: { type: 'emoji' as const, value: '✓' } },
+      ],
+    },
+  },
+  progress: {
+    id: '',
+    type: 'progress',
+    properties: {},
+  },
+}
 
 const AddBlockDialogContext = React.createContext<{
   onBlockAdd: (block: BlockData) => void
@@ -49,8 +216,7 @@ function AddBlockDialogPopup() {
   const [highlightedBlockType, setHighlightedBlockType] = React.useState<BlockType | undefined>(blockTypes[0])
 
   const handleBlockAdd = (type: BlockType) => {
-    const block = getBlock(type)
-    onBlockAdd(block.defaultSchema())
+    onBlockAdd({ id: ulid(), ...ADD_SCHEMAS[type] } as BlockData)
     setOpen(false)
   }
 
@@ -80,8 +246,6 @@ function AddBlockDialogPopup() {
             <Combobox.List className="flex w-full flex-col gap-0.5 overflow-y-auto p-2 data-empty:hidden md:max-w-[250px] md:border-r md:border-border">
               {(type: BlockType) => {
                 const block = getBlock(type)
-                if (!block) return null
-                const IconComponent = block.icon
                 return (
                   <Combobox.Item
                     key={type}
@@ -96,7 +260,7 @@ function AddBlockDialogPopup() {
                       highlightedBlockType === type && 'bg-secondary',
                     )}
                   >
-                    <IconComponent className="size-4 text-muted-foreground" />
+                    <block.icon className="size-4 text-muted-foreground" />
                     <span className="flex-1 truncate text-sm font-medium">{block.name}</span>
                   </Combobox.Item>
                 )
@@ -114,7 +278,7 @@ function AddBlockDialogPopup() {
                     <Badge variant="secondary" className="mb-4">
                       Preview
                     </Badge>
-                    <Block mode="preview" schema={getBlock(highlightedBlockType)!.previewSchema} selected={false} />
+                    <Block mode="preview" schema={PREVIEW_SCHEMAS[highlightedBlockType]} selected={false} />
                   </div>
                 </div>
 

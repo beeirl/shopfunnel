@@ -12,7 +12,6 @@ import {
   IconMenu as MenuIcon,
 } from '@tabler/icons-react'
 import * as React from 'react'
-import { ulid } from 'ulid'
 import { Dropdown } from './components/dropdown'
 import { Gauge } from './components/gauge'
 import { Heading } from './components/heading'
@@ -30,8 +29,6 @@ interface Block {
   category: 'input' | 'display'
   icon: React.ComponentType<any>
   component: React.ComponentType<any>
-  defaultSchema: () => BlockSchema
-  previewSchema: BlockSchema
 }
 
 const BLOCKS: Block[] = [
@@ -42,26 +39,6 @@ const BLOCKS: Block[] = [
     category: 'input',
     icon: MenuIcon,
     component: ShortText,
-    defaultSchema: () => ({
-      id: ulid(),
-      type: 'short_text',
-      properties: {
-        label: 'Your question here',
-        placeholder: '',
-      },
-      validations: {
-        required: false,
-      },
-    }),
-    previewSchema: {
-      id: '',
-      type: 'short_text',
-      properties: {
-        label: 'What is your name?',
-        placeholder: 'Enter your name...',
-      },
-      validations: {},
-    },
   },
   {
     type: 'multiple_choice',
@@ -70,30 +47,6 @@ const BLOCKS: Block[] = [
     category: 'input',
     icon: ListLettersIcon,
     component: MultipleChoice,
-    defaultSchema: () => ({
-      id: ulid(),
-      type: 'multiple_choice',
-      properties: {
-        label: 'Your question here',
-        choices: [{ id: ulid(), label: 'Choice 1' }],
-      },
-      validations: {
-        required: false,
-      },
-    }),
-    previewSchema: {
-      id: '',
-      type: 'multiple_choice',
-      properties: {
-        label: 'Where are you from?',
-        choices: [
-          { id: '1', label: 'United States' },
-          { id: '2', label: 'Canada' },
-          { id: '3', label: 'United Kingdom' },
-        ],
-      },
-      validations: {},
-    },
   },
   {
     type: 'dropdown',
@@ -102,30 +55,6 @@ const BLOCKS: Block[] = [
     category: 'input',
     icon: ChevronDownIcon,
     component: Dropdown,
-    defaultSchema: () => ({
-      id: ulid(),
-      type: 'dropdown',
-      properties: {
-        label: 'Your question here',
-        options: [{ id: ulid(), label: 'Option 1' }],
-      },
-      validations: {
-        required: false,
-      },
-    }),
-    previewSchema: {
-      id: '',
-      type: 'dropdown',
-      properties: {
-        label: 'Select your country',
-        options: [
-          { id: '1', label: 'United States' },
-          { id: '2', label: 'Canada' },
-          { id: '3', label: 'United Kingdom' },
-        ],
-      },
-      validations: {},
-    },
   },
   {
     type: 'slider',
@@ -134,27 +63,6 @@ const BLOCKS: Block[] = [
     category: 'input',
     icon: AdjustmentsHorizontalIcon,
     component: Slider,
-    defaultSchema: () => ({
-      id: ulid(),
-      type: 'slider',
-      properties: {
-        label: 'Your question here',
-        minValue: 0,
-        maxValue: 100,
-        step: 1,
-      },
-    }),
-    previewSchema: {
-      id: '',
-      type: 'slider',
-      properties: {
-        label: 'How satisfied are you?',
-        minValue: 0,
-        maxValue: 100,
-        step: 1,
-        defaultValue: 50,
-      },
-    },
   },
   {
     type: 'heading',
@@ -163,20 +71,6 @@ const BLOCKS: Block[] = [
     category: 'display',
     icon: HeadingIcon,
     component: Heading,
-    defaultSchema: () => ({
-      id: ulid(),
-      type: 'heading',
-      properties: {
-        text: 'Your heading here',
-      },
-    }),
-    previewSchema: {
-      id: '',
-      type: 'heading',
-      properties: {
-        text: 'Welcome to our form',
-      },
-    },
   },
   {
     type: 'paragraph',
@@ -185,20 +79,6 @@ const BLOCKS: Block[] = [
     category: 'display',
     icon: LetterCaseIcon,
     component: Paragraph,
-    defaultSchema: () => ({
-      id: ulid(),
-      type: 'paragraph',
-      properties: {
-        text: 'Your text here',
-      },
-    }),
-    previewSchema: {
-      id: '',
-      type: 'paragraph',
-      properties: {
-        text: 'This is a paragraph block with some descriptive text.',
-      },
-    },
   },
   {
     type: 'gauge',
@@ -207,24 +87,6 @@ const BLOCKS: Block[] = [
     category: 'display',
     icon: GaugeIcon,
     component: Gauge,
-    defaultSchema: () => ({
-      id: ulid(),
-      type: 'gauge',
-      properties: {
-        value: '50',
-        minValue: 0,
-        maxValue: 100,
-      },
-    }),
-    previewSchema: {
-      id: '',
-      type: 'gauge',
-      properties: {
-        value: '50',
-        minValue: 0,
-        maxValue: 100,
-      },
-    },
   },
   {
     type: 'list',
@@ -233,30 +95,6 @@ const BLOCKS: Block[] = [
     category: 'display',
     icon: ListDetailsIcon,
     component: List,
-    defaultSchema: () => ({
-      id: ulid(),
-      type: 'list',
-      properties: {
-        orientation: 'vertical' as const,
-        textPlacement: 'right' as const,
-        size: 'sm' as const,
-        items: [{ id: ulid(), title: 'Item', media: { type: 'emoji' as const, value: '✓' } }],
-      },
-    }),
-    previewSchema: {
-      id: '',
-      type: 'list',
-      properties: {
-        orientation: 'vertical' as const,
-        textPlacement: 'right' as const,
-        size: 'sm' as const,
-        items: [
-          { id: '1', title: 'First item', media: { type: 'emoji' as const, value: '✓' } },
-          { id: '2', title: 'Second item', media: { type: 'emoji' as const, value: '✓' } },
-          { id: '3', title: 'Third item', media: { type: 'emoji' as const, value: '✓' } },
-        ],
-      },
-    },
   },
   {
     type: 'progress',
@@ -265,16 +103,6 @@ const BLOCKS: Block[] = [
     category: 'display',
     icon: DotsIcon,
     component: Progress,
-    defaultSchema: () => ({
-      id: ulid(),
-      type: 'progress',
-      properties: {},
-    }),
-    previewSchema: {
-      id: '',
-      type: 'progress',
-      properties: {},
-    },
   },
 ]
 
@@ -290,7 +118,7 @@ export type BlockProps =
   | {
       mode: 'preview'
       schema: BlockSchema
-      selected: boolean
+      selected?: boolean
       onSelect?: () => void
     }
   | {

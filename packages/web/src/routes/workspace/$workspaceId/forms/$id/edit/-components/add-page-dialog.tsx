@@ -5,10 +5,101 @@ import { Empty } from '@/components/ui/empty'
 import { Block, getBlock } from '@/form/block'
 import { cn } from '@/lib/utils'
 import { Combobox } from '@base-ui/react/combobox'
-import type { BlockType, Page } from '@shopfunnel/core/form/schema'
+import type { Block as BlockSchema, BlockType, Page } from '@shopfunnel/core/form/schema'
 import { IconSearch as SearchIcon, IconSearchOff as SearchOffIcon } from '@tabler/icons-react'
 import * as React from 'react'
 import { ulid } from 'ulid'
+
+const ADD_SCHEMAS = {
+  short_text: {
+    type: 'short_text',
+    properties: {
+      label: 'Your question here',
+      placeholder: '',
+    },
+    validations: {
+      required: false,
+    },
+  },
+  multiple_choice: {
+    type: 'multiple_choice',
+    properties: {
+      label: 'Your question here',
+      choices: [{ id: ulid(), label: 'Choice 1' }],
+    },
+    validations: {
+      required: false,
+    },
+  },
+  dropdown: {
+    type: 'dropdown',
+    properties: {
+      label: 'Your question here',
+      options: [{ id: ulid(), label: 'Option 1' }],
+    },
+    validations: {
+      required: false,
+    },
+  },
+  slider: {
+    type: 'slider',
+    properties: {
+      label: 'Your question here',
+      minValue: 0,
+      maxValue: 100,
+      step: 1,
+    },
+  },
+} as const
+
+const PREVIEW_SCHEMAS: Record<string, BlockSchema> = {
+  short_text: {
+    id: '',
+    type: 'short_text',
+    properties: {
+      label: 'What is your name?',
+      placeholder: 'Enter your name...',
+    },
+    validations: {},
+  },
+  multiple_choice: {
+    id: '',
+    type: 'multiple_choice',
+    properties: {
+      label: 'Where are you from?',
+      choices: [
+        { id: '1', label: 'United States' },
+        { id: '2', label: 'Canada' },
+        { id: '3', label: 'United Kingdom' },
+      ],
+    },
+    validations: {},
+  },
+  dropdown: {
+    id: '',
+    type: 'dropdown',
+    properties: {
+      label: 'Select your country',
+      options: [
+        { id: '1', label: 'United States' },
+        { id: '2', label: 'Canada' },
+        { id: '3', label: 'United Kingdom' },
+      ],
+    },
+    validations: {},
+  },
+  slider: {
+    id: '',
+    type: 'slider',
+    properties: {
+      label: 'How satisfied are you?',
+      minValue: 0,
+      maxValue: 100,
+      step: 1,
+      defaultValue: 50,
+    },
+  },
+}
 
 interface PageTemplate {
   id: string
@@ -66,7 +157,7 @@ const PAGE_TEMPLATES: PageTemplate[] = [
 ]
 
 function getPageTemplate(id: string) {
-  return PAGE_TEMPLATES.find((template) => template.id === id)
+  return PAGE_TEMPLATES.find((template) => template.id === id)!
 }
 
 const AddPageDialogContext = React.createContext<{
@@ -100,28 +191,20 @@ function AddPageDialogPopup() {
   const templateIds = PAGE_TEMPLATES.map((t) => t.id)
 
   const [highlightedTemplateId, setHighlightedTemplateId] = React.useState<string | undefined>(templateIds[0])
+  const highlightedTemplate = highlightedTemplateId ? getPageTemplate(highlightedTemplateId) : undefined
 
   const handlePageAdd = (templateId: string) => {
     const template = getPageTemplate(templateId)
-    if (!template) return
-
-    const blocks = template.blocks.map((type) => {
-      const block = getBlock(type)
-      return block.defaultSchema()
-    })
-
     const page: Page = {
       id: ulid(),
-      blocks,
+      blocks: template.blocks.map((type) => {
+        return { id: ulid(), ...ADD_SCHEMAS[type] }
+      }),
       properties: template.defaultPageProperties,
     }
     onPageAdd(page)
     setOpen(false)
   }
-
-  const highlightedTemplate = highlightedTemplateId ? getPageTemplate(highlightedTemplateId) : undefined
-  const firstBlockType = highlightedTemplate?.blocks[0]
-  const highlightedBlock = firstBlockType ? getBlock(firstBlockType) : undefined
 
   return (
     <Dialog.Content showCloseButton={false} className="max-w-2xl gap-0 p-0 sm:max-w-2xl">
@@ -172,7 +255,7 @@ function AddPageDialogPopup() {
                 )
               }}
             </Combobox.List>
-            {highlightedTemplateId && highlightedTemplate && highlightedBlock && (
+            {highlightedTemplate && (
               <div className="hidden flex-1 flex-col md:flex">
                 <div className="flex flex-1 flex-col overflow-y-auto">
                   <div className="border-b border-border px-6 pt-5 pb-6">
@@ -184,12 +267,14 @@ function AddPageDialogPopup() {
                     <Badge variant="secondary" className="mb-4">
                       Preview
                     </Badge>
-                    <Block mode="preview" schema={highlightedBlock.previewSchema} selected={false} />
+                    {highlightedTemplate.blocks.map((blockType) => (
+                      <Block mode="preview" schema={PREVIEW_SCHEMAS[blockType]!} />
+                    ))}
                   </div>
                 </div>
 
                 <div className="flex shrink-0 justify-end border-t border-border p-4">
-                  <Button onClick={() => handlePageAdd(highlightedTemplateId)}>Add page</Button>
+                  <Button onClick={() => handlePageAdd(highlightedTemplate.id)}>Add page</Button>
                 </div>
               </div>
             )}
