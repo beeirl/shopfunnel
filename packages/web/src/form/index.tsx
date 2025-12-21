@@ -21,7 +21,12 @@ interface CurrentPage {
   blocks: Block[]
   values: Record<string, unknown>
   errors: Record<string, string>
-  autoAdvance: boolean
+  properties: {
+    showButton: boolean
+    buttonText: string
+    buttonAction: 'next' | 'redirect'
+    redirectUrl?: string
+  }
 }
 
 interface HistoryEntry {
@@ -58,6 +63,8 @@ export function Form({ form, mode = 'live' }: { form: FormModule.Info; mode?: 'p
     return buildPage(page, stateRef.current, evaluation)
   })
 
+  const [formCompleted, setFormCompleted] = React.useState(false)
+
   React.useEffect(() => {
     const storedValues = localStorage.getItem(storageKey)
     if (!storedValues) return
@@ -92,22 +99,34 @@ export function Form({ form, mode = 'live' }: { form: FormModule.Info; mode?: 'p
     const currentPageEvaluation = evaluatePageRules(currentPageSchema.id, form, stateRef.current)
     stateRef.current = { ...stateRef.current, variables: currentPageEvaluation.variables }
 
-    // Update page view, clearing error for changed field
-    setCurrentPage((prevCurrentPage) => {
-      const currentPage = buildPage(currentPageSchema, stateRef.current, currentPageEvaluation, prevCurrentPage?.errors)
-      delete currentPage.errors[blockId]
-      return { ...currentPage, errors: currentPage.errors }
-    })
+    // Validate page on every change
+    const errors = validatePage(currentPageSchema, stateRef.current)
 
-    // Auto-advance if applicable
-    const updatedCurrentPage = buildPage(currentPageSchema, stateRef.current, currentPageEvaluation)
-    if (updatedCurrentPage.autoAdvance) next()
+    // Update page view
+    setCurrentPage(buildPage(currentPageSchema, stateRef.current, currentPageEvaluation, errors))
+
+    // Auto-advance if showButton=false and no validation errors
+    if (!currentPageSchema.properties.showButton && Object.keys(errors).length === 0) {
+      triggerButtonAction()
+    }
   }
 
-  function next() {
+  function triggerButtonAction() {
     const currentPageSchema = form.schema.pages[stateRef.current.currentPageIndex]
     if (!currentPageSchema) return
 
+    const buttonAction = currentPageSchema.properties.buttonAction
+
+    // Handle redirect action
+    if (buttonAction === 'redirect') {
+      const redirectUrl = currentPageSchema.properties.redirectUrl
+      if (redirectUrl) {
+        window.location.href = redirectUrl
+      }
+      return
+    }
+
+    // Handle next action
     // Validate current page
     const errors = validatePage(currentPageSchema, stateRef.current)
     if (Object.keys(errors).length > 0) {
@@ -134,7 +153,13 @@ export function Form({ form, mode = 'live' }: { form: FormModule.Info; mode?: 'p
       if (stateRef.current.currentPageIndex >= form.schema.pages.length - 1) return -1
       return stateRef.current.currentPageIndex + 1
     })()
-    if (nextIndex === -1) return
+
+    // No next page - form is complete
+    if (nextIndex === -1) {
+      setCurrentPage(undefined)
+      setFormCompleted(true)
+      return
+    }
 
     const nextPageSchema = form.schema.pages[nextIndex]
     if (!nextPageSchema) return
@@ -169,6 +194,8 @@ export function Form({ form, mode = 'live' }: { form: FormModule.Info; mode?: 'p
     setCurrentPage(buildPage(prevPageSchema, stateRef.current, prevPageEvaluation))
   }
 
+  if (formCompleted) return null
+
   return (
     <AnimatePresence mode="wait">
       <motion.div
@@ -187,11 +214,13 @@ export function Form({ form, mode = 'live' }: { form: FormModule.Info; mode?: 'p
                   mode="live"
                   schema={block}
                   value={currentPage.values?.[block.id]}
-                  onChange={(value) => setValue?.(block.id, value)}
+                  onChange={(value) => setValue(block.id, value)}
                 />
               ))}
             </BaseForm>
-            {!currentPage.autoAdvance && <Button onClick={next}>Next</Button>}
+            {currentPage.properties.showButton && (
+              <Button onClick={triggerButtonAction}>{currentPage.properties.buttonText}</Button>
+            )}
           </div>
         )}
       </motion.div>
@@ -411,20 +440,17 @@ function buildPage(
     .map((block) => resolveTemplates(block, state) as Block)
   const blockIds = new Set(blocks.map((block) => block.id))
   const values = Object.fromEntries(Object.entries(state.values).filter(([key]) => blockIds.has(key)))
-  const autoAdvance = (() => {
-    const inputBlocks = blocks.filter(isInputBlock)
-    if (inputBlocks.length === 0) return false
-    return inputBlocks.every((block) => {
-      if (block.type === 'dropdown') return true
-      if (block.type === 'multiple_choice' && !block.properties.multiple) return true
-      return false
-    })
-  })()
+
   return {
     id: schema.id,
     blocks,
     values,
     errors,
-    autoAdvance,
+    properties: {
+      showButton: schema.properties.showButton,
+      buttonText: schema.properties.buttonText,
+      buttonAction: schema.properties.buttonAction,
+      redirectUrl: schema.properties.redirectUrl,
+    },
   }
 }

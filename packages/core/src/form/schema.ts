@@ -147,10 +147,10 @@ export type DisplayBlock = HeadingBlock | ParagraphBlock | GaugeBlock | ListBloc
 export interface Page {
   id: string
   blocks: Block[]
-  properties?: {
-    buttonAction?: 'next' | 'redirect'
-    buttonText?: string
-    showButton?: boolean
+  properties: {
+    showButton: boolean
+    buttonText: string
+    buttonAction: 'next' | 'redirect'
     redirectUrl?: string
   }
 }
