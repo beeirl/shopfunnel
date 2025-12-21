@@ -9,10 +9,6 @@ import type { Block as BlockData, BlockType } from '@shopfunnel/core/form/schema
 import { IconSearch as SearchIcon, IconSearchOff as SearchOffIcon } from '@tabler/icons-react'
 import * as React from 'react'
 
-// ============================================
-// Add Block Dialog
-// ============================================
-
 const AddBlockDialogContext = React.createContext<{
   onBlockAdd: (block: BlockData) => void
   setOpen: React.Dispatch<React.SetStateAction<boolean>>
@@ -54,7 +50,6 @@ function AddBlockDialogPopup() {
 
   const handleBlockAdd = (type: BlockType) => {
     const block = getBlock(type)
-    if (!block) return
     onBlockAdd(block.defaultSchema())
     setOpen(false)
   }

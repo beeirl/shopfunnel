@@ -13,7 +13,6 @@ import { mutationOptions, queryOptions, useMutation, useSuspenseQuery } from '@t
 import { createFileRoute, Link, notFound } from '@tanstack/react-router'
 import { createServerFn } from '@tanstack/react-start'
 import * as React from 'react'
-import { ulid } from 'ulid'
 import { z } from 'zod'
 import { BlockPane } from './-components/block-pane'
 import { BlocksPane } from './-components/blocks-pane'
@@ -160,16 +159,12 @@ function RouteComponent() {
     saveDebouncer.maybeExecute({ schema: updated.schema })
   }
 
-  const handlePageAdd = () => {
-    const newPage: Page = {
-      id: ulid(),
-      blocks: [],
-    }
-    const updatedSchema = { ...form.schema, pages: [...form.schema.pages, newPage] }
+  const handlePageAdd = (page: Page) => {
+    const updatedSchema = { ...form.schema, pages: [...form.schema.pages, page] }
     const updated = { ...form, schema: updatedSchema, published: false }
     setForm(updated)
-    setSelectedPageId(newPage.id)
-    setSelectedBlockId(null)
+    setSelectedPageId(page.id)
+    setSelectedBlockId(page.blocks[0]?.id ?? null)
     saveDebouncer.maybeExecute({ schema: updated.schema })
   }
 

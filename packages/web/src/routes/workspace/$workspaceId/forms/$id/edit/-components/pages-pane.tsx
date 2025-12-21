@@ -6,6 +6,7 @@ import { DragDropProvider } from '@dnd-kit/react'
 import { useSortable } from '@dnd-kit/react/sortable'
 import type { Page } from '@shopfunnel/core/form/schema'
 import { IconPlus as PlusIcon, IconTrash as TrashIcon } from '@tabler/icons-react'
+import { AddPageMenu } from './add-page-menu'
 import { Pane } from './pane'
 
 function PageItem({
@@ -72,16 +73,19 @@ export function PagesPane({
   pageSchemas: Page[]
   onPageSelect: (pageId: string) => void
   onPagesReorder: (pages: Page[]) => void
-  onPageAdd: () => void
+  onPageAdd: (page: Page) => void
   onPageDelete: (pageId: string) => void
 }) {
   return (
     <Pane.Root className="h-full">
       <Pane.Header>
         <Pane.Title>Pages</Pane.Title>
-        <Button className="-mr-2" size="icon" variant="ghost" onClick={onPageAdd}>
-          <PlusIcon />
-        </Button>
+        <AddPageMenu.Root onPageAdd={onPageAdd}>
+          <AddPageMenu.Trigger render={<Button className="-mr-2" size="icon" variant="ghost" />}>
+            <PlusIcon />
+          </AddPageMenu.Trigger>
+          <AddPageMenu.Content />
+        </AddPageMenu.Root>
       </Pane.Header>
       <Pane.Content>
         {pageSchemas.length === 0 ? (
