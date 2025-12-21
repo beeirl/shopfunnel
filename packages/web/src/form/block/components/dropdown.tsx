@@ -8,11 +8,11 @@ import { cn } from '@/lib/utils'
 export type DropdownProps =
   | {
       mode: 'preview'
-      block: DropdownBlock
+      schema: DropdownBlock
     }
   | {
       mode: 'live'
-      block: DropdownBlock
+      schema: DropdownBlock
       value?: string
       onChange?: (value: string) => void
     }
@@ -22,16 +22,14 @@ const triggerClassName =
 const iconClassName = 'size-3.5 text-muted-foreground'
 
 export function Dropdown(props: DropdownProps) {
-  const { mode, block } = props
-
-  const options = block.properties.options.map((option) => ({
+  const options = props.schema.properties.options.map((option) => ({
     id: option.id,
     label: option.label,
     value: option.id,
   }))
 
   return (
-    <Field mode={mode} label={block.properties.label} description={block.properties.description}>
+    <Field mode={props.mode} label={props.schema.properties.label} description={props.schema.properties.description}>
       {props.mode === 'preview' ? (
         <div className={triggerClassName}>
           <span className="text-muted-foreground">Select an option...</span>

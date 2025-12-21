@@ -7,11 +7,11 @@ import { Field } from '@/form/components/field'
 export type ShortTextProps =
   | {
       mode: 'preview'
-      block: ShortTextBlock
+      schema: ShortTextBlock
     }
   | {
       mode: 'live'
-      block: ShortTextBlock
+      schema: ShortTextBlock
       value?: string
       onChange?: (value: string) => void
     }
@@ -20,9 +20,9 @@ export function ShortText(props: ShortTextProps) {
   return (
     <Field
       mode={props.mode}
-      name={props.block.id}
-      label={props.block.properties.label}
-      description={props.block.properties.description}
+      name={props.schema.id}
+      label={props.schema.properties.label}
+      description={props.schema.properties.description}
     >
       <BaseInput
         className={cn(
@@ -32,8 +32,8 @@ export function ShortText(props: ShortTextProps) {
           props.mode === 'preview' && 'pointer-events-none',
         )}
         disabled={props.mode === 'preview'}
-        placeholder={props.block.properties.placeholder}
-        type={props.block.validations.email ? 'email' : 'text'}
+        placeholder={props.schema.properties.placeholder}
+        type={props.schema.validations.email ? 'email' : 'text'}
         value={props.mode === 'preview' ? undefined : props.value}
         onChange={props.mode === 'preview' ? undefined : (e) => props.onChange?.(e.target.value)}
       />

@@ -2,181 +2,12 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Dialog } from '@/components/ui/dialog'
 import { Empty } from '@/components/ui/empty'
-import { Block } from '@/form/block'
-import { blockRegistry, blockTypes } from '@/form/block/registry'
+import { Block, getBlock, getBlocks } from '@/form/block'
 import { cn } from '@/lib/utils'
 import { Combobox } from '@base-ui/react/combobox'
-import type { Block as BlockData, BlockOfType, BlockType } from '@shopfunnel/core/form/schema'
+import type { Block as BlockData, BlockType } from '@shopfunnel/core/form/schema'
 import { IconSearch as SearchIcon, IconSearchOff as SearchOffIcon } from '@tabler/icons-react'
 import * as React from 'react'
-import { ulid } from 'ulid'
-
-// ============================================
-// Block Defaults & Preview Data
-// ============================================
-
-const blockDefaults = {
-  short_text: {
-    properties: {
-      label: 'Your question here',
-      placeholder: '',
-    },
-    validations: {
-      required: false,
-    },
-  },
-  multiple_choice: {
-    properties: {
-      label: 'Your question here',
-      choices: [], // Will be filled with a default choice at creation
-    },
-    validations: {
-      required: false,
-    },
-  },
-  dropdown: {
-    properties: {
-      label: 'Your question here',
-      options: [], // Will be filled with a default option at creation
-    },
-    validations: {
-      required: false,
-    },
-  },
-  slider: {
-    properties: {
-      label: 'Your question here',
-      minValue: 0,
-      maxValue: 100,
-      step: 1,
-    },
-  },
-  heading: {
-    properties: {
-      text: 'Your heading here',
-    },
-  },
-  paragraph: {
-    properties: {
-      text: 'Your text here',
-    },
-  },
-  gauge: {
-    properties: {
-      value: '50',
-      minValue: 0,
-      maxValue: 100,
-    },
-  },
-  list: {
-    properties: {
-      orientation: 'vertical' as const,
-      textPlacement: 'right' as const,
-      size: 'sm' as const,
-      items: [], // Will be filled with a default item at creation
-    },
-  },
-  progress: {},
-} satisfies Record<BlockType, Omit<BlockData, 'id' | 'type'>>
-
-const blockPreviews = {
-  short_text: {
-    properties: {
-      label: 'What is your name?',
-      placeholder: 'Enter your name...',
-    },
-    validations: {},
-  },
-  multiple_choice: {
-    properties: {
-      label: 'Where are you from?',
-      choices: [
-        { id: '1', label: 'United States' },
-        { id: '2', label: 'Canada' },
-        { id: '3', label: 'United Kingdom' },
-      ],
-    },
-    validations: {},
-  },
-  dropdown: {
-    properties: {
-      label: 'Select your country',
-      options: [
-        { id: '1', label: 'United States' },
-        { id: '2', label: 'Canada' },
-        { id: '3', label: 'United Kingdom' },
-      ],
-    },
-    validations: {},
-  },
-  slider: {
-    properties: {
-      label: 'How satisfied are you?',
-      minValue: 0,
-      maxValue: 100,
-      step: 1,
-      defaultValue: 50,
-    },
-  },
-  heading: {
-    properties: {
-      text: 'Welcome to our form',
-    },
-  },
-  paragraph: {
-    properties: {
-      text: 'This is a paragraph block with some descriptive text.',
-    },
-  },
-  gauge: {
-    properties: {
-      value: '50',
-      minValue: 0,
-      maxValue: 100,
-    },
-  },
-  list: {
-    properties: {
-      orientation: 'vertical' as const,
-      textPlacement: 'right' as const,
-      size: 'sm' as const,
-      items: [
-        { id: '1', title: 'First item', icon: 'check' },
-        { id: '2', title: 'Second item', icon: 'check' },
-        { id: '3', title: 'Third item', icon: 'check' },
-      ],
-    },
-  },
-  progress: {},
-} satisfies Record<BlockType, Omit<BlockData, 'id' | 'type'>>
-
-// ============================================
-// Helper Functions
-// ============================================
-
-function createBlock<T extends BlockType>(type: T, id: string, generateId: () => string): BlockOfType<T> {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const defaults = structuredClone(blockDefaults[type]) as any
-
-  // Handle special cases that need generated IDs
-  if (type === 'multiple_choice') {
-    defaults.properties.choices = [{ id: generateId(), label: 'Choice 1' }]
-  }
-
-  if (type === 'dropdown') {
-    defaults.properties.options = [{ id: generateId(), label: 'Option 1' }]
-  }
-
-  if (type === 'list') {
-    defaults.properties.items = [{ id: generateId(), title: 'Item', icon: 'check' }]
-  }
-
-  return { id, type, ...defaults } as BlockOfType<T>
-}
-
-function getPreviewBlock<T extends BlockType>(type: T): BlockOfType<T> {
-  return { id: `preview-${type}`, type, ...blockPreviews[type] } as unknown as BlockOfType<T>
-}
 
 // ============================================
 // Add Block Dialog
@@ -216,11 +47,15 @@ function AddBlockDialogRoot({
 function AddBlockDialogPopup() {
   const { onBlockAdd, setOpen } = useAddBlockDialogContext()
 
+  const blocks = getBlocks()
+  const blockTypes = blocks.map((b) => b.type)
+
   const [highlightedBlockType, setHighlightedBlockType] = React.useState<BlockType | undefined>(blockTypes[0])
 
   const handleBlockAdd = (type: BlockType) => {
-    const block = createBlock(type, ulid(), ulid)
-    onBlockAdd(block)
+    const block = getBlock(type)
+    if (!block) return
+    onBlockAdd(block.defaultSchema())
     setOpen(false)
   }
 
@@ -249,8 +84,9 @@ function AddBlockDialogPopup() {
           <div className="flex h-[650px] max-h-[calc(90vh-48px)]">
             <Combobox.List className="flex w-full flex-col gap-0.5 overflow-y-auto p-2 data-empty:hidden md:max-w-[250px] md:border-r md:border-border">
               {(type: BlockType) => {
-                const item = blockRegistry[type]
-                const IconComponent = item.icon
+                const block = getBlock(type)
+                if (!block) return null
+                const IconComponent = block.icon
                 return (
                   <Combobox.Item
                     key={type}
@@ -266,7 +102,7 @@ function AddBlockDialogPopup() {
                     )}
                   >
                     <IconComponent className="size-4 text-muted-foreground" />
-                    <span className="flex-1 truncate text-sm font-medium">{item.name}</span>
+                    <span className="flex-1 truncate text-sm font-medium">{block.name}</span>
                   </Combobox.Item>
                 )
               }}
@@ -275,17 +111,15 @@ function AddBlockDialogPopup() {
               <div className="hidden flex-1 flex-col md:flex">
                 <div className="flex flex-1 flex-col overflow-y-auto">
                   <div className="border-b border-border px-6 pt-5 pb-6">
-                    <h2 className="mb-2 text-xl font-bold text-foreground">
-                      {blockRegistry[highlightedBlockType].name}
-                    </h2>
-                    <p className="text-sm text-muted-foreground">{blockRegistry[highlightedBlockType].description}</p>
+                    <h2 className="mb-2 text-xl font-bold text-foreground">{getBlock(highlightedBlockType)?.name}</h2>
+                    <p className="text-sm text-muted-foreground">{getBlock(highlightedBlockType)?.description}</p>
                   </div>
 
                   <div className="flex-1 px-6 pt-5 pb-6">
                     <Badge variant="secondary" className="mb-4">
                       Preview
                     </Badge>
-                    <Block mode="preview" block={getPreviewBlock(highlightedBlockType)} />
+                    <Block mode="preview" schema={getBlock(highlightedBlockType)!.previewSchema} />
                   </div>
                 </div>
 

@@ -185,7 +185,7 @@ export function Form({ form, mode = 'live' }: { form: FormModule.Info; mode?: 'p
                 <BlockComponent
                   key={block.id}
                   mode="live"
-                  block={block}
+                  schema={block}
                   value={currentPage.values?.[block.id]}
                   onChange={(value) => setValue?.(block.id, value)}
                 />

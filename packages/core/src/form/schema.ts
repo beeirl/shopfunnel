@@ -119,6 +119,7 @@ export interface ListBlock {
 export interface ProgressBlock {
   id: string
   type: 'progress'
+  properties: {}
 }
 
 export type Block =
@@ -147,7 +148,10 @@ export interface Page {
   id: string
   blocks: Block[]
   properties?: {
+    buttonAction?: 'next' | 'redirect'
     buttonText?: string
+    showButton?: boolean
+    redirectUrl?: string
   }
 }
 

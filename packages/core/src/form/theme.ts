@@ -2,7 +2,7 @@
 // Colors
 // ============================================
 
-export interface FormThemeColors {
+export interface Colors {
   primary: string
   primaryForeground: string
   background: string
@@ -29,6 +29,6 @@ export type RadiusValue = Radius['value']
 // ============================================
 
 export interface FormTheme {
-  colors: FormThemeColors
+  colors: Colors
   radius: Radius
 }

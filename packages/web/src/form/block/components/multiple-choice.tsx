@@ -7,38 +7,27 @@ import { Field } from '@/form/components/field'
 export type MultipleChoiceProps =
   | {
       mode: 'preview'
-      block: MultipleChoiceBlock
+      schema: MultipleChoiceBlock
     }
   | {
       mode: 'live'
-      block: MultipleChoiceBlock
+      schema: MultipleChoiceBlock
       value?: string | string[] | null
       onChange?: (value: string | string[] | null) => void
     }
 
 export function MultipleChoice(props: MultipleChoiceProps) {
-  const choices = props.block.properties.choices.map((choice) => ({
-    id: choice.id,
-    label: choice.label,
-    value: choice.id,
-    attachment: choice.attachment
-      ? choice.attachment.type === 'emoji'
-        ? { type: 'emoji' as const, value: choice.attachment.emoji }
-        : { type: 'image' as const, value: choice.attachment.url }
-      : undefined,
-  }))
-
   return (
     <Field
       mode={props.mode}
-      name={props.block.id}
-      label={props.block.properties.label}
-      description={props.block.properties.description}
+      name={props.schema.id}
+      label={props.schema.properties.label}
+      description={props.schema.properties.description}
     >
       <ReactAriaListbox
         className="flex flex-col gap-2"
-        disallowEmptySelection={props.mode === 'preview' ? false : !props.block.properties.multiple}
-        selectionMode={props.mode === 'preview' ? 'none' : props.block.properties.multiple ? 'multiple' : 'single'}
+        disallowEmptySelection={props.mode === 'preview' ? false : !props.schema.properties.multiple}
+        selectionMode={props.mode === 'preview' ? 'none' : props.schema.properties.multiple ? 'multiple' : 'single'}
         selectedKeys={
           props.mode === 'preview'
             ? undefined
@@ -51,10 +40,10 @@ export function MultipleChoice(props: MultipleChoiceProps) {
         onSelectionChange={(selection) => {
           if (props.mode === 'preview' || selection === 'all') return
           const value = Array.from(selection) as string[]
-          props.onChange?.(props.block.properties.multiple ? value : (value[0] ?? null))
+          props.onChange?.(props.schema.properties.multiple ? value : (value[0] ?? null))
         }}
       >
-        {choices.map((choice) => (
+        {props.schema.properties.choices.map((choice) => (
           <ReactAriaListboxItem
             key={choice.id}
             id={choice.id}
@@ -69,7 +58,7 @@ export function MultipleChoice(props: MultipleChoiceProps) {
               ],
             )}
           >
-            {choice.attachment?.type === 'emoji' && <span className="text-xl">{choice.attachment.value}</span>}
+            {choice.media?.type === 'emoji' && <span className="text-xl">{choice.media.value}</span>}
             <span className="flex-1 text-base font-semibold text-foreground">{choice.label}</span>
           </ReactAriaListboxItem>
         ))}

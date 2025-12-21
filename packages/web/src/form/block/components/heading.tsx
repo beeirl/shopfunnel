@@ -1,9 +1,9 @@
 import type { HeadingBlock } from '@shopfunnel/core/form/schema'
 
 export interface HeadingProps {
-  block: HeadingBlock
+  schema: HeadingBlock
 }
 
-export function Heading({ block }: HeadingProps) {
-  return <h2 className="text-2xl font-bold text-foreground">{block.properties.text}</h2>
+export function Heading(props: HeadingProps) {
+  return <h2 className="text-2xl font-bold text-foreground">{props.schema.properties.text}</h2>
 }

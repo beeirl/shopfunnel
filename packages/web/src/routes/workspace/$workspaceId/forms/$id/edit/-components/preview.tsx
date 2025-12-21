@@ -48,7 +48,7 @@ export function Preview({
                 )}
               >
                 <ThemeComponent theme={theme}>
-                  <Block mode="preview" block={block} />
+                  <Block mode="preview" schema={block} />
                 </ThemeComponent>
               </div>
             ))

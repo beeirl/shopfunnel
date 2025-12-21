@@ -1,14 +1,13 @@
 import { Button } from '@/components/ui/button'
+import { Resizable } from '@/components/ui/resizable'
 import { Tabs } from '@/components/ui/tabs'
 import { withActor } from '@/context/auth.withActor'
-import { LeftPanel } from '@/routes/workspace/$workspaceId/forms/$id/edit/-components/left-panel'
 import { Preview } from '@/routes/workspace/$workspaceId/forms/$id/edit/-components/preview'
-import { IconGitBranch as GitBranchIcon, IconLayoutDashboard as LayoutDashboardIcon } from '@tabler/icons-react'
-
 import { Form } from '@shopfunnel/core/form/index'
 import type { Block, FormSchema, Page } from '@shopfunnel/core/form/schema'
 import type { FormTheme } from '@shopfunnel/core/form/theme'
 import { Identifier } from '@shopfunnel/core/identifier'
+import { IconGitBranch as GitBranchIcon, IconLayoutDashboard as LayoutDashboardIcon } from '@tabler/icons-react'
 import { useDebouncer } from '@tanstack/react-pacer'
 import { mutationOptions, queryOptions, useMutation, useSuspenseQuery } from '@tanstack/react-query'
 import { createFileRoute, Link, notFound } from '@tanstack/react-router'
@@ -16,7 +15,10 @@ import { createServerFn } from '@tanstack/react-start'
 import * as React from 'react'
 import { ulid } from 'ulid'
 import { z } from 'zod'
-import { RightPanel } from './-components/right-panel'
+import { BlockPane } from './-components/block-pane'
+import { BlocksPane } from './-components/blocks-pane'
+import { PagesPane } from './-components/pages-pane'
+import { Panel } from './-components/panel'
 import { ThemePopover } from './-components/theme-popover'
 
 const getForm = createServerFn()
@@ -142,8 +144,8 @@ function RouteComponent() {
     { wait: 1000 },
   )
 
-  const selectedPage = form.schema.pages.find((page) => page.id === selectedPageId) ?? null
-  const selectedBlock = selectedPage?.blocks.find((b) => b.id === selectedBlockId) ?? null
+  const selectedPageSchema = form.schema.pages.find((page) => page.id === selectedPageId) ?? null
+  const selectedBlockSchema = selectedPageSchema?.blocks.find((b) => b.id === selectedBlockId) ?? null
 
   const handlePageSelect = (pageId: string) => {
     setSelectedPageId(pageId)
@@ -237,7 +239,7 @@ function RouteComponent() {
     })
   }
 
-  const handleUploadImage = async (file: globalThis.File): Promise<string> => {
+  const handleImageUpload = async (file: globalThis.File): Promise<string> => {
     const formData = new FormData()
     formData.append('file', file)
     formData.append('workspaceId', params.workspaceId)
@@ -297,25 +299,48 @@ function RouteComponent() {
             </div>
           </div>
           <Tabs.Content value="builder" className="flex flex-1 overflow-hidden">
-            <LeftPanel
-              pages={form.schema.pages}
-              selectedPageId={selectedPageId}
-              onPageSelect={handlePageSelect}
-              onPagesReorder={handlePagesReorder}
-              onPageAdd={handlePageAdd}
-              onPageDelete={handlePageDelete}
-              selectedBlockId={selectedBlockId}
-              onBlockSelect={handleBlockSelect}
-              onBlocksReorder={handleBlocksReorder}
-              onBlockAdd={handleBlockAdd}
-            />
+            <Panel className="w-[250px]">
+              <Resizable.PanelGroup direction="vertical">
+                <Resizable.Panel defaultSize={selectedPageId ? 40 : 100} minSize={20}>
+                  <PagesPane
+                    pageSchemas={form.schema.pages}
+                    onPageSelect={handlePageSelect}
+                    onPagesReorder={handlePagesReorder}
+                    onPageAdd={handlePageAdd}
+                    onPageDelete={handlePageDelete}
+                  />
+                </Resizable.Panel>
+                {selectedPageId && (
+                  <React.Fragment>
+                    <Resizable.Handle />
+                    <Resizable.Panel defaultSize={60} minSize={20}>
+                      <BlocksPane
+                        blockSchemas={selectedPageSchema?.blocks ?? []}
+                        selectedBlockId={selectedBlockId}
+                        onBlockSelect={handleBlockSelect}
+                        onBlocksReorder={handleBlocksReorder}
+                        onBlockAdd={handleBlockAdd}
+                      />
+                    </Resizable.Panel>
+                  </React.Fragment>
+                )}
+              </Resizable.PanelGroup>
+            </Panel>
             <Preview
-              page={selectedPage}
+              page={selectedPageSchema}
               theme={form.theme}
               selectedBlockId={selectedBlockId}
               onBlockSelect={handleBlockSelect}
             />
-            <RightPanel block={selectedBlock} onBlockUpdate={handleBlockUpdate} onUploadImage={handleUploadImage} />
+            {selectedBlockSchema && (
+              <Panel className="w-[350px]">
+                <BlockPane
+                  schema={selectedBlockSchema}
+                  onSchemaUpdate={(schema) => handleBlockUpdate(selectedBlockSchema.id, schema)}
+                  onImageUpload={handleImageUpload}
+                />
+              </Panel>
+            )}
           </Tabs.Content>
           <Tabs.Content value="logic" className="flex flex-1 items-center justify-center text-muted-foreground">
             Funnel logic
