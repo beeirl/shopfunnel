@@ -24,7 +24,7 @@ export function Preview({
   const blocks = page?.blocks ?? []
   return (
     <div className="relative flex flex-1 flex-col bg-background">
-      <div className="flex-1 overflow-y-auto p-6">
+      <div className="flex-1 overflow-y-auto p-6" onClick={() => onBlockSelect(null)}>
         <div
           className={cn(
             'mx-auto flex w-full flex-col gap-3 transition-all duration-300',
@@ -40,7 +40,10 @@ export function Preview({
             blocks.map((block) => (
               <div
                 key={block.id}
-                onClick={() => onBlockSelect(block.id)}
+                onClick={(e) => {
+                  e.stopPropagation()
+                  onBlockSelect(block.id)
+                }}
                 className={cn(
                   'cursor-pointer rounded-xl border border-transparent p-4 ring ring-transparent transition-all',
                   'hover:border-ring hover:ring-3 hover:ring-ring/50',

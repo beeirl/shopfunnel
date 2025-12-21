@@ -1,13 +1,11 @@
 import { Button } from '@/components/ui/button'
 import { Resizable } from '@/components/ui/resizable'
-import { Tabs } from '@/components/ui/tabs'
 import { withActor } from '@/context/auth.withActor'
 import { Preview } from '@/routes/workspace/$workspaceId/forms/$id/edit/-components/preview'
 import { Form } from '@shopfunnel/core/form/index'
 import type { Block, FormSchema, Page } from '@shopfunnel/core/form/schema'
 import type { FormTheme } from '@shopfunnel/core/form/theme'
 import { Identifier } from '@shopfunnel/core/identifier'
-import { IconGitBranch as GitBranchIcon, IconLayoutDashboard as LayoutDashboardIcon } from '@tabler/icons-react'
 import { useDebouncer } from '@tanstack/react-pacer'
 import { mutationOptions, queryOptions, useMutation, useSuspenseQuery } from '@tanstack/react-query'
 import { createFileRoute, Link, notFound } from '@tanstack/react-router'
@@ -16,6 +14,7 @@ import * as React from 'react'
 import { z } from 'zod'
 import { BlockPane } from './-components/block-pane'
 import { BlocksPane } from './-components/blocks-pane'
+import { PagePane } from './-components/page-pane'
 import { PagesPane } from './-components/pages-pane'
 import { Panel } from './-components/panel'
 import { ThemePopover } from './-components/theme-popover'
@@ -128,9 +127,9 @@ function RouteComponent() {
 
   const formQuery = useSuspenseQuery(getFormQueryOptions(params.workspaceId, params.id))
 
-  const [form, setForm] = React.useState<Form.Info>(() => formQuery.data)
-  const [selectedPageId, setSelectedPageId] = React.useState(() => form.schema.pages[0]?.id ?? null)
-  const [selectedBlockId, setSelectedBlockId] = React.useState(() => form.schema.pages[0]?.blocks[0]?.id ?? null)
+  const [form, setForm] = React.useState<Form.Info>(formQuery.data)
+  const [selectedPageId, setSelectedPageId] = React.useState<string | null>(form.schema.pages[0]?.id ?? null)
+  const [selectedBlockId, setSelectedBlockId] = React.useState<string | null>(null)
   const [activeTab, setActiveTab] = React.useState<'builder' | 'logic'>('builder')
 
   const updateFormMutation = useMutation(updateFormMutationOptions(params.workspaceId, params.id))
@@ -185,6 +184,14 @@ function RouteComponent() {
 
   const handleBlockSelect = (blockId: string | null) => {
     setSelectedBlockId(blockId)
+  }
+
+  const handlePageUpdate = (pageId: string, updates: Partial<Page>) => {
+    const updatedPages = form.schema.pages.map((page) => (page.id === pageId ? { ...page, ...updates } : page))
+    const updatedSchema = { ...form.schema, pages: updatedPages }
+    const updated = { ...form, schema: updatedSchema, published: false }
+    setForm(updated)
+    saveDebouncer.maybeExecute({ schema: updated.schema })
   }
 
   const handleBlocksReorder = (reorderedBlocks: Block[]) => {
@@ -244,103 +251,90 @@ function RouteComponent() {
   }
 
   return (
-    <div className="flex h-screen w-screen">
-      <div className="relative flex h-full min-h-32 w-full flex-col">
-        <Tabs.Root
-          value={activeTab}
-          onValueChange={(value) => setActiveTab(value as 'builder' | 'logic')}
-          className="relative z-10 flex h-full w-full flex-1 flex-col"
-        >
-          <div className="flex h-12 w-full shrink-0 items-center border-b px-4">
-            <div className="flex items-center gap-4">
-              <div className="flex items-center gap-2">
-                <span className="truncate text-sm font-medium">{form.title}</span>
-              </div>
-              <Tabs.List className="rounded-full" variant="default">
-                <Tabs.Trigger className="rounded-full" value="builder">
-                  <LayoutDashboardIcon />
-                </Tabs.Trigger>
-                <Tabs.Trigger className="rounded-full" value="logic">
-                  <GitBranchIcon />
-                </Tabs.Trigger>
-              </Tabs.List>
-            </div>
-            <div className="ml-auto flex items-center justify-end gap-1">
-              <ThemePopover.Root>
-                <ThemePopover.Trigger render={<Button variant="ghost" aria-label="Theme" />}>
-                  Design
-                </ThemePopover.Trigger>
-                <ThemePopover.Content align="end" theme={form.theme} onThemeUpdate={handleThemeUpdate} />
-              </ThemePopover.Root>
-              <Button
-                variant="ghost"
-                render={<Link to="/workspace/$workspaceId/forms/$id/preview" params={params} target="_blank" />}
-              >
-                Preview
-              </Button>
-              <Button
-                disabled={form.published || publishFormMutation.isPending}
-                variant={form.published ? 'ghost' : 'default'}
-                onClick={() => {
-                  publishFormMutation.mutate(undefined, {
-                    onSuccess: () => {
-                      setForm((prev) => ({ ...prev, published: true, publishedAt: new Date() }))
-                    },
-                  })
-                }}
-              >
-                Publish
-              </Button>
-            </div>
+    <div className="flex h-screen w-screen flex-col">
+      <div className="flex h-12 w-full shrink-0 items-center border-b px-4">
+        <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2">
+            <span className="truncate text-sm font-medium">{form.title}</span>
           </div>
-          <Tabs.Content value="builder" className="flex flex-1 overflow-hidden">
-            <Panel className="w-[250px]">
-              <Resizable.PanelGroup direction="vertical">
-                <Resizable.Panel defaultSize={selectedPageId ? 40 : 100} minSize={20}>
-                  <PagesPane
-                    pageSchemas={form.schema.pages}
-                    onPageSelect={handlePageSelect}
-                    onPagesReorder={handlePagesReorder}
-                    onPageAdd={handlePageAdd}
-                    onPageDelete={handlePageDelete}
+        </div>
+        <div className="ml-auto flex items-center justify-end gap-1">
+          <ThemePopover.Root>
+            <ThemePopover.Trigger render={<Button variant="ghost" aria-label="Theme" />}>Design</ThemePopover.Trigger>
+            <ThemePopover.Content align="end" theme={form.theme} onThemeUpdate={handleThemeUpdate} />
+          </ThemePopover.Root>
+          <Button
+            variant="ghost"
+            render={<Link to="/workspace/$workspaceId/forms/$id/preview" params={params} target="_blank" />}
+          >
+            Preview
+          </Button>
+          <Button
+            disabled={form.published || publishFormMutation.isPending}
+            variant={form.published ? 'ghost' : 'default'}
+            onClick={() => {
+              publishFormMutation.mutate(undefined, {
+                onSuccess: () => {
+                  setForm((prev) => ({ ...prev, published: true, publishedAt: new Date() }))
+                },
+              })
+            }}
+          >
+            Publish
+          </Button>
+        </div>
+      </div>
+      <div className="flex flex-1 overflow-hidden">
+        <Panel className="w-[250px]">
+          <Resizable.PanelGroup direction="vertical">
+            <Resizable.Panel defaultSize={selectedPageId ? 40 : 100} minSize={20}>
+              <PagesPane
+                pageSchemas={form.schema.pages}
+                onPageSelect={handlePageSelect}
+                onPagesReorder={handlePagesReorder}
+                onPageAdd={handlePageAdd}
+                onPageDelete={handlePageDelete}
+              />
+            </Resizable.Panel>
+            {selectedPageId && (
+              <React.Fragment>
+                <Resizable.Handle />
+                <Resizable.Panel defaultSize={60} minSize={20}>
+                  <BlocksPane
+                    blockSchemas={selectedPageSchema?.blocks ?? []}
+                    selectedBlockId={selectedBlockId}
+                    onBlockSelect={handleBlockSelect}
+                    onBlocksReorder={handleBlocksReorder}
+                    onBlockAdd={handleBlockAdd}
                   />
                 </Resizable.Panel>
-                {selectedPageId && (
-                  <React.Fragment>
-                    <Resizable.Handle />
-                    <Resizable.Panel defaultSize={60} minSize={20}>
-                      <BlocksPane
-                        blockSchemas={selectedPageSchema?.blocks ?? []}
-                        selectedBlockId={selectedBlockId}
-                        onBlockSelect={handleBlockSelect}
-                        onBlocksReorder={handleBlocksReorder}
-                        onBlockAdd={handleBlockAdd}
-                      />
-                    </Resizable.Panel>
-                  </React.Fragment>
-                )}
-              </Resizable.PanelGroup>
-            </Panel>
-            <Preview
-              page={selectedPageSchema}
-              theme={form.theme}
-              selectedBlockId={selectedBlockId}
-              onBlockSelect={handleBlockSelect}
-            />
-            {selectedBlockSchema && (
-              <Panel className="w-[350px]">
-                <BlockPane
-                  schema={selectedBlockSchema}
-                  onSchemaUpdate={(schema) => handleBlockUpdate(selectedBlockSchema.id, schema)}
-                  onImageUpload={handleImageUpload}
-                />
-              </Panel>
+              </React.Fragment>
             )}
-          </Tabs.Content>
-          <Tabs.Content value="logic" className="flex flex-1 items-center justify-center text-muted-foreground">
-            Funnel logic
-          </Tabs.Content>
-        </Tabs.Root>
+          </Resizable.PanelGroup>
+        </Panel>
+        <Preview
+          page={selectedPageSchema}
+          theme={form.theme}
+          selectedBlockId={selectedBlockId}
+          onBlockSelect={handleBlockSelect}
+        />
+        {selectedBlockSchema ? (
+          <Panel className="w-[350px]">
+            <BlockPane
+              schema={selectedBlockSchema}
+              onSchemaUpdate={(schema) => handleBlockUpdate(selectedBlockSchema.id, schema)}
+              onImageUpload={handleImageUpload}
+            />
+          </Panel>
+        ) : selectedPageSchema ? (
+          <Panel className="w-[350px]">
+            <PagePane
+              pageSchema={selectedPageSchema}
+              pageIndex={form.schema.pages.findIndex((p) => p.id === selectedPageId)}
+              onPageSchemaUpdate={(updates) => handlePageUpdate(selectedPageSchema.id, updates)}
+            />
+          </Panel>
+        ) : null}
       </div>
     </div>
   )

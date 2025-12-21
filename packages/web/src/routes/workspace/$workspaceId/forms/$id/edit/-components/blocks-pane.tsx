@@ -29,7 +29,7 @@ function BlockItem({
       ref={ref}
       className={cn(
         'bg-backround flex h-9 cursor-grab items-center gap-2.5 rounded-lg border border-border px-2.5 transition-all hover:bg-accent',
-        selected && 'bg-muted',
+        selected && 'border-ring bg-background ring-2 ring-ring/50',
       )}
       onClick={onSelect}
     >
