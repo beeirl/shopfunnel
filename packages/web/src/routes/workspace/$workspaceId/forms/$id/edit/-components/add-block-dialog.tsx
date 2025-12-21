@@ -43,7 +43,7 @@ function AddBlockDialogRoot({
 function AddBlockDialogPopup() {
   const { onBlockAdd, setOpen } = useAddBlockDialogContext()
 
-  const blocks = getBlocks()
+  const blocks = getBlocks().filter((b) => b.category === 'display')
   const blockTypes = blocks.map((b) => b.type)
 
   const [highlightedBlockType, setHighlightedBlockType] = React.useState<BlockType | undefined>(blockTypes[0])
@@ -68,7 +68,7 @@ function AddBlockDialogPopup() {
             <SearchIcon className="pointer-events-none absolute left-4.5 size-4 text-muted-foreground" />
             <Combobox.Input
               className="h-full flex-1 bg-transparent pl-10.5 text-sm outline-none placeholder:text-muted-foreground"
-              placeholder="Find questions, input fields and layout options..."
+              placeholder="Find blocks..."
               onKeyDown={(e) => {
                 if (e.key === 'Enter' && highlightedBlockType) {
                   handleBlockAdd(highlightedBlockType)
@@ -114,7 +114,7 @@ function AddBlockDialogPopup() {
                     <Badge variant="secondary" className="mb-4">
                       Preview
                     </Badge>
-                    <Block mode="preview" schema={getBlock(highlightedBlockType)!.previewSchema} />
+                    <Block mode="preview" schema={getBlock(highlightedBlockType)!.previewSchema} selected={false} />
                   </div>
                 </div>
 

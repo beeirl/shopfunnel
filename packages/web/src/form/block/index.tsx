@@ -27,6 +27,7 @@ interface Block {
   type: BlockType
   name: string
   description: string
+  category: 'input' | 'display'
   icon: React.ComponentType<any>
   component: React.ComponentType<any>
   defaultSchema: () => BlockSchema
@@ -38,6 +39,7 @@ const BLOCKS: Block[] = [
     type: 'short_text',
     name: 'Short Text',
     description: `Use this to insert a question combined with a short text answer. Add an answer label or placeholder text for guidance.`,
+    category: 'input',
     icon: MenuIcon,
     component: ShortText,
     defaultSchema: () => ({
@@ -65,6 +67,7 @@ const BLOCKS: Block[] = [
     type: 'multiple_choice',
     name: 'Multiple Choice',
     description: `Use this to insert a question combined with multiple choice answers. Add an answer label or placeholder text for guidance.`,
+    category: 'input',
     icon: ListLettersIcon,
     component: MultipleChoice,
     defaultSchema: () => ({
@@ -96,6 +99,7 @@ const BLOCKS: Block[] = [
     type: 'dropdown',
     name: 'Dropdown',
     description: `A compact way to present many options. Users can select one option from a dropdown menu.`,
+    category: 'input',
     icon: ChevronDownIcon,
     component: Dropdown,
     defaultSchema: () => ({
@@ -127,6 +131,7 @@ const BLOCKS: Block[] = [
     type: 'slider',
     name: 'Slider',
     description: `Allow users to select a value within a range using a slider.`,
+    category: 'input',
     icon: AdjustmentsHorizontalIcon,
     component: Slider,
     defaultSchema: () => ({
@@ -155,6 +160,7 @@ const BLOCKS: Block[] = [
     type: 'heading',
     name: 'Heading',
     description: `Add a title or section header to organize your form and guide users through different sections.`,
+    category: 'display',
     icon: HeadingIcon,
     component: Heading,
     defaultSchema: () => ({
@@ -176,6 +182,7 @@ const BLOCKS: Block[] = [
     type: 'paragraph',
     name: 'Paragraph',
     description: `Add descriptive text to provide context or instructions.`,
+    category: 'display',
     icon: LetterCaseIcon,
     component: Paragraph,
     defaultSchema: () => ({
@@ -197,6 +204,7 @@ const BLOCKS: Block[] = [
     type: 'gauge',
     name: 'Gauge',
     description: `Display a visual gauge to show progress or a value within a range.`,
+    category: 'display',
     icon: GaugeIcon,
     component: Gauge,
     defaultSchema: () => ({
@@ -222,6 +230,7 @@ const BLOCKS: Block[] = [
     type: 'list',
     name: 'List',
     description: `Display a list of items with icons and text. Great for showing features or benefits.`,
+    category: 'display',
     icon: ListDetailsIcon,
     component: List,
     defaultSchema: () => ({
@@ -253,6 +262,7 @@ const BLOCKS: Block[] = [
     type: 'progress',
     name: 'Progress',
     description: `Show users how far along they are in completing the form.`,
+    category: 'display',
     icon: DotsIcon,
     component: Progress,
     defaultSchema: () => ({

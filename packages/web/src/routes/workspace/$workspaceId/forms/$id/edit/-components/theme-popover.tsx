@@ -2,7 +2,7 @@ import { ColorPicker } from '@/components/ui/color-picker'
 import { InputGroup } from '@/components/ui/input-group'
 import { Popover } from '@/components/ui/popover'
 import { Select } from '@/components/ui/select'
-import { RADII, type FormTheme, type FormThemeColors } from '@shopfunnel/core/form/theme'
+import { RADII, type Colors, type FormTheme } from '@shopfunnel/core/form/theme'
 import * as React from 'react'
 import { Field } from './field'
 
@@ -12,7 +12,7 @@ interface ThemePopoverContentProps extends React.ComponentProps<typeof Popover.C
 }
 
 function ThemePopoverContent({ theme, onThemeUpdate, ...props }: ThemePopoverContentProps) {
-  const handleColorChange = (key: keyof FormThemeColors, value: string) => {
+  const handleColorChange = (key: keyof Colors, value: string) => {
     onThemeUpdate({
       colors: {
         ...theme.colors,
