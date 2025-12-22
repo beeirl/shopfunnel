@@ -97,8 +97,8 @@ const PREVIEW_BLOCK_DATA: Record<string, Block> = {
     properties: {
       label: 'How old are you?',
       choices: [
-        { id: '1', label: '20 - 29 Years Old', media: { type: 'image', value: '/img1.png' } },
-        { id: '2', label: '30 - 39 Years Old', media: { type: 'image', value: '/img2.jpg' } },
+        { id: '1', label: '20 - 29 Years Old' },
+        { id: '2', label: '30 - 39 Years Old' },
       ],
     },
     validations: {},
