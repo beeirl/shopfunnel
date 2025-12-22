@@ -40,7 +40,7 @@ export function FormPage(props: FormPageProps) {
               props.mode === 'edit'
                 ? cn(
                     'relative cursor-pointer',
-                    'before:absolute before:-inset-3 before:rounded-lg before:border before:border-transparent before:ring-3 before:ring-transparent before:transition-all hover:before:border-(--sf-color-primary)/50 hover:before:ring-(--sf-color-primary)/20',
+                    'before:absolute before:-inset-2 before:rounded-[calc(var(--sf-radius)+4px)] before:border before:border-transparent before:ring-3 before:ring-transparent before:transition-all hover:before:border-(--sf-color-primary)/50 hover:before:ring-(--sf-color-primary)/20',
                     props.selectedBlockId === block.id &&
                       'before:border-(--sf-color-primary)/40 before:ring-(--sf-color-primary)/25',
                   )

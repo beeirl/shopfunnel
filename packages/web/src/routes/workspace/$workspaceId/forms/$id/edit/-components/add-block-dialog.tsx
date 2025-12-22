@@ -92,6 +92,13 @@ const ADD_BLOCK_DATA = {
     type: 'progress' as const,
     properties: {},
   }),
+  image: () => ({
+    id: ulid(),
+    type: 'image' as const,
+    properties: {
+      aspectRatio: '16/9' as const,
+    },
+  }),
 }
 
 const PREVIEW_BLOCK_DATA: Record<Block['type'], Block> = {
@@ -182,6 +189,13 @@ const PREVIEW_BLOCK_DATA: Record<Block['type'], Block> = {
     id: '',
     type: 'progress',
     properties: {},
+  },
+  image: {
+    id: '',
+    type: 'image',
+    properties: {
+      aspectRatio: '16/9',
+    },
   },
 }
 

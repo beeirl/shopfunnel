@@ -9,11 +9,13 @@ import {
   IconListDetails as ListDetailsIcon,
   IconListLetters as ListLettersIcon,
   IconMenu as MenuIcon,
+  IconPhoto as PhotoIcon,
 } from '@tabler/icons-react'
 import * as React from 'react'
 import { DropdownBlock, DropdownBlockProps } from './blocks/dropdown'
 import { GaugeBlock, GaugeBlockProps } from './blocks/gauge'
 import { HeadingBlock, HeadingBlockProps } from './blocks/heading'
+import { ImageBlock, ImageBlockProps } from './blocks/image'
 import { ListBlock, ListBlockProps } from './blocks/list'
 import { MultipleChoiceBlock, MultipleChoiceBlockProps } from './blocks/multiple-choice'
 import { ParagraphBlock, ParagraphBlockProps } from './blocks/paragraph'
@@ -110,6 +112,14 @@ const FORM_BLOCK_TYPES: FormBlockType[] = [
     category: 'display',
     icon: DotsIcon,
     render: ({ block, ...rest }) => <ProgressBlock {...({ data: block, ...rest } as ProgressBlockProps)} />,
+  },
+  {
+    type: 'image',
+    name: 'Image',
+    description: `Display an image with customizable aspect ratio.`,
+    category: 'display',
+    icon: PhotoIcon,
+    render: ({ block, ...rest }) => <ImageBlock {...({ data: block, ...rest } as ImageBlockProps)} />,
   },
 ]
 

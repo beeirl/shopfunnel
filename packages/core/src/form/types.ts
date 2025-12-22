@@ -123,6 +123,15 @@ export interface ProgressBlock {
   properties: {}
 }
 
+export interface ImageBlock {
+  id: string
+  type: 'image'
+  properties: {
+    url?: string
+    aspectRatio: '16/9' | '4/3' | '1/1' | '3/2'
+  }
+}
+
 export type Block =
   | ShortTextBlock
   | MultipleChoiceBlock
@@ -133,6 +142,7 @@ export type Block =
   | GaugeBlock
   | ListBlock
   | ProgressBlock
+  | ImageBlock
 
 // ============================================
 // Page

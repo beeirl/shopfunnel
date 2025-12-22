@@ -26,7 +26,7 @@ export function GaugeBlock(props: GaugeBlockProps) {
 
         <div className="absolute top-1/2 -translate-x-1/2 -translate-y-1/2" style={{ left: `${percentage}%` }}>
           <div className="absolute bottom-full left-1/2 mb-2 flex -translate-x-1/2 flex-col items-center">
-            <div className="rounded-lg bg-(--sf-color-primary) px-3 py-1.5 text-sm font-medium whitespace-nowrap text-(--sf-color-primary-foreground)">
+            <div className="rounded-[calc(var(--sf-radius)-2px)] bg-(--sf-color-primary) px-3 py-1.5 text-sm font-medium whitespace-nowrap text-(--sf-color-primary-foreground)">
               {tooltipLabel ? `${tooltipLabel} - ${value.toFixed(1)}` : value.toFixed(1)}
             </div>
             <div className="h-0 w-0 border-x-[6px] border-t-[6px] border-x-transparent border-t-(--sf-color-primary)" />
