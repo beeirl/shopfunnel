@@ -62,6 +62,8 @@ export function Form({ form, preview }: FormProps) {
   const [formCompleted, setFormCompleted] = React.useState(false)
 
   React.useEffect(() => {
+    if (preview) return
+
     const storedValues = localStorage.getItem(storageKey)
     if (!storedValues) return
 
@@ -78,7 +80,7 @@ export function Form({ form, preview }: FormProps) {
     } catch {
       // Invalid stored data, ignore
     }
-  }, [storageKey, form])
+  }, [storageKey, form, preview])
 
   function setValue(blockId: string, value: unknown) {
     const currentPageData = form.pages[stateRef.current.currentPageIndex]
@@ -89,7 +91,9 @@ export function Form({ form, preview }: FormProps) {
       ...stateRef.current,
       values: { ...stateRef.current.values, [blockId]: value },
     }
-    localStorage.setItem(storageKey, JSON.stringify(stateRef.current.values))
+    if (!preview) {
+      localStorage.setItem(storageKey, JSON.stringify(stateRef.current.values))
+    }
 
     // Re-evaluate rules with updated values
     const currentPageEvaluation = evaluatePageRules(currentPageData.id, form, stateRef.current)

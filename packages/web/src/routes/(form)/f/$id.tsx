@@ -33,10 +33,8 @@ function RouteComponent() {
   const formQuery = useSuspenseQuery(getFormQueryOptions(params.id))
 
   return (
-    <div className="min-h-screen w-full p-6">
-      <div className="mx-auto max-w-md">
-        <FormComponent form={formQuery.data} />
-      </div>
+    <div className="flex min-h-dvh flex-col">
+      <FormComponent form={formQuery.data} />
     </div>
   )
 }
