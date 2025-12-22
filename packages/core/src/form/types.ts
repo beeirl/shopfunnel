@@ -47,6 +47,7 @@ export interface DropdownBlock {
   properties: {
     label: string
     description?: string
+    placeholder?: string
     options: Array<{
       id: string
       label: string
