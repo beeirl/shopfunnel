@@ -99,6 +99,14 @@ const ADD_BLOCK_DATA = {
       aspectRatio: '16/9' as const,
     },
   }),
+  loader: () => ({
+    id: ulid(),
+    type: 'loader' as const,
+    properties: {
+      description: '',
+      duration: 3,
+    },
+  }),
 }
 
 const PREVIEW_BLOCK_DATA: Record<Block['type'], Block> = {
@@ -195,6 +203,14 @@ const PREVIEW_BLOCK_DATA: Record<Block['type'], Block> = {
     type: 'image',
     properties: {
       aspectRatio: '16/9',
+    },
+  },
+  loader: {
+    id: '',
+    type: 'loader',
+    properties: {
+      description: 'Calculating your personality type...',
+      duration: 3,
     },
   },
 }

@@ -28,7 +28,7 @@ function BlockItem({
     <div
       ref={ref}
       className={cn(
-        'bg-backround flex h-9 cursor-grab items-center gap-2.5 rounded-lg border border-border px-2.5 transition-all hover:border-ring/50',
+        'bg-backround flex h-9 cursor-grab items-center gap-2 rounded-lg border border-border px-2.5 transition-all hover:border-ring/50',
         selected && 'border-ring ring-2 ring-ring/50 hover:border-ring',
       )}
       onClick={onSelect}
@@ -70,7 +70,7 @@ export function BlocksPane({
           </div>
         ) : (
           <DragDropProvider onDragEnd={(event) => onBlocksReorder(move(blocks, event))}>
-            <Pane.Group className="flex flex-col gap-2">
+            <Pane.Group className="flex flex-col gap-1.5">
               {blocks.map((block, index) => (
                 <BlockItem
                   key={block.id}

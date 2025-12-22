@@ -123,6 +123,15 @@ export interface ProgressBlock {
   properties: {}
 }
 
+export interface LoaderBlock {
+  id: string
+  type: 'loader'
+  properties: {
+    description?: string
+    duration: number
+  }
+}
+
 export interface ImageBlock {
   id: string
   type: 'image'
@@ -143,6 +152,7 @@ export type Block =
   | ListBlock
   | ProgressBlock
   | ImageBlock
+  | LoaderBlock
 
 // ============================================
 // Page

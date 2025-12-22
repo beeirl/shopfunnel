@@ -8,6 +8,7 @@ import {
   IconLetterCase as LetterCaseIcon,
   IconListDetails as ListDetailsIcon,
   IconListLetters as ListLettersIcon,
+  IconLoader2 as Loader2Icon,
   IconMenu as MenuIcon,
   IconPhoto as PhotoIcon,
 } from '@tabler/icons-react'
@@ -17,6 +18,7 @@ import { GaugeBlock, GaugeBlockProps } from './blocks/gauge'
 import { HeadingBlock, HeadingBlockProps } from './blocks/heading'
 import { ImageBlock, ImageBlockProps } from './blocks/image'
 import { ListBlock, ListBlockProps } from './blocks/list'
+import { LoaderBlock, LoaderBlockProps } from './blocks/loader'
 import { MultipleChoiceBlock, MultipleChoiceBlockProps } from './blocks/multiple-choice'
 import { ParagraphBlock, ParagraphBlockProps } from './blocks/paragraph'
 import { ProgressBlock, ProgressBlockProps } from './blocks/progress'
@@ -120,6 +122,14 @@ const FORM_BLOCK_TYPES: FormBlockType[] = [
     category: 'display',
     icon: PhotoIcon,
     render: ({ block, ...rest }) => <ImageBlock {...({ data: block, ...rest } as ImageBlockProps)} />,
+  },
+  {
+    type: 'loader',
+    name: 'Loader',
+    description: `Display an animated loading bar that fills up over time.`,
+    category: 'display',
+    icon: Loader2Icon,
+    render: ({ block, ...rest }) => <LoaderBlock {...({ data: block, ...rest } as LoaderBlockProps)} />,
   },
 ]
 

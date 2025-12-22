@@ -18,7 +18,7 @@ export function GaugeBlock(props: GaugeBlockProps) {
     <div className={cn('w-full pt-14', props.index > 0 && 'mt-6')}>
       <div className="relative">
         <div
-          className="h-2.5 w-full rounded-full"
+          className="h-2.5 w-full rounded-[calc(var(--sf-radius)-5px)]"
           style={{
             background: 'linear-gradient(to right, #ef4444, #f97316, #eab308, #22c55e, #06b6d4, #3b82f6)',
           }}
@@ -31,7 +31,7 @@ export function GaugeBlock(props: GaugeBlockProps) {
             </div>
             <div className="h-0 w-0 border-x-[6px] border-t-[6px] border-x-transparent border-t-(--sf-color-primary)" />
           </div>
-          <div className="size-6 rounded-full border-2 border-(--sf-color-primary)/50 bg-(--sf-color-background)" />
+          <div className="size-6 rounded-[calc(var(--sf-radius)-2px)] border-2 border-(--sf-color-primary)/50 bg-(--sf-color-background)" />
         </div>
       </div>
 
