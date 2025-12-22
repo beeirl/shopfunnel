@@ -2,13 +2,13 @@ import { cn } from '@/lib/utils'
 import type { Theme } from '@shopfunnel/core/form/types'
 import * as React from 'react'
 
-export interface FormGroupProps {
+export interface FormRootProps {
   theme: Theme
   children: React.ReactNode
   className?: string
 }
 
-export function FormGroup({ theme, children, className }: FormGroupProps) {
+export function FormRoot({ theme, children, className }: FormRootProps) {
   return (
     <div className={cn('relative', className)}>
       <style>{`

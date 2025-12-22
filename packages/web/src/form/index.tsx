@@ -1,7 +1,7 @@
 import type { Block, ComparisonCondition, Condition, Info, Page, Variables } from '@shopfunnel/core/form/types'
 import { AnimatePresence, motion } from 'motion/react'
 import * as React from 'react'
-import { FormGroup } from './group'
+import { FormRoot } from './group'
 import { FormPage } from './page'
 
 // ============================================
@@ -197,7 +197,7 @@ export function Form({ form, preview }: FormProps) {
   if (formCompleted) return null
 
   return (
-    <FormGroup className="flex flex-1 flex-col" theme={form.theme}>
+    <FormRoot className="flex flex-1 flex-col" theme={form.theme}>
       <AnimatePresence mode="wait">
         <motion.div
           key={currentPage?.page.id}
@@ -211,13 +211,14 @@ export function Form({ form, preview }: FormProps) {
             <FormPage
               page={currentPage.page}
               values={currentPage.values}
+              errors={currentPage.errors}
               onButtonClick={triggerButtonAction}
               onBlockValueChange={setValue}
             />
           )}
         </motion.div>
       </AnimatePresence>
-    </FormGroup>
+    </FormRoot>
   )
 }
 

@@ -1,5 +1,5 @@
 import { Button } from '@/components/ui/button'
-import { FormGroup } from '@/form/group'
+import { FormRoot } from '@/form/group'
 import { FormPage } from '@/form/page'
 import type { Page, Theme } from '@shopfunnel/core/form/types'
 import { IconDeviceDesktop as DesktopIcon, IconDeviceMobile as MobileIcon } from '@tabler/icons-react'
@@ -20,7 +20,7 @@ export function Preview({
 }) {
   const [displayMode, setDisplayMode] = React.useState<DisplayMode>('mobile')
   return (
-    <FormGroup className="relative flex flex-1 flex-col overflow-auto" theme={theme}>
+    <FormRoot className="relative flex flex-1 flex-col overflow-auto" theme={theme}>
       {!page ? (
         <div className="flex flex-col items-center justify-center py-16 text-center">
           <span className="text-lg text-muted-foreground">No blocks on this page</span>
@@ -37,6 +37,6 @@ export function Preview({
         {displayMode === 'desktop' ? <DesktopIcon /> : <MobileIcon />}
         {displayMode === 'desktop' ? 'Desktop' : 'Mobile'}
       </Button>
-    </FormGroup>
+    </FormRoot>
   )
 }
