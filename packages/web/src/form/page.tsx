@@ -33,7 +33,7 @@ export function FormPage(props: FormPageProps) {
       }}
     >
       <div className="flex-1">
-        {props.page.blocks.map((block) => (
+        {props.page.blocks.map((block, index) => (
           <div
             key={block.id}
             className={
@@ -58,6 +58,7 @@ export function FormPage(props: FormPageProps) {
             <FormBlock
               static={props.mode !== 'live'}
               block={block}
+              index={index}
               value={props.mode === 'live' ? props.values[block.id] : undefined}
               onValueChange={props.mode === 'live' ? (value) => props.onBlockValueChange?.(block.id, value) : undefined}
             />
@@ -72,6 +73,7 @@ export function FormPage(props: FormPageProps) {
             'focus:ring-2 focus:ring-(--sf-color-primary) focus:ring-offset-2',
             props.mode !== 'live' && 'pointer-events-none',
           )}
+          disabled={props.mode !== 'live'}
           onClick={props.mode === 'live' ? props.onButtonClick : undefined}
         >
           {props.page.properties.buttonText}

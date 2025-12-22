@@ -101,7 +101,7 @@ export function PagesPane({
           </div>
         ) : (
           <DragDropProvider onDragEnd={(event) => onPagesReorder(move(pages, event))}>
-            <Pane.Group className="flex flex-col gap-1.5">
+            <Pane.Group className="flex flex-col gap-2">
               {pages.map((page, index) => (
                 <PageItem
                   key={page.id}

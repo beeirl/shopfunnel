@@ -90,10 +90,11 @@ export interface GaugeBlock {
   id: string
   type: 'gauge'
   properties: {
-    value: string
+    value: number
+    tooltipLabel?: string
+    marks?: string[]
     minValue?: number
     maxValue?: number
-    step?: number
   }
 }
 

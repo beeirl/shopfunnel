@@ -70,7 +70,7 @@ export function BlocksPane({
           </div>
         ) : (
           <DragDropProvider onDragEnd={(event) => onBlocksReorder(move(blocks, event))}>
-            <Pane.Group className="flex flex-col gap-1.5">
+            <Pane.Group className="flex flex-col gap-2">
               {blocks.map((block, index) => (
                 <BlockItem
                   key={block.id}

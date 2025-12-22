@@ -159,9 +159,9 @@ const PREVIEW_BLOCK_DATA: Record<Block['type'], Block> = {
     id: '',
     type: 'gauge',
     properties: {
-      value: '50',
+      value: 5,
       minValue: 0,
-      maxValue: 100,
+      maxValue: 10,
     },
   },
   list: {

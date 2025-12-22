@@ -24,6 +24,7 @@ import { SliderBlock, SliderBlockProps } from './blocks/slider'
 export interface FormBlockProps {
   static?: boolean
   block: Block
+  index: number
   value?: unknown
   onValueChange?: (value: unknown) => void
 }
