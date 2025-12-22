@@ -21,20 +21,21 @@ export function ShortTextBlock(props: ShortTextBlockProps) {
       <BaseInput
         className={cn(
           // Base
-          'h-14 w-full rounded-(--sf-radius) border px-4 text-base transition-all duration-200 outline-none',
-          'border-(--sf-color-primary)/50 bg-(--sf-color-primary)/15 text-(--sf-color-primary) placeholder:text-(--sf-color-primary-foreground)/50',
+          'h-14 w-full rounded-(--sf-radius) border px-4 text-base transition-all outline-none',
+          'border-(--sf-color-primary)/50 bg-(--sf-color-background) text-(--sf-color-primary) placeholder:text-(--sf-color-primary-foreground)/50',
           // Hover
-          'hover:border-(--sf-color-primary)/70 hover:bg-(--sf-color-primary)/30',
+          'hover:border-(--sf-color-primary)/70',
           // Focus
-          'data-focus:border-2',
+          'focus:border-(--sf-color-primary) focus:ring focus:ring-(--sf-color-primary)',
           // Invalid
           'data-invalid:border-red-500',
           props.static && 'pointer-events-none',
         )}
+        autoFocus
         disabled={props.static}
         placeholder={props.data.properties.placeholder}
         type={props.data.validations.email ? 'email' : 'text'}
-        value={props.static ? undefined : props.value}
+        value={props.static ? undefined : (props.value ?? '')}
         onValueChange={props.static ? undefined : props.onValueChange}
       />
     </Field>

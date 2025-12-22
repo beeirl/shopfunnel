@@ -9,7 +9,9 @@ export function Button({ className, static: isStatic = false, ...props }: Button
   return (
     <BaseButton
       className={cn(
-        'h-12 rounded-(--sf-radius) bg-(--sf-color-primary) text-base font-semibold text-(--sf-color-primary-foreground) not-first:mt-6 hover:bg-(--sf-color-primary)/80',
+        'h-12 rounded-(--sf-radius) text-base font-semibold transition-all outline-none not-first:mt-6',
+        'bg-(--sf-color-primary) text-(--sf-color-primary-foreground) hover:bg-(--sf-color-primary)/90',
+        'focus:ring-2 focus:ring-(--sf-color-primary) focus:ring-offset-2',
         isStatic && 'pointer-events-none',
         className,
       )}

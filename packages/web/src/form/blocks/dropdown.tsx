@@ -30,7 +30,7 @@ export function DropdownBlock(props: DropdownBlockProps) {
           <ChevronDownIcon className={iconClassName} />
         </div>
       ) : (
-        <BaseSelect.Root items={options} value={props.value} onValueChange={props.onValueChange}>
+        <BaseSelect.Root items={options} value={props.value ?? null} onValueChange={props.onValueChange}>
           <BaseSelect.Trigger
             className={cn(triggerClassName, 'transition-colors focus:border-primary focus:outline-none')}
           >

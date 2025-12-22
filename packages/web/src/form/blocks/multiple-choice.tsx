@@ -23,7 +23,7 @@ export function MultipleChoiceBlock(props: MultipleChoiceBlockProps) {
         disallowEmptySelection={props.static ? false : !props.data.properties.multiple}
         selectionMode={props.static ? 'none' : props.data.properties.multiple ? 'multiple' : 'single'}
         selectedKeys={
-          props.static ? undefined : Array.isArray(props.value) ? props.value : props.value ? [props.value] : undefined
+          props.static ? undefined : Array.isArray(props.value) ? props.value : props.value ? [props.value] : []
         }
         onSelectionChange={(selection) => {
           if (props.static || selection === 'all') return
@@ -45,9 +45,19 @@ export function MultipleChoiceBlock(props: MultipleChoiceBlockProps) {
               // Focus
               'data-focused:ring-2 data-focused:ring-(--sf-color-primary) data-focused:ring-offset-2',
               // Selected
-              'data-selected:border-2 data-selected:border-(--sf-color-primary)',
+              'data-selected:border-2 data-selected:border-(--sf-color-primary) data-selected:bg-(--sf-color-background) data-selected:hover:bg-(--sf-color-background)',
               props.static && 'pointer-events-none',
             )}
+            onClick={() => {
+              if (!props.data.properties.multiple && props.value === choice.id) {
+                props.onValueChange?.(choice.id)
+              }
+            }}
+            onPointerDown={(e) => {
+              if (!props.data.properties.multiple && props.value === choice.id) {
+                e.preventDefault()
+              }
+            }}
           >
             {choice.media?.type === 'emoji' && <span className="text-xl">{choice.media.value}</span>}
             <span className="flex-1 text-base font-semibold">{choice.label}</span>
