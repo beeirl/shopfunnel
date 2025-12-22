@@ -45,7 +45,7 @@ export function MultipleChoiceBlock(props: MultipleChoiceBlockProps) {
               // Focus
               'data-focused:ring-2 data-focused:ring-(--sf-color-primary) data-focused:ring-offset-2',
               // Selected
-              'data-selected:border-2 data-selected:border-(--sf-color-primary) data-selected:bg-(--sf-color-background) data-selected:hover:bg-(--sf-color-background)',
+              'data-selected:border-2 data-selected:border-(--sf-color-primary) data-selected:bg-(--sf-color-background) data-selected:hover:border-(--sf-color-primary) data-selected:hover:bg-(--sf-color-background)',
               props.static && 'pointer-events-none',
             )}
             onClick={() => {
