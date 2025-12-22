@@ -5,6 +5,7 @@ import * as React from 'react'
 export interface LoaderBlockProps {
   data: LoaderBlockData
   index: number
+  onComplete?: () => void
 }
 
 // Custom easing keyframes that simulate "calculating" feel
@@ -46,11 +47,21 @@ export function LoaderBlock(props: LoaderBlockProps) {
   const { description, duration } = props.data.properties
 
   const [progress, setProgress] = React.useState(0)
+  const hasCompletedRef = React.useRef(false)
+  const onCompleteRef = React.useRef(props.onComplete)
+
+  // Keep the ref up to date with the latest callback
+  React.useEffect(() => {
+    onCompleteRef.current = props.onComplete
+  }, [props.onComplete])
 
   React.useEffect(() => {
     const durationMs = duration * 1000
     let startTime: number | null = null
     let animationId: number
+
+    // Reset completion tracking when effect re-runs
+    hasCompletedRef.current = false
 
     function animate(currentTime: number) {
       if (startTime === null) {
@@ -65,6 +76,9 @@ export function LoaderBlock(props: LoaderBlockProps) {
 
       if (normalizedTime < 1) {
         animationId = requestAnimationFrame(animate)
+      } else if (!hasCompletedRef.current) {
+        hasCompletedRef.current = true
+        onCompleteRef.current?.()
       }
     }
 

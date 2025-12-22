@@ -11,6 +11,7 @@ import {
   IconFile as FileIcon,
   IconLayoutGrid as LayoutGridIcon,
   IconListLetters as ListLettersIcon,
+  IconLoader as LoaderIcon,
   IconMenu as MenuIcon,
   IconSearch as SearchIcon,
   IconSearchOff as SearchOffIcon,
@@ -66,6 +67,14 @@ const ADD_BLOCK_DATA = {
       required: false,
     },
   }),
+  loader: () => ({
+    id: ulid(),
+    type: 'loader' as const,
+    properties: {
+      description: '',
+      duration: 3,
+    },
+  }),
 }
 
 const PREVIEW_BLOCK_DATA: Record<string, Block> = {
@@ -115,6 +124,14 @@ const PREVIEW_BLOCK_DATA: Record<string, Block> = {
       ],
     },
     validations: {},
+  },
+  loader: {
+    id: '',
+    type: 'loader',
+    properties: {
+      description: 'Calculating your results...',
+      duration: 3,
+    },
   },
 }
 
@@ -182,6 +199,19 @@ const PAGE_TEMPLATES: PageTemplate[] = [
     blocks: ['dropdown'],
     name: 'Dropdown',
     description: 'Present many options in a compact dropdown menu. Ideal for long lists.',
+    defaultPageProperties: {
+      buttonAction: 'next',
+      buttonText: 'Continue',
+      showButton: true,
+    },
+  },
+  {
+    id: 'loader',
+    icon: LoaderIcon,
+    blocks: ['loader'],
+    name: 'Loader',
+    description:
+      'Display a progress indicator that fills up over time. The Continue button is disabled until loading completes.',
     defaultPageProperties: {
       buttonAction: 'next',
       buttonText: 'Continue',

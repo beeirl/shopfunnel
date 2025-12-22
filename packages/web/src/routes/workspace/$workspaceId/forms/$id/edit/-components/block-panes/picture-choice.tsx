@@ -71,7 +71,7 @@ function ChoiceItem({
       </Button>
       <Input
         ref={inputRef}
-        placeholder="Choice label..."
+        placeholder="Choice..."
         value={choice.label}
         onValueChange={(value) => onUpdate({ label: value })}
         onMouseDown={(e) => e.stopPropagation()}
@@ -88,7 +88,7 @@ function ChoiceItem({
       <div />
       <Input
         className="col-span-2"
-        placeholder="Description (optional)..."
+        placeholder="Description..."
         value={choice.description ?? ''}
         onValueChange={(value) => onUpdate({ description: value || undefined })}
         onMouseDown={(e) => e.stopPropagation()}

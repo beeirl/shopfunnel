@@ -2,6 +2,7 @@ import { cn } from '@/lib/utils'
 import { Button as BaseButton } from '@base-ui/react/button'
 import { Form as BaseForm } from '@base-ui/react/form'
 import type { Page } from '@shopfunnel/core/form/types'
+import * as React from 'react'
 import { FormBlock } from './block'
 
 type FormPageProps = {
@@ -23,6 +24,20 @@ type FormPageProps = {
 )
 
 export function FormPage(props: FormPageProps) {
+  // Check if page has a loader block
+  const hasLoader = props.page.blocks.some((block) => block.type === 'loader')
+
+  // Track loader completion state (only relevant in preview/live mode)
+  const [loaderComplete, setLoaderComplete] = React.useState(!hasLoader)
+
+  // Reset loaderComplete when page changes or hasLoader changes
+  React.useEffect(() => {
+    setLoaderComplete(!hasLoader)
+  }, [props.page.id, hasLoader])
+
+  // Button should be disabled if in edit mode, or if there's a loader that hasn't completed
+  const isButtonDisabled = props.mode === 'edit' || (hasLoader && !loaderComplete)
+
   return (
     <BaseForm
       className="mx-auto flex w-full max-w-md flex-1 flex-col px-8 py-11"
@@ -61,6 +76,7 @@ export function FormPage(props: FormPageProps) {
               index={index}
               value={props.mode !== 'edit' ? props.values[block.id] : undefined}
               onValueChange={props.mode !== 'edit' ? (value) => props.onBlockValueChange?.(block.id, value) : undefined}
+              onLoaderComplete={() => setLoaderComplete(true)}
             />
           </div>
         ))}
@@ -71,9 +87,9 @@ export function FormPage(props: FormPageProps) {
             'h-12 rounded-(--sf-radius) text-base font-semibold transition-all outline-none not-first:mt-6',
             'bg-(--sf-color-primary) text-(--sf-color-primary-foreground) hover:bg-(--sf-color-primary)/90',
             'focus-visible:ring-2 focus-visible:ring-(--sf-color-primary) focus-visible:ring-offset-2',
-            props.mode === 'edit' && 'pointer-events-none',
+            isButtonDisabled && 'pointer-events-none opacity-50',
           )}
-          disabled={props.mode === 'edit'}
+          disabled={isButtonDisabled}
           onClick={props.mode !== 'edit' ? props.onButtonClick : undefined}
         >
           {props.page.properties.buttonText}

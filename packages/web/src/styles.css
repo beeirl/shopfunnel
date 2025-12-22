@@ -6,8 +6,8 @@
 @custom-variant dark (&:is(.dark *));
 
 :root {
-  --sf-color-primary: var(--muted);
-  --sf-color-primary-foreground: var(--muted-foreground);
+  --sf-color-primary: var(--primary);
+  --sf-color-primary-foreground: var(--primary-foreground);
   --sf-color-background: var(--background);
   --sf-color-foreground: var(--foreground);
   --sf-radius: var(--radius);

@@ -41,6 +41,12 @@ export default {
         namespace: env.AuthStorage,
       }),
       subjects,
+      allow: async (input) => {
+        const hostname = new URL(input.redirectURI).hostname
+        if (hostname.endsWith('shopfunnel.app')) return true
+        if (hostname === 'localhost') return true
+        return false
+      },
       async success(ctx, response) {
         let subject: string | undefined
         let email: string | undefined
@@ -55,6 +61,8 @@ export default {
 
         if (!email) throw new Error('No email found')
         if (!subject) throw new Error('No subject found')
+
+        if (['christoph@5head.org'].includes(email)) throw new Error('Not allowed')
 
         const accountId = await Account.findOrCreate({
           email,

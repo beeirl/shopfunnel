@@ -29,6 +29,7 @@ export interface FormBlockProps {
   index: number
   value?: unknown
   onValueChange?: (value: unknown) => void
+  onLoaderComplete?: () => void
 }
 
 interface FormBlockType {
@@ -120,7 +121,13 @@ const FORM_BLOCK_TYPES: FormBlockType[] = [
     description: `Display an animated loading bar that fills up over time.`,
     category: 'display',
     icon: LoaderIcon,
-    render: (props: FormBlockProps) => <LoaderBlock {...({ data: props.block, ...props } as LoaderBlockProps)} />,
+    render: (props: FormBlockProps) => (
+      <LoaderBlock
+        data={props.block as LoaderBlockProps['data']}
+        index={props.index}
+        onComplete={props.onLoaderComplete}
+      />
+    ),
   },
 ]
 

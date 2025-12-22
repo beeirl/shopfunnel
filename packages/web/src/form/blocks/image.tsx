@@ -19,7 +19,7 @@ export function ImageBlock(props: ImageBlockProps) {
       style={{ aspectRatio: props.data.properties.aspectRatio }}
     >
       {props.data.properties.url && <img src={props.data.properties.url} alt="" />}
-      {!props.data.properties.url && <PhotoIcon className="size-10 text-(--sf-color-primary-primary) opacity-30" />}
+      {!props.data.properties.url && <PhotoIcon className="size-14 text-(--sf-color-primary) opacity-30" />}
     </div>
   )
 }
