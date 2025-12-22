@@ -6,6 +6,12 @@
 @custom-variant dark (&:is(.dark *));
 
 :root {
+  --sf-color-primary: var(--muted);
+  --sf-color-primary-foreground: var(--muted-foreground);
+  --sf-color-background: var(--background);
+  --sf-color-foreground: var(--foreground);
+  --sf-radius: var(--radius);
+
   --background: oklch(1 0 0);
   --foreground: oklch(0.145 0 0);
   --card: oklch(1 0 0);
