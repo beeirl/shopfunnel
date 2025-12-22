@@ -27,6 +27,7 @@ export interface MultipleChoiceBlock {
     choices: Array<{
       id: string
       label: string
+      description?: string
       media?: {
         type: 'emoji' | 'image'
         value: string

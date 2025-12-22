@@ -1,6 +1,5 @@
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { InputGroup } from '@/components/ui/input-group'
 import { SegmentedControl } from '@/components/ui/segmented-control'
 import { getFormBlockType } from '@/form/block'
 import { move } from '@dnd-kit/helpers'
@@ -37,58 +36,74 @@ function ChoiceItem({
   onImageUpload: (file: File) => Promise<string>
 }) {
   const { ref, handleRef } = useSortable({ id: choice.id, index })
-  const inputGroupRef = React.useRef<HTMLDivElement>(null)
+  const mediaButtonRef = React.useRef<HTMLDivElement>(null)
 
   return (
-    <div ref={ref} className="flex items-center gap-1">
+    <div
+      ref={ref}
+      className="grid grid-cols-[auto_auto_1fr_auto] items-center gap-1 rounded-lg border border-border bg-card p-2"
+    >
       <button
         ref={handleRef}
         type="button"
-        className="cursor-grab touch-none text-muted-foreground hover:text-foreground"
+        className="h-8 cursor-grab touch-none text-muted-foreground hover:text-foreground"
       >
         <GripVerticalIcon className="size-4" />
       </button>
-      <InputGroup.Root className="flex-1" ref={inputGroupRef}>
-        <InputGroup.Addon>
-          <MediaPicker.Root>
-            <MediaPicker.Trigger
-              render={
-                <InputGroup.Button size="icon-xs">
-                  {choice.media ? (
-                    choice.media.type === 'emoji' ? (
-                      choice.media.value
-                    ) : (
-                      <img src={choice.media.value} alt="" className="size-full rounded object-cover" />
-                    )
+      <MediaPicker.Root>
+        <div ref={mediaButtonRef}>
+          <MediaPicker.Trigger
+            render={
+              <Button variant="outline" size="icon" className="overflow-hidden p-0">
+                {choice.media ? (
+                  choice.media.type === 'emoji' ? (
+                    choice.media.value
                   ) : (
-                    <PhotoIcon />
-                  )}
-                </InputGroup.Button>
-              }
-            />
-            <MediaPicker.Content
-              anchor={inputGroupRef}
-              side="left"
-              align="start"
-              onEmojiSelect={(emoji) => onUpdate({ media: { type: 'emoji', value: emoji } })}
-              onImageUpload={async (file) => {
-                const url = await onImageUpload(file)
-                onUpdate({ media: { type: 'image', value: url } })
-              }}
-            />
-          </MediaPicker.Root>
-        </InputGroup.Addon>
-        <InputGroup.Input
-          ref={inputRef}
-          placeholder="Choice label..."
-          value={choice.label}
-          onValueChange={(value) => onUpdate({ label: value })}
-          onMouseDown={(e) => e.stopPropagation()}
+                    <img src={choice.media.value} alt="" className="size-full object-cover" />
+                  )
+                ) : (
+                  <PhotoIcon />
+                )}
+              </Button>
+            }
+          />
+        </div>
+        <MediaPicker.Content
+          anchor={mediaButtonRef}
+          side="left"
+          align="start"
+          onEmojiSelect={(emoji) => onUpdate({ media: { type: 'emoji', value: emoji } })}
+          onImageUpload={async (file) => {
+            const url = await onImageUpload(file)
+            onUpdate({ media: { type: 'image', value: url } })
+          }}
         />
-      </InputGroup.Root>
-      <Button size="icon" variant="ghost" onClick={onDelete} onPointerDown={(e) => e.stopPropagation()}>
+      </MediaPicker.Root>
+      <Input
+        ref={inputRef}
+        placeholder="Choice label..."
+        value={choice.label}
+        onValueChange={(value) => onUpdate({ label: value })}
+        onMouseDown={(e) => e.stopPropagation()}
+      />
+      <Button
+        size="icon"
+        variant="ghost"
+        className="shrink-0"
+        onClick={onDelete}
+        onPointerDown={(e) => e.stopPropagation()}
+      >
         <TrashIcon />
       </Button>
+      <div />
+      <Input
+        className="col-span-2"
+        placeholder="Description (optional)..."
+        value={choice.description ?? ''}
+        onValueChange={(value) => onUpdate({ description: value || undefined })}
+        onMouseDown={(e) => e.stopPropagation()}
+      />
+      <div />
     </div>
   )
 }
@@ -195,7 +210,7 @@ export function MultipleChoiceBlockPane({
             </Button>
           </Pane.GroupHeader>
           <DragDropProvider onDragEnd={(event) => handleChoicesReorder(move(choices, event))}>
-            <div className="flex flex-col gap-1">
+            <div className="flex flex-col gap-2">
               {choices.map((choice, index) => (
                 <ChoiceItem
                   key={choice.id}
@@ -212,9 +227,6 @@ export function MultipleChoiceBlockPane({
               ))}
             </div>
           </DragDropProvider>
-          {choices.length === 0 && (
-            <div className="flex items-center justify-center py-4 text-sm text-muted-foreground">No choices yet</div>
-          )}
         </Pane.Group>
         <Pane.Separator />
         <Pane.Group>
