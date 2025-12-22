@@ -1,6 +1,5 @@
 import type { Block } from '@shopfunnel/core/form/types'
 import {
-  IconAdjustmentsHorizontal as AdjustmentsHorizontalIcon,
   IconChevronDown as ChevronDownIcon,
   IconGauge as GaugeIcon,
   IconHeading as HeadingIcon,
@@ -22,7 +21,6 @@ import { LoaderBlock, LoaderBlockProps } from './blocks/loader'
 import { MultipleChoiceBlock, MultipleChoiceBlockProps } from './blocks/multiple-choice'
 import { ParagraphBlock, ParagraphBlockProps } from './blocks/paragraph'
 import { PictureChoiceBlock, PictureChoiceBlockProps } from './blocks/picture-choice'
-import { SliderBlock, SliderBlockProps } from './blocks/slider'
 import { TextInputBlock, TextInputBlockProps } from './blocks/text-input'
 
 export interface FormBlockProps {
@@ -74,14 +72,6 @@ const FORM_BLOCK_TYPES: FormBlockType[] = [
     category: 'input',
     icon: ChevronDownIcon,
     render: ({ block, ...rest }) => <DropdownBlock {...({ data: block, ...rest } as DropdownBlockProps)} />,
-  },
-  {
-    type: 'slider',
-    name: 'Slider',
-    description: `Allow users to select a value within a range using a slider.`,
-    category: 'input',
-    icon: AdjustmentsHorizontalIcon,
-    render: ({ block, ...rest }) => <SliderBlock {...({ data: block, ...rest } as SliderBlockProps)} />,
   },
   {
     type: 'heading',

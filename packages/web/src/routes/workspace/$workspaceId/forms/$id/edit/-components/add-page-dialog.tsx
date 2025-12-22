@@ -7,7 +7,6 @@ import { cn } from '@/lib/utils'
 import { Combobox } from '@base-ui/react/combobox'
 import type { Block, Page } from '@shopfunnel/core/form/types'
 import {
-  IconAdjustmentsHorizontal as AdjustmentsHorizontalIcon,
   IconChevronDown as ChevronDownIcon,
   IconFile as FileIcon,
   IconLayoutGrid as LayoutGridIcon,
@@ -67,16 +66,6 @@ const ADD_BLOCK_DATA = {
       required: false,
     },
   }),
-  slider: () => ({
-    id: ulid(),
-    type: 'slider' as const,
-    properties: {
-      label: 'Your question here',
-      minValue: 0,
-      maxValue: 100,
-      step: 1,
-    },
-  }),
 }
 
 const PREVIEW_BLOCK_DATA: Record<string, Block> = {
@@ -126,17 +115,6 @@ const PREVIEW_BLOCK_DATA: Record<string, Block> = {
       ],
     },
     validations: {},
-  },
-  slider: {
-    id: '',
-    type: 'slider',
-    properties: {
-      label: 'How satisfied are you?',
-      minValue: 0,
-      maxValue: 100,
-      step: 1,
-      defaultValue: 50,
-    },
   },
 }
 
@@ -204,18 +182,6 @@ const PAGE_TEMPLATES: PageTemplate[] = [
     blocks: ['dropdown'],
     name: 'Dropdown',
     description: 'Present many options in a compact dropdown menu. Ideal for long lists.',
-    defaultPageProperties: {
-      buttonAction: 'next',
-      buttonText: 'Continue',
-      showButton: true,
-    },
-  },
-  {
-    id: 'slider',
-    icon: AdjustmentsHorizontalIcon,
-    blocks: ['slider'],
-    name: 'Slider',
-    description: 'Allow users to select a value within a defined range using a draggable slider.',
     defaultPageProperties: {
       buttonAction: 'next',
       buttonText: 'Continue',

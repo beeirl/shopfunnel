@@ -227,7 +227,7 @@ export function Form({ form, mode = 'live' }: FormProps) {
 // Helper Functions
 // ============================================
 
-const INPUT_BLOCK_TYPES = ['text_input', 'multiple_choice', 'dropdown', 'slider'] as const
+const INPUT_BLOCK_TYPES = ['text_input', 'multiple_choice', 'dropdown'] as const
 
 type InputBlock = Extract<Block, { type: (typeof INPUT_BLOCK_TYPES)[number] }>
 

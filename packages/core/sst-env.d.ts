@@ -6,48 +6,6 @@
 import "sst"
 declare module "sst" {
   export interface Resource {
-    "CLOUDFLARE_API_TOKEN": {
-      "type": "sst.sst.Secret"
-      "value": string
-    }
-    "CLOUDFLARE_DEFAULT_ACCOUNT_ID": {
-      "type": "sst.sst.Secret"
-      "value": string
-    }
-    "CLOUDFLARE_R2_ACCESS_KEY_ID": {
-      "type": "sst.sst.Secret"
-      "value": string
-    }
-    "CLOUDFLARE_R2_SECRET_ACCESS_KEY": {
-      "type": "sst.sst.Secret"
-      "value": string
-    }
-    "Database": {
-      "database": string
-      "host": string
-      "password": string
-      "port": number
-      "type": "sst.sst.Linkable"
-      "username": string
-    }
-    "GOOGLE_CLIENT_ID": {
-      "type": "sst.sst.Secret"
-      "value": string
-    }
-    "Web": {
-      "type": "sst.cloudflare.SolidStart"
-      "url": string
-    }
-  }
-}
-// cloudflare 
-import * as cloudflare from "@cloudflare/workers-types";
-declare module "sst" {
-  export interface Resource {
-    "AuthApi": cloudflare.Service
-    "AuthStorage": cloudflare.KVNamespace
-    "Storage": cloudflare.R2Bucket
-    "StorageWorker": cloudflare.Service
   }
 }
 

@@ -58,16 +58,6 @@ const ADD_BLOCK_DATA = {
       required: false,
     },
   }),
-  slider: () => ({
-    id: ulid(),
-    type: 'slider' as const,
-    properties: {
-      label: 'Your question here',
-      minValue: 0,
-      maxValue: 100,
-      step: 1,
-    },
-  }),
   heading: () => ({
     id: ulid(),
     type: 'heading' as const,
@@ -166,17 +156,6 @@ const PREVIEW_BLOCK_DATA: Record<Block['type'], Block> = {
       ],
     },
     validations: {},
-  },
-  slider: {
-    id: '',
-    type: 'slider',
-    properties: {
-      label: 'How satisfied are you?',
-      minValue: 0,
-      maxValue: 100,
-      step: 1,
-      defaultValue: 50,
-    },
   },
   heading: {
     id: '',

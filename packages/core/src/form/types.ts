@@ -78,19 +78,6 @@ export interface DropdownBlock {
   }
 }
 
-export interface SliderBlock {
-  id: string
-  type: 'slider'
-  properties: {
-    label: string
-    description?: string
-    step?: number
-    defaultValue?: number
-    minValue?: number
-    maxValue?: number
-  }
-}
-
 export interface HeadingBlock {
   id: string
   type: 'heading'
@@ -161,7 +148,6 @@ export type Block =
   | MultipleChoiceBlock
   | PictureChoiceBlock
   | DropdownBlock
-  | SliderBlock
   | HeadingBlock
   | ParagraphBlock
   | GaugeBlock

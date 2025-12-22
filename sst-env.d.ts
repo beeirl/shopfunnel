@@ -5,54 +5,6 @@
 
 declare module "sst" {
   export interface Resource {
-    "AuthApi": {
-      "type": "sst.cloudflare.Worker"
-      "url": string
-    }
-    "AuthStorage": {
-      "namespaceId": string
-      "type": "sst.cloudflare.Kv"
-    }
-    "CLOUDFLARE_API_TOKEN": {
-      "type": "sst.sst.Secret"
-      "value": string
-    }
-    "CLOUDFLARE_DEFAULT_ACCOUNT_ID": {
-      "type": "sst.sst.Secret"
-      "value": string
-    }
-    "CLOUDFLARE_R2_ACCESS_KEY_ID": {
-      "type": "sst.sst.Secret"
-      "value": string
-    }
-    "CLOUDFLARE_R2_SECRET_ACCESS_KEY": {
-      "type": "sst.sst.Secret"
-      "value": string
-    }
-    "Database": {
-      "database": string
-      "host": string
-      "password": string
-      "port": number
-      "type": "sst.sst.Linkable"
-      "username": string
-    }
-    "GOOGLE_CLIENT_ID": {
-      "type": "sst.sst.Secret"
-      "value": string
-    }
-    "Storage": {
-      "name": string
-      "type": "sst.cloudflare.Bucket"
-    }
-    "StorageWorker": {
-      "type": "sst.cloudflare.Worker"
-      "url": string
-    }
-    "Web": {
-      "type": "sst.cloudflare.SolidStart"
-      "url": string
-    }
   }
 }
 /// <reference path="sst-env.d.ts" />
