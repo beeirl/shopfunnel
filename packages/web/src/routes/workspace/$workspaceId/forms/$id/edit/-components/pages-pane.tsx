@@ -45,7 +45,7 @@ function PageItem({
         <AlertDialog.Root>
           <AlertDialog.Trigger
             render={
-              <Button size="icon-sm" variant="ghost">
+              <Button className="opacity-0 group-hover:opacity-100" size="icon-sm" variant="ghost">
                 <TrashIcon />
               </Button>
             }

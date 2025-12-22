@@ -1,3 +1,4 @@
+import { AlertDialog } from '@/components/ui/alert-dialog'
 import { Button } from '@/components/ui/button'
 import { getFormBlockType } from '@/form/block'
 import { cn } from '@/lib/utils'
@@ -5,7 +6,7 @@ import { move } from '@dnd-kit/helpers'
 import { DragDropProvider } from '@dnd-kit/react'
 import { useSortable } from '@dnd-kit/react/sortable'
 import type { Block } from '@shopfunnel/core/form/types'
-import { IconPlus as PlusIcon } from '@tabler/icons-react'
+import { IconPlus as PlusIcon, IconTrash as TrashIcon } from '@tabler/icons-react'
 import { AddBlockDialog } from './add-block-dialog'
 import { Pane } from './pane'
 
@@ -14,11 +15,13 @@ function BlockItem({
   index,
   selected,
   onSelect,
+  onDelete,
 }: {
   data: Block
   index: number
   selected: boolean
   onSelect: () => void
+  onDelete: () => void
 }) {
   const block = getFormBlockType(data.type)
 
@@ -28,13 +31,39 @@ function BlockItem({
     <div
       ref={ref}
       className={cn(
-        'bg-backround flex h-9 cursor-grab items-center gap-2 rounded-lg border border-border px-2.5 transition-all hover:border-ring/50',
+        'bg-backround group flex h-9 cursor-grab items-center gap-2 rounded-lg border border-border pr-1 pl-2.5 transition-all hover:border-ring/50',
         selected && 'border-ring ring-2 ring-ring/50 hover:border-ring',
       )}
       onClick={onSelect}
     >
       <block.icon className="size-4 text-muted-foreground" />
       <span className="flex-1 truncate text-xm font-medium">{block.name}</span>
+      <AlertDialog.Root>
+        <AlertDialog.Trigger
+          render={
+            <Button
+              className="opacity-0 group-hover:opacity-100"
+              size="icon-sm"
+              variant="ghost"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <TrashIcon />
+            </Button>
+          }
+        />
+        <AlertDialog.Content size="sm">
+          <AlertDialog.Header>
+            <AlertDialog.Title>Delete block?</AlertDialog.Title>
+            <AlertDialog.Description>This action cannot be undone.</AlertDialog.Description>
+          </AlertDialog.Header>
+          <AlertDialog.Footer>
+            <AlertDialog.Cancel>Cancel</AlertDialog.Cancel>
+            <AlertDialog.Action variant="destructive" onClick={onDelete}>
+              Delete
+            </AlertDialog.Action>
+          </AlertDialog.Footer>
+        </AlertDialog.Content>
+      </AlertDialog.Root>
     </div>
   )
 }
@@ -45,12 +74,14 @@ export function BlocksPane({
   onBlockSelect,
   onBlocksReorder,
   onBlockAdd,
+  onBlockDelete,
 }: {
   blocks: Block[]
   selectedBlockId: string | null
   onBlockSelect: (blockId: string | null) => void
   onBlocksReorder: (blocks: Block[]) => void
   onBlockAdd: (block: Block) => void
+  onBlockDelete: (blockId: string) => void
 }) {
   return (
     <Pane.Root className="h-full">
@@ -78,6 +109,7 @@ export function BlocksPane({
                   index={index}
                   selected={selectedBlockId === block.id}
                   onSelect={() => onBlockSelect(block.id)}
+                  onDelete={() => onBlockDelete(block.id)}
                 />
               ))}
             </Pane.Group>

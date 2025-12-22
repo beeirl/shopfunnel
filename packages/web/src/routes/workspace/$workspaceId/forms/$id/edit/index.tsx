@@ -218,6 +218,24 @@ function RouteComponent() {
     saveDebouncer.maybeExecute({ pages: updatedForm.pages })
   }
 
+  const handleBlockDelete = (blockId: string) => {
+    if (!selectedPageId) return
+    setForm((prev) => {
+      const updatedPages = prev.pages.map((page) => {
+        if (page.id !== selectedPageId) return page
+        const blockIndex = page.blocks.findIndex((block) => block.id === blockId)
+        const updatedBlocks = page.blocks.filter((block) => block.id !== blockId)
+        const newIndex = Math.max(0, blockIndex - 1)
+        const newSelectedBlock = updatedBlocks[newIndex] ?? null
+        setSelectedBlockId(newSelectedBlock?.id ?? null)
+        return { ...page, blocks: updatedBlocks }
+      })
+      const updated = { ...prev, pages: updatedPages, published: false }
+      saveDebouncer.maybeExecute({ pages: updated.pages })
+      return updated
+    })
+  }
+
   const handleThemeUpdate = (updatedTheme: Partial<Theme>) => {
     const updatedForm = {
       ...form,
@@ -297,6 +315,7 @@ function RouteComponent() {
                     onBlockSelect={handleBlockSelect}
                     onBlocksReorder={handleBlocksReorder}
                     onBlockAdd={handleBlockAdd}
+                    onBlockDelete={handleBlockDelete}
                   />
                 </Resizable.Panel>
               </React.Fragment>
