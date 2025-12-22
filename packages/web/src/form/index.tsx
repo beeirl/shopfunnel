@@ -1,9 +1,8 @@
 import type { Block, ComparisonCondition, Condition, Info, Page, Variables } from '@shopfunnel/core/form/types'
 import { AnimatePresence, motion } from 'motion/react'
 import * as React from 'react'
-import { FormBackdrop } from './backdrop'
+import { FormGroup } from './group'
 import { FormPage } from './page'
-import { FormTheme } from './theme'
 
 // ============================================
 // Types
@@ -36,7 +35,11 @@ interface RuleEvaluationResult {
 // Form Component
 // ============================================
 
-export function Form({ form }: { form: Info }) {
+export interface FormProps {
+  form: Info
+}
+
+export function Form({ form }: FormProps) {
   const storageKey = `form-${form.id}-values`
 
   const stateRef = React.useRef<State>({
@@ -189,11 +192,11 @@ export function Form({ form }: { form: Info }) {
   if (formCompleted) return null
 
   return (
-    <FormTheme theme={form.theme}>
-      <FormBackdrop color={form.theme.colors.background} />
+    <FormGroup className="flex flex-1 flex-col" theme={form.theme}>
       <AnimatePresence mode="wait">
         <motion.div
           key={currentPage?.page.id}
+          className="flex flex-1 flex-col"
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: 20 }}
@@ -210,7 +213,7 @@ export function Form({ form }: { form: Info }) {
           )}
         </motion.div>
       </AnimatePresence>
-    </FormTheme>
+    </FormGroup>
   )
 }
 

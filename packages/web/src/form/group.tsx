@@ -1,14 +1,16 @@
+import { cn } from '@/lib/utils'
 import type { Theme } from '@shopfunnel/core/form/types'
 import * as React from 'react'
 
-interface FormThemeProps {
+export interface FormGroupProps {
   theme: Theme
   children: React.ReactNode
+  className?: string
 }
 
-export function FormTheme({ theme, children }: FormThemeProps) {
+export function FormGroup({ theme, children, className }: FormGroupProps) {
   return (
-    <React.Fragment>
+    <div className={cn('relative', className)}>
       <style>{`
         :root {
           --sf-color-primary: ${theme.colors.primary};
@@ -19,6 +21,7 @@ export function FormTheme({ theme, children }: FormThemeProps) {
         }
       `}</style>
       {children}
-    </React.Fragment>
+      <div className="absolute inset-0 -z-10 bg-(--sf-color-background)" />
+    </div>
   )
 }

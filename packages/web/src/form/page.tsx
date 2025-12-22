@@ -12,7 +12,7 @@ export interface FormPageProps {
 
 export function FormPage(props: FormPageProps) {
   return (
-    <div className="@container flex h-full flex-col">
+    <div className="mx-auto flex w-full max-w-md flex-1 flex-col px-8 py-11">
       <div className="flex-1">
         {props.page.blocks.map((block) => (
           <FormBlock

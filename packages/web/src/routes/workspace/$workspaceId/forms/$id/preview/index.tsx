@@ -41,5 +41,9 @@ function RouteComponent() {
   const formQuery = useSuspenseQuery(getFormQueryOptions(params.workspaceId, params.id))
   const form = formQuery.data
 
-  return <FormComponent form={form} />
+  return (
+    <div className="flex min-h-dvh flex-col">
+      <FormComponent form={form} />
+    </div>
+  )
 }

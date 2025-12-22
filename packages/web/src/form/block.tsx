@@ -28,7 +28,7 @@ export interface FormBlockProps {
   onValueChange?: (value: unknown) => void
 }
 
-interface BlockType {
+interface FormBlockType {
   type: Block['type']
   name: string
   description: string
@@ -37,7 +37,7 @@ interface BlockType {
   render: (props: FormBlockProps) => React.ReactNode
 }
 
-const BLOCK_TYPES: BlockType[] = [
+const FORM_BLOCK_TYPES: FormBlockType[] = [
   {
     type: 'short_text',
     name: 'Short Text',
@@ -113,11 +113,11 @@ const BLOCK_TYPES: BlockType[] = [
 ]
 
 export function getFormBlockType(type: Block['type']) {
-  return BLOCK_TYPES.find((block) => block.type === type)!
+  return FORM_BLOCK_TYPES.find((block) => block.type === type)!
 }
 
 export function getFormBlockTypes() {
-  return BLOCK_TYPES
+  return FORM_BLOCK_TYPES
 }
 
 export function FormBlock(props: FormBlockProps) {
