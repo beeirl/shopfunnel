@@ -241,6 +241,7 @@ function AddPageDialogPopup() {
         highlightItemOnHover={false}
         items={templateIds}
         onItemHighlighted={setHighlightedTemplateId}
+        onValueChange={(_, eventDetails) => eventDetails.cancel()}
       >
         <div className="flex flex-col">
           <div className="relative flex h-12 shrink-0 items-center border-b border-border">
@@ -291,8 +292,8 @@ function AddPageDialogPopup() {
                     <Badge variant="secondary" className="mb-4">
                       Preview
                     </Badge>
-                    {highlightedTemplate.blocks.map((blockType) => (
-                      <FormBlock key={blockType} static block={PREVIEW_BLOCK_DATA[blockType]!} />
+                    {highlightedTemplate.blocks.map((blockType, index) => (
+                      <FormBlock key={blockType} static block={PREVIEW_BLOCK_DATA[blockType]!} index={index} />
                     ))}
                   </div>
                 </div>

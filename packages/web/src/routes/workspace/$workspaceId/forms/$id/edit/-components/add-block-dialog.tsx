@@ -259,6 +259,7 @@ function AddBlockDialogPopup() {
         highlightItemOnHover={false}
         items={blockTypeValues}
         onItemHighlighted={setHighlightedBlockType}
+        onValueChange={(_, eventDetails) => eventDetails.cancel()}
       >
         <div className="flex flex-col">
           <div className="relative flex h-12 shrink-0 items-center border-b border-border">
@@ -313,7 +314,7 @@ function AddBlockDialogPopup() {
                     <Badge variant="secondary" className="mb-4">
                       Preview
                     </Badge>
-                    <FormBlock static block={PREVIEW_BLOCK_DATA[highlightedBlockType]} />
+                    <FormBlock static block={PREVIEW_BLOCK_DATA[highlightedBlockType]} index={0} />
                   </div>
                 </div>
 
