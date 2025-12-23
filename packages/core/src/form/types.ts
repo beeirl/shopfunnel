@@ -47,6 +47,7 @@ export interface PictureChoiceBlock {
   properties: {
     label: string
     description?: string
+    multiple?: boolean
     choices: Array<{
       id: string
       label: string

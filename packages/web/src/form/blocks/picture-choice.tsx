@@ -8,8 +8,8 @@ export interface PictureChoiceBlockProps {
   data: PictureChoiceBlockData
   index: number
   static?: boolean
-  value?: string | null
-  onValueChange?: (value: string | null) => void
+  value?: string | string[] | null
+  onValueChange?: (value: string | string[] | null) => void
 }
 
 export function PictureChoiceBlock(props: PictureChoiceBlockProps) {
@@ -23,12 +23,15 @@ export function PictureChoiceBlock(props: PictureChoiceBlockProps) {
     >
       <ReactAriaListbox
         className="grid grid-cols-2 gap-3"
-        selectionMode={props.static ? 'none' : 'single'}
-        selectedKeys={props.static ? undefined : props.value ? [props.value] : []}
+        disallowEmptySelection={props.static ? false : !props.data.properties.multiple}
+        selectionMode={props.static ? 'none' : props.data.properties.multiple ? 'multiple' : 'single'}
+        selectedKeys={
+          props.static ? undefined : Array.isArray(props.value) ? props.value : props.value ? [props.value] : []
+        }
         onSelectionChange={(selection) => {
           if (props.static || selection === 'all') return
           const value = Array.from(selection) as string[]
-          props.onValueChange?.(value[0] ?? null)
+          props.onValueChange?.(props.data.properties.multiple ? value : (value[0] ?? null))
         }}
       >
         {props.data.properties.choices.map((choice) => (
@@ -36,6 +39,16 @@ export function PictureChoiceBlock(props: PictureChoiceBlockProps) {
             key={choice.id}
             id={choice.id}
             isDisabled={props.static}
+            onClick={() => {
+              if (!props.data.properties.multiple && props.value === choice.id) {
+                props.onValueChange?.(choice.id)
+              }
+            }}
+            onPointerDown={(e) => {
+              if (!props.data.properties.multiple && props.value === choice.id) {
+                e.preventDefault()
+              }
+            }}
             className={cn(
               // Base
               'relative flex cursor-pointer flex-col overflow-hidden rounded-(--sf-radius) bg-(--sf-color-background) transition-all outline-none',
