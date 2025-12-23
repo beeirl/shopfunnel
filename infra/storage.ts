@@ -15,3 +15,7 @@ export const storageWorker = new sst.cloudflare.Worker('StorageWorker', {
     },
   },
 })
+
+export const STORAGE_URL = new sst.Linkable('STORAGE_URL', {
+  properties: { value: storageWorker.url.apply((url) => url!) },
+})

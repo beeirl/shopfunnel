@@ -1,4 +1,4 @@
-import { env } from "cloudflare:workers"
+import { env } from 'cloudflare:workers'
 
 export const Resource = new Proxy(
   {},
@@ -7,8 +7,8 @@ export const Resource = new Proxy(
       if (prop in env) {
         // @ts-expect-error
         const value = env[prop]
-        return typeof value === "string" ? JSON.parse(value) : value
-      } else if (prop === "App") {
+        return typeof value === 'string' ? JSON.parse(value) : value
+      } else if (prop === 'App') {
         // @ts-expect-error
         return JSON.parse(env.SST_RESOURCE_App)
       }

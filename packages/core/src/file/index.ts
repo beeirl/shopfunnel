@@ -57,6 +57,6 @@ export namespace File {
   })
 
   const url = fn(Identifier.schema('file'), (id) => {
-    return `${Resource.StorageWorker.url}/${key(id)}`
+    return `${Resource.STORAGE_URL.value}/${key(id)}`
   })
 }

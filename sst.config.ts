@@ -4,8 +4,8 @@ export default $config({
   app(input) {
     return {
       name: 'shopfunnel',
-      removal: input?.stage === 'production' ? 'retain' : 'remove',
-      protect: ['production'].includes(input?.stage),
+      // removal: input?.stage === 'production' ? 'retain' : 'remove',
+      // protect: ['production'].includes(input?.stage),
       home: 'cloudflare',
       providers: {
         cloudflare: true,
