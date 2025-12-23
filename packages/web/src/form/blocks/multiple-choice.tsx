@@ -40,8 +40,8 @@ export function MultipleChoiceBlock(props: MultipleChoiceBlockProps) {
             isDisabled={props.static}
             className={cn(
               // Base
-              choice.media ? 'min-h-18' : 'min-h-14',
-              'relative flex cursor-pointer items-center overflow-hidden rounded-(--sf-radius) px-4 py-3 text-left text-base transition-all outline-none',
+              choice.media ? 'min-h-18 grid-cols-[auto_1fr]' : 'min-h-14 grid-cols-1',
+              'relative grid cursor-pointer overflow-hidden rounded-(--sf-radius) text-left text-base transition-all outline-none',
               'border border-(--sf-color-primary)/50 bg-(--sf-color-primary)/15 text-(--sf-color-primary)',
               // Hover
               'hover:scale-[1.01] hover:border-(--sf-color-primary)/70 hover:bg-(--sf-color-primary)/30',
@@ -63,14 +63,14 @@ export function MultipleChoiceBlock(props: MultipleChoiceBlockProps) {
             }}
           >
             {choice.media && (
-              <div className="-ml-4 flex aspect-square h-full items-center justify-center">
+              <div className="flex aspect-square h-full items-center justify-center">
                 {choice.media.type === 'emoji' && <span className="text-[2.5rem]">{choice.media.value}</span>}
                 {choice.media.type === 'image' && (
                   <img className="size-full object-cover" src={choice.media.value} alt="" />
                 )}
               </div>
             )}
-            <div className="flex flex-1 flex-col justify-center">
+            <div className="flex flex-col justify-center py-3 pr-4 first:pl-4">
               <span className="text-base font-semibold">{choice.label}</span>
               {choice.description && <span className="text-sm text-(--sf-color-primary)/70">{choice.description}</span>}
             </div>
