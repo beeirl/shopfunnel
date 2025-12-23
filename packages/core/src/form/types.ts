@@ -140,7 +140,6 @@ export interface ImageBlock {
   type: 'image'
   properties: {
     url?: string
-    aspectRatio: '16/9' | '4/3' | '1/1' | '3/2'
   }
 }
 

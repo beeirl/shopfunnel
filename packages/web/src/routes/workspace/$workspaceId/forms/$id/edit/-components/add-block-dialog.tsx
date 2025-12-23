@@ -198,9 +198,7 @@ const PREVIEW_BLOCK_DATA: Record<Block['type'], Block> = {
   image: {
     id: '',
     type: 'image',
-    properties: {
-      aspectRatio: '16/9',
-    },
+    properties: {},
   },
   loader: {
     id: '',
