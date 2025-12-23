@@ -35,6 +35,13 @@ export function FormPage(props: FormPageProps) {
     setLoaderComplete(!hasLoader)
   }, [props.page.id, hasLoader])
 
+  // Auto-advance when loader completes and button is not shown
+  React.useEffect(() => {
+    if (props.mode !== 'edit' && hasLoader && loaderComplete && !props.page.properties.showButton) {
+      props.onButtonClick?.()
+    }
+  }, [props.mode, hasLoader, loaderComplete, props.page.properties.showButton])
+
   // Button should be disabled if in edit mode, or if there's a loader that hasn't completed
   const isButtonDisabled = props.mode === 'edit' || (hasLoader && !loaderComplete)
 
