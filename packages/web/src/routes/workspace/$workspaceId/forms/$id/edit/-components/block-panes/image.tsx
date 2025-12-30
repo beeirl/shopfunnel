@@ -1,5 +1,5 @@
+import { getBlockInfo } from '@/components/block'
 import { Input } from '@/components/ui/input'
-import { getFormBlockType } from '@/form/block'
 import type { ImageBlock as ImageBlockData } from '@shopfunnel/core/form/types'
 import * as React from 'react'
 import { Field } from '../field'
@@ -14,7 +14,7 @@ export function ImageBlockPane({
   onDataUpdate: (data: Partial<ImageBlockData>) => void
   onImageUpload: (file: File) => Promise<string>
 }) {
-  const block = getFormBlockType(data.type)
+  const block = getBlockInfo(data.type)
   const inputRef = React.useRef<HTMLInputElement>(null)
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {

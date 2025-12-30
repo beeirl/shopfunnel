@@ -1,8 +1,8 @@
+import { Block as BlockComponent } from '@/components/block'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Dialog } from '@/components/ui/dialog'
 import { Empty } from '@/components/ui/empty'
-import { FormBlock } from '@/form/block'
 import { cn } from '@/lib/utils'
 import { Combobox } from '@base-ui/react/combobox'
 import type { Block, Page } from '@shopfunnel/core/form/types'
@@ -348,7 +348,7 @@ function AddPageDialogPopup() {
                       Preview
                     </Badge>
                     {highlightedTemplate.blocks.map((blockType, index) => (
-                      <FormBlock key={blockType} static block={PREVIEW_BLOCK_DATA[blockType]!} index={index} />
+                      <BlockComponent key={blockType} static block={PREVIEW_BLOCK_DATA[blockType]!} index={index} />
                     ))}
                   </div>
                 </div>

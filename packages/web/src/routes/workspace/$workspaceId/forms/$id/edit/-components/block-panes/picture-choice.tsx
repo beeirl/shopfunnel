@@ -1,7 +1,7 @@
+import { getBlockInfo } from '@/components/block'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { SegmentedControl } from '@/components/ui/segmented-control'
-import { getFormBlockType } from '@/form/block'
 import { move } from '@dnd-kit/helpers'
 import { DragDropProvider } from '@dnd-kit/react'
 import { useSortable } from '@dnd-kit/react/sortable'
@@ -107,7 +107,7 @@ export function PictureChoiceBlockPane({
   onDataUpdate: (data: Partial<PictureChoiceBlockData>) => void
   onImageUpload: (file: File) => Promise<string>
 }) {
-  const block = getFormBlockType(data.type)
+  const block = getBlockInfo(data.type)
   const choices = data.properties.choices
 
   const choiceInputRefs = React.useRef<Map<string, HTMLInputElement>>(new Map())

@@ -1,7 +1,7 @@
+import { getBlockInfo } from '@/components/block'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { SegmentedControl } from '@/components/ui/segmented-control'
-import { getFormBlockType } from '@/form/block'
 import { move } from '@dnd-kit/helpers'
 import { DragDropProvider } from '@dnd-kit/react'
 import { useSortable } from '@dnd-kit/react/sortable'
@@ -60,7 +60,7 @@ export function DropdownBlockPane({
   data: DropdownBlockData
   onDataUpdate: (data: Partial<DropdownBlockData>) => void
 }) {
-  const block = getFormBlockType(data.type)
+  const block = getBlockInfo(data.type)
   const options = data.properties.options
 
   const optionInputRefs = React.useRef<Map<string, HTMLInputElement>>(new Map())

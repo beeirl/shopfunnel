@@ -1,7 +1,8 @@
-import type { ListBlock as ListBlockData } from '@shopfunnel/core/form/types'
+import type { ListBlock as BlockType } from '@shopfunnel/core/form/types'
 
 export interface ListBlockProps {
-  data: ListBlockData
+  block: BlockType
+  index: number
   static?: boolean
 }
 

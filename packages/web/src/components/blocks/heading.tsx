@@ -1,8 +1,8 @@
 import { cn } from '@/lib/utils'
-import type { HeadingBlock as HeadingBlockData } from '@shopfunnel/core/form/types'
+import type { HeadingBlock as BlockType } from '@shopfunnel/core/form/types'
 
 export interface HeadingBlockProps {
-  data: HeadingBlockData
+  block: BlockType
   index: number
   static?: boolean
 }
@@ -12,11 +12,11 @@ export function HeadingBlock(props: HeadingBlockProps) {
     <div className={cn(props.index > 0 && 'mt-3')}>
       <h2
         className={cn(
-          'text-2xl font-bold tracking-tight text-balance text-(--sf-color-foreground)',
-          props.data.properties.alignment === 'center' && 'text-center',
+          'text-2xl font-bold tracking-tight text-balance text-foreground',
+          props.block.properties.alignment === 'center' && 'text-center',
         )}
       >
-        {props.data.properties.text}
+        {props.block.properties.text}
       </h2>
     </div>
   )

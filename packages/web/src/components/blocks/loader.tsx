@@ -1,15 +1,13 @@
 import { cn } from '@/lib/utils'
-import type { LoaderBlock as LoaderBlockData } from '@shopfunnel/core/form/types'
+import type { LoaderBlock as BlockType } from '@shopfunnel/core/form/types'
 import * as React from 'react'
 
 export interface LoaderBlockProps {
-  data: LoaderBlockData
+  block: BlockType
   index: number
-  onComplete?: () => void
+  onLoadingValueChange?: (value: boolean) => void
 }
 
-// Custom easing keyframes that simulate "calculating" feel
-// Progress jumps quickly then pauses briefly, creating a thinking effect
 const KEYFRAMES = [
   { progress: 0, time: 0 },
   { progress: 15, time: 0.08 },
@@ -25,16 +23,13 @@ const KEYFRAMES = [
 ]
 
 function interpolateProgress(normalizedTime: number): number {
-  // Clamp time to [0, 1]
   const t = Math.max(0, Math.min(1, normalizedTime))
 
-  // Find the two keyframes we're between
   for (let i = 0; i < KEYFRAMES.length - 1; i++) {
     const current = KEYFRAMES[i]!
     const next = KEYFRAMES[i + 1]!
 
     if (t >= current.time && t <= next.time) {
-      // Linear interpolation between keyframes
       const segmentProgress = (t - current.time) / (next.time - current.time)
       return current.progress + (next.progress - current.progress) * segmentProgress
     }
@@ -44,24 +39,25 @@ function interpolateProgress(normalizedTime: number): number {
 }
 
 export function LoaderBlock(props: LoaderBlockProps) {
-  const { description, duration } = props.data.properties
+  const { description, duration } = props.block.properties
 
   const [progress, setProgress] = React.useState(0)
   const hasCompletedRef = React.useRef(false)
-  const onCompleteRef = React.useRef(props.onComplete)
+  const onLoadingChangeRef = React.useRef(props.onLoadingValueChange)
 
-  // Keep the ref up to date with the latest callback
   React.useEffect(() => {
-    onCompleteRef.current = props.onComplete
-  }, [props.onComplete])
+    onLoadingChangeRef.current = props.onLoadingValueChange
+  }, [props.onLoadingValueChange])
 
   React.useEffect(() => {
     const durationMs = duration * 1000
     let startTime: number | null = null
     let animationId: number
 
-    // Reset completion tracking when effect re-runs
     hasCompletedRef.current = false
+
+    // Signal loading started
+    onLoadingChangeRef.current?.(true)
 
     function animate(currentTime: number) {
       if (startTime === null) {
@@ -78,7 +74,8 @@ export function LoaderBlock(props: LoaderBlockProps) {
         animationId = requestAnimationFrame(animate)
       } else if (!hasCompletedRef.current) {
         hasCompletedRef.current = true
-        onCompleteRef.current?.()
+        // Signal loading complete
+        onLoadingChangeRef.current?.(false)
       }
     }
 
@@ -92,7 +89,7 @@ export function LoaderBlock(props: LoaderBlockProps) {
   return (
     <div className={cn('flex w-full flex-col items-center py-6', props.index > 0 && 'mt-6')}>
       <div className="mb-6 text-5xl font-bold text-(--sf-color-foreground)">{progress}%</div>
-      <div className="h-2.5 w-full overflow-hidden rounded-[calc(var(--sf-radius)-5px)] bg-(--sf-color-primary)/20">
+      <div className="h-2.5 w-full overflow-hidden rounded-[calc(var(--sf-radius)-5px)] bg-muted">
         <div
           className="h-full rounded-[calc(var(--sf-radius)-5px)] bg-(--sf-color-primary) transition-[width] duration-75 ease-out"
           style={{ width: `${progress}%` }}

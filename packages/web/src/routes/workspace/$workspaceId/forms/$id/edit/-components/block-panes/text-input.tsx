@@ -1,6 +1,6 @@
+import { getBlockInfo } from '@/components/block'
 import { Input } from '@/components/ui/input'
 import { SegmentedControl } from '@/components/ui/segmented-control'
-import { getFormBlockType } from '@/form/block'
 import type { TextInputBlock as TextInputBlockData } from '@shopfunnel/core/form/types'
 import { Field } from '../field'
 import { Pane } from '../pane'
@@ -12,7 +12,7 @@ export function TextInputBlockPane({
   data: TextInputBlockData
   onDataUpdate: (data: Partial<TextInputBlockData>) => void
 }) {
-  const block = getFormBlockType(data.type)
+  const block = getBlockInfo(data.type)
   return (
     <Pane.Root>
       <Pane.Header>

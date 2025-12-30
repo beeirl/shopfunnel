@@ -1,6 +1,6 @@
+import { getBlockInfo } from '@/components/block'
 import { AlertDialog } from '@/components/ui/alert-dialog'
 import { Button } from '@/components/ui/button'
-import { getFormBlockType } from '@/form/block'
 import { cn } from '@/lib/utils'
 import { move } from '@dnd-kit/helpers'
 import { DragDropProvider } from '@dnd-kit/react'
@@ -23,7 +23,7 @@ function BlockItem({
   onSelect: () => void
   onDelete: () => void
 }) {
-  const block = getFormBlockType(data.type)
+  const block = getBlockInfo(data.type)
 
   const { ref } = useSortable({ id: data.id, index })
 

@@ -1,14 +1,16 @@
+import { Block as BlockComponent, getBlockInfo } from '@/components/block'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Dialog } from '@/components/ui/dialog'
 import { Empty } from '@/components/ui/empty'
-import { FormBlock, getFormBlockType, getFormBlockTypes } from '@/form/block'
 import { cn } from '@/lib/utils'
 import { Combobox } from '@base-ui/react/combobox'
 import type { Block } from '@shopfunnel/core/form/types'
 import { IconSearch as SearchIcon, IconSearchOff as SearchOffIcon } from '@tabler/icons-react'
 import * as React from 'react'
 import { ulid } from 'ulid'
+
+const DISPLAY_BLOCK_TYPES: Block['type'][] = ['heading', 'paragraph', 'gauge', 'list', 'image', 'loader']
 
 const ADD_BLOCK_DATA = {
   text_input: () => ({
@@ -248,10 +250,9 @@ function AddBlockDialogRoot({
 function AddBlockDialogPopup() {
   const { onBlockAdd, setOpen } = useAddBlockDialogContext()
 
-  const blocks = getFormBlockTypes().filter((b) => b.category === 'display')
-  const blockTypeValues = blocks.map((b) => b.type)
-
-  const [highlightedBlockType, setHighlightedBlockType] = React.useState<Block['type'] | undefined>(blockTypeValues[0])
+  const [highlightedBlockType, setHighlightedBlockType] = React.useState<Block['type'] | undefined>(
+    DISPLAY_BLOCK_TYPES[0],
+  )
 
   const handleBlockAdd = (type: Block['type']) => {
     onBlockAdd(ADD_BLOCK_DATA[type]() as Block)
@@ -264,7 +265,7 @@ function AddBlockDialogPopup() {
         inline
         autoHighlight
         highlightItemOnHover={false}
-        items={blockTypeValues}
+        items={DISPLAY_BLOCK_TYPES}
         onItemHighlighted={setHighlightedBlockType}
         onValueChange={(_, eventDetails) => eventDetails.cancel()}
       >
@@ -284,7 +285,7 @@ function AddBlockDialogPopup() {
           <div className="flex h-[650px] max-h-[calc(90vh-48px)]">
             <Combobox.List className="flex w-full flex-col gap-0.5 overflow-y-auto p-2 data-empty:hidden md:max-w-[250px] md:border-r md:border-border">
               {(type: Block['type']) => {
-                const block = getFormBlockType(type)
+                const blockInfo = getBlockInfo(type)
                 return (
                   <Combobox.Item
                     key={type}
@@ -299,8 +300,8 @@ function AddBlockDialogPopup() {
                       highlightedBlockType === type && 'bg-secondary',
                     )}
                   >
-                    <block.icon className="size-4 text-muted-foreground" />
-                    <span className="flex-1 truncate text-sm font-medium">{block.name}</span>
+                    <blockInfo.icon className="size-4 text-muted-foreground" />
+                    <span className="flex-1 truncate text-sm font-medium">{blockInfo.name}</span>
                   </Combobox.Item>
                 )
               }}
@@ -310,18 +311,16 @@ function AddBlockDialogPopup() {
                 <div className="flex flex-1 flex-col overflow-y-auto">
                   <div className="border-b border-border px-6 pt-5 pb-6">
                     <h2 className="mb-2 text-xl font-bold text-foreground">
-                      {getFormBlockType(highlightedBlockType)?.name}
+                      {getBlockInfo(highlightedBlockType).name}
                     </h2>
-                    <p className="text-sm text-muted-foreground">
-                      {getFormBlockType(highlightedBlockType)?.description}
-                    </p>
+                    <p className="text-sm text-muted-foreground">{getBlockInfo(highlightedBlockType).description}</p>
                   </div>
 
                   <div className="flex-1 px-6 pt-5 pb-6">
                     <Badge variant="secondary" className="mb-4">
                       Preview
                     </Badge>
-                    <FormBlock static block={PREVIEW_BLOCK_DATA[highlightedBlockType]} index={0} />
+                    <BlockComponent static block={PREVIEW_BLOCK_DATA[highlightedBlockType]} index={0} />
                   </div>
                 </div>
 

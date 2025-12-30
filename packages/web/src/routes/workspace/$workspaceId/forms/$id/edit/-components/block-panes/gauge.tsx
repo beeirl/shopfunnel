@@ -1,6 +1,6 @@
+import { getBlockInfo } from '@/components/block'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { getFormBlockType } from '@/form/block'
 import type { GaugeBlock as GaugeBlockData } from '@shopfunnel/core/form/types'
 import { IconPlus as PlusIcon, IconTrash as TrashIcon } from '@tabler/icons-react'
 import * as React from 'react'
@@ -14,7 +14,7 @@ export function GaugeBlockPane({
   data: GaugeBlockData
   onDataUpdate: (data: Partial<GaugeBlockData>) => void
 }) {
-  const block = getFormBlockType(data.type)
+  const block = getBlockInfo(data.type)
   const marks = data.properties.marks ?? []
 
   const markInputRefs = React.useRef<Map<number, HTMLInputElement>>(new Map())

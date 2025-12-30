@@ -1,6 +1,6 @@
+import { Form } from '@/components/form'
 import { withActor } from '@/context/auth.withActor'
-import { Form as FormComponent } from '@/form'
-import { Form } from '@shopfunnel/core/form/index'
+import { Form as FormCore } from '@shopfunnel/core/form/index'
 import { Identifier } from '@shopfunnel/core/identifier'
 import { queryOptions, useSuspenseQuery } from '@tanstack/react-query'
 import { createFileRoute, notFound } from '@tanstack/react-router'
@@ -16,7 +16,7 @@ const getForm = createServerFn()
   )
   .handler(({ data }) => {
     return withActor(async () => {
-      const form = await Form.getCurrentVersion(data.formId)
+      const form = await FormCore.getCurrentVersion(data.formId)
       if (!form) throw notFound()
       return form
     }, data.workspaceId)
@@ -43,7 +43,7 @@ function RouteComponent() {
 
   return (
     <div className="flex min-h-dvh flex-col">
-      <FormComponent mode="preview" form={form} />
+      <Form form={form} mode="preview" className="flex flex-1 flex-col" />
     </div>
   )
 }

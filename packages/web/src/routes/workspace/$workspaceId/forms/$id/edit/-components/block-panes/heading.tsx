@@ -1,6 +1,6 @@
+import { getBlockInfo } from '@/components/block'
 import { Input } from '@/components/ui/input'
 import { SegmentedControl } from '@/components/ui/segmented-control'
-import { getFormBlockType } from '@/form/block'
 import type { HeadingBlock as HeadingBlockData } from '@shopfunnel/core/form/types'
 import { IconAlignCenter as AlignCenterIcon, IconAlignLeft as AlignLeftIcon } from '@tabler/icons-react'
 import { Field } from '../field'
@@ -13,7 +13,7 @@ export function HeadingBlockPane({
   data: HeadingBlockData
   onDataUpdate: (data: Partial<HeadingBlockData>) => void
 }) {
-  const block = getFormBlockType(data.type)
+  const block = getBlockInfo(data.type)
   return (
     <Pane.Root>
       <Pane.Header>

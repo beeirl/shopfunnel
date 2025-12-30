@@ -1,14 +1,14 @@
 import { cn } from '@/lib/utils'
-import type { GaugeBlock as GaugeBlockData } from '@shopfunnel/core/form/types'
+import type { GaugeBlock as BlockType } from '@shopfunnel/core/form/types'
 
 export interface GaugeBlockProps {
-  data: GaugeBlockData
+  block: BlockType
   index: number
   static?: boolean
 }
 
 export function GaugeBlock(props: GaugeBlockProps) {
-  const { value: rawValue, tooltipLabel, marks, minValue = 0, maxValue = 10 } = props.data.properties
+  const { value: rawValue, tooltipLabel, marks, minValue = 0, maxValue = 10 } = props.block.properties
 
   const value = typeof rawValue === 'number' && !Number.isNaN(rawValue) ? rawValue : 0
   const range = maxValue - minValue
@@ -18,7 +18,7 @@ export function GaugeBlock(props: GaugeBlockProps) {
     <div className={cn('w-full pt-14', props.index > 0 && 'mt-6')}>
       <div className="relative">
         <div
-          className="h-2.5 w-full rounded-[calc(var(--sf-radius)-5px)]"
+          className="h-2.5 w-full rounded-[calc(var(--radius)-5px)]"
           style={{
             background: 'linear-gradient(to right, #ef4444, #f97316, #eab308, #22c55e, #06b6d4, #3b82f6)',
           }}
@@ -26,18 +26,18 @@ export function GaugeBlock(props: GaugeBlockProps) {
 
         <div className="absolute top-1/2 -translate-x-1/2 -translate-y-1/2" style={{ left: `${percentage}%` }}>
           <div className="absolute bottom-full left-1/2 mb-2 flex -translate-x-1/2 flex-col items-center">
-            <div className="rounded-[calc(var(--sf-radius)-2px)] bg-(--sf-color-primary) px-3 py-1.5 text-sm font-medium whitespace-nowrap text-(--sf-color-primary-foreground)">
+            <div className="rounded-[calc(var(--radius)-2px)] bg-foreground px-3 py-1.5 text-sm font-medium whitespace-nowrap text-background">
               {tooltipLabel ? `${tooltipLabel} - ${value.toFixed(1)}` : value.toFixed(1)}
             </div>
-            <div className="h-0 w-0 border-x-[6px] border-t-[6px] border-x-transparent border-t-(--sf-color-primary)" />
+            <div className="h-0 w-0 border-x-[6px] border-t-[6px] border-x-transparent border-t-foreground" />
           </div>
-          <div className="size-6 rounded-[calc(var(--sf-radius)-2px)] border-2 border-(--sf-color-primary)/50 bg-(--sf-color-background)" />
+          <div className="size-6 rounded-full border-2 border-border bg-background" />
         </div>
       </div>
 
       <div className="mt-3 flex h-4 items-center justify-between">
         {marks?.map((mark, index) => (
-          <span key={index} className="text-xs font-medium tracking-wide text-foreground/50 uppercase">
+          <span key={index} className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
             {mark}
           </span>
         ))}

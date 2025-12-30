@@ -1,6 +1,6 @@
+import { getBlockInfo } from '@/components/block'
 import { SegmentedControl } from '@/components/ui/segmented-control'
 import { Textarea } from '@/components/ui/textarea'
-import { getFormBlockType } from '@/form/block'
 import type { ParagraphBlock as ParagraphBlockData } from '@shopfunnel/core/form/types'
 import { IconAlignCenter as AlignCenterIcon, IconAlignLeft as AlignLeftIcon } from '@tabler/icons-react'
 import { Field } from '../field'
@@ -13,7 +13,7 @@ export function ParagraphBlockPane({
   data: ParagraphBlockData
   onDataUpdate: (data: Partial<ParagraphBlockData>) => void
 }) {
-  const block = getFormBlockType(data.type)
+  const block = getBlockInfo(data.type)
   return (
     <Pane.Root>
       <Pane.Header>

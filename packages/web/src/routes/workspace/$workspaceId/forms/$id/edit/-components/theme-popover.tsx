@@ -110,6 +110,34 @@ function ThemePopoverContent({ theme, onThemeUpdate, onImageUpload, ...props }: 
           </Field.Control>
         </Field.Root>
         <Field.Root className="px-0">
+          <Field.Label>Accent text</Field.Label>
+          <Field.Control>
+            <InputGroup.Root>
+              <InputGroup.Addon>
+                <ColorPicker.Root>
+                  <ColorPicker.Trigger
+                    render={
+                      <InputGroup.Button
+                        size="icon-xs"
+                        variant="outline"
+                        style={{ backgroundColor: theme.colors.primaryForeground }}
+                      />
+                    }
+                  />
+                  <ColorPicker.Content
+                    value={theme.colors.primaryForeground}
+                    onValueChange={(value) => handleColorChange('primaryForeground', value)}
+                  />
+                </ColorPicker.Root>
+              </InputGroup.Addon>
+              <InputGroup.Input
+                value={theme.colors.primaryForeground}
+                onChange={(e) => handleColorChange('primaryForeground', e.target.value)}
+              />
+            </InputGroup.Root>
+          </Field.Control>
+        </Field.Root>
+        <Field.Root className="px-0">
           <Field.Label>Background</Field.Label>
           <Field.Control>
             <InputGroup.Root>

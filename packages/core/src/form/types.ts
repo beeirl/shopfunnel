@@ -178,6 +178,23 @@ export type Variables = Record<string, string | number>
 // ============================================
 // Rules & Conditions
 // ============================================
+//
+// Rules define conditional logic that is evaluated when the user navigates
+// away from a page (e.g., presses the "next" button). Each rule is associated
+// with a specific page via `pageId`.
+//
+// Evaluation Flow:
+// 1. User completes a page and triggers navigation
+// 2. The rule for the current page is found and evaluated
+// 3. Each action's condition is checked against current block values and variables
+// 4. Matching actions are executed in order:
+//    - `jump`: Determines which page to navigate to (overrides sequential navigation)
+//    - `hide`: Marks blocks to be hidden on the DESTINATION page (not the current page)
+//    - Math ops (add, subtract, multiply, divide, set): Update variable values
+// 5. Navigation occurs to the determined page with updated state
+//
+// Important: Hide actions reference block IDs on the NEXT page, not the current page.
+// This allows conditional display of content based on previous answers.
 
 export interface LogicalCondition {
   op: 'and' | 'or'
@@ -194,18 +211,31 @@ export interface ComparisonCondition {
 
 export type Condition = ComparisonCondition | LogicalCondition
 
+/**
+ * An action to execute when its condition is met.
+ *
+ * Action types:
+ * - `jump`: Navigate to a specific page (uses `details.to`)
+ * - `hide`: Hide a block on the destination page (uses `details.target` with type 'block')
+ * - `add`, `subtract`, `multiply`, `divide`, `set`: Perform math on a variable
+ *   (uses `details.target` with type 'variable' and `details.value`)
+ */
 export interface RuleAction {
   type: 'jump' | 'hide' | 'add' | 'subtract' | 'multiply' | 'divide' | 'set'
+  /** The condition that must be true for this action to execute */
   condition: Condition
   details: {
+    /** Target page for 'jump' actions */
     to?: {
       type: 'page'
       value: string
     }
+    /** Target block (for 'hide') or variable (for math operations) */
     target?: {
       type: 'block' | 'variable'
       value: string
     }
+    /** Value to use in math operations */
     value?: {
       type: 'constant' | 'variable'
       value: number
@@ -213,8 +243,14 @@ export interface RuleAction {
   }
 }
 
+/**
+ * A rule associated with a specific page, evaluated when the user leaves that page.
+ * Contains a list of actions that are executed if their conditions are met.
+ */
 export interface Rule {
+  /** The page this rule belongs to (evaluated when leaving this page) */
   pageId: string
+  /** Actions to evaluate and potentially execute */
   actions: RuleAction[]
 }
 

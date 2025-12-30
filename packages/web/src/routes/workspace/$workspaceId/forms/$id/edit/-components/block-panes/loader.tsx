@@ -1,5 +1,5 @@
+import { getBlockInfo } from '@/components/block'
 import { Input } from '@/components/ui/input'
-import { getFormBlockType } from '@/form/block'
 import type { LoaderBlock as LoaderBlockData } from '@shopfunnel/core/form/types'
 import { Pane } from '../pane'
 
@@ -10,7 +10,7 @@ export function LoaderBlockPane({
   data: LoaderBlockData
   onDataUpdate: (data: Partial<LoaderBlockData>) => void
 }) {
-  const block = getFormBlockType(data.type)
+  const block = getBlockInfo(data.type)
   return (
     <Pane.Root>
       <Pane.Header>
