@@ -34,7 +34,7 @@ export const Route = createFileRoute('/workspace/$workspaceId/forms/$id/_layout'
 const menuItems = [
   { title: 'Edit', linkOptions: linkOptions({ from: Route.fullPath, to: './edit' }) },
   { title: 'Insights', linkOptions: linkOptions({ from: Route.fullPath, to: './insights' }) },
-  { title: 'Results', linkOptions: linkOptions({ from: Route.fullPath, to: './results' }) },
+  { title: 'Responses', linkOptions: linkOptions({ from: Route.fullPath, to: './responses' }) },
 ]
 
 function RouteComponent() {

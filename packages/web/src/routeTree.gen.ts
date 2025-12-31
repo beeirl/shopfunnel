@@ -19,7 +19,7 @@ import { Route as WorkspaceWorkspaceIdDashboardRouteRouteImport } from './routes
 import { Route as WorkspaceWorkspaceIdDashboardIndexRouteImport } from './routes/workspace/$workspaceId/_dashboard/index'
 import { Route as WorkspaceWorkspaceIdFormsIdLayoutRouteRouteImport } from './routes/workspace/$workspaceId/forms/$id/_layout/route'
 import { Route as WorkspaceWorkspaceIdFormsIdPreviewIndexRouteImport } from './routes/workspace/$workspaceId/forms/$id/preview/index'
-import { Route as WorkspaceWorkspaceIdFormsIdLayoutResultsRouteImport } from './routes/workspace/$workspaceId/forms/$id/_layout/results'
+import { Route as WorkspaceWorkspaceIdFormsIdLayoutResponsesRouteImport } from './routes/workspace/$workspaceId/forms/$id/_layout/responses'
 import { Route as WorkspaceWorkspaceIdFormsIdLayoutInsightsRouteImport } from './routes/workspace/$workspaceId/forms/$id/_layout/insights'
 import { Route as WorkspaceWorkspaceIdFormsIdLayoutEditIndexRouteImport } from './routes/workspace/$workspaceId/forms/$id/_layout/edit/index'
 
@@ -77,10 +77,10 @@ const WorkspaceWorkspaceIdFormsIdPreviewIndexRoute =
     path: '/forms/$id/preview/',
     getParentRoute: () => WorkspaceWorkspaceIdRouteRoute,
   } as any)
-const WorkspaceWorkspaceIdFormsIdLayoutResultsRoute =
-  WorkspaceWorkspaceIdFormsIdLayoutResultsRouteImport.update({
-    id: '/results',
-    path: '/results',
+const WorkspaceWorkspaceIdFormsIdLayoutResponsesRoute =
+  WorkspaceWorkspaceIdFormsIdLayoutResponsesRouteImport.update({
+    id: '/responses',
+    path: '/responses',
     getParentRoute: () => WorkspaceWorkspaceIdFormsIdLayoutRouteRoute,
   } as any)
 const WorkspaceWorkspaceIdFormsIdLayoutInsightsRoute =
@@ -106,7 +106,7 @@ export interface FileRoutesByFullPath {
   '/workspace/$workspaceId/': typeof WorkspaceWorkspaceIdDashboardIndexRoute
   '/workspace/$workspaceId/forms/$id': typeof WorkspaceWorkspaceIdFormsIdLayoutRouteRouteWithChildren
   '/workspace/$workspaceId/forms/$id/insights': typeof WorkspaceWorkspaceIdFormsIdLayoutInsightsRoute
-  '/workspace/$workspaceId/forms/$id/results': typeof WorkspaceWorkspaceIdFormsIdLayoutResultsRoute
+  '/workspace/$workspaceId/forms/$id/responses': typeof WorkspaceWorkspaceIdFormsIdLayoutResponsesRoute
   '/workspace/$workspaceId/forms/$id/preview': typeof WorkspaceWorkspaceIdFormsIdPreviewIndexRoute
   '/workspace/$workspaceId/forms/$id/edit': typeof WorkspaceWorkspaceIdFormsIdLayoutEditIndexRoute
 }
@@ -119,7 +119,7 @@ export interface FileRoutesByTo {
   '/f/$id': typeof formFIdRoute
   '/workspace/$workspaceId/forms/$id': typeof WorkspaceWorkspaceIdFormsIdLayoutRouteRouteWithChildren
   '/workspace/$workspaceId/forms/$id/insights': typeof WorkspaceWorkspaceIdFormsIdLayoutInsightsRoute
-  '/workspace/$workspaceId/forms/$id/results': typeof WorkspaceWorkspaceIdFormsIdLayoutResultsRoute
+  '/workspace/$workspaceId/forms/$id/responses': typeof WorkspaceWorkspaceIdFormsIdLayoutResponsesRoute
   '/workspace/$workspaceId/forms/$id/preview': typeof WorkspaceWorkspaceIdFormsIdPreviewIndexRoute
   '/workspace/$workspaceId/forms/$id/edit': typeof WorkspaceWorkspaceIdFormsIdLayoutEditIndexRoute
 }
@@ -135,7 +135,7 @@ export interface FileRoutesById {
   '/workspace/$workspaceId/_dashboard/': typeof WorkspaceWorkspaceIdDashboardIndexRoute
   '/workspace/$workspaceId/forms/$id/_layout': typeof WorkspaceWorkspaceIdFormsIdLayoutRouteRouteWithChildren
   '/workspace/$workspaceId/forms/$id/_layout/insights': typeof WorkspaceWorkspaceIdFormsIdLayoutInsightsRoute
-  '/workspace/$workspaceId/forms/$id/_layout/results': typeof WorkspaceWorkspaceIdFormsIdLayoutResultsRoute
+  '/workspace/$workspaceId/forms/$id/_layout/responses': typeof WorkspaceWorkspaceIdFormsIdLayoutResponsesRoute
   '/workspace/$workspaceId/forms/$id/preview/': typeof WorkspaceWorkspaceIdFormsIdPreviewIndexRoute
   '/workspace/$workspaceId/forms/$id/_layout/edit/': typeof WorkspaceWorkspaceIdFormsIdLayoutEditIndexRoute
 }
@@ -151,7 +151,7 @@ export interface FileRouteTypes {
     | '/workspace/$workspaceId/'
     | '/workspace/$workspaceId/forms/$id'
     | '/workspace/$workspaceId/forms/$id/insights'
-    | '/workspace/$workspaceId/forms/$id/results'
+    | '/workspace/$workspaceId/forms/$id/responses'
     | '/workspace/$workspaceId/forms/$id/preview'
     | '/workspace/$workspaceId/forms/$id/edit'
   fileRoutesByTo: FileRoutesByTo
@@ -164,7 +164,7 @@ export interface FileRouteTypes {
     | '/f/$id'
     | '/workspace/$workspaceId/forms/$id'
     | '/workspace/$workspaceId/forms/$id/insights'
-    | '/workspace/$workspaceId/forms/$id/results'
+    | '/workspace/$workspaceId/forms/$id/responses'
     | '/workspace/$workspaceId/forms/$id/preview'
     | '/workspace/$workspaceId/forms/$id/edit'
   id:
@@ -179,7 +179,7 @@ export interface FileRouteTypes {
     | '/workspace/$workspaceId/_dashboard/'
     | '/workspace/$workspaceId/forms/$id/_layout'
     | '/workspace/$workspaceId/forms/$id/_layout/insights'
-    | '/workspace/$workspaceId/forms/$id/_layout/results'
+    | '/workspace/$workspaceId/forms/$id/_layout/responses'
     | '/workspace/$workspaceId/forms/$id/preview/'
     | '/workspace/$workspaceId/forms/$id/_layout/edit/'
   fileRoutesById: FileRoutesById
@@ -265,11 +265,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof WorkspaceWorkspaceIdFormsIdPreviewIndexRouteImport
       parentRoute: typeof WorkspaceWorkspaceIdRouteRoute
     }
-    '/workspace/$workspaceId/forms/$id/_layout/results': {
-      id: '/workspace/$workspaceId/forms/$id/_layout/results'
-      path: '/results'
-      fullPath: '/workspace/$workspaceId/forms/$id/results'
-      preLoaderRoute: typeof WorkspaceWorkspaceIdFormsIdLayoutResultsRouteImport
+    '/workspace/$workspaceId/forms/$id/_layout/responses': {
+      id: '/workspace/$workspaceId/forms/$id/_layout/responses'
+      path: '/responses'
+      fullPath: '/workspace/$workspaceId/forms/$id/responses'
+      preLoaderRoute: typeof WorkspaceWorkspaceIdFormsIdLayoutResponsesRouteImport
       parentRoute: typeof WorkspaceWorkspaceIdFormsIdLayoutRouteRoute
     }
     '/workspace/$workspaceId/forms/$id/_layout/insights': {
@@ -306,7 +306,7 @@ const WorkspaceWorkspaceIdDashboardRouteRouteWithChildren =
 
 interface WorkspaceWorkspaceIdFormsIdLayoutRouteRouteChildren {
   WorkspaceWorkspaceIdFormsIdLayoutInsightsRoute: typeof WorkspaceWorkspaceIdFormsIdLayoutInsightsRoute
-  WorkspaceWorkspaceIdFormsIdLayoutResultsRoute: typeof WorkspaceWorkspaceIdFormsIdLayoutResultsRoute
+  WorkspaceWorkspaceIdFormsIdLayoutResponsesRoute: typeof WorkspaceWorkspaceIdFormsIdLayoutResponsesRoute
   WorkspaceWorkspaceIdFormsIdLayoutEditIndexRoute: typeof WorkspaceWorkspaceIdFormsIdLayoutEditIndexRoute
 }
 
@@ -314,8 +314,8 @@ const WorkspaceWorkspaceIdFormsIdLayoutRouteRouteChildren: WorkspaceWorkspaceIdF
   {
     WorkspaceWorkspaceIdFormsIdLayoutInsightsRoute:
       WorkspaceWorkspaceIdFormsIdLayoutInsightsRoute,
-    WorkspaceWorkspaceIdFormsIdLayoutResultsRoute:
-      WorkspaceWorkspaceIdFormsIdLayoutResultsRoute,
+    WorkspaceWorkspaceIdFormsIdLayoutResponsesRoute:
+      WorkspaceWorkspaceIdFormsIdLayoutResponsesRoute,
     WorkspaceWorkspaceIdFormsIdLayoutEditIndexRoute:
       WorkspaceWorkspaceIdFormsIdLayoutEditIndexRoute,
   }
