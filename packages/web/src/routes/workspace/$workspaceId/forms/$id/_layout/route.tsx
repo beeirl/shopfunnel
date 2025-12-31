@@ -50,7 +50,7 @@ function RouteComponent() {
     <div className="flex h-screen w-screen flex-col">
       <div className="grid h-12 w-full shrink-0 grid-cols-3 items-center border-b px-4">
         <div className="flex items-center">
-          <span className="truncate text-sm font-medium">{form.title}</span>
+          <span className="truncate text-sm font-medium">Shopfunnel</span>
         </div>
         <div className="flex items-center justify-center gap-1">
           {menuItems.map((item, index) => (
