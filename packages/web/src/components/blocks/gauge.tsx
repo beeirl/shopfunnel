@@ -1,5 +1,5 @@
 import { cn } from '@/lib/utils'
-import type { GaugeBlock as BlockType } from '@shopfunnel/core/form/types'
+import type { GaugeBlock as BlockType } from '@shopfunnel/core/quiz/types'
 
 export interface GaugeBlockProps {
   block: BlockType

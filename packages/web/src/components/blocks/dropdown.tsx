@@ -1,6 +1,6 @@
 import { cn } from '@/lib/utils'
 import { Select as BaseSelect } from '@base-ui/react/select'
-import type { DropdownBlock as BlockType } from '@shopfunnel/core/form/types'
+import type { DropdownBlock as BlockType } from '@shopfunnel/core/quiz/types'
 import { IconCheck as CheckIcon, IconChevronDown as ChevronDownIcon } from '@tabler/icons-react'
 
 export interface DropdownBlockProps {

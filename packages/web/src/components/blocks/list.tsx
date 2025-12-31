@@ -1,4 +1,4 @@
-import type { ListBlock as BlockType } from '@shopfunnel/core/form/types'
+import type { ListBlock as BlockType } from '@shopfunnel/core/quiz/types'
 
 export interface ListBlockProps {
   block: BlockType

@@ -8,7 +8,7 @@ export namespace Identifier {
     billing: 'bil',
     field: 'fld',
     file: 'fil',
-    form: 'frm',
+    quiz: 'qiz',
     theme: 'thm',
     submission: 'sub',
     usage: 'usg',

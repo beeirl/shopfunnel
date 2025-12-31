@@ -7,38 +7,38 @@ import { Button } from '@/components/ui/button'
 import { Empty } from '@/components/ui/empty'
 import { Item } from '@/components/ui/item'
 import { withActor } from '@/context/auth.withActor'
-import { Form } from '@shopfunnel/core/form/index'
 import { Identifier } from '@shopfunnel/core/identifier'
+import { Quiz } from '@shopfunnel/core/quiz/index'
 import { Heading } from './-components/heading'
 
-const listForms = createServerFn()
+const listQuizzes = createServerFn()
   .inputValidator(Identifier.schema('workspace'))
   .handler(({ data: workspaceId }) => {
-    return withActor(() => Form.list(), workspaceId)
+    return withActor(() => Quiz.list(), workspaceId)
   })
 
-const listFormsQueryOptions = (workspaceId: string) =>
+const listQuizzesQueryOptions = (workspaceId: string) =>
   queryOptions({
-    queryKey: ['forms', workspaceId],
-    queryFn: () => listForms({ data: workspaceId }),
+    queryKey: ['quizzes', workspaceId],
+    queryFn: () => listQuizzes({ data: workspaceId }),
   })
 
-const createForm = createServerFn({ method: 'POST' })
+const createQuiz = createServerFn({ method: 'POST' })
   .inputValidator(Identifier.schema('workspace'))
   .handler(({ data: workspaceId }) => {
-    return withActor(() => Form.create(), workspaceId)
+    return withActor(() => Quiz.create(), workspaceId)
   })
 
-const createFormMutationOptions = (workspaceId: string) =>
+const createQuizMutationOptions = (workspaceId: string) =>
   mutationOptions({
-    mutationFn: () => createForm({ data: workspaceId }),
+    mutationFn: () => createQuiz({ data: workspaceId }),
   })
 
 export const Route = createFileRoute('/workspace/$workspaceId/_dashboard/')({
   component: RouteComponent,
   ssr: false,
   loader: async ({ context, params }) => {
-    await context.queryClient.ensureQueryData(listFormsQueryOptions(params.workspaceId))
+    await context.queryClient.ensureQueryData(listQuizzesQueryOptions(params.workspaceId))
   },
 })
 
@@ -47,18 +47,18 @@ function RouteComponent() {
   const navigate = Route.useNavigate()
   const queryClient = useQueryClient()
 
-  const listFormsQuery = useSuspenseQuery(listFormsQueryOptions(params.workspaceId))
-  const forms = listFormsQuery.data ?? []
+  const listQuizzesQuery = useSuspenseQuery(listQuizzesQueryOptions(params.workspaceId))
+  const quizzes = listQuizzesQuery.data ?? []
 
-  const createFormMutation = useMutation(createFormMutationOptions(params.workspaceId))
+  const createQuizMutation = useMutation(createQuizMutationOptions(params.workspaceId))
 
-  async function handleFormCreate() {
-    const id = await createFormMutation.mutateAsync()
-    await navigate({ to: 'forms/$id/edit', params: { id } })
-    queryClient.invalidateQueries(listFormsQueryOptions(params.workspaceId))
+  async function handleQuizCreate() {
+    const id = await createQuizMutation.mutateAsync()
+    await navigate({ to: 'quizzes/$id/edit', params: { id } })
+    queryClient.invalidateQueries(listQuizzesQueryOptions(params.workspaceId))
   }
 
-  if (forms.length === 0) {
+  if (quizzes.length === 0) {
     return (
       <div className="flex h-full w-full flex-1 items-center justify-center">
         <Empty.Root>
@@ -66,10 +66,10 @@ function RouteComponent() {
             <Empty.Media variant="icon">
               <FileTextIcon />
             </Empty.Media>
-            <Empty.Title>No forms yet</Empty.Title>
-            <Empty.Description>Create your first form to get started.</Empty.Description>
+            <Empty.Title>No quizzes yet</Empty.Title>
+            <Empty.Description>Create your first quiz to get started.</Empty.Description>
           </Empty.Header>
-          <Button onClick={handleFormCreate}>Create form</Button>
+          <Button onClick={handleQuizCreate}>Create quiz</Button>
         </Empty.Root>
       </div>
     )
@@ -79,10 +79,10 @@ function RouteComponent() {
     <div className="flex h-full w-full flex-col gap-4">
       <Heading.Root>
         <Heading.Content>
-          <Heading.Title>Forms</Heading.Title>
+          <Heading.Title>Quizzes</Heading.Title>
         </Heading.Content>
         <Heading.Actions>
-          <Button onClick={handleFormCreate}>
+          <Button onClick={handleQuizCreate}>
             <PlusIcon />
             Create
           </Button>
@@ -90,14 +90,14 @@ function RouteComponent() {
       </Heading.Root>
 
       <Item.Group>
-        {forms.map((form) => (
+        {quizzes.map((quiz) => (
           <Item.Root
-            key={form.id}
+            key={quiz.id}
             variant="outline"
-            render={<Link from={Route.fullPath} to="forms/$id/edit" params={{ id: form.id }} />}
+            render={<Link from={Route.fullPath} to="quizzes/$id/edit" params={{ id: quiz.id }} />}
           >
             <Item.Content>
-              <Item.Title>{form.title}</Item.Title>
+              <Item.Title>{quiz.title}</Item.Title>
             </Item.Content>
           </Item.Root>
         ))}

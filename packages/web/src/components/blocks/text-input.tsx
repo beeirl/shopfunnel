@@ -1,6 +1,6 @@
 import { cn } from '@/lib/utils'
 import { Input as BaseInput } from '@base-ui/react/input'
-import type { TextInputBlock as BlockType } from '@shopfunnel/core/form/types'
+import type { TextInputBlock as BlockType } from '@shopfunnel/core/quiz/types'
 
 export interface TextInputBlockProps {
   block: BlockType

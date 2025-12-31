@@ -20,7 +20,7 @@ import type {
   ParagraphBlock as ParagraphBlockType,
   PictureChoiceBlock as PictureChoiceBlockType,
   TextInputBlock as TextInputBlockType,
-} from '@shopfunnel/core/form/types'
+} from '@shopfunnel/core/quiz/types'
 import {
   IconChevronDown as ChevronDownIcon,
   IconGauge as GaugeIcon,

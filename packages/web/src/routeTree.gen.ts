@@ -14,14 +14,14 @@ import { Route as AuthIndexRouteImport } from './routes/auth/index'
 import { Route as AuthCallbackRouteImport } from './routes/auth/callback'
 import { Route as AuthAuthorizeRouteImport } from './routes/auth/authorize'
 import { Route as WorkspaceWorkspaceIdRouteRouteImport } from './routes/workspace/$workspaceId/route'
-import { Route as formFIdRouteImport } from './routes/(form)/f/$id'
+import { Route as quizQIdRouteImport } from './routes/(quiz)/q/$id'
 import { Route as WorkspaceWorkspaceIdDashboardRouteRouteImport } from './routes/workspace/$workspaceId/_dashboard/route'
 import { Route as WorkspaceWorkspaceIdDashboardIndexRouteImport } from './routes/workspace/$workspaceId/_dashboard/index'
-import { Route as WorkspaceWorkspaceIdFormsIdLayoutRouteRouteImport } from './routes/workspace/$workspaceId/forms/$id/_layout/route'
-import { Route as WorkspaceWorkspaceIdFormsIdPreviewIndexRouteImport } from './routes/workspace/$workspaceId/forms/$id/preview/index'
-import { Route as WorkspaceWorkspaceIdFormsIdLayoutResponsesRouteImport } from './routes/workspace/$workspaceId/forms/$id/_layout/responses'
-import { Route as WorkspaceWorkspaceIdFormsIdLayoutInsightsRouteImport } from './routes/workspace/$workspaceId/forms/$id/_layout/insights'
-import { Route as WorkspaceWorkspaceIdFormsIdLayoutEditIndexRouteImport } from './routes/workspace/$workspaceId/forms/$id/_layout/edit/index'
+import { Route as WorkspaceWorkspaceIdQuizzesIdLayoutRouteRouteImport } from './routes/workspace/$workspaceId/quizzes/$id/_layout/route'
+import { Route as WorkspaceWorkspaceIdQuizzesIdPreviewIndexRouteImport } from './routes/workspace/$workspaceId/quizzes/$id/preview/index'
+import { Route as WorkspaceWorkspaceIdQuizzesIdLayoutResponsesRouteImport } from './routes/workspace/$workspaceId/quizzes/$id/_layout/responses'
+import { Route as WorkspaceWorkspaceIdQuizzesIdLayoutInsightsRouteImport } from './routes/workspace/$workspaceId/quizzes/$id/_layout/insights'
+import { Route as WorkspaceWorkspaceIdQuizzesIdLayoutEditIndexRouteImport } from './routes/workspace/$workspaceId/quizzes/$id/_layout/edit/index'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -49,9 +49,9 @@ const WorkspaceWorkspaceIdRouteRoute =
     path: '/workspace/$workspaceId',
     getParentRoute: () => rootRouteImport,
   } as any)
-const formFIdRoute = formFIdRouteImport.update({
-  id: '/(form)/f/$id',
-  path: '/f/$id',
+const quizQIdRoute = quizQIdRouteImport.update({
+  id: '/(quiz)/q/$id',
+  path: '/q/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
 const WorkspaceWorkspaceIdDashboardRouteRoute =
@@ -65,35 +65,35 @@ const WorkspaceWorkspaceIdDashboardIndexRoute =
     path: '/',
     getParentRoute: () => WorkspaceWorkspaceIdDashboardRouteRoute,
   } as any)
-const WorkspaceWorkspaceIdFormsIdLayoutRouteRoute =
-  WorkspaceWorkspaceIdFormsIdLayoutRouteRouteImport.update({
-    id: '/forms/$id/_layout',
-    path: '/forms/$id',
+const WorkspaceWorkspaceIdQuizzesIdLayoutRouteRoute =
+  WorkspaceWorkspaceIdQuizzesIdLayoutRouteRouteImport.update({
+    id: '/quizzes/$id/_layout',
+    path: '/quizzes/$id',
     getParentRoute: () => WorkspaceWorkspaceIdRouteRoute,
   } as any)
-const WorkspaceWorkspaceIdFormsIdPreviewIndexRoute =
-  WorkspaceWorkspaceIdFormsIdPreviewIndexRouteImport.update({
-    id: '/forms/$id/preview/',
-    path: '/forms/$id/preview/',
+const WorkspaceWorkspaceIdQuizzesIdPreviewIndexRoute =
+  WorkspaceWorkspaceIdQuizzesIdPreviewIndexRouteImport.update({
+    id: '/quizzes/$id/preview/',
+    path: '/quizzes/$id/preview/',
     getParentRoute: () => WorkspaceWorkspaceIdRouteRoute,
   } as any)
-const WorkspaceWorkspaceIdFormsIdLayoutResponsesRoute =
-  WorkspaceWorkspaceIdFormsIdLayoutResponsesRouteImport.update({
+const WorkspaceWorkspaceIdQuizzesIdLayoutResponsesRoute =
+  WorkspaceWorkspaceIdQuizzesIdLayoutResponsesRouteImport.update({
     id: '/responses',
     path: '/responses',
-    getParentRoute: () => WorkspaceWorkspaceIdFormsIdLayoutRouteRoute,
+    getParentRoute: () => WorkspaceWorkspaceIdQuizzesIdLayoutRouteRoute,
   } as any)
-const WorkspaceWorkspaceIdFormsIdLayoutInsightsRoute =
-  WorkspaceWorkspaceIdFormsIdLayoutInsightsRouteImport.update({
+const WorkspaceWorkspaceIdQuizzesIdLayoutInsightsRoute =
+  WorkspaceWorkspaceIdQuizzesIdLayoutInsightsRouteImport.update({
     id: '/insights',
     path: '/insights',
-    getParentRoute: () => WorkspaceWorkspaceIdFormsIdLayoutRouteRoute,
+    getParentRoute: () => WorkspaceWorkspaceIdQuizzesIdLayoutRouteRoute,
   } as any)
-const WorkspaceWorkspaceIdFormsIdLayoutEditIndexRoute =
-  WorkspaceWorkspaceIdFormsIdLayoutEditIndexRouteImport.update({
+const WorkspaceWorkspaceIdQuizzesIdLayoutEditIndexRoute =
+  WorkspaceWorkspaceIdQuizzesIdLayoutEditIndexRouteImport.update({
     id: '/edit/',
     path: '/edit/',
-    getParentRoute: () => WorkspaceWorkspaceIdFormsIdLayoutRouteRoute,
+    getParentRoute: () => WorkspaceWorkspaceIdQuizzesIdLayoutRouteRoute,
   } as any)
 
 export interface FileRoutesByFullPath {
@@ -102,13 +102,13 @@ export interface FileRoutesByFullPath {
   '/auth/authorize': typeof AuthAuthorizeRoute
   '/auth/callback': typeof AuthCallbackRoute
   '/auth': typeof AuthIndexRoute
-  '/f/$id': typeof formFIdRoute
+  '/q/$id': typeof quizQIdRoute
   '/workspace/$workspaceId/': typeof WorkspaceWorkspaceIdDashboardIndexRoute
-  '/workspace/$workspaceId/forms/$id': typeof WorkspaceWorkspaceIdFormsIdLayoutRouteRouteWithChildren
-  '/workspace/$workspaceId/forms/$id/insights': typeof WorkspaceWorkspaceIdFormsIdLayoutInsightsRoute
-  '/workspace/$workspaceId/forms/$id/responses': typeof WorkspaceWorkspaceIdFormsIdLayoutResponsesRoute
-  '/workspace/$workspaceId/forms/$id/preview': typeof WorkspaceWorkspaceIdFormsIdPreviewIndexRoute
-  '/workspace/$workspaceId/forms/$id/edit': typeof WorkspaceWorkspaceIdFormsIdLayoutEditIndexRoute
+  '/workspace/$workspaceId/quizzes/$id': typeof WorkspaceWorkspaceIdQuizzesIdLayoutRouteRouteWithChildren
+  '/workspace/$workspaceId/quizzes/$id/insights': typeof WorkspaceWorkspaceIdQuizzesIdLayoutInsightsRoute
+  '/workspace/$workspaceId/quizzes/$id/responses': typeof WorkspaceWorkspaceIdQuizzesIdLayoutResponsesRoute
+  '/workspace/$workspaceId/quizzes/$id/preview': typeof WorkspaceWorkspaceIdQuizzesIdPreviewIndexRoute
+  '/workspace/$workspaceId/quizzes/$id/edit': typeof WorkspaceWorkspaceIdQuizzesIdLayoutEditIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -116,12 +116,12 @@ export interface FileRoutesByTo {
   '/auth/authorize': typeof AuthAuthorizeRoute
   '/auth/callback': typeof AuthCallbackRoute
   '/auth': typeof AuthIndexRoute
-  '/f/$id': typeof formFIdRoute
-  '/workspace/$workspaceId/forms/$id': typeof WorkspaceWorkspaceIdFormsIdLayoutRouteRouteWithChildren
-  '/workspace/$workspaceId/forms/$id/insights': typeof WorkspaceWorkspaceIdFormsIdLayoutInsightsRoute
-  '/workspace/$workspaceId/forms/$id/responses': typeof WorkspaceWorkspaceIdFormsIdLayoutResponsesRoute
-  '/workspace/$workspaceId/forms/$id/preview': typeof WorkspaceWorkspaceIdFormsIdPreviewIndexRoute
-  '/workspace/$workspaceId/forms/$id/edit': typeof WorkspaceWorkspaceIdFormsIdLayoutEditIndexRoute
+  '/q/$id': typeof quizQIdRoute
+  '/workspace/$workspaceId/quizzes/$id': typeof WorkspaceWorkspaceIdQuizzesIdLayoutRouteRouteWithChildren
+  '/workspace/$workspaceId/quizzes/$id/insights': typeof WorkspaceWorkspaceIdQuizzesIdLayoutInsightsRoute
+  '/workspace/$workspaceId/quizzes/$id/responses': typeof WorkspaceWorkspaceIdQuizzesIdLayoutResponsesRoute
+  '/workspace/$workspaceId/quizzes/$id/preview': typeof WorkspaceWorkspaceIdQuizzesIdPreviewIndexRoute
+  '/workspace/$workspaceId/quizzes/$id/edit': typeof WorkspaceWorkspaceIdQuizzesIdLayoutEditIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -131,13 +131,13 @@ export interface FileRoutesById {
   '/auth/callback': typeof AuthCallbackRoute
   '/auth/': typeof AuthIndexRoute
   '/workspace/$workspaceId/_dashboard': typeof WorkspaceWorkspaceIdDashboardRouteRouteWithChildren
-  '/(form)/f/$id': typeof formFIdRoute
+  '/(quiz)/q/$id': typeof quizQIdRoute
   '/workspace/$workspaceId/_dashboard/': typeof WorkspaceWorkspaceIdDashboardIndexRoute
-  '/workspace/$workspaceId/forms/$id/_layout': typeof WorkspaceWorkspaceIdFormsIdLayoutRouteRouteWithChildren
-  '/workspace/$workspaceId/forms/$id/_layout/insights': typeof WorkspaceWorkspaceIdFormsIdLayoutInsightsRoute
-  '/workspace/$workspaceId/forms/$id/_layout/responses': typeof WorkspaceWorkspaceIdFormsIdLayoutResponsesRoute
-  '/workspace/$workspaceId/forms/$id/preview/': typeof WorkspaceWorkspaceIdFormsIdPreviewIndexRoute
-  '/workspace/$workspaceId/forms/$id/_layout/edit/': typeof WorkspaceWorkspaceIdFormsIdLayoutEditIndexRoute
+  '/workspace/$workspaceId/quizzes/$id/_layout': typeof WorkspaceWorkspaceIdQuizzesIdLayoutRouteRouteWithChildren
+  '/workspace/$workspaceId/quizzes/$id/_layout/insights': typeof WorkspaceWorkspaceIdQuizzesIdLayoutInsightsRoute
+  '/workspace/$workspaceId/quizzes/$id/_layout/responses': typeof WorkspaceWorkspaceIdQuizzesIdLayoutResponsesRoute
+  '/workspace/$workspaceId/quizzes/$id/preview/': typeof WorkspaceWorkspaceIdQuizzesIdPreviewIndexRoute
+  '/workspace/$workspaceId/quizzes/$id/_layout/edit/': typeof WorkspaceWorkspaceIdQuizzesIdLayoutEditIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -147,13 +147,13 @@ export interface FileRouteTypes {
     | '/auth/authorize'
     | '/auth/callback'
     | '/auth'
-    | '/f/$id'
+    | '/q/$id'
     | '/workspace/$workspaceId/'
-    | '/workspace/$workspaceId/forms/$id'
-    | '/workspace/$workspaceId/forms/$id/insights'
-    | '/workspace/$workspaceId/forms/$id/responses'
-    | '/workspace/$workspaceId/forms/$id/preview'
-    | '/workspace/$workspaceId/forms/$id/edit'
+    | '/workspace/$workspaceId/quizzes/$id'
+    | '/workspace/$workspaceId/quizzes/$id/insights'
+    | '/workspace/$workspaceId/quizzes/$id/responses'
+    | '/workspace/$workspaceId/quizzes/$id/preview'
+    | '/workspace/$workspaceId/quizzes/$id/edit'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -161,12 +161,12 @@ export interface FileRouteTypes {
     | '/auth/authorize'
     | '/auth/callback'
     | '/auth'
-    | '/f/$id'
-    | '/workspace/$workspaceId/forms/$id'
-    | '/workspace/$workspaceId/forms/$id/insights'
-    | '/workspace/$workspaceId/forms/$id/responses'
-    | '/workspace/$workspaceId/forms/$id/preview'
-    | '/workspace/$workspaceId/forms/$id/edit'
+    | '/q/$id'
+    | '/workspace/$workspaceId/quizzes/$id'
+    | '/workspace/$workspaceId/quizzes/$id/insights'
+    | '/workspace/$workspaceId/quizzes/$id/responses'
+    | '/workspace/$workspaceId/quizzes/$id/preview'
+    | '/workspace/$workspaceId/quizzes/$id/edit'
   id:
     | '__root__'
     | '/'
@@ -175,13 +175,13 @@ export interface FileRouteTypes {
     | '/auth/callback'
     | '/auth/'
     | '/workspace/$workspaceId/_dashboard'
-    | '/(form)/f/$id'
+    | '/(quiz)/q/$id'
     | '/workspace/$workspaceId/_dashboard/'
-    | '/workspace/$workspaceId/forms/$id/_layout'
-    | '/workspace/$workspaceId/forms/$id/_layout/insights'
-    | '/workspace/$workspaceId/forms/$id/_layout/responses'
-    | '/workspace/$workspaceId/forms/$id/preview/'
-    | '/workspace/$workspaceId/forms/$id/_layout/edit/'
+    | '/workspace/$workspaceId/quizzes/$id/_layout'
+    | '/workspace/$workspaceId/quizzes/$id/_layout/insights'
+    | '/workspace/$workspaceId/quizzes/$id/_layout/responses'
+    | '/workspace/$workspaceId/quizzes/$id/preview/'
+    | '/workspace/$workspaceId/quizzes/$id/_layout/edit/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -190,7 +190,7 @@ export interface RootRouteChildren {
   AuthAuthorizeRoute: typeof AuthAuthorizeRoute
   AuthCallbackRoute: typeof AuthCallbackRoute
   AuthIndexRoute: typeof AuthIndexRoute
-  formFIdRoute: typeof formFIdRoute
+  quizQIdRoute: typeof quizQIdRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -230,11 +230,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof WorkspaceWorkspaceIdRouteRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/(form)/f/$id': {
-      id: '/(form)/f/$id'
-      path: '/f/$id'
-      fullPath: '/f/$id'
-      preLoaderRoute: typeof formFIdRouteImport
+    '/(quiz)/q/$id': {
+      id: '/(quiz)/q/$id'
+      path: '/q/$id'
+      fullPath: '/q/$id'
+      preLoaderRoute: typeof quizQIdRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/workspace/$workspaceId/_dashboard': {
@@ -251,40 +251,40 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof WorkspaceWorkspaceIdDashboardIndexRouteImport
       parentRoute: typeof WorkspaceWorkspaceIdDashboardRouteRoute
     }
-    '/workspace/$workspaceId/forms/$id/_layout': {
-      id: '/workspace/$workspaceId/forms/$id/_layout'
-      path: '/forms/$id'
-      fullPath: '/workspace/$workspaceId/forms/$id'
-      preLoaderRoute: typeof WorkspaceWorkspaceIdFormsIdLayoutRouteRouteImport
+    '/workspace/$workspaceId/quizzes/$id/_layout': {
+      id: '/workspace/$workspaceId/quizzes/$id/_layout'
+      path: '/quizzes/$id'
+      fullPath: '/workspace/$workspaceId/quizzes/$id'
+      preLoaderRoute: typeof WorkspaceWorkspaceIdQuizzesIdLayoutRouteRouteImport
       parentRoute: typeof WorkspaceWorkspaceIdRouteRoute
     }
-    '/workspace/$workspaceId/forms/$id/preview/': {
-      id: '/workspace/$workspaceId/forms/$id/preview/'
-      path: '/forms/$id/preview'
-      fullPath: '/workspace/$workspaceId/forms/$id/preview'
-      preLoaderRoute: typeof WorkspaceWorkspaceIdFormsIdPreviewIndexRouteImport
+    '/workspace/$workspaceId/quizzes/$id/preview/': {
+      id: '/workspace/$workspaceId/quizzes/$id/preview/'
+      path: '/quizzes/$id/preview'
+      fullPath: '/workspace/$workspaceId/quizzes/$id/preview'
+      preLoaderRoute: typeof WorkspaceWorkspaceIdQuizzesIdPreviewIndexRouteImport
       parentRoute: typeof WorkspaceWorkspaceIdRouteRoute
     }
-    '/workspace/$workspaceId/forms/$id/_layout/responses': {
-      id: '/workspace/$workspaceId/forms/$id/_layout/responses'
+    '/workspace/$workspaceId/quizzes/$id/_layout/responses': {
+      id: '/workspace/$workspaceId/quizzes/$id/_layout/responses'
       path: '/responses'
-      fullPath: '/workspace/$workspaceId/forms/$id/responses'
-      preLoaderRoute: typeof WorkspaceWorkspaceIdFormsIdLayoutResponsesRouteImport
-      parentRoute: typeof WorkspaceWorkspaceIdFormsIdLayoutRouteRoute
+      fullPath: '/workspace/$workspaceId/quizzes/$id/responses'
+      preLoaderRoute: typeof WorkspaceWorkspaceIdQuizzesIdLayoutResponsesRouteImport
+      parentRoute: typeof WorkspaceWorkspaceIdQuizzesIdLayoutRouteRoute
     }
-    '/workspace/$workspaceId/forms/$id/_layout/insights': {
-      id: '/workspace/$workspaceId/forms/$id/_layout/insights'
+    '/workspace/$workspaceId/quizzes/$id/_layout/insights': {
+      id: '/workspace/$workspaceId/quizzes/$id/_layout/insights'
       path: '/insights'
-      fullPath: '/workspace/$workspaceId/forms/$id/insights'
-      preLoaderRoute: typeof WorkspaceWorkspaceIdFormsIdLayoutInsightsRouteImport
-      parentRoute: typeof WorkspaceWorkspaceIdFormsIdLayoutRouteRoute
+      fullPath: '/workspace/$workspaceId/quizzes/$id/insights'
+      preLoaderRoute: typeof WorkspaceWorkspaceIdQuizzesIdLayoutInsightsRouteImport
+      parentRoute: typeof WorkspaceWorkspaceIdQuizzesIdLayoutRouteRoute
     }
-    '/workspace/$workspaceId/forms/$id/_layout/edit/': {
-      id: '/workspace/$workspaceId/forms/$id/_layout/edit/'
+    '/workspace/$workspaceId/quizzes/$id/_layout/edit/': {
+      id: '/workspace/$workspaceId/quizzes/$id/_layout/edit/'
       path: '/edit'
-      fullPath: '/workspace/$workspaceId/forms/$id/edit'
-      preLoaderRoute: typeof WorkspaceWorkspaceIdFormsIdLayoutEditIndexRouteImport
-      parentRoute: typeof WorkspaceWorkspaceIdFormsIdLayoutRouteRoute
+      fullPath: '/workspace/$workspaceId/quizzes/$id/edit'
+      preLoaderRoute: typeof WorkspaceWorkspaceIdQuizzesIdLayoutEditIndexRouteImport
+      parentRoute: typeof WorkspaceWorkspaceIdQuizzesIdLayoutRouteRoute
     }
   }
 }
@@ -304,41 +304,41 @@ const WorkspaceWorkspaceIdDashboardRouteRouteWithChildren =
     WorkspaceWorkspaceIdDashboardRouteRouteChildren,
   )
 
-interface WorkspaceWorkspaceIdFormsIdLayoutRouteRouteChildren {
-  WorkspaceWorkspaceIdFormsIdLayoutInsightsRoute: typeof WorkspaceWorkspaceIdFormsIdLayoutInsightsRoute
-  WorkspaceWorkspaceIdFormsIdLayoutResponsesRoute: typeof WorkspaceWorkspaceIdFormsIdLayoutResponsesRoute
-  WorkspaceWorkspaceIdFormsIdLayoutEditIndexRoute: typeof WorkspaceWorkspaceIdFormsIdLayoutEditIndexRoute
+interface WorkspaceWorkspaceIdQuizzesIdLayoutRouteRouteChildren {
+  WorkspaceWorkspaceIdQuizzesIdLayoutInsightsRoute: typeof WorkspaceWorkspaceIdQuizzesIdLayoutInsightsRoute
+  WorkspaceWorkspaceIdQuizzesIdLayoutResponsesRoute: typeof WorkspaceWorkspaceIdQuizzesIdLayoutResponsesRoute
+  WorkspaceWorkspaceIdQuizzesIdLayoutEditIndexRoute: typeof WorkspaceWorkspaceIdQuizzesIdLayoutEditIndexRoute
 }
 
-const WorkspaceWorkspaceIdFormsIdLayoutRouteRouteChildren: WorkspaceWorkspaceIdFormsIdLayoutRouteRouteChildren =
+const WorkspaceWorkspaceIdQuizzesIdLayoutRouteRouteChildren: WorkspaceWorkspaceIdQuizzesIdLayoutRouteRouteChildren =
   {
-    WorkspaceWorkspaceIdFormsIdLayoutInsightsRoute:
-      WorkspaceWorkspaceIdFormsIdLayoutInsightsRoute,
-    WorkspaceWorkspaceIdFormsIdLayoutResponsesRoute:
-      WorkspaceWorkspaceIdFormsIdLayoutResponsesRoute,
-    WorkspaceWorkspaceIdFormsIdLayoutEditIndexRoute:
-      WorkspaceWorkspaceIdFormsIdLayoutEditIndexRoute,
+    WorkspaceWorkspaceIdQuizzesIdLayoutInsightsRoute:
+      WorkspaceWorkspaceIdQuizzesIdLayoutInsightsRoute,
+    WorkspaceWorkspaceIdQuizzesIdLayoutResponsesRoute:
+      WorkspaceWorkspaceIdQuizzesIdLayoutResponsesRoute,
+    WorkspaceWorkspaceIdQuizzesIdLayoutEditIndexRoute:
+      WorkspaceWorkspaceIdQuizzesIdLayoutEditIndexRoute,
   }
 
-const WorkspaceWorkspaceIdFormsIdLayoutRouteRouteWithChildren =
-  WorkspaceWorkspaceIdFormsIdLayoutRouteRoute._addFileChildren(
-    WorkspaceWorkspaceIdFormsIdLayoutRouteRouteChildren,
+const WorkspaceWorkspaceIdQuizzesIdLayoutRouteRouteWithChildren =
+  WorkspaceWorkspaceIdQuizzesIdLayoutRouteRoute._addFileChildren(
+    WorkspaceWorkspaceIdQuizzesIdLayoutRouteRouteChildren,
   )
 
 interface WorkspaceWorkspaceIdRouteRouteChildren {
   WorkspaceWorkspaceIdDashboardRouteRoute: typeof WorkspaceWorkspaceIdDashboardRouteRouteWithChildren
-  WorkspaceWorkspaceIdFormsIdLayoutRouteRoute: typeof WorkspaceWorkspaceIdFormsIdLayoutRouteRouteWithChildren
-  WorkspaceWorkspaceIdFormsIdPreviewIndexRoute: typeof WorkspaceWorkspaceIdFormsIdPreviewIndexRoute
+  WorkspaceWorkspaceIdQuizzesIdLayoutRouteRoute: typeof WorkspaceWorkspaceIdQuizzesIdLayoutRouteRouteWithChildren
+  WorkspaceWorkspaceIdQuizzesIdPreviewIndexRoute: typeof WorkspaceWorkspaceIdQuizzesIdPreviewIndexRoute
 }
 
 const WorkspaceWorkspaceIdRouteRouteChildren: WorkspaceWorkspaceIdRouteRouteChildren =
   {
     WorkspaceWorkspaceIdDashboardRouteRoute:
       WorkspaceWorkspaceIdDashboardRouteRouteWithChildren,
-    WorkspaceWorkspaceIdFormsIdLayoutRouteRoute:
-      WorkspaceWorkspaceIdFormsIdLayoutRouteRouteWithChildren,
-    WorkspaceWorkspaceIdFormsIdPreviewIndexRoute:
-      WorkspaceWorkspaceIdFormsIdPreviewIndexRoute,
+    WorkspaceWorkspaceIdQuizzesIdLayoutRouteRoute:
+      WorkspaceWorkspaceIdQuizzesIdLayoutRouteRouteWithChildren,
+    WorkspaceWorkspaceIdQuizzesIdPreviewIndexRoute:
+      WorkspaceWorkspaceIdQuizzesIdPreviewIndexRoute,
   }
 
 const WorkspaceWorkspaceIdRouteRouteWithChildren =
@@ -352,7 +352,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthAuthorizeRoute: AuthAuthorizeRoute,
   AuthCallbackRoute: AuthCallbackRoute,
   AuthIndexRoute: AuthIndexRoute,
-  formFIdRoute: formFIdRoute,
+  quizQIdRoute: quizQIdRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

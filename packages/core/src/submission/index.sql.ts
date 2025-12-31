@@ -6,7 +6,7 @@ export const SubmissionsTable = mysqlTable(
   {
     ...workspaceColumns,
     ...timestampColumns,
-    formId: id('form_id').notNull(),
+    quizId: id('quiz_id').notNull(),
     completedAt: timestamp('completed_at'),
   },
   (table) => [...workspaceIndexes(table)],

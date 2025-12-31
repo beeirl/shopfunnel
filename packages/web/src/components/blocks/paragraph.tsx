@@ -1,5 +1,5 @@
 import { cn } from '@/lib/utils'
-import type { ParagraphBlock as BlockType } from '@shopfunnel/core/form/types'
+import type { ParagraphBlock as BlockType } from '@shopfunnel/core/quiz/types'
 
 export interface ParagraphBlockProps {
   block: BlockType

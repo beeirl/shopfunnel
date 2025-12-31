@@ -1,5 +1,5 @@
 import { cn } from '@/lib/utils'
-import type { ImageBlock as BlockType } from '@shopfunnel/core/form/types'
+import type { ImageBlock as BlockType } from '@shopfunnel/core/quiz/types'
 import { IconPhoto as PhotoIcon } from '@tabler/icons-react'
 
 export interface ImageBlockProps {

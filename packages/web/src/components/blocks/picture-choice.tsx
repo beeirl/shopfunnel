@@ -1,5 +1,5 @@
 import { cn } from '@/lib/utils'
-import type { PictureChoiceBlock as BlockType } from '@shopfunnel/core/form/types'
+import type { PictureChoiceBlock as BlockType } from '@shopfunnel/core/quiz/types'
 import { IconPhoto as PhotoIcon } from '@tabler/icons-react'
 import { ListBox as ReactAriaListbox, ListBoxItem as ReactAriaListboxItem } from 'react-aria-components'
 

@@ -1,5 +1,5 @@
 import { cn } from '@/lib/utils'
-import type { HeadingBlock as BlockType } from '@shopfunnel/core/form/types'
+import type { HeadingBlock as BlockType } from '@shopfunnel/core/quiz/types'
 
 export interface HeadingBlockProps {
   block: BlockType

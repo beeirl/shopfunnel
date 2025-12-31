@@ -1,5 +1,5 @@
 import { cn } from '@/lib/utils'
-import type { LoaderBlock as BlockType } from '@shopfunnel/core/form/types'
+import type { LoaderBlock as BlockType } from '@shopfunnel/core/quiz/types'
 import * as React from 'react'
 
 export interface LoaderBlockProps {

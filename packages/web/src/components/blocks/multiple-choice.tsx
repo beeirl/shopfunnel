@@ -1,5 +1,5 @@
 import { cn } from '@/lib/utils'
-import type { MultipleChoiceBlock as BlockType } from '@shopfunnel/core/form/types'
+import type { MultipleChoiceBlock as BlockType } from '@shopfunnel/core/quiz/types'
 import { ListBox as ReactAriaListbox, ListBoxItem as ReactAriaListboxItem } from 'react-aria-components'
 
 export interface MultipleChoiceBlockProps {
