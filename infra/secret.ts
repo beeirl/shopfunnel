@@ -5,5 +5,6 @@ export const secret = {
   CLOUDFLARE_R2_ACCESS_KEY_ID: new sst.Secret('CLOUDFLARE_R2_ACCESS_KEY_ID', process.env.CLOUDFLARE_R2_ACCESS_KEY_ID),
   CLOUDFLARE_R2_SECRET_ACCESS_KEY: new sst.Secret('CLOUDFLARE_R2_SECRET_ACCESS_KEY', process.env.CLOUDFLARE_R2_SECRET_ACCESS_KEY),
   GOOGLE_CLIENT_ID: new sst.Secret('GOOGLE_CLIENT_ID', process.env.GOOGLE_CLIENT_ID),
+  TINYBIRD_TOKEN: new sst.Secret('TINYBIRD_TOKEN', process.env.TINYBIRD_TOKEN),
 }
 export const allSecrets = Object.values(secret)

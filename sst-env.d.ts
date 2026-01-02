@@ -5,6 +5,14 @@
 
 declare module "sst" {
   export interface Resource {
+    "AnalyticsQueue": {
+      "accountId": string
+      "queueId": string
+      "type": "cloudflare.index/queue.Queue"
+    }
+    "AnalyticsWorker": {
+      "type": "sst.cloudflare.Worker"
+    }
     "AuthApi": {
       "type": "sst.cloudflare.Worker"
       "url": string
@@ -52,6 +60,10 @@ declare module "sst" {
     "StorageWorker": {
       "type": "sst.cloudflare.Worker"
       "url": string
+    }
+    "TINYBIRD_TOKEN": {
+      "type": "sst.sst.Secret"
+      "value": string
     }
     "Web": {
       "type": "sst.cloudflare.SolidStart"

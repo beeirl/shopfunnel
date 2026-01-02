@@ -1,0 +1,22 @@
+DESCRIPTION >
+    Returns step-by-step funnel data for a quiz
+
+TOKEN tracker READ
+
+NODE funnel_data
+SQL >
+    %
+    SELECT
+        step_index,
+        any(step_id) as step_id,
+        any(step_name) as step_name,
+        countDistinct(session_id) as views,
+        round(avg(duration)) as avg_duration_ms
+    FROM quiz_events
+    WHERE 
+        quiz_id = {{String(quiz_id, required=True)}}
+        AND type = 'step_complete'
+    GROUP BY step_index
+    ORDER BY step_index
+
+TYPE ENDPOINT

@@ -259,6 +259,7 @@ export namespace Quiz {
           workspaceId: group[0].quiz.workspaceId,
           shortId: group[0].quiz.shortId,
           title: group[0].quiz.title,
+          version: group[0].quiz_version.version,
           steps: group[0].quiz_version.steps,
           rules: group[0].quiz_version.rules,
           variables: group[0].quiz_version.variables,

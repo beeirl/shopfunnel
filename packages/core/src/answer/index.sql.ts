@@ -8,6 +8,7 @@ export const AnswerTable = mysqlTable(
     ...workspaceColumns,
     submissionId: id('submission_id').notNull(),
     questionId: id('question_id').notNull(),
+    duration: bigint('duration', { mode: 'number' }),
   },
   (table) => [...workspaceIndexes(table), index('question').on(table.workspaceId, table.questionId)],
 )

@@ -87,7 +87,7 @@ export function StepsPane({
     <Pane.Root className="h-full">
       <Pane.Header>
         <Pane.Title>Steps</Pane.Title>
-        <AddStepDialog.Root onStepAdd={onStepAdd}>
+        <AddStepDialog.Root onStepAdd={onStepAdd} stepCount={steps.length}>
           <AddStepDialog.Trigger render={<Button className="-mr-2" size="icon" variant="ghost" />}>
             <PlusIcon />
           </AddStepDialog.Trigger>

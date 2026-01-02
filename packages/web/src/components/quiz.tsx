@@ -240,11 +240,12 @@ export interface QuizProps {
   quiz: QuizType
   mode?: 'preview' | 'live'
   onComplete?: (values: Values) => void
-  onNext?: (values: Values) => void
+  onStepChange?: (step: { id: string; index: number; name: string }) => void
+  onStepComplete?: (step: { id: string; index: number; name: string; values: Values }) => void
 }
 
-export function Quiz({ quiz, mode = 'live', onComplete, onNext }: QuizProps) {
-  const STORAGE_KEY = `quiz-${quiz.id}-values`
+export function Quiz({ quiz, mode = 'live', onComplete, onStepChange, onStepComplete }: QuizProps) {
+  const VALUES_STORAGE_KEY = `sf_quiz_${quiz.id}_values`
 
   const [currentStepIndex, setCurrentStepIndex] = useState(0)
 
@@ -271,7 +272,8 @@ export function Quiz({ quiz, mode = 'live', onComplete, onNext }: QuizProps) {
   const persistValues = useDebouncedCallback(
     (values: Values) => {
       if (mode === 'preview') return
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(values))
+      if (completed) return
+      localStorage.setItem(VALUES_STORAGE_KEY, JSON.stringify(values))
     },
     { wait: 300 },
   )
@@ -279,7 +281,7 @@ export function Quiz({ quiz, mode = 'live', onComplete, onNext }: QuizProps) {
   useEffect(() => {
     if (mode === 'preview') return
 
-    const storedValues = localStorage.getItem(STORAGE_KEY)
+    const storedValues = localStorage.getItem(VALUES_STORAGE_KEY)
     if (!storedValues) return
 
     try {
@@ -288,7 +290,13 @@ export function Quiz({ quiz, mode = 'live', onComplete, onNext }: QuizProps) {
     } catch {
       // Invalid stored data, ignore
     }
-  }, [STORAGE_KEY, mode])
+  }, [VALUES_STORAGE_KEY, mode])
+
+  useEffect(() => {
+    const step = quiz.steps[currentStepIndex]
+    if (!step) return
+    onStepChange?.({ id: step.id, index: currentStepIndex, name: step.name })
+  }, [currentStepIndex, quiz.steps, onStepChange])
 
   const handleBlockValueChange = (blockId: string, value: unknown) => {
     const newValues = { ...values, [blockId]: value }
@@ -332,19 +340,27 @@ export function Quiz({ quiz, mode = 'live', onComplete, onNext }: QuizProps) {
       }
     }
 
-    const currentValues = (() => {
+    const currentStepValues = (() => {
       const currentBlockIds = currentStep.blocks.map((b) => b.id)
-      return currentBlockIds.reduce<Values>((currentValues, blockId) => {
+      return currentBlockIds.reduce<Values>((currentStepValues, blockId) => {
         if (values[blockId] !== undefined) {
-          currentValues[blockId] = values[blockId]
+          currentStepValues[blockId] = values[blockId]
         }
-        return currentValues
+        return currentStepValues
       }, {})
     })()
 
-    onNext?.(currentValues)
+    onStepComplete?.({
+      id: currentStep.id,
+      index: currentStepIndex,
+      name: currentStep.name,
+      values: currentStepValues,
+    })
 
     if (nextStepIndex >= quiz.steps.length) {
+      setValues({})
+      setLoadingValues({})
+      localStorage.removeItem(VALUES_STORAGE_KEY)
       setCompleted(true)
       onComplete?.(values)
       return

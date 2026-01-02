@@ -237,6 +237,7 @@ function getStepTemplate(id: string) {
 const AddStepDialogContext = React.createContext<{
   onStepAdd: (step: Step) => void
   setOpen: React.Dispatch<React.SetStateAction<boolean>>
+  stepCount: number
 } | null>(null)
 
 function useAddStepDialogContext() {
@@ -247,11 +248,19 @@ function useAddStepDialogContext() {
   return context
 }
 
-function AddStepDialogRoot({ children, onStepAdd }: { children: React.ReactNode; onStepAdd: (step: Step) => void }) {
+function AddStepDialogRoot({
+  children,
+  onStepAdd,
+  stepCount,
+}: {
+  children: React.ReactNode
+  onStepAdd: (step: Step) => void
+  stepCount: number
+}) {
   const [open, setOpen] = React.useState(false)
 
   return (
-    <AddStepDialogContext value={{ onStepAdd, setOpen }}>
+    <AddStepDialogContext value={{ onStepAdd, setOpen, stepCount }}>
       <Dialog.Root open={open} onOpenChange={setOpen}>
         {children}
       </Dialog.Root>
@@ -260,7 +269,7 @@ function AddStepDialogRoot({ children, onStepAdd }: { children: React.ReactNode;
 }
 
 function AddStepDialogPopup() {
-  const { onStepAdd, setOpen } = useAddStepDialogContext()
+  const { onStepAdd, setOpen, stepCount } = useAddStepDialogContext()
 
   const templateIds = STEP_TEMPLATES.map((t) => t.id)
 
@@ -281,6 +290,7 @@ function AddStepDialogPopup() {
 
     const step: Step = {
       id: ulid(),
+      name: `Step ${stepCount + 1}`,
       blocks,
       properties: template.defaultStepProperties,
     }

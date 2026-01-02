@@ -1,0 +1,22 @@
+DESCRIPTION >
+    Returns high-level metrics for a quiz
+
+TOKEN tracker READ
+
+NODE metrics
+SQL >
+    %
+    SELECT
+        countDistinctIf(session_id, type = 'quiz_view') as total_views,
+        countDistinctIf(session_id, type = 'quiz_start') as total_starts,
+        countDistinctIf(session_id, type = 'step_complete' 
+            AND step_index = (
+                SELECT max(step_index) 
+                FROM quiz_events 
+                WHERE quiz_id = {{String(quiz_id, required=True)}}
+            )
+        ) as total_completions
+    FROM quiz_events
+    WHERE quiz_id = {{String(quiz_id, required=True)}}
+
+TYPE ENDPOINT

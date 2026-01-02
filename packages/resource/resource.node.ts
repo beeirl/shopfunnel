@@ -51,6 +51,47 @@ export const Resource = new Proxy(
             },
           }
         }
+        // cloudflare.Queue wrapped with Linkable.wrap
+        if ((value.type as string) === 'cloudflare:index/queue:Queue' || 'queueId' in value) {
+          // @ts-ignore
+          const accountId = value.accountId ?? ResourceBase.CLOUDFLARE_DEFAULT_ACCOUNT_ID.value
+          // @ts-ignore
+          const queueId = value.queueId as string
+          return {
+            send: async (body: unknown) => {
+              const response = await fetch(
+                `https://api.cloudflare.com/client/v4/accounts/${accountId}/queues/${queueId}/messages`,
+                {
+                  method: 'POST',
+                  headers: {
+                    Authorization: `Bearer ${ResourceBase.CLOUDFLARE_API_TOKEN.value}`,
+                    'Content-Type': 'application/json',
+                  },
+                  body: JSON.stringify({ body }),
+                },
+              )
+              if (!response.ok) {
+                throw new Error(`Failed to send message to queue: ${response.statusText}`)
+              }
+            },
+            sendBatch: async (messages: { body: unknown }[]) => {
+              const response = await fetch(
+                `https://api.cloudflare.com/client/v4/accounts/${accountId}/queues/${queueId}/messages/batch`,
+                {
+                  method: 'POST',
+                  headers: {
+                    Authorization: `Bearer ${ResourceBase.CLOUDFLARE_API_TOKEN.value}`,
+                    'Content-Type': 'application/json',
+                  },
+                  body: JSON.stringify({ messages }),
+                },
+              )
+              if (!response.ok) {
+                throw new Error(`Failed to send batch messages to queue: ${response.statusText}`)
+              }
+            },
+          }
+        }
         // @ts-ignore
         if (value.type === 'sst.cloudflare.Kv') {
           const client = new Cloudflare({

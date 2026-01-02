@@ -163,6 +163,7 @@ export type InputBlock = (typeof INPUT_BLOCKS)[number]
 
 export interface Step {
   id: string
+  name: string
   blocks: Block[]
   properties: {
     showButton: boolean
@@ -292,6 +293,7 @@ export interface Info {
   workspaceId: string
   shortId: string
   title: string
+  version: number
   steps: Step[]
   rules: Rule[]
   variables: Variables

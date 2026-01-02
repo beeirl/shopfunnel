@@ -1,0 +1,23 @@
+DESCRIPTION >
+    Quiz analytics events for tracking user interactions
+
+TOKEN tracker APPEND
+
+SCHEMA >
+    `timestamp` DateTime64(3) `json:$.timestamp`,
+    `type` LowCardinality(String) `json:$.type`,
+    `session_id` String `json:$.session_id`,
+    `visitor_id` String `json:$.visitor_id`,
+    `quiz_id` String `json:$.quiz_id`,
+    `quiz_version` UInt32 `json:$.quiz_version`,
+    `workspace_id` String `json:$.workspace_id`,
+    `step_id` Nullable(String) `json:$.step_id`,
+    `step_index` Nullable(UInt16) `json:$.step_index`,
+    `step_name` Nullable(String) `json:$.step_name`,
+    `block_id` Nullable(String) `json:$.block_id`,
+    `block_type` LowCardinality(Nullable(String)) `json:$.block_type`,
+    `duration` Nullable(UInt32) `json:$.duration`
+
+ENGINE "MergeTree"
+ENGINE_PARTITION_KEY "toYYYYMM(timestamp)"
+ENGINE_SORTING_KEY "workspace_id, quiz_id, quiz_version, visitor_id, session_id, timestamp"

@@ -21,6 +21,20 @@ export function StepPane({
       <Pane.Content>
         <Pane.Group>
           <Pane.GroupHeader>
+            <Pane.GroupLabel>Settings</Pane.GroupLabel>
+          </Pane.GroupHeader>
+          <Field.Root>
+            <Field.Label>Name</Field.Label>
+            <Field.Control>
+              <Input
+                value={step.name ?? `Step ${index + 1}`}
+                onValueChange={(value) => onStepUpdate({ name: value })}
+              />
+            </Field.Control>
+          </Field.Root>
+        </Pane.Group>
+        <Pane.Group>
+          <Pane.GroupHeader>
             <Pane.GroupLabel>Button</Pane.GroupLabel>
           </Pane.GroupHeader>
           <Field.Root>

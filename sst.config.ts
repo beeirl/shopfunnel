@@ -17,6 +17,7 @@ export default $config({
     await import('./infra/auth')
     await import('./infra/database')
     await import('./infra/storage')
+    await import('./infra/analytics')
     await import('./infra/web')
   },
 })
