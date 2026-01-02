@@ -111,7 +111,7 @@ export namespace Submission {
         questionAnswers.push(answer.text)
       } else if (answer.optionId !== null) {
         const options = questionOptionByQuestionId.get(answer.questionId)
-        const label = options?.[answer.optionId]?.label ?? answer.optionId
+        const label = options?.find((o) => o.id === answer.optionId)?.label ?? answer.optionId
         questionAnswers.push(label)
       } else if (answer.number !== null) {
         questionAnswers.push(String(answer.number))

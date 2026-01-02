@@ -85,21 +85,18 @@ export namespace Question {
               : null
           const answeredOptionIds = question ? answeredOptions.get(question.id) : undefined
 
-          let questionOptions: Record<string, { id: string; label: string; index: number }> | undefined
+          let questionOptions: Array<{ id: string; label: string; archived?: boolean }> | undefined
           if (options) {
-            questionOptions = {}
             const currentIds = new Set(options.map((o) => o.id))
 
-            // Add current options with index
-            options.forEach((opt, i) => {
-              questionOptions![opt.id] = { id: opt.id, label: opt.label, index: i }
-            })
+            // Current options in quiz order
+            questionOptions = options.map((o) => ({ id: o.id, label: o.label }))
 
-            // Keep removed options that have answers
+            // Append archived options that have answers
             if (question?.options && answeredOptionIds) {
-              for (const [id, value] of Object.entries(question.options)) {
-                if (!currentIds.has(id) && answeredOptionIds.has(id)) {
-                  questionOptions[id] = value
+              for (const opt of question.options) {
+                if (!currentIds.has(opt.id) && answeredOptionIds.has(opt.id)) {
+                  questionOptions.push({ id: opt.id, label: opt.label, archived: true })
                 }
               }
             }
