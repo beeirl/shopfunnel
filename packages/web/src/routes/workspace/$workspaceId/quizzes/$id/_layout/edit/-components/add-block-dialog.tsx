@@ -10,7 +10,7 @@ import { IconSearch as SearchIcon, IconSearchOff as SearchOffIcon } from '@table
 import * as React from 'react'
 import { ulid } from 'ulid'
 
-const DISPLAY_BLOCK_TYPES: Block['type'][] = ['heading', 'paragraph', 'gauge', 'list', 'image', 'loader']
+const DISPLAY_BLOCK_TYPES: Block['type'][] = ['heading', 'paragraph', 'gauge', 'list', 'image']
 
 const ADD_BLOCK_DATA = {
   text_input: () => ({
@@ -103,17 +103,9 @@ const ADD_BLOCK_DATA = {
       aspectRatio: '16/9' as const,
     },
   }),
-  loader: () => ({
-    id: ulid(),
-    type: 'loader' as const,
-    properties: {
-      description: '',
-      duration: 3,
-    },
-  }),
 }
 
-const PREVIEW_BLOCK_DATA: Record<Block['type'], Block> = {
+const PREVIEW_BLOCK_DATA: Partial<Record<Block['type'], Block>> = {
   text_input: {
     id: '',
     type: 'text_input',
@@ -205,14 +197,6 @@ const PREVIEW_BLOCK_DATA: Record<Block['type'], Block> = {
     id: '',
     type: 'image',
     properties: {},
-  },
-  loader: {
-    id: '',
-    type: 'loader',
-    properties: {
-      description: 'Calculating your personality type...',
-      duration: 3,
-    },
   },
 }
 
@@ -320,7 +304,7 @@ function AddBlockDialogPopup() {
                     <Badge variant="secondary" className="mb-4">
                       Preview
                     </Badge>
-                    <BlockComponent static block={PREVIEW_BLOCK_DATA[highlightedBlockType]} index={0} />
+                    <BlockComponent static block={PREVIEW_BLOCK_DATA[highlightedBlockType]!} index={0} />
                   </div>
                 </div>
 
