@@ -76,7 +76,7 @@ function RouteComponent() {
   }
 
   return (
-    <div className="flex h-full w-full flex-col gap-4">
+    <div className="flex h-full w-full flex-col gap-2">
       <Heading.Root>
         <Heading.Content>
           <Heading.Title>Quizzes</Heading.Title>

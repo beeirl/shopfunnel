@@ -5,6 +5,7 @@ import { Input } from '@/components/ui/input'
 import { withActor } from '@/context/auth.withActor'
 import { Identifier } from '@shopfunnel/core/identifier'
 import { Quiz } from '@shopfunnel/core/quiz/index'
+import { IconChevronLeft as ChevronLeftIcon } from '@tabler/icons-react'
 import { mutationOptions, useMutation, useQueryClient, useSuspenseQuery } from '@tanstack/react-query'
 import { createFileRoute, Link, linkOptions, MatchRoute, Outlet } from '@tanstack/react-router'
 import { createServerFn } from '@tanstack/react-start'
@@ -98,7 +99,16 @@ function RouteComponent() {
   return (
     <div className="flex h-screen w-screen flex-col">
       <div className="grid h-12 w-full shrink-0 grid-cols-3 items-center border-b pr-4 pl-2">
-        <div className="flex items-center">
+        <div className="flex items-center gap-1">
+          <Button
+            variant="ghost"
+            size="icon"
+            aria-label="Back to dashboard"
+            render={<Link from={Route.fullPath} to="../.." />}
+          >
+            <ChevronLeftIcon />
+          </Button>
+          <div className="h-3 w-px rounded-full bg-border" />
           <Dialog.Root open={editTitleOpen} onOpenChange={handleTitleOpenChange}>
             <Dialog.Trigger aria-label="Edit quiz title" render={<Button variant="ghost">{quiz.title}</Button>} />
             <Dialog.Content>

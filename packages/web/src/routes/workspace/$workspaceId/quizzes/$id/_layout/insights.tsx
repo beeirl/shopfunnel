@@ -92,7 +92,7 @@ function RouteComponent() {
     const dropoffPercent = prevViews > 0 ? Math.round((dropoff / prevViews) * 100) : 0
 
     return {
-      step: `${item.step_index + 1}. ${item.step_name}`,
+      step: item.step_name,
       views: item.views,
       dropoff,
       dropoffPercent,
