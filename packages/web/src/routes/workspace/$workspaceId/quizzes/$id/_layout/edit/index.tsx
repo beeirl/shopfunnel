@@ -4,7 +4,7 @@ import { Identifier } from '@shopfunnel/core/identifier'
 import { Quiz } from '@shopfunnel/core/quiz/index'
 import type { Block, Info, Step, Theme } from '@shopfunnel/core/quiz/types'
 import { useDebouncer } from '@tanstack/react-pacer'
-import { mutationOptions, useMutation, useSuspenseQuery } from '@tanstack/react-query'
+import { mutationOptions, useMutation, useQueryClient, useSuspenseQuery } from '@tanstack/react-query'
 import { createFileRoute } from '@tanstack/react-router'
 import { createServerFn } from '@tanstack/react-start'
 import * as React from 'react'
@@ -81,13 +81,17 @@ export const Route = createFileRoute('/workspace/$workspaceId/quizzes/$id/_layou
 
 function RouteComponent() {
   const params = Route.useParams()
+  const queryClient = useQueryClient()
 
   const quizQuery = useSuspenseQuery(getQuizQueryOptions(params.workspaceId, params.id))
   const updateQuizMutation = useMutation(updateQuizMutationOptions(params.workspaceId, params.id))
 
   const saveDebouncer = useDebouncer(
-    (data: { steps: Step[]; theme?: Theme }) => {
-      updateQuizMutation.mutate(data)
+    async (data: { steps: Step[]; theme?: Theme }) => {
+      await updateQuizMutation.mutateAsync(data)
+      queryClient.setQueryData(getQuizQueryOptions(params.workspaceId, params.id).queryKey, (quiz: Info | undefined) =>
+        quiz ? { ...quiz, published: false } : quiz,
+      )
     },
     { wait: 1000 },
   )
