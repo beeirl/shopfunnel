@@ -80,7 +80,7 @@ export namespace Quiz {
         id,
         workspaceId: Actor.workspace(),
         shortId,
-        title: 'My new quiz',
+        title: 'New quiz',
         currentVersion,
       })
 
@@ -124,10 +124,24 @@ export namespace Quiz {
     },
   )
 
+  export const updateTitle = fn(
+    z.object({
+      id: Identifier.schema('quiz'),
+      title: z.string().min(1).max(255),
+    }),
+    async (input) => {
+      await Database.use((tx) =>
+        tx
+          .update(QuizTable)
+          .set({ title: input.title })
+          .where(and(eq(QuizTable.workspaceId, Actor.workspace()), eq(QuizTable.id, input.id))),
+      )
+    },
+  )
+
   export const update = fn(
     z.object({
       id: Identifier.schema('quiz'),
-      title: z.string().min(1).max(255).optional(),
       steps: z.custom<Step[]>().optional(),
       rules: z.custom<Rule[]>().optional(),
       variables: z.custom<Variables>().optional(),
@@ -177,10 +191,7 @@ export namespace Quiz {
 
           await tx
             .update(QuizTable)
-            .set({
-              title: input.title,
-              currentVersion: newVersion,
-            })
+            .set({ currentVersion: newVersion })
             .where(and(eq(QuizTable.workspaceId, Actor.workspace()), eq(QuizTable.id, input.id)))
         } else {
           await tx
@@ -198,13 +209,6 @@ export namespace Quiz {
                 eq(QuizVersionTable.version, quiz.currentVersion),
               ),
             )
-
-          if (input.title) {
-            await tx
-              .update(QuizTable)
-              .set({ title: input.title })
-              .where(and(eq(QuizTable.workspaceId, Actor.workspace()), eq(QuizTable.id, input.id)))
-          }
         }
       })
     },
