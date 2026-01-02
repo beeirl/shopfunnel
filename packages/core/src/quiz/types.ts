@@ -22,7 +22,7 @@ export interface MultipleChoiceBlock {
   properties: {
     name: string
     multiple?: boolean
-    choices: Array<{
+    options: Array<{
       id: string
       label: string
       description?: string
@@ -45,7 +45,7 @@ export interface PictureChoiceBlock {
   properties: {
     name: string
     multiple?: boolean
-    choices: Array<{
+    options: Array<{
       id: string
       label: string
       description?: string
@@ -153,6 +153,9 @@ export type Block =
   | ListBlock
   | ImageBlock
   | LoaderBlock
+
+export const INPUT_BLOCKS = ['text_input', 'multiple_choice', 'picture_choice', 'dropdown'] as const
+export type InputBlock = (typeof INPUT_BLOCKS)[number]
 
 // ============================================
 // Step

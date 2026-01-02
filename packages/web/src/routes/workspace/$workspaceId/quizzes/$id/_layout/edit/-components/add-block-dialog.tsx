@@ -29,7 +29,7 @@ const ADD_BLOCK_DATA = {
     type: 'multiple_choice' as const,
     properties: {
       name: 'Multiple Choice',
-      choices: [{ id: ulid(), label: 'Choice 1' }],
+      options: [{ id: ulid(), label: 'Choice 1' }],
     },
     validations: {
       required: false,
@@ -40,7 +40,7 @@ const ADD_BLOCK_DATA = {
     type: 'picture_choice' as const,
     properties: {
       name: 'Picture Choice',
-      choices: [
+      options: [
         { id: ulid(), label: 'Choice 1' },
         { id: ulid(), label: 'Choice 2' },
       ],
@@ -128,7 +128,7 @@ const PREVIEW_BLOCK_DATA: Record<Block['type'], Block> = {
     type: 'multiple_choice',
     properties: {
       name: 'Multiple Choice',
-      choices: [
+      options: [
         { id: '1', label: 'United States' },
         { id: '2', label: 'Canada' },
         { id: '3', label: 'United Kingdom' },
@@ -141,7 +141,7 @@ const PREVIEW_BLOCK_DATA: Record<Block['type'], Block> = {
     type: 'picture_choice',
     properties: {
       name: 'Picture Choice',
-      choices: [
+      options: [
         { id: '1', label: '20 - 29 Years Old', media: { type: 'image', value: '/img1.png' } },
         { id: '2', label: '30 - 39 Years Old', media: { type: 'image', value: '/img2.jpg' } },
       ],

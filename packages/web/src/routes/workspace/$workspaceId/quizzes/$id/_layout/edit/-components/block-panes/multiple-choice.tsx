@@ -18,7 +18,7 @@ import { Field } from '../field'
 import { MediaPicker } from '../media-picker'
 import { Pane } from '../pane'
 
-type Choice = MultipleChoiceBlockData['properties']['choices'][number]
+type Choice = MultipleChoiceBlockData['properties']['options'][number]
 
 function ChoiceItem({
   choice,
@@ -118,7 +118,7 @@ export function MultipleChoiceBlockPane({
   onImageUpload: (file: File) => Promise<string>
 }) {
   const block = getBlockInfo(data.type)
-  const choices = data.properties.choices
+  const options = data.properties.options
 
   const choiceInputRefs = React.useRef<Map<string, HTMLInputElement>>(new Map())
 
@@ -126,7 +126,7 @@ export function MultipleChoiceBlockPane({
     onDataUpdate({
       properties: {
         ...data.properties,
-        choices: choices.map((c) => (c.id === choiceId ? { ...c, ...updates } : c)),
+        options: options.map((c) => (c.id === choiceId ? { ...c, ...updates } : c)),
       },
     })
   }
@@ -135,7 +135,7 @@ export function MultipleChoiceBlockPane({
     onDataUpdate({
       properties: {
         ...data.properties,
-        choices: choices.filter((c) => c.id !== choiceId),
+        options: options.filter((c) => c.id !== choiceId),
       },
     })
   }
@@ -145,11 +145,11 @@ export function MultipleChoiceBlockPane({
     onDataUpdate({
       properties: {
         ...data.properties,
-        choices: [
-          ...choices,
+        options: [
+          ...options,
           {
             id,
-            label: `Choice ${choices.length + 1}`,
+            label: `Choice ${options.length + 1}`,
           },
         ],
       },
@@ -165,7 +165,7 @@ export function MultipleChoiceBlockPane({
     onDataUpdate({
       properties: {
         ...data.properties,
-        choices: newChoices,
+        options: newChoices,
       },
     })
   }
@@ -194,9 +194,9 @@ export function MultipleChoiceBlockPane({
               <PlusIcon />
             </Button>
           </Pane.GroupHeader>
-          <DragDropProvider onDragEnd={(event) => handleChoicesReorder(move(choices, event))}>
+          <DragDropProvider onDragEnd={(event) => handleChoicesReorder(move(options, event))}>
             <div className="flex flex-col gap-2">
-              {choices.map((choice, index) => (
+              {options.map((choice, index) => (
                 <ChoiceItem
                   key={choice.id}
                   choice={choice}

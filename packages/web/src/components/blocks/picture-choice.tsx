@@ -27,7 +27,7 @@ export function PictureChoiceBlock(props: PictureChoiceBlockProps) {
           props.onValueChange?.(props.block.properties.multiple ? value : (value[0] ?? null))
         }}
       >
-        {props.block.properties.choices.map((choice) => (
+        {props.block.properties.options.map((choice) => (
           <ReactAriaListboxItem
             key={choice.id}
             id={choice.id}
