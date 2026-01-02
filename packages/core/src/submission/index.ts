@@ -1,7 +1,10 @@
-import { eq, sql } from 'drizzle-orm'
+import { and, desc, eq, inArray, sql } from 'drizzle-orm'
 import { z } from 'zod'
+import { Actor } from '../actor'
+import { AnswerTable, AnswerValueTable } from '../answer/index.sql'
 import { Database } from '../database'
 import { Identifier } from '../identifier'
+import { Question } from '../question'
 import { fn } from '../utils/fn'
 import { SubmissionTable } from './index.sql'
 
@@ -43,5 +46,100 @@ export namespace Submission {
         .set({ completedAt: sql`NOW(3)` })
         .where(eq(SubmissionTable.id, id)),
     )
+  })
+
+  export const list = fn(Identifier.schema('quiz'), async (quizId) => {
+    const questions = await Question.list(quizId)
+
+    // Fetch all submissions for this quiz
+    const submissions = await Database.use((tx) =>
+      tx
+        .select()
+        .from(SubmissionTable)
+        .where(and(eq(SubmissionTable.workspaceId, Actor.workspaceId()), eq(SubmissionTable.quizId, quizId)))
+        .orderBy(desc(SubmissionTable.createdAt)),
+    )
+
+    if (submissions.length === 0) {
+      return {
+        questions: questions.map((q) => ({
+          id: q.id,
+          title: q.title,
+          index: q.index,
+          options: q.options,
+        })),
+        submissions: [],
+      }
+    }
+
+    // Fetch all answers for these submissions
+    const submissionIds = submissions.map((s) => s.id)
+    const answers = await Database.use((tx) =>
+      tx
+        .select({
+          submissionId: AnswerTable.submissionId,
+          questionId: AnswerTable.questionId,
+          text: AnswerValueTable.text,
+          number: AnswerValueTable.number,
+          optionId: AnswerValueTable.optionId,
+        })
+        .from(AnswerTable)
+        .innerJoin(AnswerValueTable, eq(AnswerValueTable.answerId, AnswerTable.id))
+        .where(and(eq(AnswerTable.workspaceId, Actor.workspaceId()), inArray(AnswerTable.submissionId, submissionIds))),
+    )
+
+    // Build a map of questionId -> options for label resolution
+    const questionOptionByQuestionId = new Map(questions.map((q) => [q.id, q.options]))
+
+    // Group answers by submission
+    const answersBySubmission = new Map<string, Map<string, string[]>>()
+    for (const answer of answers) {
+      let submissionAnswers = answersBySubmission.get(answer.submissionId)
+      if (!submissionAnswers) {
+        submissionAnswers = new Map()
+        answersBySubmission.set(answer.submissionId, submissionAnswers)
+      }
+
+      let questionAnswers = submissionAnswers.get(answer.questionId)
+      if (!questionAnswers) {
+        questionAnswers = []
+        submissionAnswers.set(answer.questionId, questionAnswers)
+      }
+
+      // Resolve the answer value
+      if (answer.text !== null) {
+        questionAnswers.push(answer.text)
+      } else if (answer.optionId !== null) {
+        const options = questionOptionByQuestionId.get(answer.questionId)
+        const label = options?.[answer.optionId]?.label ?? answer.optionId
+        questionAnswers.push(label)
+      } else if (answer.number !== null) {
+        questionAnswers.push(String(answer.number))
+      }
+    }
+
+    return {
+      questions: questions.map((q) => ({
+        id: q.id,
+        title: q.title,
+        index: q.index,
+        options: q.options,
+      })),
+      submissions: submissions.map((s) => {
+        const submissionAnswers = answersBySubmission.get(s.id)
+        const answers: Record<string, string[]> = {}
+        if (submissionAnswers) {
+          for (const [questionId, values] of submissionAnswers) {
+            answers[questionId] = values
+          }
+        }
+        return {
+          id: s.id,
+          createdAt: s.createdAt,
+          completedAt: s.completedAt,
+          answers,
+        }
+      }),
+    }
   })
 }

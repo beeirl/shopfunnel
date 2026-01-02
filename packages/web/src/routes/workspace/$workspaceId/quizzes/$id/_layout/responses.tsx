@@ -1,128 +1,83 @@
+import { withActor } from '@/context/auth.withActor'
+import { Identifier } from '@shopfunnel/core/identifier'
+import { Submission } from '@shopfunnel/core/submission/index'
+import { queryOptions, useSuspenseQuery } from '@tanstack/react-query'
 import { createFileRoute } from '@tanstack/react-router'
+import { createServerFn } from '@tanstack/react-start'
 import * as React from 'react'
 import { Column, useTable } from 'react-table'
+import { z } from 'zod'
 
 import { Table } from '@/components/ui/table'
 import { cn } from '@/lib/utils'
+
+const listSubmissions = createServerFn()
+  .inputValidator(
+    z.object({
+      workspaceId: Identifier.schema('workspace'),
+      quizId: Identifier.schema('quiz'),
+    }),
+  )
+  .handler(({ data }) => {
+    return withActor(() => Submission.list(data.quizId), data.workspaceId)
+  })
+
+const listSubmissionsQueryOptions = (workspaceId: string, quizId: string) =>
+  queryOptions({
+    queryKey: ['submissions', workspaceId, quizId],
+    queryFn: () => listSubmissions({ data: { workspaceId, quizId } }),
+  })
 
 export const Route = createFileRoute('/workspace/$workspaceId/quizzes/$id/_layout/responses')({
   component: RouteComponent,
 })
 
-type Submission = {
-  responseTime: string
-  gender: string
-  age: string
-  lifestyle: string
-  goals: string
-  activity: string
-  diet: string
-  plan: string
+type RowData = {
+  submittedAt: string
+  [questionId: string]: string
 }
 
-const mockSubmissions: Submission[] = [
-  {
-    responseTime: 'Dec 30, 2025 14:32',
-    gender: 'Male',
-    age: '25-34',
-    lifestyle: 'Active',
-    goals: 'Lose weight',
-    activity: 'High',
-    diet: 'Balanced',
-    plan: 'Premium',
-  },
-  {
-    responseTime: 'Dec 30, 2025 11:15',
-    gender: 'Female',
-    age: '18-24',
-    lifestyle: 'Moderate',
-    goals: 'Build muscle',
-    activity: 'Medium',
-    diet: 'Keto',
-    plan: 'Basic',
-  },
-  {
-    responseTime: 'Dec 29, 2025 18:47',
-    gender: 'Male',
-    age: '35-44',
-    lifestyle: 'Sedentary',
-    goals: 'Improve health',
-    activity: 'Low',
-    diet: 'Vegan',
-    plan: 'Premium',
-  },
-  {
-    responseTime: 'Dec 29, 2025 09:23',
-    gender: 'Female',
-    age: '45-54',
-    lifestyle: 'Active',
-    goals: 'Maintain weight',
-    activity: 'High',
-    diet: 'Mediterranean',
-    plan: 'Pro',
-  },
-  {
-    responseTime: 'Dec 28, 2025 16:58',
-    gender: 'Non-binary',
-    age: '25-34',
-    lifestyle: 'Moderate',
-    goals: 'Lose weight',
-    activity: 'Medium',
-    diet: 'Balanced',
-    plan: 'Basic',
-  },
-  {
-    responseTime: 'Dec 28, 2025 12:04',
-    gender: 'Female',
-    age: '18-24',
-    lifestyle: 'Active',
-    goals: 'Build muscle',
-    activity: 'High',
-    diet: 'High protein',
-    plan: 'Pro',
-  },
-  {
-    responseTime: 'Dec 27, 2025 20:31',
-    gender: 'Male',
-    age: '55-64',
-    lifestyle: 'Sedentary',
-    goals: 'Improve health',
-    activity: 'Low',
-    diet: 'Low carb',
-    plan: 'Premium',
-  },
-  {
-    responseTime: 'Dec 27, 2025 08:19',
-    gender: 'Male',
-    age: '35-44',
-    lifestyle: 'Moderate',
-    goals: 'Lose weight',
-    activity: 'Medium',
-    diet: 'Balanced',
-    plan: 'Basic',
-  },
-]
+function formatDate(date: Date): string {
+  return new Intl.DateTimeFormat('en-US', {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  }).format(date)
+}
 
 function RouteComponent() {
-  const columns: Column<Submission>[] = React.useMemo(
-    () => [
-      { Header: 'Submitted At', accessor: 'responseTime' },
-      { Header: 'Gender', accessor: 'gender' },
-      { Header: 'Age', accessor: 'age' },
-      { Header: 'Lifestyle', accessor: 'lifestyle' },
-      { Header: 'Goals', accessor: 'goals' },
-      { Header: 'Activity', accessor: 'activity' },
-      { Header: 'Diet', accessor: 'diet' },
-      { Header: 'Plan', accessor: 'plan' },
-    ],
-    [],
-  )
+  const params = Route.useParams()
+  const { data } = useSuspenseQuery(listSubmissionsQueryOptions(params.workspaceId, params.id))
 
-  const data = React.useMemo(() => mockSubmissions, [])
+  const columns: Column<RowData>[] = React.useMemo(() => {
+    const questionColumns: Column<RowData>[] = data.questions
+      .sort((a, b) => a.index - b.index)
+      .map((q) => ({
+        Header: q.title,
+        accessor: q.id,
+      }))
+
+    return [{ Header: 'Submitted At', accessor: 'submittedAt' }, ...questionColumns]
+  }, [data.questions])
+
+  const tableData: RowData[] = React.useMemo(() => {
+    return data.submissions.map((submission) => {
+      const row: RowData = {
+        submittedAt: formatDate(new Date(submission.completedAt ?? submission.createdAt)),
+      }
+      for (const question of data.questions) {
+        const answers = submission.answers[question.id]
+        row[question.id] = answers?.join(', ') ?? ''
+      }
+      return row
+    })
+  }, [data.submissions, data.questions])
 
   const { getTableProps, getTableBodyProps, headerGroups, rows, prepareRow } = useTable({
     columns,
-    data,
+    data: tableData,
   })
 
   return (

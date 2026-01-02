@@ -1,4 +1,4 @@
-import { index, int, json, mysqlTable, unique, varchar } from 'drizzle-orm/mysql-core'
+import { int, json, mysqlTable, uniqueIndex, varchar } from 'drizzle-orm/mysql-core'
 import { id, timestampColumns, ulid, workspaceColumns, workspaceIndexes } from '../database/types'
 
 export const QuestionTable = mysqlTable(
@@ -13,9 +13,5 @@ export const QuestionTable = mysqlTable(
     index: int('index').notNull(),
     options: json('options').$type<Record<string, { id: string; label: string; index: number }>>(),
   },
-  (table) => [
-    ...workspaceIndexes(table),
-    index('quiz_block_idx').on(table.workspaceId, table.quizId, table.blockId),
-    unique('quiz_block_unique').on(table.workspaceId, table.quizId, table.blockId),
-  ],
+  (table) => [...workspaceIndexes(table), uniqueIndex('quiz_block').on(table.workspaceId, table.quizId, table.blockId)],
 )
