@@ -12,5 +12,6 @@ SQL >
         countDistinctIf(session_id, type = 'quiz_complete') as total_completions
     FROM quiz_events
     WHERE quiz_id = {{String(quiz_id, required=True)}}
+      AND quiz_version = {{UInt32(quiz_version, required=True)}}
 
 TYPE ENDPOINT

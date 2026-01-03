@@ -15,6 +15,7 @@ SQL >
     FROM quiz_events
     WHERE 
         quiz_id = {{String(quiz_id, required=True)}}
+        AND quiz_version = {{UInt32(quiz_version, required=True)}}
         AND type = 'step_complete'
     GROUP BY step_index
     ORDER BY step_index

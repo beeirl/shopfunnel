@@ -1,6 +1,9 @@
 import { Card } from '@/components/ui/card'
 import { Chart, ChartConfig } from '@/components/ui/chart'
 import { Empty } from '@/components/ui/empty'
+import { withActor } from '@/context/auth.withActor'
+import { Identifier } from '@shopfunnel/core/identifier'
+import { Quiz } from '@shopfunnel/core/quiz/index'
 import { Resource } from '@shopfunnel/resource'
 import { IconChartBar as ChartBarIcon } from '@tabler/icons-react'
 import { queryOptions, useSuspenseQuery } from '@tanstack/react-query'
@@ -23,18 +26,35 @@ interface MetricsData {
   total_completions: number
 }
 
+const getPublishedVersionNumber = createServerFn()
+  .inputValidator(
+    z.object({
+      workspaceId: Identifier.schema('workspace'),
+      quizId: Identifier.schema('quiz'),
+    }),
+  )
+  .handler(({ data }) => {
+    return withActor(() => Quiz.getPublishedVersionNumber(data.quizId), data.workspaceId)
+  })
+
 const getInsights = createServerFn()
-  .inputValidator(z.object({ quizId: z.string() }))
+  .inputValidator(z.object({ quizId: z.string(), quizVersion: z.number() }))
   .handler(async ({ data }) => {
     const token = Resource.TINYBIRD_TOKEN.value
 
     const [funnelRes, metricsRes] = await Promise.all([
-      fetch(`https://api.us-east.aws.tinybird.co/v0/pipes/funnel.json?quiz_id=${data.quizId}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      }),
-      fetch(`https://api.us-east.aws.tinybird.co/v0/pipes/quiz_metrics.json?quiz_id=${data.quizId}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      }),
+      fetch(
+        `https://api.us-east.aws.tinybird.co/v0/pipes/funnel.json?quiz_id=${data.quizId}&quiz_version=${data.quizVersion}`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        },
+      ),
+      fetch(
+        `https://api.us-east.aws.tinybird.co/v0/pipes/quiz_metrics.json?quiz_id=${data.quizId}&quiz_version=${data.quizVersion}`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        },
+      ),
     ])
 
     const funnelJson = (await funnelRes.json()) as any
@@ -50,17 +70,29 @@ const getInsights = createServerFn()
     return { funnel, metrics }
   })
 
-const getInsightsQueryOptions = (quizId: string) =>
+const getPublishedVersionQueryOptions = (workspaceId: string, quizId: string) =>
   queryOptions({
-    queryKey: ['insights', quizId],
-    queryFn: () => getInsights({ data: { quizId } }),
+    queryKey: ['quiz-published-version-number', workspaceId, quizId],
+    queryFn: () => getPublishedVersionNumber({ data: { workspaceId, quizId } }),
+  })
+
+const getInsightsQueryOptions = (quizId: string, quizVersion: number) =>
+  queryOptions({
+    queryKey: ['insights', quizId, quizVersion],
+    queryFn: () => getInsights({ data: { quizId, quizVersion } }),
   })
 
 export const Route = createFileRoute('/workspace/$workspaceId/quizzes/$id/_layout/insights')({
   component: RouteComponent,
   ssr: false,
   loader: async ({ context, params }) => {
-    await context.queryClient.ensureQueryData(getInsightsQueryOptions(params.id))
+    const publishedVersion = await context.queryClient.ensureQueryData(
+      getPublishedVersionQueryOptions(params.workspaceId, params.id),
+    )
+    if (publishedVersion) {
+      await context.queryClient.ensureQueryData(getInsightsQueryOptions(params.id, publishedVersion))
+    }
+    return { publishedVersion }
   },
 })
 
@@ -82,7 +114,29 @@ function formatDuration(ms: number): string {
 
 function RouteComponent() {
   const params = Route.useParams()
-  const insightsQuery = useSuspenseQuery(getInsightsQueryOptions(params.id))
+  const { publishedVersion } = Route.useLoaderData()
+
+  // If no published version, show empty state
+  if (!publishedVersion) {
+    return (
+      <div className="flex flex-1 justify-center overflow-auto p-6">
+        <div className="w-full max-w-4xl space-y-6">
+          <div className="text-2xl font-bold">Insights</div>
+          <Empty.Root>
+            <Empty.Header>
+              <Empty.Media variant="icon">
+                <ChartBarIcon />
+              </Empty.Media>
+              <Empty.Title>No data yet</Empty.Title>
+              <Empty.Description>Publish your quiz to start collecting analytics.</Empty.Description>
+            </Empty.Header>
+          </Empty.Root>
+        </div>
+      </div>
+    )
+  }
+
+  const insightsQuery = useSuspenseQuery(getInsightsQueryOptions(params.id, publishedVersion))
   const { funnel, metrics } = insightsQuery.data
 
   // Transform funnel data for chart

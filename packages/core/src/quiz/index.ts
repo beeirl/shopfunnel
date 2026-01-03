@@ -60,6 +60,16 @@ export namespace Quiz {
     )
   })
 
+  export const getPublishedVersionNumber = fn(Identifier.schema('quiz'), (id) =>
+    Database.use((tx) =>
+      tx
+        .select({ publishedVersion: QuizTable.publishedVersion })
+        .from(QuizTable)
+        .where(and(eq(QuizTable.workspaceId, Actor.workspace()), eq(QuizTable.id, id), isNull(QuizTable.archivedAt)))
+        .then((rows) => rows[0]?.publishedVersion ?? null),
+    ),
+  )
+
   export const list = fn(z.void(), () =>
     Database.use((tx) =>
       tx
