@@ -2,6 +2,7 @@ import { Block, getBlockInfo } from '@/components/block'
 import { NextButton } from '@/components/next-button'
 import { getThemeCssVars, shouldAutoAdvance } from '@/components/quiz'
 import { Button } from '@/components/ui/button'
+import { ButtonGroup } from '@/components/ui/button-group'
 import { cn } from '@/lib/utils'
 import {
   defaultDropAnimationSideEffects,
@@ -24,13 +25,20 @@ import {
 } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import type { Block as BlockType, Page as PageType, Theme } from '@shopfunnel/core/quiz/types'
-import { IconPlus as PlusIcon } from '@tabler/icons-react'
+import {
+  IconMaximize as MaximizeIcon,
+  IconPalette as PaletteIcon,
+  IconPlus as PlusIcon,
+  IconZoomIn as ZoomInIcon,
+  IconZoomOut as ZoomOutIcon,
+} from '@tabler/icons-react'
 import {
   Background,
-  Controls,
   PanOnScrollMode,
   ReactFlow,
+  Panel as ReactFlowPanel,
   ReactFlowProvider,
+  useReactFlow,
   useViewport,
   type Node,
   type NodeProps,
@@ -434,6 +442,7 @@ function SortablePage({
 
 type NodeData = {
   pages: PageType[]
+  theme: Theme
   draggingPage: PageType | null
   draggingBlock: BlockType | null
   dropping: boolean
@@ -452,6 +461,7 @@ type NodeType = Node<NodeData, 'node'>
 function Node({
   data: {
     pages,
+    theme,
     draggingPage,
     draggingBlock,
     dropping,
@@ -474,7 +484,7 @@ function Node({
   )
 
   return (
-    <div className="nopan nodrag">
+    <div className="nopan nodrag" style={getThemeCssVars(theme)}>
       <DndContext sensors={sensors} collisionDetection={pointerWithin} onDragStart={onDragStart} onDragEnd={onDragEnd}>
         <SortableContext items={pages} strategy={horizontalListSortingStrategy}>
           <div className="flex items-start gap-6">
@@ -525,13 +535,72 @@ const nodeTypes = {
   node: Node,
 }
 
+function CanvasContent({
+  nodes,
+  onPaneClick,
+  onDesignSelect,
+}: {
+  nodes: NodeType[]
+  onPaneClick: () => void
+  onDesignSelect: () => void
+}) {
+  const { zoomIn, zoomOut, fitView } = useReactFlow()
+
+  return (
+    <ReactFlow
+      nodes={nodes}
+      nodeTypes={nodeTypes}
+      minZoom={ZOOM_MIN}
+      maxZoom={ZOOM_MAX}
+      fitView
+      nodesDraggable={false}
+      nodesConnectable={false}
+      elementsSelectable={false}
+      panOnScroll
+      panOnScrollSpeed={1}
+      panOnScrollMode={PanOnScrollMode.Free}
+      zoomOnScroll={false}
+      zoomOnPinch
+      zoomActivationKeyCode="Meta"
+      panOnDrag={[0, 1, 2]}
+      onPaneClick={onPaneClick}
+      proOptions={{
+        hideAttribution: true,
+      }}
+    >
+      <Background />
+      <ReactFlowPanel position="top-left">
+        <ButtonGroup.Root orientation="horizontal">
+          <Button variant="outline" size="icon" onClick={() => zoomIn()}>
+            <ZoomInIcon />
+          </Button>
+          <Button variant="outline" size="icon" onClick={() => zoomOut()}>
+            <ZoomOutIcon />
+          </Button>
+          <Button variant="outline" size="icon" onClick={() => fitView()}>
+            <MaximizeIcon />
+          </Button>
+        </ButtonGroup.Root>
+      </ReactFlowPanel>
+      <ReactFlowPanel position="top-right">
+        <Button variant="outline" onClick={onDesignSelect}>
+          <PaletteIcon />
+          Design
+        </Button>
+      </ReactFlowPanel>
+    </ReactFlow>
+  )
+}
+
 export interface CanvasProps {
   pages: PageType[]
   theme: Theme
   selectedPageId: string | null
   selectedBlockId: string | null
+  showDesignPanel: boolean
   onPageSelect: (pageId: string | null) => void
   onBlockSelect: (blockId: string | null) => void
+  onDesignSelect: () => void
   onPagesReorder: (pages: PageType[]) => void
   onPageAdd: (page: PageType, index: number) => void
   onPageDelete: (pageId: string) => void
@@ -545,8 +614,10 @@ export function Canvas({
   theme,
   selectedPageId,
   selectedBlockId,
+  showDesignPanel,
   onPageSelect,
   onBlockSelect,
+  onDesignSelect,
   onPagesReorder,
   onPageAdd,
   onPageDelete,
@@ -655,6 +726,7 @@ export function Canvas({
         position: { x: 0, y: 0 },
         data: {
           pages,
+          theme,
           draggingPage,
           draggingBlock,
           dropping,
@@ -671,6 +743,7 @@ export function Canvas({
     ],
     [
       pages,
+      theme,
       draggingPage,
       draggingBlock,
       dropping,
@@ -686,32 +759,9 @@ export function Canvas({
   )
 
   return (
-    <div className="size-full overscroll-x-none bg-background" data-slot="canvas" style={getThemeCssVars(theme)}>
+    <div className="size-full overscroll-x-none bg-background" data-slot="canvas">
       <ReactFlowProvider>
-        <ReactFlow
-          nodes={nodes}
-          nodeTypes={nodeTypes}
-          minZoom={ZOOM_MIN}
-          maxZoom={ZOOM_MAX}
-          fitView
-          nodesDraggable={false}
-          nodesConnectable={false}
-          elementsSelectable={false}
-          panOnScroll
-          panOnScrollSpeed={1}
-          panOnScrollMode={PanOnScrollMode.Free}
-          zoomOnScroll={false}
-          zoomOnPinch
-          zoomActivationKeyCode="Meta"
-          panOnDrag={[0, 1, 2]}
-          onPaneClick={handlePaneClick}
-          proOptions={{
-            hideAttribution: true,
-          }}
-        >
-          <Background />
-          <Controls showInteractive={false} />
-        </ReactFlow>
+        <CanvasContent nodes={nodes} onPaneClick={handlePaneClick} onDesignSelect={onDesignSelect} />
       </ReactFlowProvider>
     </div>
   )

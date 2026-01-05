@@ -12,6 +12,7 @@ import { getQuizQueryOptions } from '../../-common'
 import { BlockPanel } from './-components/block-panel'
 import { Canvas } from './-components/canvas'
 import { PagePanel } from './-components/page-panel'
+import { ThemePanel } from './-components/theme-panel'
 
 const updateQuiz = createServerFn({ method: 'POST' })
   .inputValidator(
@@ -105,8 +106,11 @@ function RouteComponent() {
   const [selectedBlockId, setSelectedBlockId] = React.useState<string | null>(null)
   const selectedBlock = quiz.pages.flatMap((p) => p.blocks).find((b) => b.id === selectedBlockId) ?? null
 
+  const [showThemePanel, setShowThemePanel] = React.useState(false)
+
   const handlePageSelect = (pageId: string | null) => {
     setSelectedPageId(pageId)
+    setShowThemePanel(false)
     if (pageId) {
       const page = quiz.pages.find((p) => p.id === pageId)
       setSelectedBlockId(page?.blocks[0]?.id ?? null)
@@ -115,6 +119,24 @@ function RouteComponent() {
 
   const handleBlockSelect = (blockId: string | null) => {
     setSelectedBlockId(blockId)
+    setShowThemePanel(false)
+  }
+
+  const handleDesignSelect = () => {
+    if (showThemePanel) {
+      setShowThemePanel(false)
+    } else {
+      setSelectedPageId(null)
+      setSelectedBlockId(null)
+      setShowThemePanel(true)
+    }
+  }
+
+  const handleThemeUpdate = (updates: Partial<Theme>) => {
+    const updatedTheme = { ...quiz.theme, ...updates }
+    const updatedQuiz = { ...quiz, theme: updatedTheme, published: false }
+    setQuiz(updatedQuiz)
+    saveDebouncer.maybeExecute({ pages: updatedQuiz.pages, theme: updatedTheme })
   }
 
   const handlePagesReorder = (reorderedPages: Page[]) => {
@@ -225,8 +247,10 @@ function RouteComponent() {
         theme={quiz.theme}
         selectedPageId={selectedPageId}
         selectedBlockId={selectedBlockId}
+        showDesignPanel={showThemePanel}
         onPageSelect={handlePageSelect}
         onBlockSelect={handleBlockSelect}
+        onDesignSelect={handleDesignSelect}
         onPagesReorder={handlePagesReorder}
         onPageAdd={handlePageAdd}
         onPageDelete={handlePageDelete}
@@ -234,7 +258,9 @@ function RouteComponent() {
         onBlockAdd={handleBlockAdd}
         onBlockDelete={handleBlockDelete}
       />
-      {selectedBlock ? (
+      {showThemePanel ? (
+        <ThemePanel theme={quiz.theme} onThemeUpdate={handleThemeUpdate} onImageUpload={handleImageUpload} />
+      ) : selectedBlock ? (
         <BlockPanel
           block={selectedBlock}
           onBlockUpdate={(block) => handleBlockUpdate(selectedBlock.id, block)}
