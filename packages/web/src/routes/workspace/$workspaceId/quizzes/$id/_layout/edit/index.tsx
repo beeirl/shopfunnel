@@ -154,11 +154,20 @@ function RouteComponent() {
     saveDebouncer.maybeExecute({ pages: updatedQuiz.pages })
   }
 
-  const handleBlockAdd = (addedBlock: Block) => {
-    if (!selectedPageId) return
-    const updatedPages = quiz.pages.map((page) =>
-      page.id === selectedPageId ? { ...page, blocks: [...page.blocks, addedBlock] } : page,
-    )
+  const handleBlockAdd = (addedBlock: Block, pageId?: string, index?: number) => {
+    const targetPageId = pageId ?? selectedPageId
+    if (!targetPageId) return
+
+    const updatedPages = quiz.pages.map((page) => {
+      if (page.id !== targetPageId) return page
+      if (index !== undefined) {
+        const newBlocks = [...page.blocks]
+        newBlocks.splice(index, 0, addedBlock)
+        return { ...page, blocks: newBlocks }
+      }
+      return { ...page, blocks: [...page.blocks, addedBlock] }
+    })
+
     const updatedQuiz = { ...quiz, pages: updatedPages, published: false }
     setQuiz(updatedQuiz)
     setSelectedBlockId(addedBlock.id)
