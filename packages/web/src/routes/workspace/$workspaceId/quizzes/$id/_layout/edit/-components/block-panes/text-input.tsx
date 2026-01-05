@@ -1,22 +1,22 @@
 import { getBlockInfo } from '@/components/block'
 import { Input } from '@/components/ui/input'
 import { SegmentedControl } from '@/components/ui/segmented-control'
-import type { TextInputBlock as TextInputBlockData } from '@shopfunnel/core/quiz/types'
+import type { TextInputBlock as TextInputBlockType } from '@shopfunnel/core/quiz/types'
 import { Field } from '../field'
 import { Pane } from '../pane'
 
 export function TextInputBlockPane({
-  data,
-  onDataUpdate,
+  block,
+  onBlockUpdate,
 }: {
-  data: TextInputBlockData
-  onDataUpdate: (data: Partial<TextInputBlockData>) => void
+  block: TextInputBlockType
+  onBlockUpdate: (block: Partial<TextInputBlockType>) => void
 }) {
-  const block = getBlockInfo(data.type)
+  const blockInfo = getBlockInfo(block.type)
   return (
     <Pane.Root>
       <Pane.Header>
-        <Pane.Title>{block?.name}</Pane.Title>
+        <Pane.Title>{blockInfo?.name}</Pane.Title>
       </Pane.Header>
       <Pane.Content>
         <Pane.Group>
@@ -25,8 +25,8 @@ export function TextInputBlockPane({
           </Pane.GroupHeader>
           <Input
             placeholder="Enter name..."
-            value={data.properties.name}
-            onValueChange={(value) => onDataUpdate({ properties: { ...data.properties, name: value } })}
+            value={block.properties.name}
+            onValueChange={(value) => onBlockUpdate({ properties: { ...block.properties, name: value } })}
           />
         </Pane.Group>
         <Pane.Separator />
@@ -38,9 +38,9 @@ export function TextInputBlockPane({
             <Field.Label>Required</Field.Label>
             <Field.Control>
               <SegmentedControl.Root
-                value={data.validations.required ?? false}
+                value={block.validations.required ?? false}
                 onValueChange={(value: boolean) =>
-                  onDataUpdate({ validations: { ...data.validations, required: value } })
+                  onBlockUpdate({ validations: { ...block.validations, required: value } })
                 }
               >
                 <SegmentedControl.Segment value={false}>No</SegmentedControl.Segment>

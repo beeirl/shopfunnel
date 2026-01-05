@@ -1,20 +1,20 @@
 import { getBlockInfo } from '@/components/block'
 import { Input } from '@/components/ui/input'
-import type { LoaderBlock as LoaderBlockData } from '@shopfunnel/core/quiz/types'
+import type { LoaderBlock as LoaderBlockType } from '@shopfunnel/core/quiz/types'
 import { Pane } from '../pane'
 
 export function LoaderBlockPane({
-  data,
-  onDataUpdate,
+  block,
+  onBlockUpdate,
 }: {
-  data: LoaderBlockData
-  onDataUpdate: (data: Partial<LoaderBlockData>) => void
+  block: LoaderBlockType
+  onBlockUpdate: (block: Partial<LoaderBlockType>) => void
 }) {
-  const block = getBlockInfo(data.type)
+  const blockInfo = getBlockInfo(block.type)
   return (
     <Pane.Root>
       <Pane.Header>
-        <Pane.Title>{block?.name}</Pane.Title>
+        <Pane.Title>{blockInfo?.name}</Pane.Title>
       </Pane.Header>
       <Pane.Content>
         <Pane.Group>
@@ -23,10 +23,10 @@ export function LoaderBlockPane({
           </Pane.GroupHeader>
           <Input
             placeholder="Loading text..."
-            value={data.properties.description ?? ''}
+            value={block.properties.description ?? ''}
             onValueChange={(value) =>
-              onDataUpdate({
-                properties: { ...data.properties, description: value || undefined },
+              onBlockUpdate({
+                properties: { ...block.properties, description: value || undefined },
               })
             }
           />
@@ -40,10 +40,10 @@ export function LoaderBlockPane({
             type="number"
             min={1}
             max={30}
-            value={data.properties.duration}
+            value={block.properties.duration}
             onValueChange={(value) =>
-              onDataUpdate({
-                properties: { ...data.properties, duration: parseFloat(value) || 3 },
+              onBlockUpdate({
+                properties: { ...block.properties, duration: parseFloat(value) || 3 },
               })
             }
           />

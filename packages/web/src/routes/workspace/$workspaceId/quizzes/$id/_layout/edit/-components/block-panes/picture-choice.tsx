@@ -5,7 +5,7 @@ import { SegmentedControl } from '@/components/ui/segmented-control'
 import { move } from '@dnd-kit/helpers'
 import { DragDropProvider } from '@dnd-kit/react'
 import { useSortable } from '@dnd-kit/react/sortable'
-import type { PictureChoiceBlock as PictureChoiceBlockData } from '@shopfunnel/core/quiz/types'
+import type { PictureChoiceBlock as PictureChoiceBlockType } from '@shopfunnel/core/quiz/types'
 import {
   IconGripVertical as GripVerticalIcon,
   IconPhoto as PhotoIcon,
@@ -17,7 +17,7 @@ import { ulid } from 'ulid'
 import { Field } from '../field'
 import { Pane } from '../pane'
 
-type Choice = PictureChoiceBlockData['properties']['options'][number]
+type Choice = PictureChoiceBlockType['properties']['options'][number]
 
 function ChoiceItem({
   choice,
@@ -99,32 +99,32 @@ function ChoiceItem({
 }
 
 export function PictureChoiceBlockPane({
-  data,
-  onDataUpdate,
+  block,
+  onBlockUpdate,
   onImageUpload,
 }: {
-  data: PictureChoiceBlockData
-  onDataUpdate: (data: Partial<PictureChoiceBlockData>) => void
+  block: PictureChoiceBlockType
+  onBlockUpdate: (block: Partial<PictureChoiceBlockType>) => void
   onImageUpload: (file: File) => Promise<string>
 }) {
-  const block = getBlockInfo(data.type)
-  const options = data.properties.options
+  const blockInfo = getBlockInfo(block.type)
+  const options = block.properties.options
 
   const choiceInputRefs = React.useRef<Map<string, HTMLInputElement>>(new Map())
 
   const handleChoiceUpdate = (choiceId: string, updates: Partial<Choice>) => {
-    onDataUpdate({
+    onBlockUpdate({
       properties: {
-        ...data.properties,
+        ...block.properties,
         options: options.map((c) => (c.id === choiceId ? { ...c, ...updates } : c)),
       },
     })
   }
 
   const handleChoiceDelete = (choiceId: string) => {
-    onDataUpdate({
+    onBlockUpdate({
       properties: {
-        ...data.properties,
+        ...block.properties,
         options: options.filter((c) => c.id !== choiceId),
       },
     })
@@ -132,9 +132,9 @@ export function PictureChoiceBlockPane({
 
   const handleChoiceAdd = () => {
     const id = ulid()
-    onDataUpdate({
+    onBlockUpdate({
       properties: {
-        ...data.properties,
+        ...block.properties,
         options: [
           ...options,
           {
@@ -152,9 +152,9 @@ export function PictureChoiceBlockPane({
   }
 
   const handleChoicesReorder = (newChoices: Choice[]) => {
-    onDataUpdate({
+    onBlockUpdate({
       properties: {
-        ...data.properties,
+        ...block.properties,
         options: newChoices,
       },
     })
@@ -163,7 +163,7 @@ export function PictureChoiceBlockPane({
   return (
     <Pane.Root>
       <Pane.Header>
-        <Pane.Title>{block?.name}</Pane.Title>
+        <Pane.Title>{blockInfo?.name}</Pane.Title>
       </Pane.Header>
       <Pane.Content>
         <Pane.Group>
@@ -172,8 +172,8 @@ export function PictureChoiceBlockPane({
           </Pane.GroupHeader>
           <Input
             placeholder="Enter name..."
-            value={data.properties.name}
-            onValueChange={(value) => onDataUpdate({ properties: { ...data.properties, name: value } })}
+            value={block.properties.name}
+            onValueChange={(value) => onBlockUpdate({ properties: { ...block.properties, name: value } })}
           />
         </Pane.Group>
         <Pane.Separator />
@@ -215,9 +215,9 @@ export function PictureChoiceBlockPane({
             <Field.Label>Mode</Field.Label>
             <Field.Control>
               <SegmentedControl.Root
-                value={data.properties.multiple ?? false}
+                value={block.properties.multiple ?? false}
                 onValueChange={(value: boolean) =>
-                  onDataUpdate({ properties: { ...data.properties, multiple: value } })
+                  onBlockUpdate({ properties: { ...block.properties, multiple: value } })
                 }
               >
                 <SegmentedControl.Segment value={false}>Single</SegmentedControl.Segment>
@@ -229,9 +229,9 @@ export function PictureChoiceBlockPane({
             <Field.Label>Required</Field.Label>
             <Field.Control>
               <SegmentedControl.Root
-                value={data.validations.required ?? false}
+                value={block.validations.required ?? false}
                 onValueChange={(value: boolean) =>
-                  onDataUpdate({ validations: { ...data.validations, required: value } })
+                  onBlockUpdate({ validations: { ...block.validations, required: value } })
                 }
               >
                 <SegmentedControl.Segment value={false}>No</SegmentedControl.Segment>

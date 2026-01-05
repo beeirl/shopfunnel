@@ -1,43 +1,43 @@
 import { getBlockInfo } from '@/components/block'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import type { GaugeBlock as GaugeBlockData } from '@shopfunnel/core/quiz/types'
+import type { GaugeBlock as GaugeBlockType } from '@shopfunnel/core/quiz/types'
 import { IconPlus as PlusIcon, IconTrash as TrashIcon } from '@tabler/icons-react'
 import * as React from 'react'
 import { Field } from '../field'
 import { Pane } from '../pane'
 
 export function GaugeBlockPane({
-  data,
-  onDataUpdate,
+  block,
+  onBlockUpdate,
 }: {
-  data: GaugeBlockData
-  onDataUpdate: (data: Partial<GaugeBlockData>) => void
+  block: GaugeBlockType
+  onBlockUpdate: (block: Partial<GaugeBlockType>) => void
 }) {
-  const block = getBlockInfo(data.type)
-  const marks = data.properties.marks ?? []
+  const blockInfo = getBlockInfo(block.type)
+  const marks = block.properties.marks ?? []
 
   const markInputRefs = React.useRef<Map<number, HTMLInputElement>>(new Map())
 
   const handleMarkUpdate = (index: number, value: string) => {
     const newMarks = [...marks]
     newMarks[index] = value
-    onDataUpdate({
-      properties: { ...data.properties, marks: newMarks },
+    onBlockUpdate({
+      properties: { ...block.properties, marks: newMarks },
     })
   }
 
   const handleMarkDelete = (index: number) => {
     const newMarks = marks.filter((_, i) => i !== index)
-    onDataUpdate({
-      properties: { ...data.properties, marks: newMarks.length > 0 ? newMarks : undefined },
+    onBlockUpdate({
+      properties: { ...block.properties, marks: newMarks.length > 0 ? newMarks : undefined },
     })
   }
 
   const handleMarkAdd = () => {
     const newIndex = marks.length
-    onDataUpdate({
-      properties: { ...data.properties, marks: [...marks, `Mark ${newIndex + 1}`] },
+    onBlockUpdate({
+      properties: { ...block.properties, marks: [...marks, `Mark ${newIndex + 1}`] },
     })
     requestAnimationFrame(() => {
       const input = markInputRefs.current.get(newIndex)
@@ -49,7 +49,7 @@ export function GaugeBlockPane({
   return (
     <Pane.Root>
       <Pane.Header>
-        <Pane.Title>{block?.name}</Pane.Title>
+        <Pane.Title>{blockInfo?.name}</Pane.Title>
       </Pane.Header>
       <Pane.Content>
         <Pane.Group>
@@ -58,10 +58,10 @@ export function GaugeBlockPane({
           </Pane.GroupHeader>
           <Input
             placeholder="Tooltip label..."
-            value={data.properties.tooltipLabel ?? ''}
+            value={block.properties.tooltipLabel ?? ''}
             onValueChange={(value) =>
-              onDataUpdate({
-                properties: { ...data.properties, tooltipLabel: value || undefined },
+              onBlockUpdate({
+                properties: { ...block.properties, tooltipLabel: value || undefined },
               })
             }
           />
@@ -76,10 +76,10 @@ export function GaugeBlockPane({
             <Field.Control>
               <Input
                 type="number"
-                value={data.properties.value}
+                value={block.properties.value}
                 onValueChange={(value) =>
-                  onDataUpdate({
-                    properties: { ...data.properties, value: parseFloat(value) || 0 },
+                  onBlockUpdate({
+                    properties: { ...block.properties, value: parseFloat(value) || 0 },
                   })
                 }
               />
@@ -90,10 +90,10 @@ export function GaugeBlockPane({
             <Field.Control>
               <Input
                 type="number"
-                value={data.properties.minValue ?? 0}
+                value={block.properties.minValue ?? 0}
                 onValueChange={(value) =>
-                  onDataUpdate({
-                    properties: { ...data.properties, minValue: parseFloat(value) || 0 },
+                  onBlockUpdate({
+                    properties: { ...block.properties, minValue: parseFloat(value) || 0 },
                   })
                 }
               />
@@ -104,10 +104,10 @@ export function GaugeBlockPane({
             <Field.Control>
               <Input
                 type="number"
-                value={data.properties.maxValue ?? 10}
+                value={block.properties.maxValue ?? 10}
                 onValueChange={(value) =>
-                  onDataUpdate({
-                    properties: { ...data.properties, maxValue: parseFloat(value) || 10 },
+                  onBlockUpdate({
+                    properties: { ...block.properties, maxValue: parseFloat(value) || 10 },
                   })
                 }
               />

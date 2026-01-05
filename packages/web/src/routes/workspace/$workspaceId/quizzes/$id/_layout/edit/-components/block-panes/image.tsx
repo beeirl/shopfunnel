@@ -1,20 +1,20 @@
 import { getBlockInfo } from '@/components/block'
 import { Input } from '@/components/ui/input'
-import type { ImageBlock as ImageBlockData } from '@shopfunnel/core/quiz/types'
+import type { ImageBlock as ImageBlockType } from '@shopfunnel/core/quiz/types'
 import * as React from 'react'
 import { Field } from '../field'
 import { Pane } from '../pane'
 
 export function ImageBlockPane({
-  data,
-  onDataUpdate,
+  block,
+  onBlockUpdate,
   onImageUpload,
 }: {
-  data: ImageBlockData
-  onDataUpdate: (data: Partial<ImageBlockData>) => void
+  block: ImageBlockType
+  onBlockUpdate: (block: Partial<ImageBlockType>) => void
   onImageUpload: (file: File) => Promise<string>
 }) {
-  const block = getBlockInfo(data.type)
+  const blockInfo = getBlockInfo(block.type)
   const inputRef = React.useRef<HTMLInputElement>(null)
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -22,8 +22,8 @@ export function ImageBlockPane({
     if (!file) return
 
     const url = await onImageUpload(file)
-    onDataUpdate({
-      properties: { ...data.properties, url },
+    onBlockUpdate({
+      properties: { ...block.properties, url },
     })
 
     if (inputRef.current) {
@@ -34,7 +34,7 @@ export function ImageBlockPane({
   return (
     <Pane.Root>
       <Pane.Header>
-        <Pane.Title>{block?.name}</Pane.Title>
+        <Pane.Title>{blockInfo?.name}</Pane.Title>
       </Pane.Header>
       <Pane.Content>
         <Pane.Group>

@@ -1,23 +1,23 @@
 import { getBlockInfo } from '@/components/block'
 import { Input } from '@/components/ui/input'
 import { SegmentedControl } from '@/components/ui/segmented-control'
-import type { HeadingBlock as HeadingBlockData } from '@shopfunnel/core/quiz/types'
+import type { HeadingBlock as HeadingBlockType } from '@shopfunnel/core/quiz/types'
 import { IconAlignCenter as AlignCenterIcon, IconAlignLeft as AlignLeftIcon } from '@tabler/icons-react'
 import { Field } from '../field'
 import { Pane } from '../pane'
 
 export function HeadingBlockPane({
-  data,
-  onDataUpdate,
+  block,
+  onBlockUpdate,
 }: {
-  data: HeadingBlockData
-  onDataUpdate: (data: Partial<HeadingBlockData>) => void
+  block: HeadingBlockType
+  onBlockUpdate: (block: Partial<HeadingBlockType>) => void
 }) {
-  const block = getBlockInfo(data.type)
+  const blockInfo = getBlockInfo(block.type)
   return (
     <Pane.Root>
       <Pane.Header>
-        <Pane.Title>{block?.name}</Pane.Title>
+        <Pane.Title>{blockInfo?.name}</Pane.Title>
       </Pane.Header>
       <Pane.Content>
         <Pane.Group>
@@ -26,8 +26,8 @@ export function HeadingBlockPane({
           </Pane.GroupHeader>
           <Input
             placeholder="Your heading here..."
-            value={data.properties.text}
-            onValueChange={(value) => onDataUpdate({ properties: { ...data.properties, text: value } })}
+            value={block.properties.text}
+            onValueChange={(value) => onBlockUpdate({ properties: { ...block.properties, text: value } })}
           />
         </Pane.Group>
         <Pane.Separator />
@@ -39,9 +39,9 @@ export function HeadingBlockPane({
             <Field.Label>Alignment</Field.Label>
             <Field.Control>
               <SegmentedControl.Root
-                value={data.properties.alignment}
+                value={block.properties.alignment}
                 onValueChange={(value) =>
-                  onDataUpdate({ properties: { ...data.properties, alignment: value as 'left' | 'center' } })
+                  onBlockUpdate({ properties: { ...block.properties, alignment: value as 'left' | 'center' } })
                 }
               >
                 <SegmentedControl.Segment value="left">

@@ -1,4 +1,4 @@
-import type { Block as BlockData } from '@shopfunnel/core/quiz/types'
+import type { Block as BlockType } from '@shopfunnel/core/quiz/types'
 import { DropdownBlockPane } from './block-panes/dropdown'
 import { GaugeBlockPane } from './block-panes/gauge'
 import { HeadingBlockPane } from './block-panes/heading'
@@ -10,32 +10,32 @@ import { PictureChoiceBlockPane } from './block-panes/picture-choice'
 import { TextInputBlockPane } from './block-panes/text-input'
 
 export function BlockPane({
-  data,
-  onDataUpdate,
+  block,
+  onBlockUpdate,
   onImageUpload,
 }: {
-  data: BlockData
-  onDataUpdate: (data: Partial<BlockData>) => void
+  block: BlockType
+  onBlockUpdate: (block: Partial<BlockType>) => void
   onImageUpload: (file: File) => Promise<string>
 }) {
-  switch (data.type) {
+  switch (block.type) {
     case 'text_input':
-      return <TextInputBlockPane data={data} onDataUpdate={onDataUpdate} />
+      return <TextInputBlockPane block={block} onBlockUpdate={onBlockUpdate} />
     case 'multiple_choice':
-      return <MultipleChoiceBlockPane data={data} onDataUpdate={onDataUpdate} onImageUpload={onImageUpload} />
+      return <MultipleChoiceBlockPane block={block} onBlockUpdate={onBlockUpdate} onImageUpload={onImageUpload} />
     case 'picture_choice':
-      return <PictureChoiceBlockPane data={data} onDataUpdate={onDataUpdate} onImageUpload={onImageUpload} />
+      return <PictureChoiceBlockPane block={block} onBlockUpdate={onBlockUpdate} onImageUpload={onImageUpload} />
     case 'dropdown':
-      return <DropdownBlockPane data={data} onDataUpdate={onDataUpdate} />
+      return <DropdownBlockPane block={block} onBlockUpdate={onBlockUpdate} />
     case 'gauge':
-      return <GaugeBlockPane data={data} onDataUpdate={onDataUpdate} />
+      return <GaugeBlockPane block={block} onBlockUpdate={onBlockUpdate} />
     case 'image':
-      return <ImageBlockPane data={data} onDataUpdate={onDataUpdate} onImageUpload={onImageUpload} />
+      return <ImageBlockPane block={block} onBlockUpdate={onBlockUpdate} onImageUpload={onImageUpload} />
     case 'loader':
-      return <LoaderBlockPane data={data} onDataUpdate={onDataUpdate} />
+      return <LoaderBlockPane block={block} onBlockUpdate={onBlockUpdate} />
     case 'heading':
-      return <HeadingBlockPane data={data} onDataUpdate={onDataUpdate} />
+      return <HeadingBlockPane block={block} onBlockUpdate={onBlockUpdate} />
     case 'paragraph':
-      return <ParagraphBlockPane data={data} onDataUpdate={onDataUpdate} />
+      return <ParagraphBlockPane block={block} onBlockUpdate={onBlockUpdate} />
   }
 }

@@ -219,10 +219,10 @@ function RouteComponent() {
         onBlockDelete={handleBlockDelete}
       />
       {selectedBlock && (
-        <Panel className="w-[450px]">
+        <Panel>
           <BlockPane
-            data={selectedBlock}
-            onDataUpdate={(data) => handleBlockUpdate(selectedBlock.id, data)}
+            block={selectedBlock}
+            onBlockUpdate={(block) => handleBlockUpdate(selectedBlock.id, block)}
             onImageUpload={handleImageUpload}
           />
         </Panel>

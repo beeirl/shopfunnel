@@ -5,14 +5,14 @@ import { SegmentedControl } from '@/components/ui/segmented-control'
 import { move } from '@dnd-kit/helpers'
 import { DragDropProvider } from '@dnd-kit/react'
 import { useSortable } from '@dnd-kit/react/sortable'
-import type { DropdownBlock as DropdownBlockData } from '@shopfunnel/core/quiz/types'
+import type { DropdownBlock as DropdownBlockType } from '@shopfunnel/core/quiz/types'
 import { IconGripVertical as GripVerticalIcon, IconPlus as PlusIcon, IconTrash as TrashIcon } from '@tabler/icons-react'
 import * as React from 'react'
 import { ulid } from 'ulid'
 import { Field } from '../field'
 import { Pane } from '../pane'
 
-type Option = DropdownBlockData['properties']['options'][number]
+type Option = DropdownBlockType['properties']['options'][number]
 
 function OptionItem({
   option,
@@ -54,30 +54,30 @@ function OptionItem({
 }
 
 export function DropdownBlockPane({
-  data,
-  onDataUpdate,
+  block,
+  onBlockUpdate,
 }: {
-  data: DropdownBlockData
-  onDataUpdate: (data: Partial<DropdownBlockData>) => void
+  block: DropdownBlockType
+  onBlockUpdate: (block: Partial<DropdownBlockType>) => void
 }) {
-  const block = getBlockInfo(data.type)
-  const options = data.properties.options
+  const blockInfo = getBlockInfo(block.type)
+  const options = block.properties.options
 
   const optionInputRefs = React.useRef<Map<string, HTMLInputElement>>(new Map())
 
   const handleOptionUpdate = (optionId: string, updates: Partial<Option>) => {
-    onDataUpdate({
+    onBlockUpdate({
       properties: {
-        ...data.properties,
+        ...block.properties,
         options: options.map((o) => (o.id === optionId ? { ...o, ...updates } : o)),
       },
     })
   }
 
   const handleOptionDelete = (optionId: string) => {
-    onDataUpdate({
+    onBlockUpdate({
       properties: {
-        ...data.properties,
+        ...block.properties,
         options: options.filter((o) => o.id !== optionId),
       },
     })
@@ -85,9 +85,9 @@ export function DropdownBlockPane({
 
   const handleOptionAdd = () => {
     const id = ulid()
-    onDataUpdate({
+    onBlockUpdate({
       properties: {
-        ...data.properties,
+        ...block.properties,
         options: [
           ...options,
           {
@@ -105,9 +105,9 @@ export function DropdownBlockPane({
   }
 
   const handleOptionsReorder = (newOptions: Option[]) => {
-    onDataUpdate({
+    onBlockUpdate({
       properties: {
-        ...data.properties,
+        ...block.properties,
         options: newOptions,
       },
     })
@@ -116,7 +116,7 @@ export function DropdownBlockPane({
   return (
     <Pane.Root>
       <Pane.Header>
-        <Pane.Title>{block?.name}</Pane.Title>
+        <Pane.Title>{blockInfo?.name}</Pane.Title>
       </Pane.Header>
       <Pane.Content>
         <Pane.Group>
@@ -125,8 +125,8 @@ export function DropdownBlockPane({
           </Pane.GroupHeader>
           <Input
             placeholder="Enter name..."
-            value={data.properties.name}
-            onValueChange={(value) => onDataUpdate({ properties: { ...data.properties, name: value } })}
+            value={block.properties.name}
+            onValueChange={(value) => onBlockUpdate({ properties: { ...block.properties, name: value } })}
           />
         </Pane.Group>
         <Pane.Separator />
@@ -167,9 +167,9 @@ export function DropdownBlockPane({
             <Field.Label>Required</Field.Label>
             <Field.Control>
               <SegmentedControl.Root
-                value={data.validations.required ?? false}
+                value={block.validations.required ?? false}
                 onValueChange={(value: boolean) =>
-                  onDataUpdate({ validations: { ...data.validations, required: value } })
+                  onBlockUpdate({ validations: { ...block.validations, required: value } })
                 }
               >
                 <SegmentedControl.Segment value={false}>No</SegmentedControl.Segment>

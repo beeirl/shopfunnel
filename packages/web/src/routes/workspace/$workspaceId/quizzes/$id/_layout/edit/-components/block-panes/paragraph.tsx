@@ -1,23 +1,23 @@
 import { getBlockInfo } from '@/components/block'
 import { SegmentedControl } from '@/components/ui/segmented-control'
 import { Textarea } from '@/components/ui/textarea'
-import type { ParagraphBlock as ParagraphBlockData } from '@shopfunnel/core/quiz/types'
+import type { ParagraphBlock as ParagraphBlockType } from '@shopfunnel/core/quiz/types'
 import { IconAlignCenter as AlignCenterIcon, IconAlignLeft as AlignLeftIcon } from '@tabler/icons-react'
 import { Field } from '../field'
 import { Pane } from '../pane'
 
 export function ParagraphBlockPane({
-  data,
-  onDataUpdate,
+  block,
+  onBlockUpdate,
 }: {
-  data: ParagraphBlockData
-  onDataUpdate: (data: Partial<ParagraphBlockData>) => void
+  block: ParagraphBlockType
+  onBlockUpdate: (block: Partial<ParagraphBlockType>) => void
 }) {
-  const block = getBlockInfo(data.type)
+  const blockInfo = getBlockInfo(block.type)
   return (
     <Pane.Root>
       <Pane.Header>
-        <Pane.Title>{block?.name}</Pane.Title>
+        <Pane.Title>{blockInfo?.name}</Pane.Title>
       </Pane.Header>
       <Pane.Content>
         <Pane.Group>
@@ -26,8 +26,8 @@ export function ParagraphBlockPane({
           </Pane.GroupHeader>
           <Textarea
             placeholder="Your text here..."
-            value={data.properties.text}
-            onChange={(e) => onDataUpdate({ properties: { ...data.properties, text: e.target.value } })}
+            value={block.properties.text}
+            onChange={(e) => onBlockUpdate({ properties: { ...block.properties, text: e.target.value } })}
           />
         </Pane.Group>
         <Pane.Separator />
@@ -39,9 +39,9 @@ export function ParagraphBlockPane({
             <Field.Label>Alignment</Field.Label>
             <Field.Control>
               <SegmentedControl.Root
-                value={data.properties.alignment}
+                value={block.properties.alignment}
                 onValueChange={(value) =>
-                  onDataUpdate({ properties: { ...data.properties, alignment: value as 'left' | 'center' } })
+                  onBlockUpdate({ properties: { ...block.properties, alignment: value as 'left' | 'center' } })
                 }
               >
                 <SegmentedControl.Segment value="left">

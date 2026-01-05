@@ -1,16 +1,18 @@
 import { getBlockInfo } from '@/components/block'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { InputGroup } from '@/components/ui/input-group'
 import { SegmentedControl } from '@/components/ui/segmented-control'
 import { move } from '@dnd-kit/helpers'
 import { DragDropProvider } from '@dnd-kit/react'
 import { useSortable } from '@dnd-kit/react/sortable'
-import type { MultipleChoiceBlock as MultipleChoiceBlockData } from '@shopfunnel/core/quiz/types'
+import type { MultipleChoiceBlock as MultipleChoiceBlockType } from '@shopfunnel/core/quiz/types'
 import {
   IconGripVertical as GripVerticalIcon,
-  IconPhoto as PhotoIcon,
   IconPlus as PlusIcon,
   IconTrash as TrashIcon,
+  IconUpload as UploadIcon,
+  IconX as XIcon,
 } from '@tabler/icons-react'
 import * as React from 'react'
 import { ulid } from 'ulid'
@@ -18,7 +20,7 @@ import { Field } from '../field'
 import { MediaPicker } from '../media-picker'
 import { Pane } from '../pane'
 
-type Choice = MultipleChoiceBlockData['properties']['options'][number]
+type Choice = MultipleChoiceBlockType['properties']['options'][number]
 
 function ChoiceItem({
   choice,
@@ -38,15 +40,16 @@ function ChoiceItem({
   const { ref, handleRef } = useSortable({ id: choice.id, index })
   const mediaButtonRef = React.useRef<HTMLDivElement>(null)
 
+  const handleMediaClear = () => {
+    onUpdate({ media: undefined })
+  }
+
   return (
-    <div
-      ref={ref}
-      className="grid grid-cols-[auto_auto_1fr_auto] items-center gap-1 rounded-lg border border-border bg-card p-2"
-    >
+    <div ref={ref} className="grid grid-cols-[auto_1fr_auto] items-center gap-1">
       <button
         ref={handleRef}
         type="button"
-        className="h-8 cursor-grab touch-none text-muted-foreground hover:text-foreground"
+        className="cursor-grab touch-none pr-1 text-muted-foreground hover:text-foreground"
       >
         <GripVerticalIcon className="size-4" />
       </button>
@@ -54,17 +57,39 @@ function ChoiceItem({
         <div ref={mediaButtonRef}>
           <MediaPicker.Trigger
             render={
-              <Button variant="outline" size="icon" className="overflow-hidden p-0">
-                {choice.media ? (
-                  choice.media.type === 'emoji' ? (
-                    choice.media.value
+              <InputGroup.Root>
+                <InputGroup.Addon>
+                  {choice.media ? (
+                    choice.media.type === 'emoji' ? (
+                      <span className="text-base">{choice.media.value}</span>
+                    ) : (
+                      <img src={choice.media.value} alt="" className="size-6 rounded object-cover" />
+                    )
                   ) : (
-                    <img src={choice.media.value} alt="" className="size-full object-cover" />
-                  )
-                ) : (
-                  <PhotoIcon />
+                    <UploadIcon className="size-4" />
+                  )}
+                </InputGroup.Addon>
+                <InputGroup.Input
+                  readOnly
+                  placeholder="Add media..."
+                  value={choice.media ? (choice.media.type === 'emoji' ? 'Emoji' : 'Image') : ''}
+                  className="cursor-pointer"
+                />
+                {choice.media && (
+                  <InputGroup.Addon align="inline-end">
+                    <InputGroup.Button
+                      size="icon-xs"
+                      variant="ghost"
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        handleMediaClear()
+                      }}
+                    >
+                      <XIcon className="size-4" />
+                    </InputGroup.Button>
+                  </InputGroup.Addon>
                 )}
-              </Button>
+              </InputGroup.Root>
             }
           />
         </div>
@@ -79,13 +104,6 @@ function ChoiceItem({
           }}
         />
       </MediaPicker.Root>
-      <Input
-        ref={inputRef}
-        placeholder="Choice..."
-        value={choice.label}
-        onValueChange={(value) => onUpdate({ label: value })}
-        onMouseDown={(e) => e.stopPropagation()}
-      />
       <Button
         size="icon"
         variant="ghost"
@@ -95,46 +113,52 @@ function ChoiceItem({
       >
         <TrashIcon />
       </Button>
-      <div />
       <Input
-        className="col-span-2"
+        ref={inputRef}
+        className="col-start-2"
+        placeholder="Label..."
+        value={choice.label}
+        onValueChange={(value) => onUpdate({ label: value })}
+        onMouseDown={(e) => e.stopPropagation()}
+      />
+      <Input
+        className="col-start-2"
         placeholder="Description..."
         value={choice.description ?? ''}
         onValueChange={(value) => onUpdate({ description: value || undefined })}
         onMouseDown={(e) => e.stopPropagation()}
       />
-      <div />
     </div>
   )
 }
 
 export function MultipleChoiceBlockPane({
-  data,
-  onDataUpdate,
+  block,
+  onBlockUpdate,
   onImageUpload,
 }: {
-  data: MultipleChoiceBlockData
-  onDataUpdate: (data: Partial<MultipleChoiceBlockData>) => void
+  block: MultipleChoiceBlockType
+  onBlockUpdate: (block: Partial<MultipleChoiceBlockType>) => void
   onImageUpload: (file: File) => Promise<string>
 }) {
-  const block = getBlockInfo(data.type)
-  const options = data.properties.options
+  const blockInfo = getBlockInfo(block.type)
+  const options = block.properties.options
 
   const choiceInputRefs = React.useRef<Map<string, HTMLInputElement>>(new Map())
 
   const handleChoiceUpdate = (choiceId: string, updates: Partial<Choice>) => {
-    onDataUpdate({
+    onBlockUpdate({
       properties: {
-        ...data.properties,
+        ...block.properties,
         options: options.map((c) => (c.id === choiceId ? { ...c, ...updates } : c)),
       },
     })
   }
 
   const handleChoiceDelete = (choiceId: string) => {
-    onDataUpdate({
+    onBlockUpdate({
       properties: {
-        ...data.properties,
+        ...block.properties,
         options: options.filter((c) => c.id !== choiceId),
       },
     })
@@ -142,9 +166,9 @@ export function MultipleChoiceBlockPane({
 
   const handleChoiceAdd = () => {
     const id = ulid()
-    onDataUpdate({
+    onBlockUpdate({
       properties: {
-        ...data.properties,
+        ...block.properties,
         options: [
           ...options,
           {
@@ -162,9 +186,9 @@ export function MultipleChoiceBlockPane({
   }
 
   const handleChoicesReorder = (newChoices: Choice[]) => {
-    onDataUpdate({
+    onBlockUpdate({
       properties: {
-        ...data.properties,
+        ...block.properties,
         options: newChoices,
       },
     })
@@ -173,7 +197,7 @@ export function MultipleChoiceBlockPane({
   return (
     <Pane.Root>
       <Pane.Header>
-        <Pane.Title>{block?.name}</Pane.Title>
+        <Pane.Title>{blockInfo?.name}</Pane.Title>
       </Pane.Header>
       <Pane.Content>
         <Pane.Group>
@@ -182,8 +206,8 @@ export function MultipleChoiceBlockPane({
           </Pane.GroupHeader>
           <Input
             placeholder="Enter name..."
-            value={data.properties.name}
-            onValueChange={(value) => onDataUpdate({ properties: { ...data.properties, name: value } })}
+            value={block.properties.name}
+            onValueChange={(value) => onBlockUpdate({ properties: { ...block.properties, name: value } })}
           />
         </Pane.Group>
         <Pane.Separator />
@@ -195,7 +219,7 @@ export function MultipleChoiceBlockPane({
             </Button>
           </Pane.GroupHeader>
           <DragDropProvider onDragEnd={(event) => handleChoicesReorder(move(options, event))}>
-            <div className="flex flex-col gap-2">
+            <div className="flex flex-col gap-4">
               {options.map((choice, index) => (
                 <ChoiceItem
                   key={choice.id}
@@ -222,9 +246,9 @@ export function MultipleChoiceBlockPane({
             <Field.Label>Mode</Field.Label>
             <Field.Control>
               <SegmentedControl.Root
-                value={data.properties.multiple ?? false}
+                value={block.properties.multiple ?? false}
                 onValueChange={(value: boolean) =>
-                  onDataUpdate({ properties: { ...data.properties, multiple: value } })
+                  onBlockUpdate({ properties: { ...block.properties, multiple: value } })
                 }
               >
                 <SegmentedControl.Segment value={false}>Single</SegmentedControl.Segment>
@@ -236,9 +260,9 @@ export function MultipleChoiceBlockPane({
             <Field.Label>Required</Field.Label>
             <Field.Control>
               <SegmentedControl.Root
-                value={data.validations.required ?? false}
+                value={block.validations.required ?? false}
                 onValueChange={(value: boolean) =>
-                  onDataUpdate({ validations: { ...data.validations, required: value } })
+                  onBlockUpdate({ validations: { ...block.validations, required: value } })
                 }
               >
                 <SegmentedControl.Segment value={false}>No</SegmentedControl.Segment>
