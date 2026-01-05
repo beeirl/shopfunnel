@@ -104,6 +104,9 @@ export namespace Quiz {
             id: ulid(),
             name: 'Page 1',
             blocks: [],
+            properties: {
+              buttonText: 'Continue',
+            },
           },
         ],
         rules: [],

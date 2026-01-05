@@ -11,6 +11,7 @@ import { z } from 'zod'
 import { getQuizQueryOptions } from '../../-common'
 import { BlockPane } from './-components/block-pane'
 import { Canvas } from './-components/canvas'
+import { PagePane } from './-components/page-pane'
 import { Panel } from './-components/panel'
 
 const updateQuiz = createServerFn({ method: 'POST' })
@@ -202,6 +203,13 @@ function RouteComponent() {
     })
   }
 
+  const handlePageUpdate = (pageId: string, updates: Partial<Page>) => {
+    const updatedPages = quiz.pages.map((page) => (page.id === pageId ? { ...page, ...updates } : page))
+    const updatedQuiz = { ...quiz, pages: updatedPages, published: false }
+    setQuiz(updatedQuiz)
+    saveDebouncer.maybeExecute({ pages: updatedQuiz.pages })
+  }
+
   const handleImageUpload = async (file: globalThis.File): Promise<string> => {
     const formData = new FormData()
     formData.append('file', file)
@@ -227,7 +235,7 @@ function RouteComponent() {
         onBlockAdd={handleBlockAdd}
         onBlockDelete={handleBlockDelete}
       />
-      {selectedBlock && (
+      {selectedBlock ? (
         <Panel>
           <BlockPane
             block={selectedBlock}
@@ -235,7 +243,11 @@ function RouteComponent() {
             onImageUpload={handleImageUpload}
           />
         </Panel>
-      )}
+      ) : selectedPage ? (
+        <Panel>
+          <PagePane page={selectedPage} onPageUpdate={(updates) => handlePageUpdate(selectedPage.id, updates)} />
+        </Panel>
+      ) : null}
     </div>
   )
 }

@@ -165,8 +165,9 @@ export interface Page {
   id: string
   name: string
   blocks: Block[]
-  properties?: {
-    buttonText?: string
+  properties: {
+    buttonText: string
+    redirectUrl?: string
   }
 }
 

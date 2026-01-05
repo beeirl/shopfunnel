@@ -1,5 +1,6 @@
 import { Block, getBlockInfo } from '@/components/block'
-import { getThemeCssVars } from '@/components/quiz'
+import { NextButton } from '@/components/next-button'
+import { getThemeCssVars, shouldAutoAdvance } from '@/components/quiz'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 import {
@@ -255,28 +256,42 @@ function Page({
         >
           <div className="mx-auto flex w-full max-w-sm flex-1 flex-col px-6 pt-8">
             {overlay || draggingPage ? (
-              <div className="flex flex-col">
-                {page.blocks.map((block, index) => (
-                  <BlockContent key={block.id} block={block} index={index} />
-                ))}
-              </div>
-            ) : (
-              <SortableContext items={page.blocks} strategy={verticalListSortingStrategy}>
+              <>
                 <div className="flex flex-col">
                   {page.blocks.map((block, index) => (
-                    <SortableBlock
-                      key={block.id}
-                      block={block}
-                      index={index}
-                      dropping={dropping}
-                      selected={selectedBlockId === block.id}
-                      onSelect={onSelectBlock!}
-                      pageId={page.id}
-                      onBlockAdd={onBlockAdd!}
-                    />
+                    <BlockContent key={block.id} block={block} index={index} />
                   ))}
                 </div>
-              </SortableContext>
+                {!shouldAutoAdvance(page.blocks) && (
+                  <div className="mt-auto w-full pt-4 pb-5">
+                    <NextButton static>{page.properties?.buttonText || 'Next'}</NextButton>
+                  </div>
+                )}
+              </>
+            ) : (
+              <>
+                <SortableContext items={page.blocks} strategy={verticalListSortingStrategy}>
+                  <div className="flex flex-col">
+                    {page.blocks.map((block, index) => (
+                      <SortableBlock
+                        key={block.id}
+                        block={block}
+                        index={index}
+                        dropping={dropping}
+                        selected={selectedBlockId === block.id}
+                        onSelect={onSelectBlock!}
+                        pageId={page.id}
+                        onBlockAdd={onBlockAdd!}
+                      />
+                    ))}
+                  </div>
+                </SortableContext>
+                {!shouldAutoAdvance(page.blocks) && (
+                  <div className="mt-auto w-full pt-4 pb-5">
+                    <NextButton static>{page.properties?.buttonText || 'Next'}</NextButton>
+                  </div>
+                )}
+              </>
             )}
           </div>
         </div>

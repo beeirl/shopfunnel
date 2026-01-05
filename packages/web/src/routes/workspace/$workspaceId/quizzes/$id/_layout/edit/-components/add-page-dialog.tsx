@@ -162,9 +162,7 @@ const PAGE_TEMPLATES: PageTemplate[] = [
     name: 'Blank',
     description: 'Start with an empty page and add blocks as needed.',
     defaultPageProperties: {
-      buttonAction: 'next',
       buttonText: 'Continue',
-      showButton: true,
     },
   },
   {
@@ -174,9 +172,7 @@ const PAGE_TEMPLATES: PageTemplate[] = [
     name: 'Text Input',
     description: 'Collect brief text responses like names or short answers.',
     defaultPageProperties: {
-      buttonAction: 'next',
       buttonText: 'Continue',
-      showButton: true,
     },
   },
   {
@@ -186,9 +182,7 @@ const PAGE_TEMPLATES: PageTemplate[] = [
     name: 'Multiple Choice',
     description: 'Let users select from a list of predefined options. Auto-advances on selection.',
     defaultPageProperties: {
-      buttonAction: 'next',
       buttonText: 'Continue',
-      showButton: false,
     },
   },
   {
@@ -198,9 +192,7 @@ const PAGE_TEMPLATES: PageTemplate[] = [
     name: 'Picture Choice',
     description: 'Display image-based choices in a grid. Users select one option from visually rich cards.',
     defaultPageProperties: {
-      buttonAction: 'next',
       buttonText: 'Continue',
-      showButton: false,
     },
   },
   {
@@ -210,9 +202,7 @@ const PAGE_TEMPLATES: PageTemplate[] = [
     name: 'Dropdown',
     description: 'Present many options in a compact dropdown menu. Ideal for long lists.',
     defaultPageProperties: {
-      buttonAction: 'next',
       buttonText: 'Continue',
-      showButton: true,
     },
   },
   {
@@ -223,9 +213,7 @@ const PAGE_TEMPLATES: PageTemplate[] = [
     description:
       'Display a progress indicator that fills up over time. The Continue button is disabled until loading completes.',
     defaultPageProperties: {
-      buttonAction: 'next',
       buttonText: 'Continue',
-      showButton: true,
     },
   },
 ]
