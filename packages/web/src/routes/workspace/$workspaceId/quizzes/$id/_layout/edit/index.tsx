@@ -9,10 +9,9 @@ import { createServerFn } from '@tanstack/react-start'
 import * as React from 'react'
 import { z } from 'zod'
 import { getQuizQueryOptions } from '../../-common'
-import { BlockPane } from './-components/block-pane'
+import { BlockPanel } from './-components/block-panel'
 import { Canvas } from './-components/canvas'
-import { PagePane } from './-components/page-pane'
-import { Panel } from './-components/panel'
+import { PagePanel } from './-components/page-panel'
 
 const updateQuiz = createServerFn({ method: 'POST' })
   .inputValidator(
@@ -236,17 +235,13 @@ function RouteComponent() {
         onBlockDelete={handleBlockDelete}
       />
       {selectedBlock ? (
-        <Panel>
-          <BlockPane
-            block={selectedBlock}
-            onBlockUpdate={(block) => handleBlockUpdate(selectedBlock.id, block)}
-            onImageUpload={handleImageUpload}
-          />
-        </Panel>
+        <BlockPanel
+          block={selectedBlock}
+          onBlockUpdate={(block) => handleBlockUpdate(selectedBlock.id, block)}
+          onImageUpload={handleImageUpload}
+        />
       ) : selectedPage ? (
-        <Panel>
-          <PagePane page={selectedPage} onPageUpdate={(updates) => handlePageUpdate(selectedPage.id, updates)} />
-        </Panel>
+        <PagePanel page={selectedPage} onPageUpdate={(updates) => handlePageUpdate(selectedPage.id, updates)} />
       ) : null}
     </div>
   )

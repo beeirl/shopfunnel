@@ -19,6 +19,7 @@ import { ulid } from 'ulid'
 import { Field } from '../field'
 import { MediaPicker } from '../media-picker'
 import { Pane } from '../pane'
+import { Panel } from '../panel'
 
 type Choice = MultipleChoiceBlockType['properties']['options'][number]
 
@@ -132,7 +133,7 @@ function ChoiceItem({
   )
 }
 
-export function MultipleChoiceBlockPane({
+export function MultipleChoiceBlockPanel({
   block,
   onBlockUpdate,
   onImageUpload,
@@ -195,83 +196,85 @@ export function MultipleChoiceBlockPane({
   }
 
   return (
-    <Pane.Root>
-      <Pane.Header>
-        <Pane.Title>{blockInfo?.name}</Pane.Title>
-      </Pane.Header>
-      <Pane.Content>
-        <Pane.Group>
-          <Pane.GroupHeader>
-            <Pane.GroupLabel>Name</Pane.GroupLabel>
-          </Pane.GroupHeader>
-          <Input
-            placeholder="Enter name..."
-            value={block.properties.name}
-            onValueChange={(value) => onBlockUpdate({ properties: { ...block.properties, name: value } })}
-          />
-        </Pane.Group>
-        <Pane.Separator />
-        <Pane.Group>
-          <Pane.GroupHeader>
-            <Pane.GroupLabel>Choices</Pane.GroupLabel>
-            <Button size="icon" variant="ghost" onClick={handleChoiceAdd}>
-              <PlusIcon />
-            </Button>
-          </Pane.GroupHeader>
-          <DragDropProvider onDragEnd={(event) => handleChoicesReorder(move(options, event))}>
-            <div className="flex flex-col gap-4">
-              {options.map((choice, index) => (
-                <ChoiceItem
-                  key={choice.id}
-                  choice={choice}
-                  index={index}
-                  inputRef={(el) => {
-                    if (el) choiceInputRefs.current.set(choice.id, el)
-                    else choiceInputRefs.current.delete(choice.id)
-                  }}
-                  onUpdate={(updates) => handleChoiceUpdate(choice.id, updates)}
-                  onDelete={() => handleChoiceDelete(choice.id)}
-                  onImageUpload={onImageUpload}
-                />
-              ))}
-            </div>
-          </DragDropProvider>
-        </Pane.Group>
-        <Pane.Separator />
-        <Pane.Group>
-          <Pane.GroupHeader>
-            <Pane.GroupLabel>Validation</Pane.GroupLabel>
-          </Pane.GroupHeader>
-          <Field.Root>
-            <Field.Label>Mode</Field.Label>
-            <Field.Control>
-              <SegmentedControl.Root
-                value={block.properties.multiple ?? false}
-                onValueChange={(value: boolean) =>
-                  onBlockUpdate({ properties: { ...block.properties, multiple: value } })
-                }
-              >
-                <SegmentedControl.Segment value={false}>Single</SegmentedControl.Segment>
-                <SegmentedControl.Segment value={true}>Multiple</SegmentedControl.Segment>
-              </SegmentedControl.Root>
-            </Field.Control>
-          </Field.Root>
-          <Field.Root>
-            <Field.Label>Required</Field.Label>
-            <Field.Control>
-              <SegmentedControl.Root
-                value={block.validations.required ?? false}
-                onValueChange={(value: boolean) =>
-                  onBlockUpdate({ validations: { ...block.validations, required: value } })
-                }
-              >
-                <SegmentedControl.Segment value={false}>No</SegmentedControl.Segment>
-                <SegmentedControl.Segment value={true}>Yes</SegmentedControl.Segment>
-              </SegmentedControl.Root>
-            </Field.Control>
-          </Field.Root>
-        </Pane.Group>
-      </Pane.Content>
-    </Pane.Root>
+    <Panel>
+      <Pane.Root>
+        <Pane.Header>
+          <Pane.Title>{blockInfo?.name}</Pane.Title>
+        </Pane.Header>
+        <Pane.Content>
+          <Pane.Group>
+            <Pane.GroupHeader>
+              <Pane.GroupLabel>Name</Pane.GroupLabel>
+            </Pane.GroupHeader>
+            <Input
+              placeholder="Enter name..."
+              value={block.properties.name}
+              onValueChange={(value) => onBlockUpdate({ properties: { ...block.properties, name: value } })}
+            />
+          </Pane.Group>
+          <Pane.Separator />
+          <Pane.Group>
+            <Pane.GroupHeader>
+              <Pane.GroupLabel>Choices</Pane.GroupLabel>
+              <Button size="icon" variant="ghost" onClick={handleChoiceAdd}>
+                <PlusIcon />
+              </Button>
+            </Pane.GroupHeader>
+            <DragDropProvider onDragEnd={(event) => handleChoicesReorder(move(options, event))}>
+              <div className="flex flex-col gap-4">
+                {options.map((choice, index) => (
+                  <ChoiceItem
+                    key={choice.id}
+                    choice={choice}
+                    index={index}
+                    inputRef={(el) => {
+                      if (el) choiceInputRefs.current.set(choice.id, el)
+                      else choiceInputRefs.current.delete(choice.id)
+                    }}
+                    onUpdate={(updates) => handleChoiceUpdate(choice.id, updates)}
+                    onDelete={() => handleChoiceDelete(choice.id)}
+                    onImageUpload={onImageUpload}
+                  />
+                ))}
+              </div>
+            </DragDropProvider>
+          </Pane.Group>
+          <Pane.Separator />
+          <Pane.Group>
+            <Pane.GroupHeader>
+              <Pane.GroupLabel>Validation</Pane.GroupLabel>
+            </Pane.GroupHeader>
+            <Field.Root>
+              <Field.Label>Mode</Field.Label>
+              <Field.Control>
+                <SegmentedControl.Root
+                  value={block.properties.multiple ?? false}
+                  onValueChange={(value: boolean) =>
+                    onBlockUpdate({ properties: { ...block.properties, multiple: value } })
+                  }
+                >
+                  <SegmentedControl.Segment value={false}>Single</SegmentedControl.Segment>
+                  <SegmentedControl.Segment value={true}>Multiple</SegmentedControl.Segment>
+                </SegmentedControl.Root>
+              </Field.Control>
+            </Field.Root>
+            <Field.Root>
+              <Field.Label>Required</Field.Label>
+              <Field.Control>
+                <SegmentedControl.Root
+                  value={block.validations.required ?? false}
+                  onValueChange={(value: boolean) =>
+                    onBlockUpdate({ validations: { ...block.validations, required: value } })
+                  }
+                >
+                  <SegmentedControl.Segment value={false}>No</SegmentedControl.Segment>
+                  <SegmentedControl.Segment value={true}>Yes</SegmentedControl.Segment>
+                </SegmentedControl.Root>
+              </Field.Control>
+            </Field.Root>
+          </Pane.Group>
+        </Pane.Content>
+      </Pane.Root>
+    </Panel>
   )
 }

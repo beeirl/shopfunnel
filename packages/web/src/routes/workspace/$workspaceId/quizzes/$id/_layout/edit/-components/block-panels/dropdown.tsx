@@ -11,6 +11,7 @@ import * as React from 'react'
 import { ulid } from 'ulid'
 import { Field } from '../field'
 import { Pane } from '../pane'
+import { Panel } from '../panel'
 
 type Option = DropdownBlockType['properties']['options'][number]
 
@@ -53,7 +54,7 @@ function OptionItem({
   )
 }
 
-export function DropdownBlockPane({
+export function DropdownBlockPanel({
   block,
   onBlockUpdate,
 }: {
@@ -114,71 +115,73 @@ export function DropdownBlockPane({
   }
 
   return (
-    <Pane.Root>
-      <Pane.Header>
-        <Pane.Title>{blockInfo?.name}</Pane.Title>
-      </Pane.Header>
-      <Pane.Content>
-        <Pane.Group>
-          <Pane.GroupHeader>
-            <Pane.GroupLabel>Name</Pane.GroupLabel>
-          </Pane.GroupHeader>
-          <Input
-            placeholder="Enter name..."
-            value={block.properties.name}
-            onValueChange={(value) => onBlockUpdate({ properties: { ...block.properties, name: value } })}
-          />
-        </Pane.Group>
-        <Pane.Separator />
-        <Pane.Group>
-          <Pane.GroupHeader>
-            <Pane.GroupLabel>Options</Pane.GroupLabel>
-            <Button size="icon" variant="ghost" onClick={handleOptionAdd}>
-              <PlusIcon />
-            </Button>
-          </Pane.GroupHeader>
-          <DragDropProvider onDragEnd={(event) => handleOptionsReorder(move(options, event))}>
-            <div className="flex flex-col gap-1">
-              {options.map((option, index) => (
-                <OptionItem
-                  key={option.id}
-                  option={option}
-                  index={index}
-                  inputRef={(el) => {
-                    if (el) optionInputRefs.current.set(option.id, el)
-                    else optionInputRefs.current.delete(option.id)
-                  }}
-                  onUpdate={(updates) => handleOptionUpdate(option.id, updates)}
-                  onDelete={() => handleOptionDelete(option.id)}
-                />
-              ))}
-            </div>
-          </DragDropProvider>
-          {options.length === 0 && (
-            <div className="flex items-center justify-center py-4 text-sm text-muted-foreground">No options yet</div>
-          )}
-        </Pane.Group>
-        <Pane.Separator />
-        <Pane.Group>
-          <Pane.GroupHeader>
-            <Pane.GroupLabel>Validation</Pane.GroupLabel>
-          </Pane.GroupHeader>
-          <Field.Root>
-            <Field.Label>Required</Field.Label>
-            <Field.Control>
-              <SegmentedControl.Root
-                value={block.validations.required ?? false}
-                onValueChange={(value: boolean) =>
-                  onBlockUpdate({ validations: { ...block.validations, required: value } })
-                }
-              >
-                <SegmentedControl.Segment value={false}>No</SegmentedControl.Segment>
-                <SegmentedControl.Segment value={true}>Yes</SegmentedControl.Segment>
-              </SegmentedControl.Root>
-            </Field.Control>
-          </Field.Root>
-        </Pane.Group>
-      </Pane.Content>
-    </Pane.Root>
+    <Panel>
+      <Pane.Root>
+        <Pane.Header>
+          <Pane.Title>{blockInfo?.name}</Pane.Title>
+        </Pane.Header>
+        <Pane.Content>
+          <Pane.Group>
+            <Pane.GroupHeader>
+              <Pane.GroupLabel>Name</Pane.GroupLabel>
+            </Pane.GroupHeader>
+            <Input
+              placeholder="Enter name..."
+              value={block.properties.name}
+              onValueChange={(value) => onBlockUpdate({ properties: { ...block.properties, name: value } })}
+            />
+          </Pane.Group>
+          <Pane.Separator />
+          <Pane.Group>
+            <Pane.GroupHeader>
+              <Pane.GroupLabel>Options</Pane.GroupLabel>
+              <Button size="icon" variant="ghost" onClick={handleOptionAdd}>
+                <PlusIcon />
+              </Button>
+            </Pane.GroupHeader>
+            <DragDropProvider onDragEnd={(event) => handleOptionsReorder(move(options, event))}>
+              <div className="flex flex-col gap-1">
+                {options.map((option, index) => (
+                  <OptionItem
+                    key={option.id}
+                    option={option}
+                    index={index}
+                    inputRef={(el) => {
+                      if (el) optionInputRefs.current.set(option.id, el)
+                      else optionInputRefs.current.delete(option.id)
+                    }}
+                    onUpdate={(updates) => handleOptionUpdate(option.id, updates)}
+                    onDelete={() => handleOptionDelete(option.id)}
+                  />
+                ))}
+              </div>
+            </DragDropProvider>
+            {options.length === 0 && (
+              <div className="flex items-center justify-center py-4 text-sm text-muted-foreground">No options yet</div>
+            )}
+          </Pane.Group>
+          <Pane.Separator />
+          <Pane.Group>
+            <Pane.GroupHeader>
+              <Pane.GroupLabel>Validation</Pane.GroupLabel>
+            </Pane.GroupHeader>
+            <Field.Root>
+              <Field.Label>Required</Field.Label>
+              <Field.Control>
+                <SegmentedControl.Root
+                  value={block.validations.required ?? false}
+                  onValueChange={(value: boolean) =>
+                    onBlockUpdate({ validations: { ...block.validations, required: value } })
+                  }
+                >
+                  <SegmentedControl.Segment value={false}>No</SegmentedControl.Segment>
+                  <SegmentedControl.Segment value={true}>Yes</SegmentedControl.Segment>
+                </SegmentedControl.Root>
+              </Field.Control>
+            </Field.Root>
+          </Pane.Group>
+        </Pane.Content>
+      </Pane.Root>
+    </Panel>
   )
 }

@@ -4,8 +4,9 @@ import type { ImageBlock as ImageBlockType } from '@shopfunnel/core/quiz/types'
 import * as React from 'react'
 import { Field } from '../field'
 import { Pane } from '../pane'
+import { Panel } from '../panel'
 
-export function ImageBlockPane({
+export function ImageBlockPanel({
   block,
   onBlockUpdate,
   onImageUpload,
@@ -32,25 +33,27 @@ export function ImageBlockPane({
   }
 
   return (
-    <Pane.Root>
-      <Pane.Header>
-        <Pane.Title>{blockInfo?.name}</Pane.Title>
-      </Pane.Header>
-      <Pane.Content>
-        <Pane.Group>
-          <Field.Root>
-            <Field.Label>File</Field.Label>
-            <Field.Control>
-              <Input
-                ref={inputRef}
-                type="file"
-                accept="image/jpeg,image/png,image/gif,image/webp"
-                onChange={handleFileChange}
-              />
-            </Field.Control>
-          </Field.Root>
-        </Pane.Group>
-      </Pane.Content>
-    </Pane.Root>
+    <Panel>
+      <Pane.Root>
+        <Pane.Header>
+          <Pane.Title>{blockInfo?.name}</Pane.Title>
+        </Pane.Header>
+        <Pane.Content>
+          <Pane.Group>
+            <Field.Root>
+              <Field.Label>File</Field.Label>
+              <Field.Control>
+                <Input
+                  ref={inputRef}
+                  type="file"
+                  accept="image/jpeg,image/png,image/gif,image/webp"
+                  onChange={handleFileChange}
+                />
+              </Field.Control>
+            </Field.Root>
+          </Pane.Group>
+        </Pane.Content>
+      </Pane.Root>
+    </Panel>
   )
 }
