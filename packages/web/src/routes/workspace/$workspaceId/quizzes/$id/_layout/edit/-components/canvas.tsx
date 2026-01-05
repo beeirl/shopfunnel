@@ -45,8 +45,8 @@ import {
 } from '@xyflow/react'
 import * as React from 'react'
 import { createPortal } from 'react-dom'
-import { AddBlockDialog } from './add-block-dialog'
-import { AddPageDialog } from './add-page-dialog'
+import { AddBlockMenu } from './add-block-menu'
+import { AddPageMenu } from './add-page-menu'
 
 import '@xyflow/react/dist/style.css'
 
@@ -108,6 +108,7 @@ function SortableBlock({
   selected,
   onSelect,
   pageId,
+  pageBlocks,
   onBlockAdd,
 }: {
   block: BlockType
@@ -116,6 +117,7 @@ function SortableBlock({
   selected: boolean
   onSelect: (blockId: string) => void
   pageId: string
+  pageBlocks: BlockType[]
   onBlockAdd: (block: BlockType, pageId?: string, index?: number) => void
 }) {
   const { zoom } = useViewport()
@@ -187,31 +189,31 @@ function SortableBlock({
         <BlockContent block={block} index={index} selected={selected} />
 
         {/* Top add-block button - centered on top border of BlockContent */}
-        <div className="pointer-events-none absolute top-0 left-1/2 z-10 hidden -translate-x-1/2 -translate-y-1/2 group-hover/block:pointer-events-auto group-hover/block:block">
-          <AddBlockDialog.Root onBlockAdd={handleAddBlockAbove}>
-            <AddBlockDialog.Trigger
+        <div className="pointer-events-none absolute top-0 left-1/2 z-10 -translate-x-1/2 -translate-y-1/2 scale-0 opacity-0 transition-[opacity,transform] group-hover/block:pointer-events-auto group-hover/block:scale-100 group-hover/block:opacity-100 has-[[data-popup-open]]:pointer-events-auto has-[[data-popup-open]]:scale-100 has-[[data-popup-open]]:opacity-100">
+          <AddBlockMenu.Root onBlockAdd={handleAddBlockAbove} existingBlocks={pageBlocks}>
+            <AddBlockMenu.Trigger
               render={
                 <Button className="cursor-crosshair" size="icon-sm">
                   <PlusIcon />
                 </Button>
               }
             />
-            <AddBlockDialog.Popup />
-          </AddBlockDialog.Root>
+            <AddBlockMenu.Content />
+          </AddBlockMenu.Root>
         </div>
 
         {/* Bottom add-block button - centered on bottom border of BlockContent */}
-        <div className="pointer-events-none absolute bottom-0 left-1/2 z-10 hidden -translate-x-1/2 translate-y-1/2 group-hover/block:pointer-events-auto group-hover/block:block">
-          <AddBlockDialog.Root onBlockAdd={handleAddBlockBelow}>
-            <AddBlockDialog.Trigger
+        <div className="pointer-events-none absolute bottom-0 left-1/2 z-10 -translate-x-1/2 translate-y-1/2 scale-0 opacity-0 transition-[opacity,transform] group-hover/block:pointer-events-auto group-hover/block:scale-100 group-hover/block:opacity-100 has-[[data-popup-open]]:pointer-events-auto has-[[data-popup-open]]:scale-100 has-[[data-popup-open]]:opacity-100">
+          <AddBlockMenu.Root onBlockAdd={handleAddBlockBelow} existingBlocks={pageBlocks}>
+            <AddBlockMenu.Trigger
               render={
                 <Button className="cursor-crosshair" size="icon-sm">
                   <PlusIcon />
                 </Button>
               }
             />
-            <AddBlockDialog.Popup />
-          </AddBlockDialog.Root>
+            <AddBlockMenu.Content />
+          </AddBlockMenu.Root>
         </div>
       </div>
     </div>
@@ -289,6 +291,7 @@ function Page({
                         selected={selectedBlockId === block.id}
                         onSelect={onSelectBlock!}
                         pageId={page.id}
+                        pageBlocks={page.blocks}
                         onBlockAdd={onBlockAdd!}
                       />
                     ))}
@@ -410,31 +413,31 @@ function SortablePage({
       />
 
       {/* Left add-page button - centered on left border */}
-      <div className="pointer-events-none absolute top-1/2 left-0 z-10 hidden -translate-x-1/2 -translate-y-1/2 group-[:hover:not(:has([data-slot=canvas-block]:hover))]/page:pointer-events-auto group-[:hover:not(:has([data-slot=canvas-block]:hover))]/page:block">
-        <AddPageDialog.Root onPageAdd={handleAddPageLeft} pageCount={pageCount}>
-          <AddPageDialog.Trigger
+      <div className="pointer-events-none absolute top-1/2 left-0 z-10 -translate-x-1/2 -translate-y-1/2 scale-0 opacity-0 transition-[opacity,transform] group-[:hover:not(:has([data-slot=canvas-block]:hover))]/page:pointer-events-auto group-[:hover:not(:has([data-slot=canvas-block]:hover))]/page:scale-100 group-[:hover:not(:has([data-slot=canvas-block]:hover))]/page:opacity-100 has-[[data-popup-open]]:pointer-events-auto has-[[data-popup-open]]:scale-100 has-[[data-popup-open]]:opacity-100">
+        <AddPageMenu.Root onPageAdd={handleAddPageLeft} pageCount={pageCount} side="left">
+          <AddPageMenu.Trigger
             render={
               <Button className="cursor-crosshair" size="icon">
                 <PlusIcon />
               </Button>
             }
           />
-          <AddPageDialog.Popup />
-        </AddPageDialog.Root>
+          <AddPageMenu.Content />
+        </AddPageMenu.Root>
       </div>
 
       {/* Right add-page button - centered on right border */}
-      <div className="pointer-events-none absolute top-1/2 right-0 z-10 hidden translate-x-1/2 -translate-y-1/2 group-[:hover:not(:has([data-slot=canvas-block]:hover))]/page:pointer-events-auto group-[:hover:not(:has([data-slot=canvas-block]:hover))]/page:block">
-        <AddPageDialog.Root onPageAdd={handleAddPageRight} pageCount={pageCount}>
-          <AddPageDialog.Trigger
+      <div className="pointer-events-none absolute top-1/2 right-0 z-10 translate-x-1/2 -translate-y-1/2 scale-0 opacity-0 transition-[opacity,transform] group-[:hover:not(:has([data-slot=canvas-block]:hover))]/page:pointer-events-auto group-[:hover:not(:has([data-slot=canvas-block]:hover))]/page:scale-100 group-[:hover:not(:has([data-slot=canvas-block]:hover))]/page:opacity-100 has-[[data-popup-open]]:pointer-events-auto has-[[data-popup-open]]:scale-100 has-[[data-popup-open]]:opacity-100">
+        <AddPageMenu.Root onPageAdd={handleAddPageRight} pageCount={pageCount} side="right">
+          <AddPageMenu.Trigger
             render={
               <Button className="cursor-crosshair" size="icon">
                 <PlusIcon />
               </Button>
             }
           />
-          <AddPageDialog.Popup />
-        </AddPageDialog.Root>
+          <AddPageMenu.Content />
+        </AddPageMenu.Root>
       </div>
     </div>
   )
