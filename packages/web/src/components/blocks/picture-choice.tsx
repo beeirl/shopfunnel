@@ -44,31 +44,31 @@ export function PictureChoiceBlock(props: PictureChoiceBlockProps) {
             }}
             className={cn(
               // Base
-              'group relative flex cursor-pointer flex-col overflow-hidden rounded-(--radius) border-2 border-border transition-all outline-none',
+              'group relative flex cursor-pointer flex-col overflow-hidden rounded-(--qz-radius) border-2 border-(--qz-border) transition-all outline-none',
               // Hover
               'hover:scale-[1.02]',
               // Focus
-              'data-focus-visible:ring-3 data-focus-visible:ring-ring/50',
+              'data-focus-visible:ring-3 data-focus-visible:ring-(--qz-ring)/50',
               // Selected
-              'data-selected:border-primary',
+              'data-selected:border-(--qz-primary)',
               props.static && 'pointer-events-none',
             )}
           >
-            <div className="relative aspect-4/3 w-full overflow-hidden bg-muted/50 group-data-selected:bg-primary/5">
+            <div className="relative aspect-4/3 w-full overflow-hidden bg-(--qz-muted)/50 group-data-selected:bg-(--qz-primary)/5">
               {choice.media?.value ? (
                 <img src={choice.media.value} alt={choice.label} className="size-full object-cover" />
               ) : (
                 <div className="flex size-full items-center justify-center">
-                  <PhotoIcon className="size-12 text-foreground opacity-20 group-data-selected:text-primary" />
+                  <PhotoIcon className="size-12 text-(--qz-foreground) opacity-20 group-data-selected:text-(--qz-primary)" />
                 </div>
               )}
             </div>
-            <div className="flex flex-col gap-0.5 bg-muted px-3 py-2.5 group-data-selected:bg-primary/20">
-              <span className="text-center text-sm font-semibold text-foreground group-data-selected:text-primary">
+            <div className="flex flex-col gap-0.5 bg-(--qz-muted) px-3 py-2.5 group-data-selected:bg-(--qz-primary)/20">
+              <span className="text-center text-sm font-semibold text-(--qz-foreground) group-data-selected:text-(--qz-primary)">
                 {choice.label}
               </span>
               {choice.description && (
-                <span className="text-center text-xs text-muted-foreground group-data-selected:text-primary/70">
+                <span className="text-center text-xs text-(--qz-muted-foreground) group-data-selected:text-(--qz-primary)/70">
                   {choice.description}
                 </span>
               )}

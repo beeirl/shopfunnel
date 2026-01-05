@@ -12,12 +12,12 @@ export function ImageBlock(props: ImageBlockProps) {
   return (
     <div
       className={cn(
-        'w-full overflow-hidden rounded-(--radius)',
-        !props.block.properties.url && 'flex aspect-video items-center justify-center bg-muted',
+        'w-full overflow-hidden rounded-(--qz-radius)',
+        !props.block.properties.url && 'flex aspect-video items-center justify-center bg-(--qz-muted)',
       )}
     >
       {props.block.properties.url && <img src={props.block.properties.url} alt="" className="h-auto w-full" />}
-      {!props.block.properties.url && <PhotoIcon className="size-14 text-foreground opacity-20" />}
+      {!props.block.properties.url && <PhotoIcon className="size-14 text-(--qz-foreground) opacity-20" />}
     </div>
   )
 }

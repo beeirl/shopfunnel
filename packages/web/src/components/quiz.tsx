@@ -223,15 +223,15 @@ export function shouldAutoAdvance(blocks: BlockType[]): boolean {
 
 export function getThemeCssVars(theme: ThemeType) {
   return {
-    '--radius': theme.radius.value,
-    '--primary': theme.colors.primary,
-    '--primary-foreground': theme.colors.primaryForeground,
-    '--muted': '#F5F5F5',
-    '--muted-foreground': '#737373',
-    '--background': '#FFFFFF',
-    '--foreground': '#0A0A0A',
-    '--border': '#E5E5E5',
-    '--ring': '#A1A1A1',
+    '--qz-radius': theme.radius.value,
+    '--qz-primary': theme.colors.primary,
+    '--qz-primary-foreground': theme.colors.primaryForeground,
+    '--qz-muted': '#F5F5F5',
+    '--qz-muted-foreground': '#737373',
+    '--qz-background': '#FFFFFF',
+    '--qz-foreground': '#0A0A0A',
+    '--qz-border': '#E5E5E5',
+    '--qz-ring': '#A1A1A1',
   } as React.CSSProperties
 }
 
@@ -356,18 +356,18 @@ export function Quiz({ quiz, mode = 'live', onComplete, onPageChange, onPageComp
   }
 
   return (
-    <div className="relative flex min-h-dvh flex-col bg-background px-6" style={getThemeCssVars(quiz.theme)}>
+    <div className="relative flex min-h-dvh flex-col bg-(--qz-background) px-6" style={getThemeCssVars(quiz.theme)}>
       <div className="mx-auto flex w-full max-w-sm flex-1 flex-col">
         <div className="flex h-16 w-full items-center justify-center">
           {quiz.theme.logo ? (
             <img src={quiz.theme.logo} alt="Logo" className="h-9 w-auto object-contain" />
           ) : (
-            <span className="text-xl font-bold text-foreground">{quiz.title}</span>
+            <span className="text-xl font-bold text-(--qz-foreground)">{quiz.title}</span>
           )}
         </div>
-        <div className="h-1.5 w-full rounded-(--radius) bg-muted">
+        <div className="h-1.5 w-full rounded-(--qz-radius) bg-(--qz-muted)">
           <motion.div
-            className="h-full rounded-(--radius) bg-primary"
+            className="h-full rounded-(--qz-radius) bg-(--qz-primary)"
             initial={{ width: 0 }}
             animate={{ width: `${(currentPageIndex / quiz.pages.length) * 100}%` }}
             transition={{ duration: 0.3, ease: 'easeOut' }}

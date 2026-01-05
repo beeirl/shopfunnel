@@ -266,43 +266,34 @@ function Page({
         >
           <div className="mx-auto flex w-full max-w-sm flex-1 flex-col px-6 pt-8">
             {overlay || draggingPage ? (
-              <>
+              <div className="flex flex-col">
+                {page.blocks.map((block, index) => (
+                  <BlockContent key={block.id} block={block} index={index} />
+                ))}
+              </div>
+            ) : (
+              <SortableContext items={page.blocks} strategy={verticalListSortingStrategy}>
                 <div className="flex flex-col">
                   {page.blocks.map((block, index) => (
-                    <BlockContent key={block.id} block={block} index={index} />
+                    <SortableBlock
+                      key={block.id}
+                      block={block}
+                      index={index}
+                      dropping={dropping}
+                      selected={selectedBlockId === block.id}
+                      onSelect={onSelectBlock!}
+                      pageId={page.id}
+                      pageBlocks={page.blocks}
+                      onBlockAdd={onBlockAdd!}
+                    />
                   ))}
                 </div>
-                {!shouldAutoAdvance(page.blocks) && (
-                  <div className="mt-auto w-full pt-4 pb-5">
-                    <NextButton static>{page.properties?.buttonText || 'Next'}</NextButton>
-                  </div>
-                )}
-              </>
-            ) : (
-              <>
-                <SortableContext items={page.blocks} strategy={verticalListSortingStrategy}>
-                  <div className="flex flex-col">
-                    {page.blocks.map((block, index) => (
-                      <SortableBlock
-                        key={block.id}
-                        block={block}
-                        index={index}
-                        dropping={dropping}
-                        selected={selectedBlockId === block.id}
-                        onSelect={onSelectBlock!}
-                        pageId={page.id}
-                        pageBlocks={page.blocks}
-                        onBlockAdd={onBlockAdd!}
-                      />
-                    ))}
-                  </div>
-                </SortableContext>
-                {!shouldAutoAdvance(page.blocks) && (
-                  <div className="mt-auto w-full pt-4 pb-5">
-                    <NextButton static>{page.properties?.buttonText || 'Next'}</NextButton>
-                  </div>
-                )}
-              </>
+              </SortableContext>
+            )}
+            {!shouldAutoAdvance(page.blocks) && (
+              <div className="mt-auto w-full pt-4 pb-5">
+                <NextButton static>{page.properties?.buttonText || 'Next'}</NextButton>
+              </div>
             )}
           </div>
         </div>
@@ -512,20 +503,24 @@ function Node({
         </SortableContext>
         {createPortal(
           <DragOverlay dropAnimation={DROP_ANIMATION}>
-            {draggingPage ? (
-              <div style={{ transform: `scale(${zoom})`, transformOrigin: 'top left', width: 'fit-content' }}>
-                <Page
-                  page={draggingPage}
-                  pageIndex={pages.findIndex((p) => p.id === draggingPage.id)}
-                  dropping={false}
-                  overlay
-                />
+            {(draggingPage || draggingBlock) && (
+              <div style={getThemeCssVars(theme)}>
+                {draggingPage ? (
+                  <div style={{ transform: `scale(${zoom})`, transformOrigin: 'top left', width: 'fit-content' }}>
+                    <Page
+                      page={draggingPage}
+                      pageIndex={pages.findIndex((p) => p.id === draggingPage.id)}
+                      dropping={false}
+                      overlay
+                    />
+                  </div>
+                ) : draggingBlock ? (
+                  <div style={{ transform: `scale(${zoom})`, transformOrigin: 'top left', width: PAGE_WIDTH - 48 }}>
+                    <BlockContent block={draggingBlock} index={0} dragging />
+                  </div>
+                ) : null}
               </div>
-            ) : draggingBlock ? (
-              <div style={{ transform: `scale(${zoom})`, transformOrigin: 'top left', width: PAGE_WIDTH - 48 }}>
-                <BlockContent block={draggingBlock} index={0} dragging />
-              </div>
-            ) : null}
+            )}
           </DragOverlay>,
           document.body,
         )}

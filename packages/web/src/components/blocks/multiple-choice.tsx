@@ -34,13 +34,13 @@ export function MultipleChoiceBlock(props: MultipleChoiceBlockProps) {
             className={cn(
               // Base
               choice.media ? 'min-h-18 grid-cols-[auto_1fr]' : 'min-h-14 grid-cols-1',
-              'group relative grid cursor-pointer overflow-hidden rounded-(--radius) border-2 border-transparent bg-muted text-left transition-all outline-none',
+              'group relative grid cursor-pointer overflow-hidden rounded-(--qz-radius) border-2 border-transparent bg-(--qz-muted) text-left transition-all outline-none',
               // Hover
               'hover:scale-[1.01]',
               // Focus
-              'data-focus-visible:ring-3 data-focus-visible:ring-ring/50',
+              'data-focus-visible:ring-3 data-focus-visible:ring-(--qz-ring)/50',
               // Selected
-              'data-selected:border-primary data-selected:bg-primary/20 data-selected:text-primary',
+              'data-selected:border-(--qz-primary) data-selected:bg-(--qz-primary)/20 data-selected:text-(--qz-primary)',
               props.static && 'pointer-events-none',
             )}
             onClick={() => {
@@ -63,11 +63,11 @@ export function MultipleChoiceBlock(props: MultipleChoiceBlockProps) {
               </div>
             )}
             <div className="flex flex-col justify-center py-3 pr-4 first:pl-4">
-              <span className="text-base font-semibold text-foreground group-data-selected:text-primary">
+              <span className="text-base font-semibold text-(--qz-foreground) group-data-selected:text-(--qz-primary)">
                 {choice.label}
               </span>
               {choice.description && (
-                <span className="text-sm text-muted-foreground group-data-selected:text-primary/70">
+                <span className="text-sm text-(--qz-muted-foreground) group-data-selected:text-(--qz-primary)/70">
                   {choice.description}
                 </span>
               )}

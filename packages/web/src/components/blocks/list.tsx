@@ -8,7 +8,7 @@ export interface ListBlockProps {
 
 export function ListBlock(_props: ListBlockProps) {
   return (
-    <div className="flex h-12 items-center justify-center rounded-(--radius) bg-muted text-sm text-muted-foreground">
+    <div className="flex h-12 items-center justify-center rounded-(--qz-radius) bg-(--qz-muted) text-sm text-(--qz-muted-foreground)">
       List block
     </div>
   )

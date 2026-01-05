@@ -12,7 +12,7 @@ export function ParagraphBlock(props: ParagraphBlockProps) {
     <div className={cn(props.index > 0 && 'mt-3')}>
       <p
         className={cn(
-          'text-[0.9375rem] tracking-tight text-balance text-muted-foreground',
+          'text-[0.9375rem] tracking-tight text-balance text-(--qz-muted-foreground)',
           props.block.properties.alignment === 'center' && 'text-center',
         )}
       >
