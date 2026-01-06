@@ -146,12 +146,9 @@ function RouteComponent() {
 
   const handlePageDelete = (pageId: string) => {
     setQuiz((prev) => {
-      const pageIndex = prev.pages.findIndex((page) => page.id === pageId)
       const updatedPages = prev.pages.filter((page) => page.id !== pageId)
-      const newIndex = Math.max(0, pageIndex - 1)
-      const newSelectedPage = updatedPages[newIndex] ?? null
-      setSelectedPageId(newSelectedPage?.id ?? null)
-      setSelectedBlockId(newSelectedPage?.blocks[0]?.id ?? null)
+      setSelectedPageId(null)
+      setSelectedBlockId(null)
       const updated = { ...prev, pages: updatedPages, published: false }
       saveDebouncer.maybeExecute({ pages: updated.pages })
       return updated
@@ -198,15 +195,10 @@ function RouteComponent() {
   const handleBlockDelete = (blockId: string) => {
     setQuiz((prev) => {
       const updatedPages = prev.pages.map((page) => {
-        const blockIndex = page.blocks.findIndex((block) => block.id === blockId)
-        if (blockIndex === -1) return page
-
-        const updatedBlocks = page.blocks.filter((block) => block.id !== blockId)
-        const newIndex = Math.max(0, blockIndex - 1)
-        const newSelectedBlock = updatedBlocks[newIndex] ?? null
-        setSelectedBlockId(newSelectedBlock?.id ?? null)
-        return { ...page, blocks: updatedBlocks }
+        if (!page.blocks.some((block) => block.id === blockId)) return page
+        return { ...page, blocks: page.blocks.filter((block) => block.id !== blockId) }
       })
+      setSelectedBlockId(null)
       const updated = { ...prev, pages: updatedPages, published: false }
       saveDebouncer.maybeExecute({ pages: updated.pages })
       return updated

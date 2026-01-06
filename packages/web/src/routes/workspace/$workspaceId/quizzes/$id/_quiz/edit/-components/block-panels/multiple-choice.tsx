@@ -9,9 +9,9 @@ import { CSS } from '@dnd-kit/utilities'
 import type { MultipleChoiceBlock as MultipleChoiceBlockType } from '@shopfunnel/core/quiz/types'
 import {
   IconGripVertical as GripVerticalIcon,
+  IconPhoto as PhotoIcon,
   IconPlus as PlusIcon,
   IconTrash as TrashIcon,
-  IconUpload as UploadIcon,
   IconX as XIcon,
 } from '@tabler/icons-react'
 import * as React from 'react'
@@ -71,7 +71,7 @@ function ChoiceItem({
                       <img src={choice.media.value} alt="" className="size-6 rounded object-cover" />
                     )
                   ) : (
-                    <UploadIcon className="size-4" />
+                    <PhotoIcon className="size-4" />
                   )}
                 </InputGroup.Addon>
                 <InputGroup.Input

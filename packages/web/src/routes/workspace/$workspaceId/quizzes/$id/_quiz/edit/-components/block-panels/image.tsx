@@ -1,7 +1,7 @@
 import { getBlockInfo } from '@/components/block'
 import { InputGroup } from '@/components/ui/input-group'
 import type { ImageBlock as ImageBlockType } from '@shopfunnel/core/quiz/types'
-import { IconUpload as UploadIcon, IconX as XIcon } from '@tabler/icons-react'
+import { IconPhoto as PhotoIcon, IconX as XIcon } from '@tabler/icons-react'
 import * as React from 'react'
 import { Pane } from '../pane'
 import { Panel } from '../panel'
@@ -53,11 +53,18 @@ export function ImageBlockPanel({
           <Pane.Group>
             <InputGroup.Root>
               <InputGroup.Addon>
-                {block.properties.url ? (
-                  <img src={block.properties.url} alt="" className="rounded object-cover" />
-                ) : (
-                  <UploadIcon />
-                )}
+                <InputGroup.Button
+                  size="icon-xs"
+                  variant="ghost"
+                  onClick={() => inputRef.current?.click()}
+                  className="size-6 overflow-hidden"
+                >
+                  {block.properties.url ? (
+                    <img src={block.properties.url} alt="" className="size-full rounded object-cover" />
+                  ) : (
+                    <PhotoIcon />
+                  )}
+                </InputGroup.Button>
               </InputGroup.Addon>
               <InputGroup.Input
                 readOnly

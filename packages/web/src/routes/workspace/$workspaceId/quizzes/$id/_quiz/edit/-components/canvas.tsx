@@ -800,8 +800,10 @@ function CanvasInner({ nodes }: { nodes: CanvasNode[] }) {
   const context = React.use(CanvasContext)
   if (!context) throw new Error('CanvasInner must be used within Canvas')
 
-  const { onPaneClick, onThemeButtonClick } = context
+  const { onPaneClick, onThemeButtonClick, onPageAdd } = context
   const { zoomIn, zoomOut, fitView } = useReactFlow()
+
+  const pages = nodes[0]?.data.pages ?? []
 
   return (
     <ReactFlow
@@ -827,17 +829,31 @@ function CanvasInner({ nodes }: { nodes: CanvasNode[] }) {
     >
       <Background />
       <ReactFlowPanel position="top-left">
-        <ButtonGroup.Root orientation="horizontal">
-          <Button variant="outline" size="icon" onClick={() => zoomIn()}>
-            <ZoomInIcon />
+        <div className="flex gap-2">
+          <ButtonGroup.Root orientation="horizontal">
+            <Button variant="outline" size="icon" onClick={() => zoomIn()}>
+              <ZoomInIcon />
+            </Button>
+            <Button variant="outline" size="icon" onClick={() => zoomOut()}>
+              <ZoomOutIcon />
+            </Button>
+            <Button variant="outline" size="icon" onClick={() => fitView()}>
+              <MaximizeIcon />
+            </Button>
+          </ButtonGroup.Root>
+          <Button
+            variant="outline"
+            onClick={() =>
+              onPageAdd(
+                { id: ulid(), name: `Page ${pages.length + 1}`, blocks: [], properties: { buttonText: 'Continue' } },
+                pages.length,
+              )
+            }
+          >
+            <PlusIcon />
+            Add page
           </Button>
-          <Button variant="outline" size="icon" onClick={() => zoomOut()}>
-            <ZoomOutIcon />
-          </Button>
-          <Button variant="outline" size="icon" onClick={() => fitView()}>
-            <MaximizeIcon />
-          </Button>
-        </ButtonGroup.Root>
+        </div>
       </ReactFlowPanel>
       <ReactFlowPanel position="top-right">
         <Button variant="outline" onClick={onThemeButtonClick}>
