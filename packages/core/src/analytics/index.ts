@@ -10,19 +10,19 @@ export namespace Analytics {
     timestamp: z.string(),
   })
 
-  const StepEvent = BaseEvent.extend({
-    step_id: z.string(),
-    step_index: z.number(),
-    step_name: z.string(),
+  const PageEvent = BaseEvent.extend({
+    page_id: z.string(),
+    page_index: z.number(),
+    page_name: z.string(),
   })
 
   export const QuizEvent = z.discriminatedUnion('type', [
     BaseEvent.extend({ type: z.literal('quiz_view') }),
     BaseEvent.extend({ type: z.literal('quiz_start') }),
     BaseEvent.extend({ type: z.literal('quiz_complete') }),
-    StepEvent.extend({ type: z.literal('step_view') }),
-    StepEvent.extend({ type: z.literal('step_complete'), duration: z.number() }),
-    StepEvent.extend({
+    PageEvent.extend({ type: z.literal('page_view') }),
+    PageEvent.extend({ type: z.literal('step_complete'), duration: z.number() }),
+    PageEvent.extend({
       type: z.literal('question_answer'),
       block_id: z.string(),
       block_type: z.string(),

@@ -7,9 +7,9 @@ NODE funnel_data
 SQL >
     %
     SELECT
-        step_index,
-        any(step_id) as step_id,
-        any(step_name) as step_name,
+        page_index,
+        any(page_id) as page_id,
+        any(page_name) as page_name,
         countDistinct(session_id) as views,
         round(avg(duration)) as avg_duration_ms
     FROM quiz_events
@@ -17,7 +17,7 @@ SQL >
         quiz_id = {{String(quiz_id, required=True)}}
         AND quiz_version = {{UInt32(quiz_version, required=True)}}
         AND type = 'step_complete'
-    GROUP BY step_index
-    ORDER BY step_index
+    GROUP BY page_index
+    ORDER BY page_index
 
 TYPE ENDPOINT

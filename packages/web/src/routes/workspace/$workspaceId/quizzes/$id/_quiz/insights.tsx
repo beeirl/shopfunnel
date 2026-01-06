@@ -13,9 +13,9 @@ import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from 'recharts'
 import { z } from 'zod'
 
 interface FunnelData {
-  step_index: number
-  step_id: string
-  step_name: string
+  page_index: number
+  page_id: string
+  page_name: string
   views: number
   avg_duration_ms: number
 }
@@ -129,7 +129,7 @@ function Insights({ id, publishedVersionNumber }: { id: string; publishedVersion
     const dropoffPercent = prevViews > 0 ? Math.round((dropoff / prevViews) * 100) : 0
 
     return {
-      step: item.step_name,
+      page: item.page_name,
       views: item.views,
       dropoff,
       dropoffPercent,
@@ -168,7 +168,7 @@ function Insights({ id, publishedVersionNumber }: { id: string; publishedVersion
             <Chart.Container config={chartConfig} className="aspect-2/1 w-full">
               <BarChart data={funnelData} margin={{ top: 10, right: 10, bottom: 0, left: 0 }}>
                 <CartesianGrid vertical={false} strokeDasharray="3 3" />
-                <XAxis dataKey="step" tickLine={false} axisLine={false} tickMargin={10} />
+                <XAxis dataKey="page" tickLine={false} axisLine={false} tickMargin={10} />
                 <YAxis
                   tickLine={false}
                   axisLine={false}
@@ -183,7 +183,7 @@ function Insights({ id, publishedVersionNumber }: { id: string; publishedVersion
                     const data = payload[0].payload
                     return (
                       <div className="rounded-lg border border-border bg-background px-3 py-2 shadow-lg">
-                        <div className="font-semibold">{data.step}</div>
+                        <div className="font-semibold">{data.page}</div>
                         <div className="mt-1 space-y-0.5 text-sm">
                           <div className="text-muted-foreground">
                             <span className="font-medium text-foreground">{data.views.toLocaleString()}</span> views

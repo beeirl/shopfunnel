@@ -128,15 +128,15 @@ function RouteComponent() {
       trackEvents({
         data: [
           {
-            type: 'step_view',
+            type: 'page_view',
             quiz_id: quiz.id,
             quiz_version: quiz.version,
             workspace_id: quiz.workspaceId,
             session_id: sessionId,
             visitor_id: visitorId,
-            step_id: page.id,
-            step_index: page.index,
-            step_name: page.name,
+            page_id: page.id,
+            page_index: page.index,
+            page_name: page.name,
             timestamp: new Date().toISOString(),
           },
         ],
@@ -174,9 +174,9 @@ function RouteComponent() {
         events.push({
           ...baseEvent,
           type: 'question_answer',
-          step_id: page.id,
-          step_index: page.index,
-          step_name: page.name,
+          page_id: page.id,
+          page_index: page.index,
+          page_name: page.name,
           block_id: blockId,
           block_type: block.type,
           duration,
@@ -187,9 +187,9 @@ function RouteComponent() {
     events.push({
       ...baseEvent,
       type: 'step_complete',
-      step_id: page.id,
-      step_index: page.index,
-      step_name: page.name,
+      page_id: page.id,
+      page_index: page.index,
+      page_name: page.name,
       duration,
     })
 
