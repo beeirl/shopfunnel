@@ -333,31 +333,44 @@ export function Quiz({ quiz, mode = 'live', onComplete, onPageChange, onPageComp
       }
     }
 
-    setCurrentPageIndex(nextPageIndex)
-    setHiddenBlockIds(nextHiddenBlockIds)
-    setVariables(nextVariables)
-    canNextRef.current = true
-
     const currentPageValues = (() => {
       const currentBlockIds = currentPage.blocks.map((b) => b.id)
-      return currentBlockIds.reduce<Values>((currentPageValues, blockId) => {
-        if (values[blockId] !== undefined) {
-          currentPageValues[blockId] = values[blockId]
-        }
-        return currentPageValues
+      return currentBlockIds.reduce<Values>((acc, blockId) => {
+        if (values[blockId] !== undefined) acc[blockId] = values[blockId]
+        return acc
       }, {})
     })()
 
-    onPageComplete?.({
-      id: currentPage.id,
-      index: currentPageIndex,
-      name: currentPage.name,
-      values: currentPageValues,
-    })
+    const redirectUrl = currentPage.properties.redirectUrl
+    if (redirectUrl) {
+      onPageComplete?.({
+        id: currentPage.id,
+        index: currentPageIndex,
+        name: currentPage.name,
+        values: currentPageValues,
+      })
 
-    if (nextPageIndex >= quiz.pages.length) {
       localStorage.removeItem(VALUES_STORAGE_KEY)
       onComplete?.(values)
+
+      window.location.href = redirectUrl
+    } else {
+      setCurrentPageIndex(nextPageIndex)
+      setHiddenBlockIds(nextHiddenBlockIds)
+      setVariables(nextVariables)
+      canNextRef.current = true
+
+      onPageComplete?.({
+        id: currentPage.id,
+        index: currentPageIndex,
+        name: currentPage.name,
+        values: currentPageValues,
+      })
+
+      if (nextPageIndex >= quiz.pages.length) {
+        localStorage.removeItem(VALUES_STORAGE_KEY)
+        onComplete?.(values)
+      }
     }
   }
 
