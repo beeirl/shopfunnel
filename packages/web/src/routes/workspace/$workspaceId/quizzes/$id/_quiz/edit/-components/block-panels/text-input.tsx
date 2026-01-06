@@ -31,6 +31,16 @@ export function TextInputBlockPanel({
               onValueChange={(value) => onBlockUpdate({ properties: { ...block.properties, name: value } })}
             />
           </Pane.Group>
+          <Pane.Group>
+            <Pane.GroupHeader>
+              <Pane.GroupLabel>Placeholder</Pane.GroupLabel>
+            </Pane.GroupHeader>
+            <Input
+              placeholder="Enter placeholder..."
+              value={block.properties.placeholder ?? ''}
+              onValueChange={(value) => onBlockUpdate({ properties: { ...block.properties, placeholder: value } })}
+            />
+          </Pane.Group>
           <Pane.Separator />
           <Pane.Group>
             <Pane.GroupHeader>
