@@ -42,7 +42,6 @@ import {
 } from '@tabler/icons-react'
 import {
   Background,
-  PanOnScrollMode,
   ReactFlow,
   Panel as ReactFlowPanel,
   ReactFlowProvider,
@@ -193,8 +192,11 @@ const PAGE_TEMPLATES = [
 // Contexts
 // =============================================================================
 
+type CanvasMode = 'select' | 'pan' | 'zoom'
+
 interface CanvasContextValue {
   theme: Theme
+  mode: CanvasMode
   draggingPage: PageType | null
   draggingBlock: BlockType | null
   dropping: boolean
@@ -394,7 +396,7 @@ function CanvasBlock({
   static?: boolean
   dragging?: boolean
 }) {
-  const { dropping, selectedBlockId, onSelectBlock, onBlockAdd } = useCanvas()
+  const { mode, dropping, selectedBlockId, onSelectBlock, onBlockAdd } = useCanvas()
   const canvasPageContext = useCanvasPage()
   const { zoom } = useViewport()
 
@@ -426,7 +428,7 @@ function CanvasBlock({
                   : null,
               ),
           transition: dropping ? 'none' : transition,
-          pointerEvents: 'all',
+          pointerEvents: mode === 'select' ? 'all' : 'none',
           touchAction: 'none',
         }
 
@@ -542,7 +544,8 @@ function CanvasPage({
   pageCount: number
   static?: boolean
 }) {
-  const { draggingPage, dropping, selectedPageId, onSelectPage, onSelectBlock, onBlockAdd, onPageAdd } = useCanvas()
+  const { mode, draggingPage, dropping, selectedPageId, onSelectPage, onSelectBlock, onBlockAdd, onPageAdd } =
+    useCanvas()
   const { zoom } = useViewport()
   const [addMenuOpen, setAddMenuOpen] = React.useState(false)
 
@@ -584,7 +587,7 @@ function CanvasPage({
                   : null,
               ),
           transition: dropping ? 'none' : transition,
-          pointerEvents: 'all',
+          pointerEvents: mode === 'select' ? 'all' : 'none',
           touchAction: 'none',
         }
 
@@ -755,7 +758,7 @@ function CanvasNodeComponent({ data: { pages } }: NodeProps<CanvasNode>) {
   )
 
   return (
-    <div className="nopan nodrag" style={getThemeCssVars(theme)}>
+    <div style={getThemeCssVars(theme)}>
       <DndContext sensors={sensors} collisionDetection={closestCenter} onDragStart={onDragStart} onDragEnd={onDragEnd}>
         <SortableContext items={pages} strategy={horizontalListSortingStrategy}>
           <div className="flex items-start gap-6">
@@ -812,16 +815,13 @@ function CanvasInner({ nodes }: { nodes: CanvasNode[] }) {
       minZoom={ZOOM_MIN}
       maxZoom={ZOOM_MAX}
       fitView
+      zoomOnPinch
+      panOnScroll
+      zoomOnScroll={false}
       nodesDraggable={false}
       nodesConnectable={false}
       elementsSelectable={false}
-      panOnScroll
-      panOnScrollSpeed={1}
-      panOnScrollMode={PanOnScrollMode.Free}
-      zoomOnScroll={false}
-      zoomOnPinch
-      zoomActivationKeyCode="Meta"
-      panOnDrag={[0, 1, 2]}
+      panOnDrag={[1, 2]}
       onPaneClick={onPaneClick}
       proOptions={{
         hideAttribution: true,
@@ -900,8 +900,62 @@ export function Canvas({
   onBlockAdd,
   onBlockDelete,
 }: CanvasProps) {
+  const [mode, setMode] = React.useState<CanvasMode>('select')
   const [draggingId, setDraggingId] = React.useState<string | null>(null)
   const [dropping, setDropping] = React.useState(false)
+
+  React.useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.code === 'Space' && !event.repeat) {
+        setMode('pan')
+      }
+      if ((event.code === 'MetaLeft' || event.code === 'MetaRight') && !event.repeat) {
+        setMode('zoom')
+      }
+    }
+
+    const handleKeyUp = (event: KeyboardEvent) => {
+      if (event.code === 'Space' || event.code === 'MetaLeft' || event.code === 'MetaRight') {
+        setMode('select')
+      }
+    }
+
+    const handleBlur = () => {
+      setMode('select')
+    }
+
+    window.addEventListener('keydown', handleKeyDown)
+    window.addEventListener('keyup', handleKeyUp)
+    window.addEventListener('blur', handleBlur)
+
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown)
+      window.removeEventListener('keyup', handleKeyUp)
+      window.removeEventListener('blur', handleBlur)
+    }
+  }, [])
+
+  React.useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      // Don't handle if we're in an input field
+      if (event.target instanceof HTMLInputElement || event.target instanceof HTMLTextAreaElement) {
+        return
+      }
+
+      if ((event.key === 'Backspace' || event.key === 'Delete') && selectedBlockId) {
+        event.preventDefault()
+        onBlockDelete(selectedBlockId)
+      }
+
+      if ((event.key === 'Backspace' || event.key === 'Delete') && selectedPageId && !selectedBlockId) {
+        event.preventDefault()
+        onPageDelete(selectedPageId)
+      }
+    }
+
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [selectedBlockId, selectedPageId, onBlockDelete, onPageDelete])
 
   const handleDragStart = React.useCallback((event: DragStartEvent) => {
     setDropping(false)
@@ -946,9 +1000,6 @@ export function Canvas({
     [pages, onBlocksReorder, onPagesReorder],
   )
 
-  const draggingPage = pages.find((p) => p.id === draggingId) ?? null
-  const draggingBlock = !draggingPage ? (pages.flatMap((p) => p.blocks).find((b) => b.id === draggingId) ?? null) : null
-
   const handleSelectPage = React.useCallback(
     (pageId: string | null) => {
       onPageSelect(pageId)
@@ -970,28 +1021,8 @@ export function Canvas({
     onBlockSelect(null)
   }, [onPageSelect, onBlockSelect])
 
-  // Keyboard handler for deleting selected block
-  React.useEffect(() => {
-    const handleKeyDown = (event: KeyboardEvent) => {
-      // Don't handle if we're in an input field
-      if (event.target instanceof HTMLInputElement || event.target instanceof HTMLTextAreaElement) {
-        return
-      }
-
-      if ((event.key === 'Backspace' || event.key === 'Delete') && selectedBlockId) {
-        event.preventDefault()
-        onBlockDelete(selectedBlockId)
-      }
-
-      if ((event.key === 'Backspace' || event.key === 'Delete') && selectedPageId && !selectedBlockId) {
-        event.preventDefault()
-        onPageDelete(selectedPageId)
-      }
-    }
-
-    window.addEventListener('keydown', handleKeyDown)
-    return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [selectedBlockId, selectedPageId, onBlockDelete, onPageDelete])
+  const draggingPage = pages.find((p) => p.id === draggingId) ?? null
+  const draggingBlock = !draggingPage ? (pages.flatMap((p) => p.blocks).find((b) => b.id === draggingId) ?? null) : null
 
   const nodes = React.useMemo<CanvasNode[]>(
     () => [
@@ -1008,6 +1039,7 @@ export function Canvas({
   const contextValue = React.useMemo<CanvasContextValue>(
     () => ({
       theme,
+      mode,
       draggingPage,
       draggingBlock,
       dropping,
@@ -1024,6 +1056,7 @@ export function Canvas({
     }),
     [
       theme,
+      mode,
       draggingPage,
       draggingBlock,
       dropping,
