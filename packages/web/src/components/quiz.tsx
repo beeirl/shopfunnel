@@ -10,7 +10,7 @@ import type {
   Variables,
 } from '@shopfunnel/core/quiz/types'
 import { AnimatePresence, motion } from 'motion/react'
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 
 export type Values = Record<string, unknown>
 
@@ -246,6 +246,9 @@ export interface QuizProps {
 export function Quiz({ quiz, mode = 'live', onComplete, onPageChange, onPageComplete }: QuizProps) {
   const VALUES_STORAGE_KEY = `sf_quiz_${quiz.id}_values`
 
+  const canNextRef = useRef(true)
+  const onPageChangeRef = useRef(onPageChange)
+
   const [currentPageIndex, setCurrentPageIndex] = useState(0)
 
   const [values, setValues] = useState<Record<string, unknown>>({})
@@ -283,8 +286,8 @@ export function Quiz({ quiz, mode = 'live', onComplete, onPageChange, onPageComp
   useEffect(() => {
     const page = quiz.pages[currentPageIndex]
     if (!page) return
-    onPageChange?.({ id: page.id, index: currentPageIndex, name: page.name })
-  }, [currentPageIndex, quiz.pages, onPageChange])
+    onPageChangeRef.current?.({ id: page.id, index: currentPageIndex, name: page.name })
+  }, [currentPageIndex, quiz.pages])
 
   const handleBlockValueChange = (blockId: string, value: unknown) => {
     const newValues = { ...values, [blockId]: value }
@@ -307,10 +310,13 @@ export function Quiz({ quiz, mode = 'live', onComplete, onPageChange, onPageComp
 
   function next(values: Values) {
     if (!currentPage) return
+    if (!canNextRef.current) return
 
     const errors = validateBlocks(visibleBlocks, values)
     setErrors(errors ?? {})
     if (errors) return
+
+    canNextRef.current = false
 
     let nextPageIndex = currentPageIndex + 1
     let nextHiddenBlockIds = new Set<string>()
@@ -331,6 +337,7 @@ export function Quiz({ quiz, mode = 'live', onComplete, onPageChange, onPageComp
     setCurrentPageIndex(nextPageIndex)
     setHiddenBlockIds(nextHiddenBlockIds)
     setVariables(nextVariables)
+    canNextRef.current = true
 
     const currentPageValues = (() => {
       const currentBlockIds = currentPage.blocks.map((b) => b.id)

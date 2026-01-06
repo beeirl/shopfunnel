@@ -95,7 +95,6 @@ function RouteComponent() {
 
   const [quiz, setQuiz] = React.useState<Info>(quizQuery.data)
 
-  // Sync local state when query data changes (e.g., after publish)
   React.useEffect(() => {
     setQuiz(quizQuery.data)
   }, [quizQuery.data])
@@ -120,16 +119,6 @@ function RouteComponent() {
   const handleBlockSelect = (blockId: string | null) => {
     setSelectedBlockId(blockId)
     if (blockId) setShowThemePanel(false)
-  }
-
-  const handleDesignSelect = () => {
-    if (showThemePanel) {
-      setShowThemePanel(false)
-    } else {
-      setSelectedPageId(null)
-      setSelectedBlockId(null)
-      setShowThemePanel(true)
-    }
   }
 
   const handleThemeUpdate = (updates: Partial<Theme>) => {
