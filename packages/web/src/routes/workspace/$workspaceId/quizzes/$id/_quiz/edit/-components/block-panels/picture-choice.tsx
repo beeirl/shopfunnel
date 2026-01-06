@@ -1,6 +1,7 @@
 import { getBlockInfo } from '@/components/block'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { InputGroup } from '@/components/ui/input-group'
 import { SegmentedControl } from '@/components/ui/segmented-control'
 import { DndContext, PointerSensor, useSensor, useSensors, type DragEndEvent } from '@dnd-kit/core'
 import { arrayMove, SortableContext, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable'
@@ -11,6 +12,7 @@ import {
   IconPhoto as PhotoIcon,
   IconPlus as PlusIcon,
   IconTrash as TrashIcon,
+  IconX as XIcon,
 } from '@tabler/icons-react'
 import * as React from 'react'
 import { ulid } from 'ulid'
@@ -34,54 +36,69 @@ function ChoiceItem({
   onImageUpload: (file: File) => Promise<string>
 }) {
   const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id: choice.id })
+  const fileInputRef = React.useRef<HTMLInputElement>(null)
 
   const style: React.CSSProperties = {
     transform: CSS.Transform.toString(transform),
     transition,
   }
 
-  const handleImageClick = () => {
-    const input = document.createElement('input')
-    input.type = 'file'
-    input.accept = 'image/*'
-    input.onchange = async (e) => {
-      const file = (e.target as HTMLInputElement).files?.[0]
-      if (file) {
-        const url = await onImageUpload(file)
-        onUpdate({ media: { type: 'image', value: url } })
-      }
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (file) {
+      const url = await onImageUpload(file)
+      onUpdate({ media: { type: 'image', value: url } })
     }
-    input.click()
+    if (fileInputRef.current) {
+      fileInputRef.current.value = ''
+    }
+  }
+
+  const handleMediaClear = () => {
+    onUpdate({ media: undefined })
   }
 
   return (
-    <div
-      ref={setNodeRef}
-      style={style}
-      className="grid grid-cols-[auto_auto_1fr_auto] items-center gap-1 rounded-lg border border-border bg-card p-2"
-    >
+    <div ref={setNodeRef} style={style} className="grid grid-cols-[auto_1fr_auto] items-center gap-1">
       <button
         type="button"
-        className="h-8 cursor-grab touch-none text-muted-foreground hover:text-foreground"
+        className="cursor-grab touch-none pr-1 text-muted-foreground hover:text-foreground"
         {...attributes}
         {...listeners}
       >
         <GripVerticalIcon className="size-4" />
       </button>
-      <Button variant="outline" size="icon" className="overflow-hidden p-0" onClick={handleImageClick}>
-        {choice.media?.value ? (
-          <img src={choice.media.value} alt="" className="size-full object-cover" />
-        ) : (
-          <PhotoIcon />
+      <InputGroup.Root>
+        <InputGroup.Addon>
+          <InputGroup.Button
+            size="icon-xs"
+            variant="ghost"
+            onClick={() => fileInputRef.current?.click()}
+            className="size-6 overflow-hidden"
+          >
+            {choice.media?.value ? (
+              <img src={choice.media.value} alt="" className="size-full rounded object-cover" />
+            ) : (
+              <PhotoIcon className="size-4" />
+            )}
+          </InputGroup.Button>
+        </InputGroup.Addon>
+        <InputGroup.Input
+          readOnly
+          placeholder="Upload image..."
+          value={choice.media?.value ? 'Image' : ''}
+          className="cursor-pointer"
+          onClick={() => fileInputRef.current?.click()}
+        />
+        {choice.media && (
+          <InputGroup.Addon align="inline-end">
+            <InputGroup.Button size="icon-xs" variant="ghost" onClick={handleMediaClear}>
+              <XIcon className="size-4" />
+            </InputGroup.Button>
+          </InputGroup.Addon>
         )}
-      </Button>
-      <Input
-        ref={inputRef}
-        placeholder="Choice..."
-        value={choice.label}
-        onValueChange={(value) => onUpdate({ label: value })}
-        onMouseDown={(e) => e.stopPropagation()}
-      />
+      </InputGroup.Root>
+      <input ref={fileInputRef} type="file" accept="image/*" onChange={handleFileChange} className="hidden" />
       <Button
         size="icon"
         variant="ghost"
@@ -91,15 +108,21 @@ function ChoiceItem({
       >
         <TrashIcon />
       </Button>
-      <div />
       <Input
-        className="col-span-2"
+        ref={inputRef}
+        className="col-start-2"
+        placeholder="Label..."
+        value={choice.label}
+        onValueChange={(value) => onUpdate({ label: value })}
+        onMouseDown={(e) => e.stopPropagation()}
+      />
+      <Input
+        className="col-start-2"
         placeholder="Description..."
         value={choice.description ?? ''}
         onValueChange={(value) => onUpdate({ description: value || undefined })}
         onMouseDown={(e) => e.stopPropagation()}
       />
-      <div />
     </div>
   )
 }
@@ -199,7 +222,7 @@ export function PictureChoiceBlockPanel({
             </Pane.GroupHeader>
             <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
               <SortableContext items={options} strategy={verticalListSortingStrategy}>
-                <div className="flex flex-col gap-2">
+                <div className="flex flex-col gap-4">
                   {options.map((choice) => (
                     <ChoiceItem
                       key={choice.id}
