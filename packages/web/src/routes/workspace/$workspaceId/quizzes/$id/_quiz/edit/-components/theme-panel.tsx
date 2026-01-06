@@ -187,34 +187,6 @@ export function ThemePanel({ theme, onThemeUpdate, onImageUpload }: ThemePanelPr
               </Field.Control>
             </Field.Root>
             <Field.Root>
-              <Field.Label>Background</Field.Label>
-              <Field.Control>
-                <InputGroup.Root>
-                  <InputGroup.Addon>
-                    <ColorPicker.Root>
-                      <ColorPicker.Trigger
-                        render={
-                          <InputGroup.Button
-                            size="icon-xs"
-                            variant="outline"
-                            style={{ backgroundColor: theme.colors.background }}
-                          />
-                        }
-                      />
-                      <ColorPicker.Content
-                        value={theme.colors.background}
-                        onValueChange={(value) => handleColorChange('background', value)}
-                      />
-                    </ColorPicker.Root>
-                  </InputGroup.Addon>
-                  <InputGroup.Input
-                    value={theme.colors.background}
-                    onChange={(e) => handleColorChange('background', e.target.value)}
-                  />
-                </InputGroup.Root>
-              </Field.Control>
-            </Field.Root>
-            <Field.Root>
               <Field.Label>Text</Field.Label>
               <Field.Control>
                 <InputGroup.Root>

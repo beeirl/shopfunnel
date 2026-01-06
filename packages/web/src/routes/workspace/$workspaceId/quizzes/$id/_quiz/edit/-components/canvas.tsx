@@ -610,7 +610,7 @@ function CanvasPage({
         )}
       >
         <div
-          className="no-scrollbar flex flex-col overflow-y-auto bg-white"
+          className="no-scrollbar flex flex-col overflow-y-auto bg-(--qz-background)"
           style={{ width: PAGE_WIDTH, height: PAGE_HEIGHT }}
         >
           <div className="mx-auto flex w-full max-w-sm flex-1 flex-col px-6 pt-8">
