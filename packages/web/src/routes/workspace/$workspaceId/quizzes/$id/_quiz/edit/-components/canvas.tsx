@@ -136,7 +136,7 @@ const BLOCKS: Record<BlockType['type'], () => BlockType> = {
     id: ulid(),
     type: 'paragraph',
     properties: {
-      text: 'Your text here',
+      text: 'Paragraph',
       alignment: 'left',
     },
   }),
@@ -175,10 +175,10 @@ const BLOCKS: Record<BlockType['type'], () => BlockType> = {
 
 const PAGE_TEMPLATES = [
   { id: 'blank', icon: FileIcon, name: 'Blank', blocks: [] as string[] },
-  { id: 'text_input', icon: MenuIcon, name: 'Text Input', blocks: ['text_input'] },
-  { id: 'multiple_choice', icon: ListLettersIcon, name: 'Multiple Choice', blocks: ['multiple_choice'] },
-  { id: 'picture_choice', icon: LayoutGridIcon, name: 'Picture Choice', blocks: ['picture_choice'] },
-  { id: 'dropdown', icon: ChevronDownIcon, name: 'Dropdown', blocks: ['dropdown'] },
+  { id: 'text_input', icon: MenuIcon, name: 'Text Input', blocks: ['heading', 'text_input'] },
+  { id: 'multiple_choice', icon: ListLettersIcon, name: 'Multiple Choice', blocks: ['heading', 'multiple_choice'] },
+  { id: 'picture_choice', icon: LayoutGridIcon, name: 'Picture Choice', blocks: ['heading', 'picture_choice'] },
+  { id: 'dropdown', icon: ChevronDownIcon, name: 'Dropdown', blocks: ['heading', 'dropdown'] },
   { id: 'loader', icon: LoaderIcon, name: 'Loader', blocks: ['loader'] },
 ]
 
@@ -340,18 +340,7 @@ function AddPageMenuContent() {
 
   const handlePageAdd = (templateId: string) => {
     const template = PAGE_TEMPLATES.find((t) => t.id === templateId)!
-
-    const blocks: BlockType[] = []
-    template.blocks.forEach((type) => {
-      if (['text_input', 'multiple_choice', 'picture_choice', 'dropdown'].includes(type)) {
-        blocks.push(BLOCKS.heading())
-      }
-      const blockFactory = BLOCKS[type as BlockType['type']]
-      if (blockFactory) {
-        blocks.push(blockFactory())
-      }
-    })
-
+    const blocks: BlockType[] = template.blocks.map((type) => BLOCKS[type]())
     const page: PageType = {
       id: ulid(),
       name: `Page ${pageCount + 1}`,
