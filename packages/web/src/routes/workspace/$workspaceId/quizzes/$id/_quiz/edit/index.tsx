@@ -110,8 +110,8 @@ function RouteComponent() {
 
   const handlePageSelect = (pageId: string | null) => {
     setSelectedPageId(pageId)
-    setShowThemePanel(false)
     if (pageId) {
+      setShowThemePanel(false)
       const page = quiz.pages.find((p) => p.id === pageId)
       setSelectedBlockId(page?.blocks[0]?.id ?? null)
     }
@@ -119,7 +119,7 @@ function RouteComponent() {
 
   const handleBlockSelect = (blockId: string | null) => {
     setSelectedBlockId(blockId)
-    setShowThemePanel(false)
+    if (blockId) setShowThemePanel(false)
   }
 
   const handleDesignSelect = () => {
