@@ -76,6 +76,18 @@ function PaneSeparator({ className, ...props }: React.ComponentProps<'hr'>) {
   return <hr data-slot="pane-separator" className={cn('bg-border', className)} {...props} />
 }
 
+function PaneFooter({ children, className, ...props }: React.ComponentProps<'div'>) {
+  return (
+    <div
+      data-slot="pane-footer"
+      className={cn('flex shrink-0 items-center justify-between border-t border-border px-3.5 py-3', className)}
+      {...props}
+    >
+      {children}
+    </div>
+  )
+}
+
 export const Pane = {
   Root: PaneRoot,
   Header: PaneHeader,
@@ -85,4 +97,5 @@ export const Pane = {
   GroupHeader: PaneGroupHeader,
   GroupLabel: PaneGroupLabel,
   Separator: PaneSeparator,
+  Footer: PaneFooter,
 }

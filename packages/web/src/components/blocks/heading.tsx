@@ -8,13 +8,10 @@ export interface HeadingBlockProps {
 
 export function HeadingBlock(props: HeadingBlockProps) {
   return (
-    <div className="group-not-data-first/block:mt-3">
-      <span
-        className={cn(
-          'text-2xl font-bold tracking-tight text-balance text-(--qz-foreground)',
-          props.block.properties.alignment === 'center' && 'text-center',
-        )}
-      >
+    <div
+      className={cn('group-not-data-first/block:mt-3', props.block.properties.alignment === 'center' && 'text-center')}
+    >
+      <span className="text-2xl font-bold tracking-tight text-balance text-(--qz-foreground)">
         {props.block.properties.text}
       </span>
     </div>

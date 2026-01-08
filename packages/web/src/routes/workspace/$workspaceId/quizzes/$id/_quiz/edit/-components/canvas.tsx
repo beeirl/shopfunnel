@@ -8,6 +8,7 @@ import { cn } from '@/lib/utils'
 import * as dagre from '@dagrejs/dagre'
 import type { Block as BlockType, Page as PageType, Rule, Theme } from '@shopfunnel/core/quiz/types'
 import {
+  IconArrowsSplit2 as BranchIcon,
   IconMaximize as MaximizeIcon,
   IconPalette as PaletteIcon,
   IconZoomIn as ZoomInIcon,
@@ -91,15 +92,22 @@ interface PageNodeData extends Record<string, unknown> {
   pageIndex: number
   selected: boolean
   selectedBlockId: string | null
+  hasRules: boolean
   onPageSelect: (pageId: string) => void
   onBlockSelect: (blockId: string) => void
+  onLogicClick: () => void
 }
 
 function PageNode({ data }: { data: PageNodeData }) {
-  const { page, theme, pageIndex, selected, selectedBlockId, onBlockSelect } = data
+  const { page, theme, pageIndex, selected, selectedBlockId, hasRules, onBlockSelect, onLogicClick } = data
 
   const handleBlockSelect = (blockId: string) => {
     onBlockSelect(blockId)
+  }
+
+  const handleLogicClick = (e: React.MouseEvent) => {
+    e.stopPropagation()
+    onLogicClick()
   }
 
   return (
@@ -110,7 +118,7 @@ function PageNode({ data }: { data: PageNodeData }) {
           'mb-2 text-sm font-medium',
           selected
             ? 'text-primary'
-            : 'text-muted-foreground group-[:hover:not(:has([data-slot=block]:hover))]/page-node:text-primary',
+            : 'text-muted-foreground group-[:hover:not(:has([data-slot=block]:hover,[data-slot=logic-button]:hover))]/page-node:text-primary',
         )}
       >
         {page.name || `Page ${pageIndex + 1}`}
@@ -120,8 +128,8 @@ function PageNode({ data }: { data: PageNodeData }) {
       <div
         className={cn(
           'nopan nodrag relative border border-border bg-background ring-primary',
-          'group-[:hover:not(:has([data-slot=block]:hover))]/page-node:border-primary',
-          'group-[:hover:not(:has([data-slot=block]:hover))]/page-node:ring',
+          'group-[:hover:not(:has([data-slot=block]:hover,[data-slot=logic-button]:hover))]/page-node:border-primary',
+          'group-[:hover:not(:has([data-slot=block]:hover,[data-slot=logic-button]:hover))]/page-node:ring',
           selected && 'border-primary ring',
         )}
         style={{ width: PAGE_WIDTH, height: PAGE_HEIGHT }}
@@ -158,6 +166,17 @@ function PageNode({ data }: { data: PageNodeData }) {
             )}
           </div>
         </div>
+
+        {/* Logic button */}
+        <Button
+          variant={hasRules ? 'default' : 'outline'}
+          size="icon"
+          data-slot="logic-button"
+          onClick={handleLogicClick}
+          className="nopan nodrag absolute top-1/2 right-0 z-10 translate-x-1/2 -translate-y-1/2 rounded-full"
+        >
+          <BranchIcon />
+        </Button>
 
         {/* Handles for flow edges */}
         <Handle type="target" position={Position.Left} className="!h-3 !w-3 !bg-border" />
@@ -249,7 +268,6 @@ function createEdges(pages: PageType[], rules: Rule[]): Edge[] {
         id: edgeId,
         source: sourceId,
         target: targetId,
-        type: 'bezier',
         markerEnd: { type: MarkerType.Arrow, width: 24, height: 24 },
       })
     }
@@ -268,7 +286,6 @@ function createEdges(pages: PageType[], rules: Rule[]): Edge[] {
             id: edgeId,
             source: sourceId,
             target: targetId,
-            type: 'bezier',
             markerEnd: { type: MarkerType.Arrow, width: 24, height: 24 },
           })
         }
@@ -377,6 +394,7 @@ export interface CanvasProps {
   onPageSelect: (pageId: string | null) => void
   onBlockSelect: (blockId: string | null) => void
   onThemeButtonClick: () => void
+  onLogicClick: (pageId: string) => void
 }
 
 export function Canvas({
@@ -389,6 +407,7 @@ export function Canvas({
   onPageSelect,
   onBlockSelect,
   onThemeButtonClick,
+  onLogicClick,
 }: CanvasProps) {
   const handlePaneClick = React.useCallback(() => {
     onPageSelect(null)
@@ -435,15 +454,17 @@ export function Canvas({
         pageIndex: index,
         selected: selectedPageId === page.id,
         selectedBlockId,
+        hasRules: rules.some((r) => r.pageId === page.id && r.actions.length > 0),
         onPageSelect: handlePageSelect,
         onBlockSelect: handleBlockSelect,
+        onLogicClick: () => onLogicClick(page.id),
       },
     }))
 
     const initialEdges = createEdges(pages, rules)
 
     return getLayoutedElements(initialNodes, initialEdges)
-  }, [pages, rules, theme, selectedPageId, selectedBlockId, handlePageSelect, handleBlockSelect])
+  }, [pages, rules, theme, selectedPageId, selectedBlockId, handlePageSelect, handleBlockSelect, onLogicClick])
 
   return (
     <div className="size-full bg-background" data-slot="canvas">

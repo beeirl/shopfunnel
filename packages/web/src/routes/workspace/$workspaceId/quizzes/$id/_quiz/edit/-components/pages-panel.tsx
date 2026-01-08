@@ -343,15 +343,17 @@ function PagesPane({
 // =============================================================================
 
 interface BlocksPaneProps {
+  pageId: string
   blocks: Block[]
   selectedBlockId: string | null
   onBlockSelect: (blockId: string | null) => void
   onPageSelect: (pageId: string | null) => void
-  onBlocksReorder: (blocks: Block[]) => void
+  onBlocksReorder: (pageId: string, blocks: Block[]) => void
   onBlockAdd: (block: Block) => void
 }
 
 function BlocksPane({
+  pageId,
   blocks,
   selectedBlockId,
   onBlockSelect,
@@ -380,7 +382,7 @@ function BlocksPane({
             <span className="text-xm text-muted-foreground">No blocks yet</span>
           </div>
         ) : (
-          <DragDropProvider onDragEnd={(event) => onBlocksReorder(move(blocks, event))}>
+          <DragDropProvider onDragEnd={(event) => onBlocksReorder(pageId, move(blocks, event))}>
             <div className="flex flex-col gap-0.5 py-2">
               {blocks.map((block, index) => (
                 <BlockItem
@@ -414,7 +416,7 @@ export interface PagesPanelProps {
   onBlockSelect: (blockId: string | null) => void
   onPagesReorder: (pages: Page[]) => void
   onPageAdd: (page: Page) => void
-  onBlocksReorder: (blocks: Block[]) => void
+  onBlocksReorder: (pageId: string, blocks: Block[]) => void
   onBlockAdd: (block: Block) => void
 }
 
@@ -453,6 +455,7 @@ export function PagesPanel({
             <Resizable.Handle />
             <Resizable.Panel defaultSize={60} minSize={20}>
               <BlocksPane
+                pageId={pageForBlocks.id}
                 blocks={pageForBlocks.blocks}
                 selectedBlockId={selectedBlockId}
                 onBlockSelect={onBlockSelect}

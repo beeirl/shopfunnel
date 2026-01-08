@@ -2,7 +2,7 @@ import { AlertDialog } from '@/components/ui/alert-dialog'
 import { withActor } from '@/context/auth.withActor'
 import { Identifier } from '@shopfunnel/core/identifier'
 import { Quiz } from '@shopfunnel/core/quiz/index'
-import type { Block, Info, Page, Theme } from '@shopfunnel/core/quiz/types'
+import type { Block, Info, Page, Rule, RuleAction, Theme } from '@shopfunnel/core/quiz/types'
 import { useDebouncer } from '@tanstack/react-pacer'
 import { mutationOptions, useMutation, useQueryClient, useSuspenseQuery } from '@tanstack/react-query'
 import { createFileRoute } from '@tanstack/react-router'
@@ -12,6 +12,7 @@ import { z } from 'zod'
 import { getQuizQueryOptions } from '../../-common'
 import { BlockPanel } from './-components/block-panel'
 import { Canvas } from './-components/canvas'
+import { LogicPanel } from './-components/logic-panel'
 import { PagePanel } from './-components/page-panel'
 import { PagesPanel } from './-components/pages-panel'
 import { ThemePanel } from './-components/theme-panel'
@@ -22,6 +23,7 @@ const updateQuiz = createServerFn({ method: 'POST' })
       workspaceId: Identifier.schema('workspace'),
       quizId: Identifier.schema('quiz'),
       pages: z.custom<Page[]>().optional(),
+      rules: z.custom<Rule[]>().optional(),
       theme: z.custom<Theme>().optional(),
     }),
   )
@@ -31,6 +33,7 @@ const updateQuiz = createServerFn({ method: 'POST' })
         Quiz.update({
           id: data.quizId,
           pages: data.pages,
+          rules: data.rules,
           theme: data.theme,
         }),
       data.workspaceId,
@@ -39,7 +42,8 @@ const updateQuiz = createServerFn({ method: 'POST' })
 
 const updateQuizMutationOptions = (workspaceId: string, quizId: string) =>
   mutationOptions({
-    mutationFn: (data: { pages?: Page[]; theme?: Theme }) => updateQuiz({ data: { workspaceId, quizId, ...data } }),
+    mutationFn: (data: { pages?: Page[]; rules?: Rule[]; theme?: Theme }) =>
+      updateQuiz({ data: { workspaceId, quizId, ...data } }),
   })
 
 const uploadQuizFile = createServerFn({ method: 'POST' })
@@ -86,13 +90,13 @@ function RouteComponent() {
   const updateQuizMutation = useMutation(updateQuizMutationOptions(params.workspaceId, params.id))
 
   const saveDebouncer = useDebouncer(
-    async (data: { pages: Page[]; theme?: Theme }) => {
+    async (data: { pages: Page[]; rules?: Rule[]; theme?: Theme }) => {
       await updateQuizMutation.mutateAsync(data)
       queryClient.setQueryData(getQuizQueryOptions(params.workspaceId, params.id).queryKey, (quiz: Info | undefined) =>
         quiz ? { ...quiz, published: false } : quiz,
       )
     },
-    { wait: 1000 },
+    { wait: 3000 },
   )
 
   const [quiz, setQuiz] = React.useState<Info>(quizQuery.data)
@@ -110,6 +114,36 @@ function RouteComponent() {
   const [showThemePanel, setShowThemePanel] = React.useState(false)
   const [selectionSource, setSelectionSource] = React.useState<'panel' | 'canvas' | null>(null)
   const [deleteDialogOpen, setDeleteDialogOpen] = React.useState(false)
+
+  const [selectedLogicPageId, setSelectedLogicPageId] = React.useState<string | null>(null)
+  const selectedLogicPage = quiz.pages.find((p) => p.id === selectedLogicPageId) ?? null
+
+  // Pending page rules - track unsaved changes per page
+  const [pendingPageRules, setPendingPageRules] = React.useState<Record<string, Rule | null>>({})
+
+  // Get rules for a specific page (pending takes priority over saved)
+  const getPageRule = (pageId: string): Rule | undefined => {
+    if (pageId in pendingPageRules) {
+      return pendingPageRules[pageId] ?? undefined
+    }
+    return quiz.rules.find((r) => r.pageId === pageId)
+  }
+
+  // Derive effective rules (saved + pending) for real-time canvas preview
+  const effectiveRules = React.useMemo(() => {
+    const rulesMap = new Map(quiz.rules.map((r) => [r.pageId, r]))
+
+    // Apply pending changes
+    for (const [pageId, pendingRule] of Object.entries(pendingPageRules)) {
+      if (pendingRule === null) {
+        rulesMap.delete(pageId) // Rule was deleted
+      } else {
+        rulesMap.set(pageId, pendingRule) // Rule was added/modified
+      }
+    }
+
+    return Array.from(rulesMap.values())
+  }, [quiz.rules, pendingPageRules])
 
   // Derive what's being deleted
   const deleteTarget = selectedBlockId ? 'block' : selectedPageId ? 'page' : null
@@ -148,15 +182,15 @@ function RouteComponent() {
   const handlePageSelect = (pageId: string | null, source: 'panel' | 'canvas' = 'canvas') => {
     setSelectedPageId(pageId)
     setSelectionSource(source)
-    if (pageId) {
-      setShowThemePanel(false)
-    }
+    setShowThemePanel(false)
+    setSelectedLogicPageId(null)
   }
 
   const handleBlockSelect = (blockId: string | null, source: 'panel' | 'canvas' = 'canvas') => {
     setSelectedBlockId(blockId)
     setSelectionSource(source)
-    if (blockId) setShowThemePanel(false)
+    setShowThemePanel(false)
+    setSelectedLogicPageId(null)
   }
 
   const handleThemeUpdate = (updates: Partial<Theme>) => {
@@ -264,8 +298,58 @@ function RouteComponent() {
     } else {
       setSelectedPageId(null)
       setSelectedBlockId(null)
+      setSelectedLogicPageId(null)
       setShowThemePanel(true)
     }
+  }
+
+  const handleLogicClick = (pageId: string) => {
+    setSelectedLogicPageId(pageId)
+    setSelectedPageId(null)
+    setSelectedBlockId(null)
+    setShowThemePanel(false)
+  }
+
+  const handlePageRulesChange = (actions: RuleAction[]) => {
+    if (!selectedLogicPageId) return
+    setPendingPageRules((prev) => ({
+      ...prev,
+      [selectedLogicPageId]: actions.length > 0 ? { pageId: selectedLogicPageId, actions } : null,
+    }))
+  }
+
+  const handlePageRulesSave = () => {
+    if (!selectedLogicPageId) return
+    const pendingRule = pendingPageRules[selectedLogicPageId]
+
+    // Merge pending into quiz.rules
+    const newRules = quiz.rules.filter((r) => r.pageId !== selectedLogicPageId)
+    if (pendingRule && pendingRule.actions.length > 0) {
+      newRules.push(pendingRule)
+    }
+
+    setQuiz((prev) => ({ ...prev, rules: newRules }))
+
+    // Clear pending for this page
+    setPendingPageRules((prev) => {
+      const { [selectedLogicPageId]: _, ...rest } = prev
+      return rest
+    })
+
+    // Save to server
+    saveDebouncer.maybeExecute({ pages: quiz.pages, rules: newRules })
+  }
+
+  const handlePageRulesReset = () => {
+    if (!selectedLogicPageId) return
+    setPendingPageRules((prev) => {
+      const { [selectedLogicPageId]: _, ...rest } = prev
+      return rest
+    })
+  }
+
+  const handleLogicClose = () => {
+    setSelectedLogicPageId(null)
   }
 
   return (
@@ -278,12 +362,12 @@ function RouteComponent() {
         onBlockSelect={(blockId) => handleBlockSelect(blockId, 'panel')}
         onPagesReorder={handlePagesReorder}
         onPageAdd={handlePageAdd}
-        onBlocksReorder={(blocks) => selectedPageId && handleBlocksReorder(selectedPageId, blocks)}
+        onBlocksReorder={handleBlocksReorder}
         onBlockAdd={(block) => selectedPageId && handleBlockAdd(block, selectedPageId)}
       />
       <Canvas
         pages={quiz.pages}
-        rules={quiz.rules}
+        rules={effectiveRules}
         theme={quiz.theme}
         selectedPageId={selectedPageId}
         selectedBlockId={selectedBlockId}
@@ -291,8 +375,21 @@ function RouteComponent() {
         onPageSelect={handlePageSelect}
         onBlockSelect={handleBlockSelect}
         onThemeButtonClick={handleThemeButtonClick}
+        onLogicClick={handleLogicClick}
       />
-      {showThemePanel ? (
+      {selectedLogicPage ? (
+        <LogicPanel
+          page={selectedLogicPage}
+          pages={quiz.pages}
+          pageRule={getPageRule(selectedLogicPage.id)}
+          saving={updateQuizMutation.isPending}
+          hasChanges={selectedLogicPage.id in pendingPageRules}
+          onPageRulesChange={handlePageRulesChange}
+          onSave={handlePageRulesSave}
+          onReset={handlePageRulesReset}
+          onClose={handleLogicClose}
+        />
+      ) : showThemePanel ? (
         <ThemePanel theme={quiz.theme} onThemeUpdate={handleThemeUpdate} onImageUpload={handleImageUpload} />
       ) : selectedBlock ? (
         <BlockPanel
