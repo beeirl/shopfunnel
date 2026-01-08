@@ -1,15 +1,19 @@
 import { getBlockInfo } from '@/components/block'
+import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import type { LoaderBlock as LoaderBlockType } from '@shopfunnel/core/quiz/types'
+import { IconTrash as TrashIcon } from '@tabler/icons-react'
 import { Pane } from '../pane'
 import { Panel } from '../panel'
 
 export function LoaderBlockPanel({
   block,
   onBlockUpdate,
+  onBlockRemove,
 }: {
   block: LoaderBlockType
   onBlockUpdate: (block: Partial<LoaderBlockType>) => void
+  onBlockRemove: () => void
 }) {
   const blockInfo = getBlockInfo(block.type)
   return (
@@ -17,6 +21,9 @@ export function LoaderBlockPanel({
       <Pane.Root>
         <Pane.Header>
           <Pane.Title>{blockInfo?.name}</Pane.Title>
+          <Button className="-mr-2" size="icon" variant="ghost" onClick={onBlockRemove}>
+            <TrashIcon />
+          </Button>
         </Pane.Header>
         <Pane.Content>
           <Pane.Group>

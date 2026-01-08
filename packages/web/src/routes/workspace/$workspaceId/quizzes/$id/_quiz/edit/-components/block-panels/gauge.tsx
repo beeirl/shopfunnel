@@ -11,9 +11,11 @@ import { Panel } from '../panel'
 export function GaugeBlockPanel({
   block,
   onBlockUpdate,
+  onBlockRemove,
 }: {
   block: GaugeBlockType
   onBlockUpdate: (block: Partial<GaugeBlockType>) => void
+  onBlockRemove: () => void
 }) {
   const blockInfo = getBlockInfo(block.type)
   const marks = block.properties.marks ?? []
@@ -52,6 +54,9 @@ export function GaugeBlockPanel({
       <Pane.Root>
         <Pane.Header>
           <Pane.Title>{blockInfo?.name}</Pane.Title>
+          <Button className="-mr-2" size="icon" variant="ghost" onClick={onBlockRemove}>
+            <TrashIcon />
+          </Button>
         </Pane.Header>
         <Pane.Content>
           <Pane.Group>

@@ -2,13 +2,12 @@ import { Button } from '@/components/ui/button'
 import { Dialog } from '@/components/ui/dialog'
 import { Field } from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
-import { Tabs } from '@/components/ui/tabs'
 import { withActor } from '@/context/auth.withActor'
 import { Identifier } from '@shopfunnel/core/identifier'
 import { Quiz } from '@shopfunnel/core/quiz/index'
 import { IconChevronLeft as ChevronLeftIcon } from '@tabler/icons-react'
 import { mutationOptions, useMutation, useQueryClient, useSuspenseQuery } from '@tanstack/react-query'
-import { createFileRoute, Link, linkOptions, Outlet, useLocation } from '@tanstack/react-router'
+import { createFileRoute, Link, linkOptions, MatchRoute, Outlet } from '@tanstack/react-router'
 import { createServerFn } from '@tanstack/react-start'
 import * as React from 'react'
 import { z } from 'zod'
@@ -63,7 +62,6 @@ const tabs = [
 
 function RouteComponent() {
   const params = Route.useParams()
-  const location = useLocation()
   const queryClient = useQueryClient()
 
   const quizQuery = useSuspenseQuery(getQuizQueryOptions(params.workspaceId, params.id))
@@ -98,96 +96,90 @@ function RouteComponent() {
     })
   }
 
-  const activeTab = tabs.findIndex((tab) => {
-    return location.pathname.endsWith(tab.linkOptions.to.replace('./', ''))
-  })
-
   return (
     <div className="flex h-screen w-screen flex-col">
-      <div className="flex w-full shrink-0 flex-col gap-1 border-b border-border bg-[hsl(0,0%,99%)]/95 px-3 pt-3">
-        <div className="flex w-full items-center justify-between">
-          <div className="flex items-center">
-            <Button
-              variant="ghost"
-              size="icon"
-              aria-label="Back to dashboard"
-              render={<Link from={Route.fullPath} to="../.." />}
-            >
-              <ChevronLeftIcon />
-            </Button>
-            <Dialog.Root open={editTitleOpen} onOpenChange={handleTitleOpenChange}>
-              <Dialog.Trigger aria-label="Edit quiz title" render={<Button variant="ghost">{quiz.title}</Button>} />
-              <Dialog.Content>
-                <Dialog.Header>
-                  <Dialog.Title>Edit quiz title</Dialog.Title>
-                </Dialog.Header>
-                <Field.Root data-invalid={!!titleError}>
-                  <Input
-                    autoFocus
-                    placeholder="Enter quiz title"
-                    value={titleValue}
-                    onValueChange={(value) => {
-                      setTitleValue(value)
-                      if (titleError) setTitleError(null)
-                    }}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter') {
-                        e.preventDefault()
-                        handleTitleSave()
-                      }
-                    }}
-                  />
-                  {titleError && <Field.Error>{titleError}</Field.Error>}
-                </Field.Root>
-                <Dialog.Footer>
-                  <Dialog.Close render={<Button variant="outline" />}>Cancel</Dialog.Close>
-                  <Button onClick={handleTitleSave} disabled={updateTitleMutation.isPending}>
-                    {updateTitleMutation.isPending ? 'Saving...' : 'Save'}
-                  </Button>
-                </Dialog.Footer>
-              </Dialog.Content>
-            </Dialog.Root>
-          </div>
-          <div className="flex items-center gap-1">
-            <Button
-              variant="ghost"
-              aria-label="Preview"
-              render={<Link from={Route.fullPath} to="preview" target="_blank" />}
-            >
-              Preview
-            </Button>
-            <Button
-              variant="ghost"
-              aria-label="Share"
-              render={<Link to="/q/$id" params={{ id: quiz.shortId }} target="_blank" />}
-            >
-              Share
-            </Button>
-            <Button
-              disabled={quiz.published || publishMutation.isPending}
-              variant={quiz.published ? 'ghost' : 'default'}
-              onClick={() => {
-                publishMutation.mutate(undefined, {
-                  onSuccess: () => {
-                    queryClient.invalidateQueries(getQuizQueryOptions(params.workspaceId, params.id))
-                  },
-                })
-              }}
-            >
-              Publish
-            </Button>
-          </div>
+      <div className="grid h-12 w-full shrink-0 grid-cols-3 items-center border-b border-border bg-background px-2">
+        <div className="flex items-center">
+          <Button
+            variant="ghost"
+            size="icon"
+            aria-label="Back to dashboard"
+            render={<Link from={Route.fullPath} to="../.." />}
+          >
+            <ChevronLeftIcon />
+          </Button>
+          <Dialog.Root open={editTitleOpen} onOpenChange={handleTitleOpenChange}>
+            <Dialog.Trigger aria-label="Edit quiz title" render={<Button variant="ghost">{quiz.title}</Button>} />
+            <Dialog.Content>
+              <Dialog.Header>
+                <Dialog.Title>Edit quiz title</Dialog.Title>
+              </Dialog.Header>
+              <Field.Root data-invalid={!!titleError}>
+                <Input
+                  autoFocus
+                  placeholder="Enter quiz title"
+                  value={titleValue}
+                  onValueChange={(value) => {
+                    setTitleValue(value)
+                    if (titleError) setTitleError(null)
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault()
+                      handleTitleSave()
+                    }
+                  }}
+                />
+                {titleError && <Field.Error>{titleError}</Field.Error>}
+              </Field.Root>
+              <Dialog.Footer>
+                <Dialog.Close render={<Button variant="outline" />}>Cancel</Dialog.Close>
+                <Button onClick={handleTitleSave} disabled={updateTitleMutation.isPending}>
+                  {updateTitleMutation.isPending ? 'Saving...' : 'Save'}
+                </Button>
+              </Dialog.Footer>
+            </Dialog.Content>
+          </Dialog.Root>
         </div>
-        <div className="pl-8.5">
-          <Tabs.Root value={activeTab}>
-            <Tabs.List variant="line">
-              {tabs.map((tab, index) => (
-                <Tabs.Trigger key={index} value={index} render={<Link {...tab.linkOptions} />}>
+        <div className="flex items-center justify-center gap-1">
+          {tabs.map((tab) => (
+            <MatchRoute key={tab.title} {...tab.linkOptions}>
+              {(match) => (
+                <Button variant={match ? 'secondary' : 'ghost'} render={<Link {...tab.linkOptions} />}>
                   {tab.title}
-                </Tabs.Trigger>
-              ))}
-            </Tabs.List>
-          </Tabs.Root>
+                </Button>
+              )}
+            </MatchRoute>
+          ))}
+        </div>
+        <div className="flex items-center justify-end gap-1">
+          <Button
+            variant="ghost"
+            aria-label="Preview"
+            render={<Link from={Route.fullPath} to="preview" target="_blank" />}
+          >
+            Preview
+          </Button>
+          <Button
+            variant="ghost"
+            aria-label="Share"
+            render={<Link to="/q/$id" params={{ id: quiz.shortId }} target="_blank" />}
+          >
+            Share
+          </Button>
+          <Button
+            disabled={quiz.published || publishMutation.isPending}
+            variant={quiz.published ? 'ghost' : 'default'}
+            onClick={() => {
+              publishMutation.mutate(undefined, {
+                onSuccess: () => {
+                  queryClient.invalidateQueries(getQuizQueryOptions(params.workspaceId, params.id))
+                },
+              })
+            }}
+          >
+            Publish
+          </Button>
         </div>
       </div>
       <Outlet />

@@ -14,6 +14,7 @@ import { Route as AuthIndexRouteImport } from './routes/auth/index'
 import { Route as AuthCallbackRouteImport } from './routes/auth/callback'
 import { Route as AuthAuthorizeRouteImport } from './routes/auth/authorize'
 import { Route as WorkspaceWorkspaceIdRouteRouteImport } from './routes/workspace/$workspaceId/route'
+import { Route as WorkspaceWorkspaceIdLogicRouteImport } from './routes/workspace/$workspaceId/logic'
 import { Route as quizQIdRouteImport } from './routes/(quiz)/q/$id'
 import { Route as WorkspaceWorkspaceIdDashboardRouteRouteImport } from './routes/workspace/$workspaceId/_dashboard/route'
 import { Route as WorkspaceWorkspaceIdDashboardIndexRouteImport } from './routes/workspace/$workspaceId/_dashboard/index'
@@ -48,6 +49,12 @@ const WorkspaceWorkspaceIdRouteRoute =
     id: '/workspace/$workspaceId',
     path: '/workspace/$workspaceId',
     getParentRoute: () => rootRouteImport,
+  } as any)
+const WorkspaceWorkspaceIdLogicRoute =
+  WorkspaceWorkspaceIdLogicRouteImport.update({
+    id: '/logic',
+    path: '/logic',
+    getParentRoute: () => WorkspaceWorkspaceIdRouteRoute,
   } as any)
 const quizQIdRoute = quizQIdRouteImport.update({
   id: '/(quiz)/q/$id',
@@ -103,6 +110,7 @@ export interface FileRoutesByFullPath {
   '/auth/callback': typeof AuthCallbackRoute
   '/auth': typeof AuthIndexRoute
   '/q/$id': typeof quizQIdRoute
+  '/workspace/$workspaceId/logic': typeof WorkspaceWorkspaceIdLogicRoute
   '/workspace/$workspaceId/': typeof WorkspaceWorkspaceIdDashboardIndexRoute
   '/workspace/$workspaceId/quizzes/$id': typeof WorkspaceWorkspaceIdQuizzesIdQuizRouteRouteWithChildren
   '/workspace/$workspaceId/quizzes/$id/preview': typeof WorkspaceWorkspaceIdQuizzesIdPreviewRoute
@@ -117,6 +125,7 @@ export interface FileRoutesByTo {
   '/auth/callback': typeof AuthCallbackRoute
   '/auth': typeof AuthIndexRoute
   '/q/$id': typeof quizQIdRoute
+  '/workspace/$workspaceId/logic': typeof WorkspaceWorkspaceIdLogicRoute
   '/workspace/$workspaceId/quizzes/$id': typeof WorkspaceWorkspaceIdQuizzesIdQuizRouteRouteWithChildren
   '/workspace/$workspaceId/quizzes/$id/preview': typeof WorkspaceWorkspaceIdQuizzesIdPreviewRoute
   '/workspace/$workspaceId/quizzes/$id/insights': typeof WorkspaceWorkspaceIdQuizzesIdQuizInsightsRoute
@@ -132,6 +141,7 @@ export interface FileRoutesById {
   '/auth/': typeof AuthIndexRoute
   '/workspace/$workspaceId/_dashboard': typeof WorkspaceWorkspaceIdDashboardRouteRouteWithChildren
   '/(quiz)/q/$id': typeof quizQIdRoute
+  '/workspace/$workspaceId/logic': typeof WorkspaceWorkspaceIdLogicRoute
   '/workspace/$workspaceId/_dashboard/': typeof WorkspaceWorkspaceIdDashboardIndexRoute
   '/workspace/$workspaceId/quizzes/$id/_quiz': typeof WorkspaceWorkspaceIdQuizzesIdQuizRouteRouteWithChildren
   '/workspace/$workspaceId/quizzes/$id/preview': typeof WorkspaceWorkspaceIdQuizzesIdPreviewRoute
@@ -148,6 +158,7 @@ export interface FileRouteTypes {
     | '/auth/callback'
     | '/auth'
     | '/q/$id'
+    | '/workspace/$workspaceId/logic'
     | '/workspace/$workspaceId/'
     | '/workspace/$workspaceId/quizzes/$id'
     | '/workspace/$workspaceId/quizzes/$id/preview'
@@ -162,6 +173,7 @@ export interface FileRouteTypes {
     | '/auth/callback'
     | '/auth'
     | '/q/$id'
+    | '/workspace/$workspaceId/logic'
     | '/workspace/$workspaceId/quizzes/$id'
     | '/workspace/$workspaceId/quizzes/$id/preview'
     | '/workspace/$workspaceId/quizzes/$id/insights'
@@ -176,6 +188,7 @@ export interface FileRouteTypes {
     | '/auth/'
     | '/workspace/$workspaceId/_dashboard'
     | '/(quiz)/q/$id'
+    | '/workspace/$workspaceId/logic'
     | '/workspace/$workspaceId/_dashboard/'
     | '/workspace/$workspaceId/quizzes/$id/_quiz'
     | '/workspace/$workspaceId/quizzes/$id/preview'
@@ -229,6 +242,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/workspace/$workspaceId'
       preLoaderRoute: typeof WorkspaceWorkspaceIdRouteRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/workspace/$workspaceId/logic': {
+      id: '/workspace/$workspaceId/logic'
+      path: '/logic'
+      fullPath: '/workspace/$workspaceId/logic'
+      preLoaderRoute: typeof WorkspaceWorkspaceIdLogicRouteImport
+      parentRoute: typeof WorkspaceWorkspaceIdRouteRoute
     }
     '/(quiz)/q/$id': {
       id: '/(quiz)/q/$id'
@@ -327,6 +347,7 @@ const WorkspaceWorkspaceIdQuizzesIdQuizRouteRouteWithChildren =
 
 interface WorkspaceWorkspaceIdRouteRouteChildren {
   WorkspaceWorkspaceIdDashboardRouteRoute: typeof WorkspaceWorkspaceIdDashboardRouteRouteWithChildren
+  WorkspaceWorkspaceIdLogicRoute: typeof WorkspaceWorkspaceIdLogicRoute
   WorkspaceWorkspaceIdQuizzesIdQuizRouteRoute: typeof WorkspaceWorkspaceIdQuizzesIdQuizRouteRouteWithChildren
   WorkspaceWorkspaceIdQuizzesIdPreviewRoute: typeof WorkspaceWorkspaceIdQuizzesIdPreviewRoute
 }
@@ -335,6 +356,7 @@ const WorkspaceWorkspaceIdRouteRouteChildren: WorkspaceWorkspaceIdRouteRouteChil
   {
     WorkspaceWorkspaceIdDashboardRouteRoute:
       WorkspaceWorkspaceIdDashboardRouteRouteWithChildren,
+    WorkspaceWorkspaceIdLogicRoute: WorkspaceWorkspaceIdLogicRoute,
     WorkspaceWorkspaceIdQuizzesIdQuizRouteRoute:
       WorkspaceWorkspaceIdQuizzesIdQuizRouteRouteWithChildren,
     WorkspaceWorkspaceIdQuizzesIdPreviewRoute:

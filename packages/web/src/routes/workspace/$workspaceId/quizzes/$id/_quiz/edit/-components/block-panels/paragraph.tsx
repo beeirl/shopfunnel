@@ -1,8 +1,13 @@
 import { getBlockInfo } from '@/components/block'
+import { Button } from '@/components/ui/button'
 import { SegmentedControl } from '@/components/ui/segmented-control'
 import { Textarea } from '@/components/ui/textarea'
 import type { ParagraphBlock as ParagraphBlockType } from '@shopfunnel/core/quiz/types'
-import { IconAlignCenter as AlignCenterIcon, IconAlignLeft as AlignLeftIcon } from '@tabler/icons-react'
+import {
+  IconAlignCenter as AlignCenterIcon,
+  IconAlignLeft as AlignLeftIcon,
+  IconTrash as TrashIcon,
+} from '@tabler/icons-react'
 import { Field } from '../field'
 import { Pane } from '../pane'
 import { Panel } from '../panel'
@@ -10,9 +15,11 @@ import { Panel } from '../panel'
 export function ParagraphBlockPanel({
   block,
   onBlockUpdate,
+  onBlockRemove,
 }: {
   block: ParagraphBlockType
   onBlockUpdate: (block: Partial<ParagraphBlockType>) => void
+  onBlockRemove: () => void
 }) {
   const blockInfo = getBlockInfo(block.type)
   return (
@@ -20,6 +27,9 @@ export function ParagraphBlockPanel({
       <Pane.Root>
         <Pane.Header>
           <Pane.Title>{blockInfo?.name}</Pane.Title>
+          <Button className="-mr-2" size="icon" variant="ghost" onClick={onBlockRemove}>
+            <TrashIcon />
+          </Button>
         </Pane.Header>
         <Pane.Content>
           <Pane.Group>

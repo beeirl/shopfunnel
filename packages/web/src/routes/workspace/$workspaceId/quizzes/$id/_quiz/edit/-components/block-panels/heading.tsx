@@ -1,8 +1,13 @@
 import { getBlockInfo } from '@/components/block'
+import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { SegmentedControl } from '@/components/ui/segmented-control'
 import type { HeadingBlock as HeadingBlockType } from '@shopfunnel/core/quiz/types'
-import { IconAlignCenter as AlignCenterIcon, IconAlignLeft as AlignLeftIcon } from '@tabler/icons-react'
+import {
+  IconAlignCenter as AlignCenterIcon,
+  IconAlignLeft as AlignLeftIcon,
+  IconTrash as TrashIcon,
+} from '@tabler/icons-react'
 import { Field } from '../field'
 import { Pane } from '../pane'
 import { Panel } from '../panel'
@@ -10,9 +15,11 @@ import { Panel } from '../panel'
 export function HeadingBlockPanel({
   block,
   onBlockUpdate,
+  onBlockRemove,
 }: {
   block: HeadingBlockType
   onBlockUpdate: (block: Partial<HeadingBlockType>) => void
+  onBlockRemove: () => void
 }) {
   const blockInfo = getBlockInfo(block.type)
   return (
@@ -20,6 +27,9 @@ export function HeadingBlockPanel({
       <Pane.Root>
         <Pane.Header>
           <Pane.Title>{blockInfo?.name}</Pane.Title>
+          <Button className="-mr-2" size="icon" variant="ghost" onClick={onBlockRemove}>
+            <TrashIcon />
+          </Button>
         </Pane.Header>
         <Pane.Content>
           <Pane.Group>

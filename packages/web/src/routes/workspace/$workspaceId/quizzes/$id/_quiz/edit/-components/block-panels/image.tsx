@@ -1,7 +1,8 @@
 import { getBlockInfo } from '@/components/block'
+import { Button } from '@/components/ui/button'
 import { InputGroup } from '@/components/ui/input-group'
 import type { ImageBlock as ImageBlockType } from '@shopfunnel/core/quiz/types'
-import { IconPhoto as PhotoIcon, IconX as XIcon } from '@tabler/icons-react'
+import { IconPhoto as PhotoIcon, IconTrash as TrashIcon, IconX as XIcon } from '@tabler/icons-react'
 import * as React from 'react'
 import { Pane } from '../pane'
 import { Panel } from '../panel'
@@ -10,10 +11,12 @@ export function ImageBlockPanel({
   block,
   onBlockUpdate,
   onImageUpload,
+  onBlockRemove,
 }: {
   block: ImageBlockType
   onBlockUpdate: (block: Partial<ImageBlockType>) => void
   onImageUpload: (file: File) => Promise<string>
+  onBlockRemove: () => void
 }) {
   const blockInfo = getBlockInfo(block.type)
   const inputRef = React.useRef<HTMLInputElement>(null)
@@ -48,6 +51,9 @@ export function ImageBlockPanel({
       <Pane.Root>
         <Pane.Header>
           <Pane.Title>{blockInfo?.name}</Pane.Title>
+          <Button className="-mr-2" size="icon" variant="ghost" onClick={onBlockRemove}>
+            <TrashIcon />
+          </Button>
         </Pane.Header>
         <Pane.Content>
           <Pane.Group>

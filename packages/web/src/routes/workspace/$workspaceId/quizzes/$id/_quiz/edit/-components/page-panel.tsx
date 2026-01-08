@@ -1,10 +1,20 @@
 import { shouldAutoAdvance } from '@/components/quiz'
+import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import type { Page } from '@shopfunnel/core/quiz/types'
+import { IconTrash as TrashIcon } from '@tabler/icons-react'
 import { Pane } from './pane'
 import { Panel } from './panel'
 
-export function PagePanel({ page, onPageUpdate }: { page: Page; onPageUpdate: (page: Partial<Page>) => void }) {
+export function PagePanel({
+  page,
+  onPageUpdate,
+  onPageRemove,
+}: {
+  page: Page
+  onPageUpdate: (page: Partial<Page>) => void
+  onPageRemove: () => void
+}) {
   const showButtonText = !shouldAutoAdvance(page.blocks)
 
   return (
@@ -12,6 +22,9 @@ export function PagePanel({ page, onPageUpdate }: { page: Page; onPageUpdate: (p
       <Pane.Root>
         <Pane.Header>
           <Pane.Title>Page</Pane.Title>
+          <Button className="-mr-2" size="icon" variant="ghost" onClick={onPageRemove}>
+            <TrashIcon />
+          </Button>
         </Pane.Header>
         <Pane.Content>
           <Pane.Group>

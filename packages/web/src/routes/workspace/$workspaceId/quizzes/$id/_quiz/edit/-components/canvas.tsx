@@ -4,55 +4,27 @@ import { getThemeCssVars, shouldAutoAdvance } from '@/components/quiz'
 import { Button } from '@/components/ui/button'
 import { ButtonGroup } from '@/components/ui/button-group'
 import { Empty } from '@/components/ui/empty'
-import { Menu } from '@/components/ui/menu'
 import { cn } from '@/lib/utils'
+import * as dagre from '@dagrejs/dagre'
+import type { Block as BlockType, Page as PageType, Rule, Theme } from '@shopfunnel/core/quiz/types'
 import {
-  closestCenter,
-  defaultDropAnimationSideEffects,
-  DndContext,
-  DragOverlay,
-  PointerSensor,
-  useSensor,
-  useSensors,
-  type DragEndEvent,
-  type DragStartEvent,
-  type DropAnimation,
-} from '@dnd-kit/core'
-import {
-  arrayMove,
-  horizontalListSortingStrategy,
-  SortableContext,
-  useSortable,
-  verticalListSortingStrategy,
-} from '@dnd-kit/sortable'
-import { CSS } from '@dnd-kit/utilities'
-import type { Block as BlockType, Page as PageType, Theme } from '@shopfunnel/core/quiz/types'
-import {
-  IconChevronDown as ChevronDownIcon,
-  IconFile as FileIcon,
-  IconLayoutGrid as LayoutGridIcon,
-  IconListLetters as ListLettersIcon,
-  IconLoader as LoaderIcon,
   IconMaximize as MaximizeIcon,
-  IconMenu as MenuIcon,
   IconPalette as PaletteIcon,
-  IconPlus as PlusIcon,
   IconZoomIn as ZoomInIcon,
   IconZoomOut as ZoomOutIcon,
 } from '@tabler/icons-react'
 import {
   Background,
+  Handle,
+  Position,
   ReactFlow,
   Panel as ReactFlowPanel,
   ReactFlowProvider,
   useReactFlow,
-  useViewport,
+  type Edge,
   type Node,
-  type NodeProps,
 } from '@xyflow/react'
 import * as React from 'react'
-import { createPortal } from 'react-dom'
-import { ulid } from 'ulid'
 
 import '@xyflow/react/dist/style.css'
 
@@ -62,467 +34,46 @@ import '@xyflow/react/dist/style.css'
 
 const PAGE_WIDTH = 393
 const PAGE_HEIGHT = 852
-const ZOOM_MIN = 0.25
-const ZOOM_MAX = 2
-
-const DROP_ANIMATION: DropAnimation = {
-  duration: 200,
-  easing: 'ease',
-  sideEffects: defaultDropAnimationSideEffects({
-    styles: {
-      active: { opacity: '0' },
-    },
-  }),
-}
-
-const BLOCKS: Record<BlockType['type'], () => BlockType> = {
-  text_input: () => ({
-    id: ulid(),
-    type: 'text_input',
-    properties: {
-      name: 'Text Input',
-      placeholder: '',
-    },
-    validations: {
-      required: false,
-    },
-  }),
-  multiple_choice: () => ({
-    id: ulid(),
-    type: 'multiple_choice',
-    properties: {
-      name: 'Multiple Choice',
-      options: [{ id: ulid(), label: 'Choice 1' }],
-    },
-    validations: {
-      required: false,
-    },
-  }),
-  picture_choice: () => ({
-    id: ulid(),
-    type: 'picture_choice',
-    properties: {
-      name: 'Picture Choice',
-      options: [
-        { id: ulid(), label: 'Choice 1' },
-        { id: ulid(), label: 'Choice 2' },
-      ],
-    },
-    validations: {
-      required: false,
-    },
-  }),
-  dropdown: () => ({
-    id: ulid(),
-    type: 'dropdown',
-    properties: {
-      name: 'Dropdown',
-      options: [{ id: ulid(), label: 'Option 1' }],
-    },
-    validations: {
-      required: false,
-    },
-  }),
-  heading: () => ({
-    id: ulid(),
-    type: 'heading',
-    properties: {
-      text: 'Heading',
-      alignment: 'left',
-    },
-  }),
-  paragraph: () => ({
-    id: ulid(),
-    type: 'paragraph',
-    properties: {
-      text: 'Paragraph',
-      alignment: 'left',
-    },
-  }),
-  gauge: () => ({
-    id: ulid(),
-    type: 'gauge',
-    properties: {
-      value: 50,
-      minValue: 0,
-      maxValue: 100,
-    },
-  }),
-  list: () => ({
-    id: ulid(),
-    type: 'list',
-    properties: {
-      orientation: 'vertical',
-      textPlacement: 'right',
-      size: 'sm',
-      items: [{ id: ulid(), title: 'Item', media: { type: 'emoji', value: '✓' } }],
-    },
-  }),
-  image: () => ({
-    id: ulid(),
-    type: 'image',
-    properties: {},
-  }),
-  loader: () => ({
-    id: ulid(),
-    type: 'loader',
-    properties: {
-      duration: 3000,
-    },
-  }),
-  spacer: () => ({
-    id: ulid(),
-    type: 'spacer',
-    properties: {
-      size: 'md',
-    },
-  }),
-}
-
-const PAGE_TEMPLATES = [
-  { id: 'blank', icon: FileIcon, name: 'Blank', blocks: [] as string[] },
-  { id: 'text_input', icon: MenuIcon, name: 'Text Input', blocks: ['heading', 'text_input'] },
-  { id: 'multiple_choice', icon: ListLettersIcon, name: 'Multiple Choice', blocks: ['heading', 'multiple_choice'] },
-  { id: 'picture_choice', icon: LayoutGridIcon, name: 'Picture Choice', blocks: ['heading', 'picture_choice'] },
-  { id: 'dropdown', icon: ChevronDownIcon, name: 'Dropdown', blocks: ['heading', 'dropdown'] },
-  { id: 'loader', icon: LoaderIcon, name: 'Loader', blocks: ['loader'] },
-]
+const COLUMN_GAP = 100
+const ROW_GAP = 100
+const ZOOM_MIN = 0.1
+const ZOOM_MAX = 1.5
 
 // =============================================================================
-// Contexts
+// SelectableBlock
 // =============================================================================
 
-type CanvasMode = 'select' | 'pan' | 'zoom'
-
-interface CanvasContextValue {
-  theme: Theme
-  mode: CanvasMode
-  draggingPage: PageType | null
-  draggingBlock: BlockType | null
-  dropping: boolean
-  selectedPageId: string | null
-  selectedBlockId: string | null
-  onSelectPage: (pageId: string | null) => void
-  onSelectBlock: (blockId: string | null) => void
-  onDragStart: (event: DragStartEvent) => void
-  onDragEnd: (event: DragEndEvent) => void
-  onPageAdd: (page: PageType, index: number) => void
-  onBlockAdd: (block: BlockType, pageId?: string, index?: number) => void
-  onPaneClick: () => void
-  onThemeButtonClick: () => void
-}
-
-const CanvasContext = React.createContext<CanvasContextValue | null>(null)
-
-function useCanvas() {
-  const context = React.use(CanvasContext)
-  if (!context) {
-    throw new Error('useCanvas must be used within Canvas')
-  }
-  return context
-}
-
-interface CanvasPageContextValue {
-  page: PageType
-  pageIndex: number
-  pageCount: number
-}
-
-const CanvasPageContext = React.createContext<CanvasPageContextValue | null>(null)
-
-function useCanvasPage() {
-  return React.use(CanvasPageContext)
-}
-
-// =============================================================================
-// AddBlockMenu
-// =============================================================================
-
-const AddBlockMenuContext = React.createContext<{
-  onBlockAdd: (block: BlockType) => void
-} | null>(null)
-
-function useAddBlockMenuContext() {
-  const context = React.use(AddBlockMenuContext)
-  if (!context) {
-    throw new Error('AddBlockMenu components must be used within AddBlockMenu.Root')
-  }
-  return context
-}
-
-function AddBlockMenuRoot({
-  children,
-  onBlockAdd,
-  onOpenChange,
-}: {
-  children: React.ReactNode
-  onBlockAdd: (block: BlockType) => void
-  onOpenChange?: (open: boolean) => void
-}) {
-  return (
-    <AddBlockMenuContext value={{ onBlockAdd }}>
-      <Menu.Root onOpenChange={onOpenChange}>{children}</Menu.Root>
-    </AddBlockMenuContext>
-  )
-}
-
-function AddBlockMenuContent() {
-  const { onBlockAdd } = useAddBlockMenuContext()
-  const canvasPageContext = useCanvasPage()
-  const existingBlocks = canvasPageContext?.page.blocks ?? []
-
-  const hasInputOrLoader = existingBlocks.some((block) =>
-    ['text_input', 'multiple_choice', 'picture_choice', 'dropdown', 'loader'].includes(block.type),
-  )
-
-  const displayBlocks: BlockType['type'][] = ['heading', 'paragraph', 'gauge', 'list', 'image', 'spacer']
-  const inputBlocks: BlockType['type'][] = ['text_input', 'multiple_choice', 'picture_choice', 'dropdown', 'loader']
-
-  const availableBlocks: BlockType['type'][] = hasInputOrLoader ? displayBlocks : [...inputBlocks, ...displayBlocks]
-
-  const handleBlockAdd = (type: BlockType['type']) => {
-    onBlockAdd(BLOCKS[type]())
-  }
-
-  return (
-    <Menu.Content side="bottom" align="center">
-      <Menu.Group>
-        <Menu.Label>Blocks</Menu.Label>
-        {availableBlocks.map((type) => {
-          const blockInfo = getBlockInfo(type)
-          return (
-            <Menu.Item key={type} onClick={() => handleBlockAdd(type)}>
-              <blockInfo.icon className="size-4 text-muted-foreground" />
-              {blockInfo.name}
-            </Menu.Item>
-          )
-        })}
-      </Menu.Group>
-    </Menu.Content>
-  )
-}
-
-const AddBlockMenu = {
-  Root: AddBlockMenuRoot,
-  Trigger: Menu.Trigger,
-  Content: AddBlockMenuContent,
-}
-
-// =============================================================================
-// AddPageMenu
-// =============================================================================
-
-const AddPageMenuContext = React.createContext<{
-  onPageAdd: (page: PageType) => void
-  side: 'left' | 'right'
-} | null>(null)
-
-function useAddPageMenuContext() {
-  const context = React.use(AddPageMenuContext)
-  if (!context) {
-    throw new Error('AddPageMenu components must be used within AddPageMenu.Root')
-  }
-  return context
-}
-
-function AddPageMenuRoot({
-  children,
-  onPageAdd,
-  side,
-  onOpenChange,
-}: {
-  children: React.ReactNode
-  onPageAdd: (page: PageType) => void
-  side: 'left' | 'right'
-  onOpenChange?: (open: boolean) => void
-}) {
-  return (
-    <AddPageMenuContext value={{ onPageAdd, side }}>
-      <Menu.Root onOpenChange={onOpenChange}>{children}</Menu.Root>
-    </AddPageMenuContext>
-  )
-}
-
-function AddPageMenuContent() {
-  const { onPageAdd, side } = useAddPageMenuContext()
-  const canvasPageContext = useCanvasPage()
-  const pageCount = canvasPageContext?.pageCount ?? 0
-
-  const handlePageAdd = (templateId: string) => {
-    const template = PAGE_TEMPLATES.find((t) => t.id === templateId)!
-    const blocks: BlockType[] = template.blocks.map((type) => BLOCKS[type]())
-    const page: PageType = {
-      id: ulid(),
-      name: `Page ${pageCount + 1}`,
-      blocks,
-      properties: { buttonText: 'Continue' },
-    }
-    onPageAdd(page)
-  }
-
-  return (
-    <Menu.Content side={side} align="center">
-      <Menu.Group>
-        <Menu.Label>Pages</Menu.Label>
-        {PAGE_TEMPLATES.map((template) => (
-          <Menu.Item key={template.id} onClick={() => handlePageAdd(template.id)}>
-            <template.icon className="size-4 text-muted-foreground" />
-            {template.name}
-          </Menu.Item>
-        ))}
-      </Menu.Group>
-    </Menu.Content>
-  )
-}
-
-const AddPageMenu = {
-  Root: AddPageMenuRoot,
-  Trigger: Menu.Trigger,
-  Content: AddPageMenuContent,
-}
-
-// =============================================================================
-// CanvasBlock
-// =============================================================================
-
-function CanvasBlock({
-  block,
-  index,
-  static: isStatic,
-  dragging,
-}: {
+interface SelectableBlockProps {
   block: BlockType
   index: number
-  static?: boolean
-  dragging?: boolean
-}) {
-  const { mode, dropping, selectedBlockId, onSelectBlock, onBlockAdd } = useCanvas()
-  const canvasPageContext = useCanvasPage()
-  const { zoom } = useViewport()
+  selected: boolean
+  onSelect: () => void
+}
 
-  const [addMenuOpen, setAddMenuOpen] = React.useState(false)
-
+function SelectableBlock({ block, index, selected, onSelect }: SelectableBlockProps) {
   const blockInfo = getBlockInfo(block.type)
-  const selected = selectedBlockId === block.id
-
-  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
-    id: block.id,
-    data: { type: 'block' },
-    disabled: isStatic,
-  })
-
-  const style: React.CSSProperties = isDragging
-    ? { opacity: 0, pointerEvents: 'none' }
-    : isStatic
-      ? {}
-      : {
-          transform: dropping
-            ? undefined
-            : CSS.Transform.toString(
-                transform
-                  ? {
-                      ...transform,
-                      x: transform.x / zoom,
-                      y: transform.y / zoom,
-                    }
-                  : null,
-              ),
-          transition: dropping ? 'none' : transition,
-          pointerEvents: mode === 'select' ? 'all' : 'none',
-          touchAction: 'none',
-        }
 
   const handleClick = (e: React.MouseEvent) => {
     e.stopPropagation()
-    onSelectBlock(block.id)
+    onSelect()
   }
 
-  const handleAddMenuOpenChange = (open: boolean) => {
-    setAddMenuOpen(open)
-    if (open) {
-      onSelectBlock(null)
-    }
-  }
-
-  if (isStatic) {
-    return (
-      <div className={cn('relative w-full select-none', dragging && 'shadow-lg ring-2 ring-primary')}>
+  return (
+    <div className="group/block relative" data-slot="block" onClick={handleClick}>
+      <div className={cn('relative ring-primary', selected && 'ring-2', !selected && 'group-hover/block:ring-2')}>
+        {/* Block label */}
         <div
           className={cn(
             'absolute bottom-full left-0 z-10 mb-1 text-xs font-medium text-primary',
-            selected || addMenuOpen ? 'block' : 'hidden group-hover/canvas-block:block',
+            selected ? 'block' : 'hidden group-hover/block:block',
           )}
         >
           {'name' in block.properties && block.properties.name ? block.properties.name : blockInfo.name}
         </div>
-        <BlockComponent block={block} index={index} static />
-      </div>
-    )
-  }
 
-  return (
-    <div
-      ref={setNodeRef}
-      style={style}
-      className="group/canvas-block nopan nodrag relative"
-      data-slot="canvas-block"
-      onClick={handleClick}
-      {...attributes}
-      {...listeners}
-    >
-      <div
-        className={cn(
-          'relative ring-primary',
-          (selected || addMenuOpen) && 'ring-2',
-          !selected && !addMenuOpen && 'group-hover/canvas-block:ring-2',
-        )}
-      >
+        {/* Block content */}
         <div className="relative w-full select-none">
-          <div
-            className={cn(
-              'absolute bottom-full left-0 z-10 mb-1 text-xs font-medium text-primary',
-              selected || addMenuOpen ? 'block' : 'hidden group-hover/canvas-block:block',
-            )}
-          >
-            {'name' in block.properties && block.properties.name ? block.properties.name : blockInfo.name}
-          </div>
           <BlockComponent block={block} index={index} static />
-        </div>
-        <div
-          className="pointer-events-none absolute top-0 left-1/2 z-10 -translate-x-1/2 -translate-y-1/2 scale-0 opacity-0 transition-[opacity,transform] group-hover/canvas-block:pointer-events-auto group-hover/canvas-block:scale-100 group-hover/canvas-block:opacity-100 has-data-popup-open:pointer-events-auto has-data-popup-open:scale-100 has-data-popup-open:opacity-100"
-          onClick={(e) => e.stopPropagation()}
-        >
-          <AddBlockMenu.Root
-            onBlockAdd={(block) => onBlockAdd(block, canvasPageContext!.page.id, index)}
-            onOpenChange={handleAddMenuOpenChange}
-          >
-            <AddBlockMenu.Trigger
-              render={
-                <Button className="cursor-crosshair" size="icon-sm">
-                  <PlusIcon />
-                </Button>
-              }
-            />
-            <AddBlockMenu.Content />
-          </AddBlockMenu.Root>
-        </div>
-        <div
-          className="pointer-events-none absolute bottom-0 left-1/2 z-10 -translate-x-1/2 translate-y-1/2 scale-0 opacity-0 transition-[opacity,transform] group-hover/canvas-block:pointer-events-auto group-hover/canvas-block:scale-100 group-hover/canvas-block:opacity-100 has-data-popup-open:pointer-events-auto has-data-popup-open:scale-100 has-data-popup-open:opacity-100"
-          onClick={(e) => e.stopPropagation()}
-        >
-          <AddBlockMenu.Root
-            onBlockAdd={(block) => onBlockAdd(block, canvasPageContext!.page.id, index + 1)}
-            onOpenChange={handleAddMenuOpenChange}
-          >
-            <AddBlockMenu.Trigger
-              render={
-                <Button className="cursor-crosshair" size="icon-sm">
-                  <PlusIcon />
-                </Button>
-              }
-            />
-            <AddBlockMenu.Content />
-          </AddBlockMenu.Root>
         </div>
       </div>
     </div>
@@ -530,288 +81,247 @@ function CanvasBlock({
 }
 
 // =============================================================================
-// CanvasPage
+// PageNode
 // =============================================================================
 
-function CanvasPage({
-  page,
-  pageIndex,
-  pageCount,
-  static: isStatic,
-}: {
+interface PageNodeData extends Record<string, unknown> {
   page: PageType
+  theme: Theme
   pageIndex: number
-  pageCount: number
-  static?: boolean
-}) {
-  const { mode, draggingPage, dropping, selectedPageId, onSelectPage, onSelectBlock, onBlockAdd, onPageAdd } =
-    useCanvas()
-  const { zoom } = useViewport()
-  const [addMenuOpen, setAddMenuOpen] = React.useState(false)
+  selected: boolean
+  selectedBlockId: string | null
+  onPageSelect: (pageId: string) => void
+  onBlockSelect: (blockId: string) => void
+}
 
-  const pageContextValue = React.useMemo<CanvasPageContextValue>(
-    () => ({ page, pageIndex, pageCount }),
-    [page, pageIndex, pageCount],
-  )
+function PageNode({ data }: { data: PageNodeData }) {
+  const { page, theme, pageIndex, selected, selectedBlockId, onBlockSelect } = data
 
-  const selected = selectedPageId === page.id
-
-  const handleAddMenuOpenChange = (open: boolean) => {
-    setAddMenuOpen(open)
-    if (open) {
-      onSelectPage(null)
-      onSelectBlock(null)
-    }
+  const handleBlockSelect = (blockId: string) => {
+    onBlockSelect(blockId)
   }
 
-  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
-    id: page.id,
-    data: { type: 'page' },
-    disabled: isStatic,
-  })
-
-  const style: React.CSSProperties = isDragging
-    ? { opacity: 0, pointerEvents: 'none' }
-    : isStatic
-      ? {}
-      : {
-          transform: dropping
-            ? undefined
-            : CSS.Transform.toString(
-                transform
-                  ? {
-                      ...transform,
-                      x: transform.x / zoom,
-                      y: transform.y / zoom,
-                    }
-                  : null,
-              ),
-          transition: dropping ? 'none' : transition,
-          pointerEvents: mode === 'select' ? 'all' : 'none',
-          touchAction: 'none',
-        }
-
-  const handleClick = (e: React.MouseEvent) => {
-    e.stopPropagation()
-    onSelectPage(page.id)
-  }
-
-  const blocksStatic = isStatic || draggingPage !== null
-
-  const pageContent = (
-    <div className="flex flex-col gap-2">
+  return (
+    <div className="group/page-node nopan nodrag flex flex-col">
+      {/* Page label */}
       <div
         className={cn(
-          'text-sm font-medium',
-          isStatic
-            ? 'text-muted-foreground'
-            : selected || addMenuOpen
-              ? 'text-primary'
-              : 'text-muted-foreground group-[:hover:not(:has([data-slot=canvas-block]:hover))]/canvas-page:text-primary',
+          'mb-2 text-sm font-medium',
+          selected
+            ? 'text-primary'
+            : 'text-muted-foreground group-[:hover:not(:has([data-slot=block]:hover))]/page-node:text-primary',
         )}
       >
         {page.name || `Page ${pageIndex + 1}`}
       </div>
+
+      {/* Page content container */}
       <div
         className={cn(
-          'relative border border-border ring-primary',
-          !isStatic &&
-            'group-[:hover:not(:has([data-slot=canvas-block]:hover))]/canvas-page:border-primary group-[:hover:not(:has([data-slot=canvas-block]:hover))]/canvas-page:ring',
-          !isStatic && (selected || addMenuOpen) && 'border-primary ring',
+          'nopan nodrag relative border border-border bg-white shadow-sm ring-primary',
+          'group-[:hover:not(:has([data-slot=block]:hover))]/page-node:border-primary',
+          'group-[:hover:not(:has([data-slot=block]:hover))]/page-node:ring',
+          selected && 'border-primary ring',
         )}
+        style={{ width: PAGE_WIDTH, height: PAGE_HEIGHT }}
       >
-        <div
-          className="nowheel no-scrollbar flex flex-col overflow-y-auto bg-(--qz-background)"
-          style={{ width: PAGE_WIDTH, height: PAGE_HEIGHT }}
-        >
+        {/* Scrollable content area */}
+        <div className="nowheel flex h-full flex-col overflow-y-auto" style={getThemeCssVars(theme)}>
           <div className="mx-auto flex w-full max-w-sm flex-1 flex-col px-6 pt-8">
             {page.blocks.length === 0 ? (
               <Empty.Root>
                 <Empty.Header>
                   <Empty.Title>No blocks yet</Empty.Title>
-                  <Empty.Description>Add a block to get started</Empty.Description>
+                  <Empty.Description>Add a block from the left panel</Empty.Description>
                 </Empty.Header>
-                <Empty.Content>
-                  <AddBlockMenu.Root onBlockAdd={(block) => onBlockAdd(block, page.id)}>
-                    <AddBlockMenu.Trigger
-                      render={
-                        <Button>
-                          <PlusIcon />
-                          Add Block
-                        </Button>
-                      }
-                    />
-                    <AddBlockMenu.Content />
-                  </AddBlockMenu.Root>
-                </Empty.Content>
               </Empty.Root>
             ) : (
-              <>
-                {blocksStatic ? (
-                  <div className="flex flex-col">
-                    {page.blocks.map((block, index) => (
-                      <CanvasBlock key={block.id} block={block} index={index} static />
-                    ))}
-                  </div>
-                ) : (
-                  <SortableContext items={page.blocks} strategy={verticalListSortingStrategy}>
-                    <div className="flex flex-col">
-                      {page.blocks.map((block, index) => (
-                        <CanvasBlock key={block.id} block={block} index={index} />
-                      ))}
-                    </div>
-                  </SortableContext>
-                )}
-                {!shouldAutoAdvance(page.blocks) && (
-                  <div className="sticky bottom-0 mt-auto w-full pt-4 pb-5">
-                    <NextButton static>{page.properties?.buttonText || 'Next'}</NextButton>
-                  </div>
-                )}
-              </>
-            )}
-          </div>
-        </div>
-      </div>
-    </div>
-  )
-
-  if (isStatic) {
-    return <CanvasPageContext.Provider value={pageContextValue}>{pageContent}</CanvasPageContext.Provider>
-  }
-
-  return (
-    <CanvasPageContext.Provider value={pageContextValue}>
-      <div
-        ref={setNodeRef}
-        style={style}
-        className="group/canvas-page nopan nodrag relative"
-        data-slot="canvas-page"
-        {...attributes}
-        {...listeners}
-        onClick={handleClick}
-      >
-        {pageContent}
-        <div
-          className="pointer-events-none absolute top-1/2 left-0 z-10 -translate-x-1/2 -translate-y-1/2 scale-0 opacity-0 transition-[opacity,transform] group-[:hover:not(:has([data-slot=canvas-block]:hover))]/canvas-page:pointer-events-auto group-[:hover:not(:has([data-slot=canvas-block]:hover))]/canvas-page:scale-100 group-[:hover:not(:has([data-slot=canvas-block]:hover))]/canvas-page:opacity-100 has-data-popup-open:pointer-events-auto has-data-popup-open:scale-100 has-data-popup-open:opacity-100"
-          onClick={(e) => e.stopPropagation()}
-        >
-          <AddPageMenu.Root
-            onPageAdd={(page) => onPageAdd(page, pageIndex)}
-            side="left"
-            onOpenChange={handleAddMenuOpenChange}
-          >
-            <AddPageMenu.Trigger
-              render={
-                <Button className="cursor-crosshair" size="icon">
-                  <PlusIcon />
-                </Button>
-              }
-            />
-            <AddPageMenu.Content />
-          </AddPageMenu.Root>
-        </div>
-        <div
-          className="pointer-events-none absolute top-1/2 right-0 z-10 translate-x-1/2 -translate-y-1/2 scale-0 opacity-0 transition-[opacity,transform] group-[:hover:not(:has([data-slot=canvas-block]:hover))]/canvas-page:pointer-events-auto group-[:hover:not(:has([data-slot=canvas-block]:hover))]/canvas-page:scale-100 group-[:hover:not(:has([data-slot=canvas-block]:hover))]/canvas-page:opacity-100 has-data-popup-open:pointer-events-auto has-data-popup-open:scale-100 has-data-popup-open:opacity-100"
-          onClick={(e) => e.stopPropagation()}
-        >
-          <AddPageMenu.Root
-            onPageAdd={(page) => onPageAdd(page, pageIndex + 1)}
-            side="right"
-            onOpenChange={handleAddMenuOpenChange}
-          >
-            <AddPageMenu.Trigger
-              render={
-                <Button className="cursor-crosshair" size="icon">
-                  <PlusIcon />
-                </Button>
-              }
-            />
-            <AddPageMenu.Content />
-          </AddPageMenu.Root>
-        </div>
-      </div>
-    </CanvasPageContext.Provider>
-  )
-}
-
-// =============================================================================
-// Canvas Components
-// =============================================================================
-
-type CanvasNodeData = {
-  pages: PageType[]
-}
-
-type CanvasNode = Node<CanvasNodeData, 'canvasNode'>
-
-function CanvasNodeComponent({ data: { pages } }: NodeProps<CanvasNode>) {
-  const context = React.use(CanvasContext)
-  if (!context) throw new Error('CanvasNode must be used within Canvas')
-
-  const { theme, draggingPage, draggingBlock, onDragStart, onDragEnd } = context
-  const { zoom } = useViewport()
-
-  const sensors = useSensors(
-    useSensor(PointerSensor, {
-      activationConstraint: { distance: 8 },
-    }),
-  )
-
-  return (
-    <div style={getThemeCssVars(theme)}>
-      <DndContext sensors={sensors} collisionDetection={closestCenter} onDragStart={onDragStart} onDragEnd={onDragEnd}>
-        <SortableContext items={pages} strategy={horizontalListSortingStrategy}>
-          <div className="flex items-start gap-6">
-            {pages.map((page, i) => (
-              <CanvasPage key={page.id} page={page} pageIndex={i} pageCount={pages.length} />
-            ))}
-          </div>
-        </SortableContext>
-        {createPortal(
-          <DragOverlay dropAnimation={DROP_ANIMATION}>
-            {(draggingPage || draggingBlock) && (
-              <div style={getThemeCssVars(theme)}>
-                {draggingPage ? (
-                  <div style={{ transform: `scale(${zoom})`, transformOrigin: 'top left', width: 'fit-content' }}>
-                    <CanvasPage
-                      page={draggingPage}
-                      pageIndex={pages.findIndex((p) => p.id === draggingPage.id)}
-                      pageCount={pages.length}
-                      static
-                    />
-                  </div>
-                ) : draggingBlock ? (
-                  <div style={{ transform: `scale(${zoom})`, transformOrigin: 'top left', width: PAGE_WIDTH - 48 }}>
-                    <CanvasBlock block={draggingBlock} index={0} static dragging />
-                  </div>
-                ) : null}
+              <div className="flex flex-col">
+                {page.blocks.map((block, index) => (
+                  <SelectableBlock
+                    key={block.id}
+                    block={block}
+                    index={index}
+                    selected={selectedBlockId === block.id}
+                    onSelect={() => handleBlockSelect(block.id)}
+                  />
+                ))}
               </div>
             )}
-          </DragOverlay>,
-          document.body,
-        )}
-      </DndContext>
+
+            {/* Next button */}
+            {page.blocks.length > 0 && !shouldAutoAdvance(page.blocks) && (
+              <div className="sticky bottom-0 mt-auto w-full pt-4 pb-5">
+                <NextButton static>{page.properties?.buttonText || 'Next'}</NextButton>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Handles for flow edges */}
+        <Handle type="target" position={Position.Left} className="!h-3 !w-3 !bg-border" />
+        <Handle type="source" position={Position.Right} className="!h-3 !w-3 !bg-border" />
+      </div>
     </div>
   )
 }
 
-const canvasNodeTypes = {
-  canvasNode: CanvasNodeComponent,
+// =============================================================================
+// Node Types
+// =============================================================================
+
+const nodeTypes = {
+  page: PageNode,
 }
 
-function CanvasInner({ nodes }: { nodes: CanvasNode[] }) {
-  const context = React.use(CanvasContext)
-  if (!context) throw new Error('CanvasInner must be used within Canvas')
+// =============================================================================
+// Layout
+// =============================================================================
 
-  const { onPaneClick, onThemeButtonClick, onPageAdd } = context
+function getLayoutedElements(
+  nodes: Node<PageNodeData>[],
+  edges: Edge[],
+): { nodes: Node<PageNodeData>[]; edges: Edge[] } {
+  const g = new dagre.graphlib.Graph().setDefaultEdgeLabel(() => ({}))
+
+  g.setGraph({
+    rankdir: 'LR',
+    nodesep: ROW_GAP,
+    ranksep: COLUMN_GAP,
+    ranker: 'longest-path',
+  })
+
+  const labelHeight = 28
+  nodes.forEach((node) => {
+    g.setNode(node.id, { width: PAGE_WIDTH, height: PAGE_HEIGHT + labelHeight })
+  })
+
+  edges.forEach((edge) => {
+    g.setEdge(edge.source, edge.target)
+  })
+
+  dagre.layout(g)
+
+  const layoutedNodes = nodes.map((node) => {
+    const nodeWithPosition = g.node(node.id)
+    return {
+      ...node,
+      position: {
+        x: nodeWithPosition.x - PAGE_WIDTH / 2,
+        y: nodeWithPosition.y - (PAGE_HEIGHT + labelHeight) / 2,
+      },
+    }
+  })
+
+  return { nodes: layoutedNodes, edges }
+}
+
+function createEdges(pages: PageType[], rules: Rule[]): Edge[] {
+  const edgeSet = new Set<string>()
+  const edges: Edge[] = []
+
+  const pagesWithJumpRules = new Set<string>()
+  rules.forEach((rule) => {
+    const hasJumpAction = rule.actions.some((action) => action.type === 'jump' && action.details.to?.value)
+    if (hasJumpAction) {
+      pagesWithJumpRules.add(rule.pageId)
+    }
+  })
+
+  for (let i = 0; i < pages.length - 1; i++) {
+    const sourcePage = pages[i]
+    const targetPage = pages[i + 1]
+    if (!sourcePage || !targetPage) continue
+
+    const hasJumpRules = pagesWithJumpRules.has(sourcePage.id)
+    const hasRedirect = !!sourcePage.properties?.redirectUrl
+
+    if (hasJumpRules || hasRedirect) continue
+
+    const sourceId = sourcePage.id
+    const targetId = targetPage.id
+    const edgeId = `seq-${sourceId}-${targetId}`
+
+    if (!edgeSet.has(edgeId)) {
+      edgeSet.add(edgeId)
+      edges.push({
+        id: edgeId,
+        source: sourceId,
+        target: targetId,
+        type: 'bezier',
+      })
+    }
+  }
+
+  rules.forEach((rule) => {
+    rule.actions.forEach((action) => {
+      if (action.type === 'jump' && action.details.to?.value) {
+        const sourceId = rule.pageId
+        const targetId = action.details.to.value
+        const edgeId = `jump-${sourceId}-${targetId}`
+
+        if (!edgeSet.has(edgeId)) {
+          edgeSet.add(edgeId)
+          edges.push({
+            id: edgeId,
+            source: sourceId,
+            target: targetId,
+            type: 'bezier',
+          })
+        }
+      }
+    })
+  })
+
+  return edges
+}
+
+// =============================================================================
+// CanvasInner
+// =============================================================================
+
+interface CanvasInnerProps {
+  nodes: Node<PageNodeData>[]
+  edges: Edge[]
+  pages: PageType[]
+  selectedPageId: string | null
+  selectedBlockId: string | null
+  selectionSource: 'panel' | 'canvas' | null
+  onPaneClick: () => void
+  onNodeClick: (event: React.MouseEvent, node: Node<PageNodeData>) => void
+  onThemeButtonClick: () => void
+}
+
+function CanvasInner({
+  nodes,
+  edges,
+  pages,
+  selectedPageId,
+  selectedBlockId,
+  selectionSource,
+  onPaneClick,
+  onNodeClick,
+  onThemeButtonClick,
+}: CanvasInnerProps) {
   const { zoomIn, zoomOut, fitView } = useReactFlow()
 
-  const pages = nodes[0]?.data.pages ?? []
+  // Derive the page ID to focus on
+  const focusPageId =
+    selectedPageId ||
+    (selectedBlockId ? pages.find((page) => page.blocks.some((block) => block.id === selectedBlockId))?.id : null)
+
+  // Focus viewport on selected page (only from panel selection)
+  React.useEffect(() => {
+    if (selectionSource === 'panel' && focusPageId) {
+      fitView({ nodes: [{ id: focusPageId }], maxZoom: 1 })
+    }
+  }, [selectedPageId, selectedBlockId, selectionSource, fitView, focusPageId])
 
   return (
     <ReactFlow
       nodes={nodes}
-      nodeTypes={canvasNodeTypes}
+      edges={edges}
+      nodeTypes={nodeTypes}
       minZoom={ZOOM_MIN}
       maxZoom={ZOOM_MAX}
       fitView
@@ -821,39 +331,24 @@ function CanvasInner({ nodes }: { nodes: CanvasNode[] }) {
       nodesDraggable={false}
       nodesConnectable={false}
       elementsSelectable={false}
-      panOnDrag={[1, 2]}
+      panOnDrag={[0, 1, 2]}
       onPaneClick={onPaneClick}
-      proOptions={{
-        hideAttribution: true,
-      }}
+      onNodeClick={onNodeClick}
+      proOptions={{ hideAttribution: true }}
     >
       <Background />
       <ReactFlowPanel position="top-left">
-        <div className="flex gap-2">
-          <ButtonGroup.Root orientation="horizontal">
-            <Button variant="outline" size="icon" onClick={() => zoomIn()}>
-              <ZoomInIcon />
-            </Button>
-            <Button variant="outline" size="icon" onClick={() => zoomOut()}>
-              <ZoomOutIcon />
-            </Button>
-            <Button variant="outline" size="icon" onClick={() => fitView()}>
-              <MaximizeIcon />
-            </Button>
-          </ButtonGroup.Root>
-          <Button
-            variant="outline"
-            onClick={() =>
-              onPageAdd(
-                { id: ulid(), name: `Page ${pages.length + 1}`, blocks: [], properties: { buttonText: 'Continue' } },
-                pages.length,
-              )
-            }
-          >
-            <PlusIcon />
-            Add page
+        <ButtonGroup.Root orientation="horizontal">
+          <Button variant="outline" size="icon" onClick={() => zoomIn()}>
+            <ZoomInIcon />
           </Button>
-        </div>
+          <Button variant="outline" size="icon" onClick={() => zoomOut()}>
+            <ZoomOutIcon />
+          </Button>
+          <Button variant="outline" size="icon" onClick={() => fitView()}>
+            <MaximizeIcon />
+          </Button>
+        </ButtonGroup.Root>
       </ReactFlowPanel>
       <ReactFlowPanel position="top-right">
         <Button variant="outline" onClick={onThemeButtonClick}>
@@ -871,215 +366,97 @@ function CanvasInner({ nodes }: { nodes: CanvasNode[] }) {
 
 export interface CanvasProps {
   pages: PageType[]
+  rules: Rule[]
   theme: Theme
   selectedPageId: string | null
   selectedBlockId: string | null
+  selectionSource: 'panel' | 'canvas' | null
   onPageSelect: (pageId: string | null) => void
   onBlockSelect: (blockId: string | null) => void
   onThemeButtonClick: () => void
-  onPagesReorder: (pages: PageType[]) => void
-  onPageAdd: (page: PageType, index: number) => void
-  onPageDelete: (pageId: string) => void
-  onBlocksReorder: (pageId: string, blocks: BlockType[]) => void
-  onBlockAdd: (block: BlockType, pageId?: string, index?: number) => void
-  onBlockDelete: (blockId: string) => void
 }
 
 export function Canvas({
   pages,
+  rules,
   theme,
   selectedPageId,
   selectedBlockId,
+  selectionSource,
   onPageSelect,
   onBlockSelect,
   onThemeButtonClick,
-  onPagesReorder,
-  onPageAdd,
-  onPageDelete,
-  onBlocksReorder,
-  onBlockAdd,
-  onBlockDelete,
 }: CanvasProps) {
-  const [mode, setMode] = React.useState<CanvasMode>('select')
-  const [draggingId, setDraggingId] = React.useState<string | null>(null)
-  const [dropping, setDropping] = React.useState(false)
+  const handlePaneClick = React.useCallback(() => {
+    onPageSelect(null)
+    onBlockSelect(null)
+  }, [onPageSelect, onBlockSelect])
 
-  React.useEffect(() => {
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.code === 'Space' && !event.repeat) {
-        setMode('pan')
-      }
-      if ((event.code === 'MetaLeft' || event.code === 'MetaRight') && !event.repeat) {
-        setMode('zoom')
-      }
-    }
-
-    const handleKeyUp = (event: KeyboardEvent) => {
-      if (event.code === 'Space' || event.code === 'MetaLeft' || event.code === 'MetaRight') {
-        setMode('select')
-      }
-    }
-
-    const handleBlur = () => {
-      setMode('select')
-    }
-
-    window.addEventListener('keydown', handleKeyDown)
-    window.addEventListener('keyup', handleKeyUp)
-    window.addEventListener('blur', handleBlur)
-
-    return () => {
-      window.removeEventListener('keydown', handleKeyDown)
-      window.removeEventListener('keyup', handleKeyUp)
-      window.removeEventListener('blur', handleBlur)
-    }
-  }, [])
-
-  React.useEffect(() => {
-    const handleKeyDown = (event: KeyboardEvent) => {
-      // Don't handle if we're in an input field
-      if (event.target instanceof HTMLInputElement || event.target instanceof HTMLTextAreaElement) {
-        return
-      }
-
-      if ((event.key === 'Backspace' || event.key === 'Delete') && selectedBlockId) {
-        event.preventDefault()
-        onBlockDelete(selectedBlockId)
-      }
-
-      if ((event.key === 'Backspace' || event.key === 'Delete') && selectedPageId && !selectedBlockId) {
-        event.preventDefault()
-        onPageDelete(selectedPageId)
-      }
-    }
-
-    window.addEventListener('keydown', handleKeyDown)
-    return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [selectedBlockId, selectedPageId, onBlockDelete, onPageDelete])
-
-  const handleDragStart = React.useCallback((event: DragStartEvent) => {
-    setDropping(false)
-    setDraggingId(String(event.active.id))
-  }, [])
-
-  const handleDragEnd = React.useCallback(
-    (event: DragEndEvent) => {
-      const { active, over } = event
-      setDropping(true)
-
-      if (over && active.id !== over.id) {
-        const activeId = String(active.id)
-        const overId = String(over.id)
-        const type = active.data.current?.type
-
-        if (type === 'block') {
-          // Block reordering within the same page
-          const page = pages.find((p) => p.blocks.some((b) => b.id === activeId))
-          if (page) {
-            const blocks = page.blocks
-            const oldIndex = blocks.findIndex((b) => b.id === activeId)
-            const newIndex = blocks.findIndex((b) => b.id === overId)
-
-            if (oldIndex !== -1 && newIndex !== -1) {
-              onBlocksReorder(page.id, arrayMove(blocks, oldIndex, newIndex))
-            }
-          }
-        } else {
-          // Page reordering
-          const oldIndex = pages.findIndex((p) => p.id === activeId)
-          const newIndex = pages.findIndex((p) => p.id === overId)
-          if (oldIndex !== -1 && newIndex !== -1) {
-            onPagesReorder(arrayMove(pages, oldIndex, newIndex))
-          }
-        }
-      }
-
-      setDraggingId(null)
-      requestAnimationFrame(() => setDropping(false))
-    },
-    [pages, onBlocksReorder, onPagesReorder],
-  )
-
-  const handleSelectPage = React.useCallback(
-    (pageId: string | null) => {
+  const handlePageSelect = React.useCallback(
+    (pageId: string) => {
       onPageSelect(pageId)
       onBlockSelect(null)
     },
     [onPageSelect, onBlockSelect],
   )
 
-  const handleSelectBlock = React.useCallback(
-    (blockId: string | null) => {
+  const handleBlockSelect = React.useCallback(
+    (blockId: string) => {
       onBlockSelect(blockId)
       onPageSelect(null)
     },
     [onBlockSelect, onPageSelect],
   )
 
-  const handlePaneClick = React.useCallback(() => {
-    onPageSelect(null)
-    onBlockSelect(null)
-  }, [onPageSelect, onBlockSelect])
+  const handleNodeClick = React.useCallback(
+    (event: React.MouseEvent, node: Node<PageNodeData>) => {
+      // Check if click was on a block - if so, don't select the page
+      const target = event.target as HTMLElement
+      if (target.closest('[data-slot="block"]')) {
+        return
+      }
+      // Select the page
+      handlePageSelect(node.id)
+    },
+    [handlePageSelect],
+  )
 
-  const draggingPage = pages.find((p) => p.id === draggingId) ?? null
-  const draggingBlock = !draggingPage ? (pages.flatMap((p) => p.blocks).find((b) => b.id === draggingId) ?? null) : null
-
-  const nodes = React.useMemo<CanvasNode[]>(
-    () => [
-      {
-        id: 'canvasNode',
-        type: 'canvasNode',
-        position: { x: 0, y: 0 },
-        data: { pages },
+  const { nodes, edges } = React.useMemo(() => {
+    const initialNodes: Node<PageNodeData>[] = pages.map((page, index) => ({
+      id: page.id,
+      type: 'page',
+      position: { x: 0, y: 0 },
+      data: {
+        page,
+        theme,
+        pageIndex: index,
+        selected: selectedPageId === page.id,
+        selectedBlockId,
+        onPageSelect: handlePageSelect,
+        onBlockSelect: handleBlockSelect,
       },
-    ],
-    [pages],
-  )
+    }))
 
-  const contextValue = React.useMemo<CanvasContextValue>(
-    () => ({
-      theme,
-      mode,
-      draggingPage,
-      draggingBlock,
-      dropping,
-      selectedPageId,
-      selectedBlockId,
-      onSelectPage: handleSelectPage,
-      onSelectBlock: handleSelectBlock,
-      onDragStart: handleDragStart,
-      onDragEnd: handleDragEnd,
-      onPageAdd,
-      onBlockAdd,
-      onPaneClick: handlePaneClick,
-      onThemeButtonClick,
-    }),
-    [
-      theme,
-      mode,
-      draggingPage,
-      draggingBlock,
-      dropping,
-      selectedPageId,
-      selectedBlockId,
-      handleSelectPage,
-      handleSelectBlock,
-      handleDragStart,
-      handleDragEnd,
-      onPageAdd,
-      onBlockAdd,
-      handlePaneClick,
-      onThemeButtonClick,
-    ],
-  )
+    const initialEdges = createEdges(pages, rules)
+
+    return getLayoutedElements(initialNodes, initialEdges)
+  }, [pages, rules, theme, selectedPageId, selectedBlockId, handlePageSelect, handleBlockSelect])
 
   return (
-    <div className="size-full overscroll-x-none bg-background" data-slot="canvas">
-      <CanvasContext.Provider value={contextValue}>
-        <ReactFlowProvider>
-          <CanvasInner nodes={nodes} />
-        </ReactFlowProvider>
-      </CanvasContext.Provider>
+    <div className="size-full bg-background" data-slot="canvas">
+      <ReactFlowProvider>
+        <CanvasInner
+          nodes={nodes}
+          edges={edges}
+          pages={pages}
+          selectedPageId={selectedPageId}
+          selectedBlockId={selectedBlockId}
+          selectionSource={selectionSource}
+          onPaneClick={handlePaneClick}
+          onNodeClick={handleNodeClick}
+          onThemeButtonClick={onThemeButtonClick}
+        />
+      </ReactFlowProvider>
     </div>
   )
 }
