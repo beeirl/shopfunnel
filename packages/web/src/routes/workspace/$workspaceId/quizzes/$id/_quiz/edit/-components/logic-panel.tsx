@@ -284,11 +284,11 @@ function Rule({ action, inputBlocks, pages, currentPageId, onActionChange, onRem
 
   const handleOperatorChange = (index: number, op: 'eq' | 'neq') => {
     const currentCondition = conditions[index]
-    if (!currentCondition) return
+    if (!currentCondition || !('vars' in currentCondition)) return
 
     const newCondition: ComparisonConditionType = {
-      ...currentCondition,
       op,
+      vars: currentCondition.vars,
     }
 
     if (isLogicalCondition(condition)) {
@@ -308,10 +308,10 @@ function Rule({ action, inputBlocks, pages, currentPageId, onActionChange, onRem
 
   const handleValueChange = (index: number, value: string) => {
     const currentCondition = conditions[index]
-    if (!currentCondition) return
+    if (!currentCondition || !('vars' in currentCondition)) return
 
     const newCondition: ComparisonConditionType = {
-      ...currentCondition,
+      op: currentCondition.op,
       vars: [currentCondition.vars[0] ?? { type: 'block', value: '' }, { type: 'constant', value }],
     }
 
@@ -395,6 +395,7 @@ function Rule({ action, inputBlocks, pages, currentPageId, onActionChange, onRem
 
   // Helper to get selected block and its options for a condition
   const getConditionData = (cond: ComparisonConditionType) => {
+    if (!('vars' in cond)) return { blockId: undefined, block: undefined, options: [], value: undefined }
     const blockId = cond.vars[0]?.type === 'block' ? String(cond.vars[0].value) : undefined
     const block = inputBlocks.find((b) => b.id === blockId)
     const options = block ? getBlockOptions(block) : []
@@ -533,7 +534,7 @@ export function LogicPanel({
   const handleDefaultPageChange = (pageId: string) => {
     const newDefaultAction: RuleActionType = {
       type: 'jump',
-      condition: { op: 'always', vars: [] },
+      condition: { op: 'always' },
       details: { to: { type: 'page', value: pageId } },
     }
 

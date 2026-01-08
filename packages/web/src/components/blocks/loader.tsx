@@ -3,6 +3,7 @@ import * as React from 'react'
 
 export interface LoaderBlockProps {
   block: BlockType
+  static?: boolean
   onLoadingValueChange?: (value: boolean) => void
 }
 
@@ -39,7 +40,8 @@ function interpolateProgress(normalizedTime: number): number {
 export function LoaderBlock(props: LoaderBlockProps) {
   const { description, duration } = props.block.properties
 
-  const [progress, setProgress] = React.useState(0)
+  const isStatic = props.static || duration === 0
+  const [progress, setProgress] = React.useState(isStatic ? 75 : 0)
   const hasCompletedRef = React.useRef(false)
   const onLoadingChangeRef = React.useRef(props.onLoadingValueChange)
 
@@ -48,7 +50,13 @@ export function LoaderBlock(props: LoaderBlockProps) {
   }, [props.onLoadingValueChange])
 
   React.useEffect(() => {
-    const durationMs = duration * 1000
+    // Static mode - no animation, no auto-advance
+    if (isStatic) {
+      setProgress(75)
+      return
+    }
+
+    const durationMs = duration
     let startTime: number | null = null
     let animationId: number
 
@@ -82,7 +90,7 @@ export function LoaderBlock(props: LoaderBlockProps) {
     return () => {
       cancelAnimationFrame(animationId)
     }
-  }, [duration])
+  }, [duration, isStatic])
 
   return (
     <div className="flex w-full flex-col items-center py-6 group-not-data-first/block:mt-6">

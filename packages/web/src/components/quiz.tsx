@@ -2,8 +2,8 @@ import { Block } from '@/components/block'
 import { NextButton } from '@/components/next-button'
 import type {
   Block as BlockType,
-  ComparisonCondition,
   Condition,
+  ConditionVar,
   Info as QuizType,
   Rule,
   Theme as ThemeType,
@@ -49,7 +49,7 @@ function evaluateCondition(condition: Condition, values: Values, variables: Vari
     }
   }
 
-  function resolveVar(v: ComparisonCondition['vars'][number]): unknown {
+  function resolveVar(v: ConditionVar): unknown {
     if (v.type === 'constant') return v.value
     if (v.type === 'variable') return variables[v.value as string]
     if (v.type === 'block') return values[v.value as string]
@@ -64,9 +64,8 @@ function evaluateCondition(condition: Condition, values: Values, variables: Vari
     case 'or':
       return (condition as { vars: Condition[] }).vars.some((c) => evaluateCondition(c, values, variables))
     default: {
-      const compCondition = condition as ComparisonCondition
-      if (compCondition.vars.length < 2) return false
-      return compare(compCondition.op, resolveVar(compCondition.vars[0]!), resolveVar(compCondition.vars[1]!))
+      if (!('vars' in condition) || condition.vars.length < 2) return false
+      return compare(condition.op, resolveVar(condition.vars[0]!), resolveVar(condition.vars[1]!))
     }
   }
 }
@@ -301,7 +300,7 @@ export function Quiz({ quiz, mode = 'live', onComplete, onPageChange, onPageComp
     const newLoadingValues = { ...loadingValues, [blockId]: value }
     setLoadingValues(newLoadingValues)
     if (shouldAutoAdvance(visibleBlocks)) {
-      if (Object.values(newLoadingValues).every((value) => value)) {
+      if (Object.values(newLoadingValues).every((value) => !value)) {
         next(values)
       }
     }

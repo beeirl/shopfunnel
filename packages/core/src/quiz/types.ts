@@ -195,13 +195,19 @@ export interface LogicalCondition {
   vars: ComparisonCondition[]
 }
 
-export interface ComparisonCondition {
-  op: 'lt' | 'lte' | 'gt' | 'gte' | 'eq' | 'neq' | 'always'
-  vars: Array<{
-    type: 'block' | 'variable' | 'constant'
-    value: string | number | boolean
-  }>
+export interface ConditionVar {
+  type: 'block' | 'variable' | 'constant'
+  value: string | number | boolean
 }
+
+export type ComparisonCondition =
+  | {
+      op: 'lt' | 'lte' | 'gt' | 'gte' | 'eq' | 'neq'
+      vars: ConditionVar[]
+    }
+  | {
+      op: 'always'
+    }
 
 export type Condition = ComparisonCondition | LogicalCondition
 

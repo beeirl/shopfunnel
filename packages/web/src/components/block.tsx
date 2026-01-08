@@ -193,7 +193,11 @@ BLOCKS['list'] = (props) => <ListBlock block={props.block as ListBlockType} stat
 BLOCKS['image'] = (props) => <ImageBlock block={props.block as ImageBlockType} static={props.static} />
 
 BLOCKS['loader'] = (props) => (
-  <LoaderBlock block={props.block as LoaderBlockType} onLoadingValueChange={props.onLoadingValueChange} />
+  <LoaderBlock
+    block={props.block as LoaderBlockType}
+    static={props.static}
+    onLoadingValueChange={props.onLoadingValueChange}
+  />
 )
 
 BLOCKS['spacer'] = (props) => <SpacerBlock block={props.block as SpacerBlockType} static={props.static} />

@@ -93,13 +93,16 @@ interface PageNodeData extends Record<string, unknown> {
   selected: boolean
   selectedBlockId: string | null
   hasRules: boolean
+  isStart: boolean
+  isEnd: boolean
   onPageSelect: (pageId: string) => void
   onBlockSelect: (blockId: string) => void
   onLogicClick: () => void
 }
 
 function PageNode({ data }: { data: PageNodeData }) {
-  const { page, theme, pageIndex, selected, selectedBlockId, hasRules, onBlockSelect, onLogicClick } = data
+  const { page, theme, pageIndex, selected, selectedBlockId, hasRules, isStart, isEnd, onBlockSelect, onLogicClick } =
+    data
 
   const handleBlockSelect = (blockId: string) => {
     onBlockSelect(blockId)
@@ -168,19 +171,21 @@ function PageNode({ data }: { data: PageNodeData }) {
         </div>
 
         {/* Logic button */}
-        <Button
-          variant={hasRules ? 'default' : 'outline'}
-          size="icon"
-          data-slot="logic-button"
-          onClick={handleLogicClick}
-          className="nopan nodrag absolute top-1/2 right-0 z-10 translate-x-1/2 -translate-y-1/2 rounded-full"
-        >
-          <BranchIcon />
-        </Button>
+        {!isEnd && (
+          <Button
+            variant={hasRules ? 'default' : 'outline'}
+            size="icon"
+            data-slot="logic-button"
+            onClick={handleLogicClick}
+            className="nopan nodrag absolute top-1/2 right-0 z-10 translate-x-1/2 -translate-y-1/2 rounded-full"
+          >
+            <BranchIcon />
+          </Button>
+        )}
 
         {/* Handles for flow edges */}
-        <Handle type="target" position={Position.Left} className="!h-3 !w-3 !bg-border" />
-        <Handle type="source" position={Position.Right} className="!h-3 !w-3 !bg-border" />
+        {!isStart && <Handle type="target" position={Position.Left} className="!h-3 !w-3 !bg-border" />}
+        {!isEnd && <Handle type="source" position={Position.Right} className="!h-3 !w-3 !bg-border" />}
       </div>
     </div>
   )
@@ -444,10 +449,12 @@ export function Canvas({
   )
 
   const { nodes, edges } = React.useMemo(() => {
-    const initialNodes: Node<PageNodeData>[] = pages.map((page, index) => ({
+    const edges = createEdges(pages, rules)
+    const nodes: Node<PageNodeData>[] = pages.map((page, index) => ({
       id: page.id,
       type: 'page',
       position: { x: 0, y: 0 },
+      className: 'focus-visible:outline-none',
       data: {
         page,
         theme,
@@ -455,15 +462,14 @@ export function Canvas({
         selected: selectedPageId === page.id,
         selectedBlockId,
         hasRules: rules.some((r) => r.pageId === page.id && r.actions.length > 0),
+        isStart: index === 0,
+        isEnd: !edges.some((e) => e.source === page.id),
         onPageSelect: handlePageSelect,
         onBlockSelect: handleBlockSelect,
         onLogicClick: () => onLogicClick(page.id),
       },
     }))
-
-    const initialEdges = createEdges(pages, rules)
-
-    return getLayoutedElements(initialNodes, initialEdges)
+    return getLayoutedElements(nodes, edges)
   }, [pages, rules, theme, selectedPageId, selectedBlockId, handlePageSelect, handleBlockSelect, onLogicClick])
 
   return (
