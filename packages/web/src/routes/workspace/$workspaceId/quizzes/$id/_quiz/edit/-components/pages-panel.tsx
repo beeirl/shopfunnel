@@ -228,11 +228,11 @@ function PageItem({ page, index, selected, onSelect }: PageItemProps) {
   return (
     <div
       ref={ref}
-      onClick={onSelect}
       className={cn(
-        '-mx-1.5 flex h-8 cursor-grab items-center gap-2 rounded-md pr-1 pl-2 transition-all hover:bg-muted',
+        '-mx-1.5 flex h-8 cursor-default items-center gap-2 rounded-md pr-1 pl-2 transition-all hover:bg-muted',
         selected && 'bg-muted',
       )}
+      onClick={onSelect}
     >
       <FileIcon className="size-4 shrink-0 text-muted-foreground" />
       <span className="flex-1 truncate text-xm">{page.name || `Page ${index + 1}`}</span>
@@ -258,11 +258,11 @@ function BlockItem({ block, index, selected, onSelect }: BlockItemProps) {
   return (
     <div
       ref={ref}
-      onClick={onSelect}
       className={cn(
-        '-mx-1.5 flex h-8 cursor-grab items-center gap-2 rounded-md pr-1 pl-2 transition-all hover:bg-muted',
+        '-mx-1.5 flex h-8 cursor-default items-center gap-2 rounded-md pr-1 pl-2 transition-all hover:bg-muted',
         selected && 'bg-muted',
       )}
+      onClick={onSelect}
     >
       <blockInfo.icon className="size-4 shrink-0 text-muted-foreground" />
       <span className="flex-1 truncate text-xm">
@@ -317,7 +317,7 @@ function PagesPane({
           </div>
         ) : (
           <DragDropProvider onDragEnd={(event) => onPagesReorder(move(pages, event))}>
-            <div className="flex flex-col gap-1 py-2">
+            <div className="flex flex-col gap-0.5 py-2">
               {pages.map((page, index) => (
                 <PageItem
                   key={page.id}
@@ -381,7 +381,7 @@ function BlocksPane({
           </div>
         ) : (
           <DragDropProvider onDragEnd={(event) => onBlocksReorder(move(blocks, event))}>
-            <div className="flex flex-col gap-1 py-2">
+            <div className="flex flex-col gap-0.5 py-2">
               {blocks.map((block, index) => (
                 <BlockItem
                   key={block.id}

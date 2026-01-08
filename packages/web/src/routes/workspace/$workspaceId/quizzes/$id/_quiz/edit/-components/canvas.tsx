@@ -1,4 +1,4 @@
-import { Block as BlockComponent, getBlockInfo } from '@/components/block'
+import { Block, getBlockInfo } from '@/components/block'
 import { NextButton } from '@/components/next-button'
 import { getThemeCssVars, shouldAutoAdvance } from '@/components/quiz'
 import { Button } from '@/components/ui/button'
@@ -16,6 +16,7 @@ import {
 import {
   Background,
   Handle,
+  MarkerType,
   Position,
   ReactFlow,
   Panel as ReactFlowPanel,
@@ -73,7 +74,7 @@ function SelectableBlock({ block, index, selected, onSelect }: SelectableBlockPr
 
         {/* Block content */}
         <div className="relative w-full select-none">
-          <BlockComponent block={block} index={index} static />
+          <Block block={block} index={index} static />
         </div>
       </div>
     </div>
@@ -102,7 +103,7 @@ function PageNode({ data }: { data: PageNodeData }) {
   }
 
   return (
-    <div className="group/page-node nopan nodrag flex flex-col">
+    <div className="group/page-node nopan nodrag flex flex-col focus-visible:outline-none">
       {/* Page label */}
       <div
         className={cn(
@@ -118,7 +119,7 @@ function PageNode({ data }: { data: PageNodeData }) {
       {/* Page content container */}
       <div
         className={cn(
-          'nopan nodrag relative border border-border bg-white shadow-sm ring-primary',
+          'nopan nodrag relative border border-border bg-background ring-primary',
           'group-[:hover:not(:has([data-slot=block]:hover))]/page-node:border-primary',
           'group-[:hover:not(:has([data-slot=block]:hover))]/page-node:ring',
           selected && 'border-primary ring',
@@ -249,6 +250,7 @@ function createEdges(pages: PageType[], rules: Rule[]): Edge[] {
         source: sourceId,
         target: targetId,
         type: 'bezier',
+        markerEnd: { type: MarkerType.Arrow, width: 24, height: 24 },
       })
     }
   }
@@ -267,6 +269,7 @@ function createEdges(pages: PageType[], rules: Rule[]): Edge[] {
             source: sourceId,
             target: targetId,
             type: 'bezier',
+            markerEnd: { type: MarkerType.Arrow, width: 24, height: 24 },
           })
         }
       }
