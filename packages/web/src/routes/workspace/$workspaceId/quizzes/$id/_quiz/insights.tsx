@@ -26,7 +26,7 @@ interface MetricsData {
   total_completions: number
 }
 
-const getPublishedVersionNumberQuery = createServerFn()
+const getPublishedVersionsQuery = createServerFn()
   .inputValidator(
     z.object({
       workspaceId: Identifier.schema('workspace'),
@@ -34,13 +34,13 @@ const getPublishedVersionNumberQuery = createServerFn()
     }),
   )
   .handler(({ data }) => {
-    return withActor(() => Quiz.getPublishedVersionNumber(data.quizId), data.workspaceId)
+    return withActor(() => Quiz.getPublishedVersionNumbers(data.quizId), data.workspaceId)
   })
 
-const getPublishedVersionNumberQueryOptions = (workspaceId: string, quizId: string) =>
+const getPublishedVersionsQueryOptions = (workspaceId: string, quizId: string) =>
   queryOptions({
-    queryKey: ['quiz-published-version-number', workspaceId, quizId],
-    queryFn: () => getPublishedVersionNumberQuery({ data: { workspaceId, quizId } }),
+    queryKey: ['quiz-published-version-numbers', workspaceId, quizId],
+    queryFn: () => getPublishedVersionsQuery({ data: { workspaceId, quizId } }),
   })
 
 const getInsights = createServerFn()
@@ -87,11 +87,12 @@ export const Route = createFileRoute('/workspace/$workspaceId/quizzes/$id/_quiz/
   component: RouteComponent,
   ssr: false,
   loader: async ({ context, params }) => {
-    const publishedVersionNumber = await context.queryClient.ensureQueryData(
-      getPublishedVersionNumberQueryOptions(params.workspaceId, params.id),
+    const publishedVersions = await context.queryClient.ensureQueryData(
+      getPublishedVersionsQueryOptions(params.workspaceId, params.id),
     )
-    if (publishedVersionNumber) {
-      await context.queryClient.ensureQueryData(getInsightsQueryOptions(params.id, publishedVersionNumber))
+    const latestPublishedVersion = publishedVersions.at(-1)
+    if (latestPublishedVersion) {
+      await context.queryClient.ensureQueryData(getInsightsQueryOptions(params.id, latestPublishedVersion))
     }
   },
 })
@@ -112,8 +113,8 @@ function formatDuration(ms: number): string {
   return remainingSeconds > 0 ? `${minutes}m ${remainingSeconds}s` : `${minutes}m`
 }
 
-function Insights({ id, publishedVersionNumber }: { id: string; publishedVersionNumber: number }) {
-  const insightsQuery = useSuspenseQuery(getInsightsQueryOptions(id, publishedVersionNumber))
+function Insights({ quizId, quizVersion }: { quizId: string; quizVersion: number }) {
+  const insightsQuery = useSuspenseQuery(getInsightsQueryOptions(quizId, quizVersion))
 
   const funnel = insightsQuery.data?.funnel ?? []
   const metrics = insightsQuery.data?.metrics ?? {
@@ -215,16 +216,15 @@ function Insights({ id, publishedVersionNumber }: { id: string; publishedVersion
 function RouteComponent() {
   const params = Route.useParams()
 
-  const getPublishedVersionNumberQuery = useSuspenseQuery(
-    getPublishedVersionNumberQueryOptions(params.workspaceId, params.id),
-  )
-  const publishedVersionNumber = getPublishedVersionNumberQuery.data
+  const publishedVersionsQuery = useSuspenseQuery(getPublishedVersionsQueryOptions(params.workspaceId, params.id))
+  const publishedVersions = publishedVersionsQuery.data
+  const latestPublishedVersion = publishedVersions.at(-1)
 
   return (
     <div className="flex flex-1 justify-center overflow-auto px-6 pt-6 sm:pt-10">
       <div className="flex w-full max-w-4xl flex-col gap-6">
         <div className="text-2xl font-bold">Insights</div>
-        {!publishedVersionNumber ? (
+        {!latestPublishedVersion ? (
           <Card.Root>
             <Card.Content>
               <Empty.Root>
@@ -242,7 +242,7 @@ function RouteComponent() {
             </Card.Content>
           </Card.Root>
         ) : (
-          <Insights id={params.id} publishedVersionNumber={publishedVersionNumber} />
+          <Insights quizId={params.id} quizVersion={latestPublishedVersion} />
         )}
       </div>
     </div>

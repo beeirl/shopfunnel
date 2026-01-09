@@ -71,7 +71,7 @@ function ChoiceItem({
                       <img src={choice.media.value} alt="" className="size-6 rounded object-cover" />
                     )
                   ) : (
-                    <PhotoIcon className="size-4" />
+                    <PhotoIcon />
                   )}
                 </InputGroup.Addon>
                 <InputGroup.Input
@@ -90,7 +90,7 @@ function ChoiceItem({
                         handleMediaClear()
                       }}
                     >
-                      <XIcon className="size-4" />
+                      <XIcon />
                     </InputGroup.Button>
                   </InputGroup.Addon>
                 )}

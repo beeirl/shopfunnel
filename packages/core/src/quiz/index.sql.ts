@@ -27,6 +27,7 @@ export const QuizVersionTable = mysqlTable(
     rules: json('rules').$type<Rule[]>().notNull(),
     variables: json('variables').$type<Variables>().notNull(),
     theme: json('theme').$type<Theme>().notNull(),
+    publishedAt: timestamp('published_at'),
   },
   (table) => [primaryKey({ columns: [table.workspaceId, table.quizId, table.version] })],
 )

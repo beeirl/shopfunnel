@@ -1,4 +1,4 @@
-import { and, eq, isNull, sql } from 'drizzle-orm'
+import { and, eq, isNotNull, isNull, sql } from 'drizzle-orm'
 import { groupBy, map, pipe, values } from 'remeda'
 import { ulid } from 'ulid'
 import z from 'zod'
@@ -61,13 +61,20 @@ export namespace Quiz {
     )
   })
 
-  export const getPublishedVersionNumber = fn(Identifier.schema('quiz'), (id) =>
+  export const getPublishedVersionNumbers = fn(Identifier.schema('quiz'), (id) =>
     Database.use((tx) =>
       tx
-        .select({ publishedVersion: QuizTable.publishedVersion })
-        .from(QuizTable)
-        .where(and(eq(QuizTable.workspaceId, Actor.workspace()), eq(QuizTable.id, id), isNull(QuizTable.archivedAt)))
-        .then((rows) => rows[0]?.publishedVersion ?? null),
+        .select({ version: QuizVersionTable.version })
+        .from(QuizVersionTable)
+        .where(
+          and(
+            eq(QuizVersionTable.workspaceId, Actor.workspace()),
+            eq(QuizVersionTable.quizId, id),
+            isNotNull(QuizVersionTable.publishedAt),
+          ),
+        )
+        .orderBy(QuizVersionTable.version)
+        .then((rows) => rows.map((row) => row.version)),
     ),
   )
 
@@ -243,6 +250,17 @@ export namespace Quiz {
         .then((rows) => rows[0])
       if (!quiz) return
       if (quiz.currentVersion === quiz.publishedVersion) return
+
+      await tx
+        .update(QuizVersionTable)
+        .set({ publishedAt: sql`NOW(3)` })
+        .where(
+          and(
+            eq(QuizVersionTable.workspaceId, Actor.workspace()),
+            eq(QuizVersionTable.quizId, id),
+            eq(QuizVersionTable.version, quiz.currentVersion),
+          ),
+        )
 
       await tx
         .update(QuizTable)
