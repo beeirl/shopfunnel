@@ -1,5 +1,4 @@
 import { Card } from '@/components/ui/card'
-import { Chart, ChartConfig } from '@/components/ui/chart'
 import { Empty } from '@/components/ui/empty'
 import { withActor } from '@/context/auth.withActor'
 import { Identifier } from '@shopfunnel/core/identifier'
@@ -9,13 +8,15 @@ import { IconChartBar as ChartBarIcon } from '@tabler/icons-react'
 import { queryOptions, useSuspenseQuery } from '@tanstack/react-query'
 import { createFileRoute } from '@tanstack/react-router'
 import { createServerFn } from '@tanstack/react-start'
-import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from 'recharts'
+import * as React from 'react'
+import { Layer, Rectangle, ResponsiveContainer, Sankey, Tooltip } from 'recharts'
 import { z } from 'zod'
 
 interface FunnelData {
-  page_index: number
+  page_depth: number
   page_id: string
   page_name: string
+  from_page_id: string | null
   views: number
   avg_duration_ms: number
 }
@@ -97,13 +98,6 @@ export const Route = createFileRoute('/workspace/$workspaceId/quizzes/$id/_quiz/
   },
 })
 
-const chartConfig = {
-  views: {
-    label: 'Views',
-    color: 'var(--chart-1)',
-  },
-} satisfies ChartConfig
-
 function formatDuration(ms: number): string {
   if (!ms || ms === 0) return '0s'
   const seconds = Math.round(ms / 1000)
@@ -111,6 +105,202 @@ function formatDuration(ms: number): string {
   const minutes = Math.floor(seconds / 60)
   const remainingSeconds = seconds % 60
   return remainingSeconds > 0 ? `${minutes}m ${remainingSeconds}s` : `${minutes}m`
+}
+
+interface SankeyNode {
+  name: string
+  pageId: string
+  pageName: string
+  depth: number
+  views: number
+  avgDuration: number
+}
+
+interface SankeyLink {
+  source: number
+  target: number
+  value: number
+}
+
+function transformToSankeyData(funnelData: FunnelData[]): { nodes: SankeyNode[]; links: SankeyLink[] } {
+  // Create a map of page_id to node index
+  const nodeMap = new Map<string, number>()
+  const nodes: SankeyNode[] = []
+  const links: SankeyLink[] = []
+
+  // First pass: create nodes for each unique page
+  const pageDataMap = new Map<string, FunnelData>()
+
+  // Aggregate views per page (sum across all from_page_id sources)
+  for (const item of funnelData) {
+    const existing = pageDataMap.get(item.page_id)
+    if (existing) {
+      // Aggregate views from different sources
+      pageDataMap.set(item.page_id, {
+        ...existing,
+        views: existing.views + item.views,
+        avg_duration_ms: (existing.avg_duration_ms + item.avg_duration_ms) / 2,
+      })
+    } else {
+      pageDataMap.set(item.page_id, item)
+    }
+  }
+
+  // Create nodes from aggregated data
+  for (const [pageId, item] of pageDataMap) {
+    nodeMap.set(pageId, nodes.length)
+    nodes.push({
+      name: item.page_name,
+      pageId: pageId,
+      pageName: item.page_name,
+      depth: item.page_depth,
+      views: item.views,
+      avgDuration: item.avg_duration_ms,
+    })
+  }
+
+  // Second pass: create links based on from_page_id relationships
+  for (const item of funnelData) {
+    if (item.from_page_id && nodeMap.has(item.from_page_id) && nodeMap.has(item.page_id)) {
+      const sourceIndex = nodeMap.get(item.from_page_id)!
+      const targetIndex = nodeMap.get(item.page_id)!
+      links.push({
+        source: sourceIndex,
+        target: targetIndex,
+        value: item.views,
+      })
+    }
+  }
+
+  return { nodes, links }
+}
+
+// Custom node component for Sankey diagram
+function CustomNode(props: any) {
+  const { x, y, width, height, payload } = props
+
+  return (
+    <Layer>
+      <Rectangle x={x} y={y} width={width} height={height} fill="var(--chart-1)" radius={[4, 4, 4, 4]} />
+      <text x={x + width + 8} y={y + height / 2} textAnchor="start" dominantBaseline="middle" className="text-xs">
+        {payload.pageName}
+      </text>
+      <text
+        x={x + width / 2}
+        y={y - 8}
+        textAnchor="middle"
+        dominantBaseline="middle"
+        className="text-xs font-semibold"
+        fill="var(--foreground)"
+      >
+        {payload.views?.toLocaleString()}
+      </text>
+    </Layer>
+  )
+}
+
+// Custom link component for Sankey diagram - draws straight dotted lines
+function CustomLink(props: any) {
+  const { sourceX, sourceY, sourceControlX, targetX, targetY, targetControlX, linkWidth, payload } = props
+
+  // Calculate center points for source and target
+  const sourceYCenter = sourceY + linkWidth / 2
+  const targetYCenter = targetY + linkWidth / 2
+
+  return (
+    <Layer>
+      <path
+        d={`M${sourceX},${sourceYCenter} C${sourceControlX},${sourceYCenter} ${targetControlX},${targetYCenter} ${targetX},${targetYCenter}`}
+        fill="none"
+        stroke="var(--border)"
+        strokeWidth={Math.max(1, linkWidth * 0.5)}
+        strokeOpacity={0.6}
+        strokeDasharray="4 2"
+      />
+    </Layer>
+  )
+}
+
+// Custom tooltip for Sankey
+function CustomTooltip({ active, payload }: any) {
+  if (!active || !payload || !payload.length) return null
+
+  const data = payload[0].payload
+
+  // Handle node tooltip
+  if (data.pageName) {
+    return (
+      <div className="rounded-lg border border-border bg-background px-3 py-2 shadow-lg">
+        <div className="font-semibold">{data.pageName}</div>
+        <div className="mt-1 space-y-0.5 text-sm">
+          <div className="text-muted-foreground">
+            <span className="font-medium text-foreground">{data.views?.toLocaleString()}</span> views
+          </div>
+          <div className="text-muted-foreground">
+            Avg time: <span className="font-medium text-foreground">{formatDuration(data.avgDuration)}</span>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  // Handle link tooltip
+  if (data.source && data.target) {
+    return (
+      <div className="rounded-lg border border-border bg-background px-3 py-2 shadow-lg">
+        <div className="font-semibold">
+          {data.source.pageName} → {data.target.pageName}
+        </div>
+        <div className="mt-1 text-sm text-muted-foreground">
+          <span className="font-medium text-foreground">{data.value?.toLocaleString()}</span> users
+        </div>
+      </div>
+    )
+  }
+
+  return null
+}
+
+function BranchingFunnel({ funnelData }: { funnelData: FunnelData[] }) {
+  const { nodes, links } = React.useMemo(() => transformToSankeyData(funnelData), [funnelData])
+
+  if (nodes.length === 0) {
+    return (
+      <div className="flex h-64 items-center justify-center text-muted-foreground">No funnel data available yet</div>
+    )
+  }
+
+  // If there are no links (single page or only first page data), show a simpler visualization
+  if (links.length === 0) {
+    return (
+      <div className="flex h-64 flex-col items-center justify-center gap-4">
+        {nodes.map((node) => (
+          <div key={node.pageId} className="flex items-center gap-4">
+            <div className="h-16 w-8 rounded bg-[var(--chart-1)]" />
+            <div>
+              <div className="font-medium">{node.pageName}</div>
+              <div className="text-sm text-muted-foreground">{node.views.toLocaleString()} views</div>
+            </div>
+          </div>
+        ))}
+      </div>
+    )
+  }
+
+  return (
+    <ResponsiveContainer width="100%" height={400}>
+      <Sankey
+        data={{ nodes, links }}
+        nodeWidth={20}
+        nodePadding={40}
+        margin={{ top: 40, right: 160, bottom: 40, left: 40 }}
+        link={<CustomLink />}
+        node={<CustomNode />}
+      >
+        <Tooltip content={<CustomTooltip />} />
+      </Sankey>
+    </ResponsiveContainer>
+  )
 }
 
 function Insights({ quizId, quizVersion }: { quizId: string; quizVersion: number }) {
@@ -122,21 +312,6 @@ function Insights({ quizId, quizVersion }: { quizId: string; quizVersion: number
     total_starts: 0,
     total_completions: 0,
   }
-
-  // Transform funnel data for chart
-  const funnelData = funnel.map((item, index, arr) => {
-    const prevViews = index > 0 ? arr[index - 1]!.views : item.views
-    const dropoff = prevViews - item.views
-    const dropoffPercent = prevViews > 0 ? Math.round((dropoff / prevViews) * 100) : 0
-
-    return {
-      page: item.page_name,
-      views: item.views,
-      dropoff,
-      dropoffPercent,
-      avgTime: formatDuration(item.avg_duration_ms),
-    }
-  })
 
   const startRate = metrics.total_views > 0 ? Math.round((metrics.total_starts / metrics.total_views) * 100) : 0
   const completionRate =
@@ -160,55 +335,14 @@ function Insights({ quizId, quizVersion }: { quizId: string; quizVersion: number
           </div>
         ))}
       </div>
-      {funnelData.length > 0 && (
-        <Card.Root>
-          <Card.Header>
-            <Card.Title>Drop-off Funnel</Card.Title>
-          </Card.Header>
-          <Card.Content>
-            <Chart.Container config={chartConfig} className="aspect-2/1 w-full">
-              <BarChart data={funnelData} margin={{ top: 10, right: 10, bottom: 0, left: 0 }}>
-                <CartesianGrid vertical={false} strokeDasharray="3 3" />
-                <XAxis dataKey="page" tickLine={false} axisLine={false} tickMargin={10} />
-                <YAxis
-                  tickLine={false}
-                  axisLine={false}
-                  tickMargin={10}
-                  domain={[0, 'auto']}
-                  tickFormatter={(value) => `${value.toLocaleString()}`}
-                  width={50}
-                />
-                <Chart.Tooltip
-                  content={({ active, payload }) => {
-                    if (!active || !payload?.length) return null
-                    const data = payload[0].payload
-                    return (
-                      <div className="rounded-lg border border-border bg-background px-3 py-2 shadow-lg">
-                        <div className="font-semibold">{data.page}</div>
-                        <div className="mt-1 space-y-0.5 text-sm">
-                          <div className="text-muted-foreground">
-                            <span className="font-medium text-foreground">{data.views.toLocaleString()}</span> views
-                          </div>
-                          {data.dropoff > 0 && (
-                            <div className="text-muted-foreground">
-                              <span className="font-medium text-foreground">{data.dropoff.toLocaleString()}</span> (
-                              {data.dropoffPercent}%) dropoff
-                            </div>
-                          )}
-                          <div className="text-muted-foreground">
-                            Avg time: <span className="font-medium text-foreground">{data.avgTime}</span>
-                          </div>
-                        </div>
-                      </div>
-                    )
-                  }}
-                />
-                <Bar dataKey="views" fill="var(--chart-1)" radius={[4, 4, 0, 0]} />
-              </BarChart>
-            </Chart.Container>
-          </Card.Content>
-        </Card.Root>
-      )}
+      <Card.Root>
+        <Card.Header>
+          <Card.Title>Drop-off Funnel</Card.Title>
+        </Card.Header>
+        <Card.Content>
+          <BranchingFunnel funnelData={funnel} />
+        </Card.Content>
+      </Card.Root>
     </>
   )
 }

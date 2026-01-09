@@ -9,7 +9,7 @@ import { Resource } from '@shopfunnel/resource'
 import { queryOptions, useSuspenseQuery } from '@tanstack/react-query'
 import { createFileRoute, notFound } from '@tanstack/react-router'
 import { createServerFn } from '@tanstack/react-start'
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { ulid } from 'ulid'
 import { z } from 'zod'
 
@@ -119,33 +119,37 @@ function RouteComponent() {
     })
   }, [sessionId, visitorId, quiz.id, quiz.version, quiz.workspaceId])
 
-  const handlePageChange = useCallback(
-    (page: { id: string; index: number; name: string }) => {
-      pageViewedAtRef.current = Date.now()
+  const handlePageChange = (page: { id: string; name: string; depth: number; fromId: string | null }) => {
+    pageViewedAtRef.current = Date.now()
 
-      if (!sessionId || !visitorId) return
+    if (!sessionId || !visitorId) return
 
-      trackEvents({
-        data: [
-          {
-            type: 'page_view',
-            quiz_id: quiz.id,
-            quiz_version: quiz.version,
-            workspace_id: quiz.workspaceId,
-            session_id: sessionId,
-            visitor_id: visitorId,
-            page_id: page.id,
-            page_index: page.index,
-            page_name: page.name,
-            timestamp: new Date().toISOString(),
-          },
-        ],
-      })
-    },
-    [sessionId, visitorId, quiz.id, quiz.version, quiz.workspaceId],
-  )
+    trackEvents({
+      data: [
+        {
+          type: 'page_view',
+          quiz_id: quiz.id,
+          quiz_version: quiz.version,
+          workspace_id: quiz.workspaceId,
+          session_id: sessionId,
+          visitor_id: visitorId,
+          page_id: page.id,
+          page_name: page.name,
+          page_depth: page.depth,
+          from_page_id: page.fromId,
+          timestamp: new Date().toISOString(),
+        },
+      ],
+    })
+  }
 
-  const handlePageComplete = async (page: { id: string; index: number; name: string; values: Values }) => {
+  const handlePageComplete = async (page: {
+    id: string
+    name: string
+    depth: number
+    fromId: string | null
+    values: Values
+  }) => {
     if (!sessionId || !visitorId) return
 
     const baseEvent = {
@@ -166,7 +170,7 @@ function RouteComponent() {
 
     const duration = Date.now() - pageViewedAtRef.current
 
-    const quizPage = quiz.pages[page.index]
+    const quizPage = quiz.pages.find((p) => p.id === page.id)
     const blocksById = new Map(quizPage?.blocks.map((b) => [b.id, b]) ?? [])
     for (const [blockId] of Object.entries(page.values)) {
       const block = blocksById.get(blockId)
@@ -175,8 +179,9 @@ function RouteComponent() {
           ...baseEvent,
           type: 'question_answer',
           page_id: page.id,
-          page_index: page.index,
           page_name: page.name,
+          page_depth: page.depth,
+          from_page_id: page.fromId,
           block_id: blockId,
           block_type: block.type,
           duration,
@@ -186,10 +191,11 @@ function RouteComponent() {
 
     events.push({
       ...baseEvent,
-      type: 'step_complete',
+      type: 'page_complete',
       page_id: page.id,
-      page_index: page.index,
       page_name: page.name,
+      page_depth: page.depth,
+      from_page_id: page.fromId,
       duration,
     })
 

@@ -33,8 +33,7 @@
     }
   },
   "scripts": {
-    "dev": "sst dev",
-    "tb:beeirl": "cd tinybird && tb --branch beeirl deploy --wait"
+    "dev": "sst dev"
   },
   "devDependencies": {
     "@tsconfig/bun": "1.0.10",

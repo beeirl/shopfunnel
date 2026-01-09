@@ -1,23 +1,24 @@
 DESCRIPTION >
-    Returns step-by-step funnel data for a quiz
+    Returns branching funnel data for a quiz with page transitions
 
-TOKEN tracker READ
+TOKEN api READ
 
 NODE funnel_data
 SQL >
     %
     SELECT
-        page_index,
-        any(page_id) as page_id,
+        page_depth,
+        page_id,
         any(page_name) as page_name,
+        from_page_id,
         countDistinct(session_id) as views,
         round(avg(duration)) as avg_duration_ms
     FROM quiz_events
     WHERE 
         quiz_id = {{String(quiz_id, required=True)}}
         AND quiz_version = {{UInt32(quiz_version, required=True)}}
-        AND type = 'step_complete'
-    GROUP BY page_index
-    ORDER BY page_index
+        AND type = 'page_complete'
+    GROUP BY page_depth, page_id, from_page_id
+    ORDER BY page_depth, views DESC
 
 TYPE ENDPOINT

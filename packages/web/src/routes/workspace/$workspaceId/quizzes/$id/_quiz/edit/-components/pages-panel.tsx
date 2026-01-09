@@ -17,6 +17,7 @@ import {
   IconPlus as PlusIcon,
 } from '@tabler/icons-react'
 import * as React from 'react'
+import { ulid } from 'ulid'
 import { Pane } from './pane'
 import { Panel } from './panel'
 
@@ -25,66 +26,64 @@ import { Panel } from './panel'
 // =============================================================================
 
 function createBlock(type: Block['type']): Block {
-  const id = crypto.randomUUID()
-
   switch (type) {
     case 'text_input':
       return {
-        id,
+        id: ulid(),
         type: 'text_input',
         properties: { name: 'Text Input', placeholder: '' },
         validations: { required: false },
       }
     case 'multiple_choice':
       return {
-        id,
+        id: ulid(),
         type: 'multiple_choice',
-        properties: { name: 'Multiple Choice', options: [{ id: crypto.randomUUID(), label: 'Choice 1' }] },
+        properties: { name: 'Multiple Choice', options: [{ id: ulid(), label: 'Choice 1' }] },
         validations: { required: false },
       }
     case 'picture_choice':
       return {
-        id,
+        id: ulid(),
         type: 'picture_choice',
         properties: {
           name: 'Picture Choice',
           options: [
-            { id: crypto.randomUUID(), label: 'Choice 1' },
-            { id: crypto.randomUUID(), label: 'Choice 2' },
+            { id: ulid(), label: 'Choice 1' },
+            { id: ulid(), label: 'Choice 2' },
           ],
         },
         validations: { required: false },
       }
     case 'dropdown':
       return {
-        id,
+        id: ulid(),
         type: 'dropdown',
-        properties: { name: 'Dropdown', options: [{ id: crypto.randomUUID(), label: 'Option 1' }] },
+        properties: { name: 'Dropdown', options: [{ id: ulid(), label: 'Option 1' }] },
         validations: { required: false },
       }
     case 'heading':
-      return { id, type: 'heading', properties: { text: 'Heading', alignment: 'left' } }
+      return { id: ulid(), type: 'heading', properties: { text: 'Heading', alignment: 'left' } }
     case 'paragraph':
-      return { id, type: 'paragraph', properties: { text: 'Paragraph', alignment: 'left' } }
+      return { id: ulid(), type: 'paragraph', properties: { text: 'Paragraph', alignment: 'left' } }
     case 'gauge':
-      return { id, type: 'gauge', properties: { value: 50, minValue: 0, maxValue: 100 } }
+      return { id: ulid(), type: 'gauge', properties: { value: 50, minValue: 0, maxValue: 100 } }
     case 'list':
       return {
-        id,
+        id: ulid(),
         type: 'list',
         properties: {
           orientation: 'vertical',
           textPlacement: 'right',
           size: 'sm',
-          items: [{ id: crypto.randomUUID(), title: 'Item', media: { type: 'emoji', value: '✓' } }],
+          items: [{ id: ulid(), title: 'Item', media: { type: 'emoji', value: '✓' } }],
         },
       }
     case 'image':
-      return { id, type: 'image', properties: {} }
+      return { id: ulid(), type: 'image', properties: {} }
     case 'loader':
-      return { id, type: 'loader', properties: { duration: 3000 } }
+      return { id: ulid(), type: 'loader', properties: { duration: 3000 } }
     case 'spacer':
-      return { id, type: 'spacer', properties: { size: 'md' } }
+      return { id: ulid(), type: 'spacer', properties: { size: 'md' } }
   }
 }
 
@@ -116,7 +115,7 @@ function createPage(templateId: string, pageCount: number): Page {
   const blocks = template.blocks.map((type) => createBlock(type))
 
   return {
-    id: crypto.randomUUID(),
+    id: ulid(),
     name: `Page ${pageCount + 1}`,
     blocks,
     properties: { buttonText: 'Continue' },

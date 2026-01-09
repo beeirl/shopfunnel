@@ -238,14 +238,16 @@ export interface QuizProps {
   quiz: QuizType
   mode?: 'preview' | 'live'
   onComplete?: (values: Values) => void
-  onPageChange?: (page: { id: string; index: number; name: string }) => void
-  onPageComplete?: (page: { id: string; index: number; name: string; values: Values }) => void
+  onPageChange?: (page: { id: string; name: string; depth: number; fromId: string | null }) => void
+  onPageComplete?: (page: { id: string; name: string; depth: number; fromId: string | null; values: Values }) => void
 }
 
 export function Quiz({ quiz, mode = 'live', onComplete, onPageChange, onPageComplete }: QuizProps) {
   const VALUES_STORAGE_KEY = `sf_quiz_${quiz.id}_values`
 
   const canNextRef = useRef(true)
+  const fromPageIdRef = useRef<string | null>(null)
+  const depthRef = useRef(0)
 
   const [currentPageIndex, setCurrentPageIndex] = useState(0)
 
@@ -284,13 +286,13 @@ export function Quiz({ quiz, mode = 'live', onComplete, onPageChange, onPageComp
   useEffect(() => {
     const page = quiz.pages[currentPageIndex]
     if (!page) return
-    onPageChange?.({ id: page.id, index: currentPageIndex, name: page.name })
+    onPageChange?.({ id: page.id, name: page.name, depth: depthRef.current, fromId: fromPageIdRef.current })
   }, [currentPageIndex, quiz.pages])
 
   const handleBlockValueChange = (blockId: string, value: unknown) => {
     const newValues = { ...values, [blockId]: value }
     setValues(newValues)
-    localStorage.setItem(VALUES_STORAGE_KEY, JSON.stringify(values))
+    localStorage.setItem(VALUES_STORAGE_KEY, JSON.stringify(newValues))
     if (shouldAutoAdvance(visibleBlocks)) {
       next(newValues)
     }
@@ -344,8 +346,9 @@ export function Quiz({ quiz, mode = 'live', onComplete, onPageChange, onPageComp
     if (redirectUrl) {
       onPageComplete?.({
         id: currentPage.id,
-        index: currentPageIndex,
         name: currentPage.name,
+        depth: depthRef.current,
+        fromId: fromPageIdRef.current,
         values: currentPageValues,
       })
 
@@ -354,15 +357,18 @@ export function Quiz({ quiz, mode = 'live', onComplete, onPageChange, onPageComp
 
       window.location.href = redirectUrl
     } else {
+      depthRef.current += 1
+      fromPageIdRef.current = currentPage.id
+      canNextRef.current = true
       setCurrentPageIndex(nextPageIndex)
       setHiddenBlockIds(nextHiddenBlockIds)
       setVariables(nextVariables)
-      canNextRef.current = true
 
       onPageComplete?.({
         id: currentPage.id,
-        index: currentPageIndex,
+        fromId: fromPageIdRef.current,
         name: currentPage.name,
+        depth: depthRef.current,
         values: currentPageValues,
       })
 

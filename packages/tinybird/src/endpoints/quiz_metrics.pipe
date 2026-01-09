@@ -1,7 +1,7 @@
 DESCRIPTION >
     Returns high-level metrics for a quiz
 
-TOKEN tracker READ
+TOKEN api READ
 
 NODE metrics
 SQL >

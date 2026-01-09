@@ -1,7 +1,7 @@
 DESCRIPTION >
     Quiz analytics events for tracking user interactions
 
-TOKEN tracker APPEND
+TOKEN api APPEND
 
 SCHEMA >
     `timestamp` DateTime64(3) `json:$.timestamp`,
@@ -12,8 +12,9 @@ SCHEMA >
     `quiz_version` UInt32 `json:$.quiz_version`,
     `workspace_id` String `json:$.workspace_id`,
     `page_id` Nullable(String) `json:$.page_id`,
-    `page_index` Nullable(UInt16) `json:$.page_index`,
     `page_name` Nullable(String) `json:$.page_name`,
+    `page_depth` Nullable(UInt16) `json:$.page_depth`,
+    `from_page_id` Nullable(String) `json:$.from_page_id`,
     `block_id` Nullable(String) `json:$.block_id`,
     `block_type` LowCardinality(Nullable(String)) `json:$.block_type`,
     `duration` Nullable(UInt32) `json:$.duration`
