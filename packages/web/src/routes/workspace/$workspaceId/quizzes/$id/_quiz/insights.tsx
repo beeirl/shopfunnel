@@ -19,17 +19,29 @@ interface MetricsData {
 }
 
 interface PathTransition {
-  from_page_id: string
-  from_page_name: string
-  from_page_index: number
+  prev_page_id: string
+  prev_page_name: string
+  prev_page_index: number
   page_id: string
   page_name: string
   page_index: number
   transition_count: number
 }
 
+interface PageStats {
+  page_id: string
+  page_name: string
+  page_index: number
+  page_views: number
+  page_completions: number
+  avg_duration: number
+}
+
 interface SankeyNode {
   name: string
+  pageId: string
+  avgDuration?: number
+  dropoffRate?: number
 }
 
 interface SankeyLink {
@@ -43,17 +55,23 @@ interface SankeyData {
   links: SankeyLink[]
 }
 
-function transformPathsToSankey(paths: PathTransition[]): SankeyData {
+function transformPathsToSankey(paths: PathTransition[], pageStats: PageStats[]): SankeyData {
   if (paths.length === 0) {
     return { nodes: [], links: [] }
   }
+
+  // Build stats lookup map
+  const statsMap = new Map<string, PageStats>()
+  pageStats.forEach((s) => {
+    statsMap.set(s.page_id, s)
+  })
 
   // Build nodes map with page index for ordering
   const nodeMap = new Map<string, { name: string; index: number }>()
 
   paths.forEach((p) => {
-    if (!nodeMap.has(p.from_page_id)) {
-      nodeMap.set(p.from_page_id, { name: p.from_page_name || p.from_page_id, index: p.from_page_index })
+    if (!nodeMap.has(p.prev_page_id)) {
+      nodeMap.set(p.prev_page_id, { name: p.prev_page_name || p.prev_page_id, index: p.prev_page_index })
     }
     if (!nodeMap.has(p.page_id)) {
       nodeMap.set(p.page_id, { name: p.page_name || p.page_id, index: p.page_index })
@@ -64,10 +82,22 @@ function transformPathsToSankey(paths: PathTransition[]): SankeyData {
   const sortedNodes = [...nodeMap.entries()].sort((a, b) => a[1].index - b[1].index)
 
   const nodeIndexMap = new Map(sortedNodes.map(([id], i) => [id, i]))
-  const nodes = sortedNodes.map(([, { name }]) => ({ name }))
+  const nodes = sortedNodes.map(([pageId, { name }]) => {
+    const stats = statsMap.get(pageId)
+    const dropoffRate =
+      stats && stats.page_views > 0
+        ? Math.round(((stats.page_views - stats.page_completions) / stats.page_views) * 100)
+        : undefined
+    return {
+      name,
+      pageId,
+      avgDuration: stats?.avg_duration,
+      dropoffRate,
+    }
+  })
 
   const links = paths.map((p) => ({
-    source: nodeIndexMap.get(p.from_page_id)!,
+    source: nodeIndexMap.get(p.prev_page_id)!,
     target: nodeIndexMap.get(p.page_id)!,
     value: p.transition_count,
   }))
@@ -97,7 +127,7 @@ const getInsights = createServerFn()
   .handler(async ({ data }) => {
     const token = Resource.TINYBIRD_TOKEN.value
 
-    const [metricsRes, pathsRes] = await Promise.all([
+    const [metricsRes, pathsRes, pageStatsRes] = await Promise.all([
       fetch(
         `https://api.us-east.aws.tinybird.co/v0/pipes/quiz_metrics.json?quiz_id=${data.quizId}&quiz_version=${data.quizVersion}`,
         {
@@ -110,10 +140,18 @@ const getInsights = createServerFn()
           headers: { Authorization: `Bearer ${token}` },
         },
       ),
+      fetch(
+        `https://api.us-east.aws.tinybird.co/v0/pipes/quiz_page_stats.json?quiz_id=${data.quizId}&quiz_version=${data.quizVersion}`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        },
+      ),
     ])
 
     const metricsJson = (await metricsRes.json()) as any
     const pathsJson = (await pathsRes.json()) as any
+    const pageStatsJson = (await pageStatsRes.json()) as any
+    console.log(pageStatsJson)
 
     const metrics: MetricsData = metricsJson.data?.[0] ?? {
       total_views: 0,
@@ -122,8 +160,9 @@ const getInsights = createServerFn()
     }
 
     const paths: PathTransition[] = pathsJson.data ?? []
+    const pageStats: PageStats[] = pageStatsJson.data ?? []
 
-    return { metrics, paths }
+    return { metrics, paths, pageStats }
   })
 
 const getInsightsQueryOptions = (quizId: string, quizVersion: number | null) =>
@@ -159,7 +198,8 @@ function Insights({ quizId, quizVersion }: { quizId: string; quizVersion: number
   }
 
   const paths = insightsQuery.data?.paths ?? []
-  const sankeyData = transformPathsToSankey(paths)
+  const pageStats = insightsQuery.data?.pageStats ?? []
+  const sankeyData = transformPathsToSankey(paths, pageStats)
 
   const startRate = metrics.total_views > 0 ? Math.round((metrics.total_starts / metrics.total_views) * 100) : 0
   const completionRate =
@@ -267,13 +307,25 @@ function Insights({ quizId, quizVersion }: { quizId: string; quizVersion: number
                       )
                     }
 
-                    // Node tooltip
+                    // Node tooltip - look up node from sankeyData to get avgDuration
+                    const node = sankeyData.nodes.find((n) => n.name === data.name)
                     return (
                       <div className="rounded-lg border border-border bg-background px-3 py-2 shadow-lg">
                         <div className="font-medium">{data.name}</div>
                         <div className="mt-1 text-sm text-muted-foreground">
                           <span className="font-medium text-foreground">{data.value?.toLocaleString()}</span> sessions
                         </div>
+                        {node?.avgDuration != null && node.avgDuration > 0 && (
+                          <div className="text-sm text-muted-foreground">
+                            <span className="font-medium text-foreground">{Math.round(node.avgDuration / 1000)}s</span>{' '}
+                            avg time
+                          </div>
+                        )}
+                        {node?.dropoffRate != null && (
+                          <div className="text-sm text-muted-foreground">
+                            <span className="font-medium text-foreground">{node.dropoffRate}%</span> dropoff
+                          </div>
+                        )}
                       </div>
                     )
                   }}

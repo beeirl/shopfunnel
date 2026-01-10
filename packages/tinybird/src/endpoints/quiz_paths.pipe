@@ -7,9 +7,9 @@ NODE paths
 SQL >
     %
     SELECT
-        from_page_id,
-        from_page_name,
-        from_page_index,
+        prev_page_id,
+        prev_page_name,
+        prev_page_index,
         page_id,
         page_name,
         page_index,
@@ -18,8 +18,8 @@ SQL >
     WHERE quiz_id = {{String(quiz_id, required=True)}}
       AND quiz_version = {{UInt32(quiz_version, required=True)}}
       AND type = 'page_view'
-      AND from_page_id IS NOT NULL
-    GROUP BY from_page_id, from_page_name, from_page_index, page_id, page_name, page_index
-    ORDER BY from_page_index, page_index
+      AND prev_page_id IS NOT NULL
+    GROUP BY prev_page_id, prev_page_name, prev_page_index, page_id, page_name, page_index
+    ORDER BY prev_page_index, page_index
 
 TYPE ENDPOINT

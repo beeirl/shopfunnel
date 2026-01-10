@@ -75,7 +75,7 @@ export function ImageBlockPanel({
               <InputGroup.Input
                 readOnly
                 placeholder="Upload image..."
-                value={isUploading ? 'Uploading...' : block.properties.url ? 'Image uploaded' : ''}
+                value={isUploading ? 'Uploading...' : block.properties.url ? 'Image' : ''}
                 className="cursor-pointer"
                 onClick={() => inputRef.current?.click()}
               />

@@ -237,23 +237,8 @@ export function getThemeCssVars(theme: ThemeType) {
 export interface QuizProps {
   quiz: QuizType
   mode?: 'preview' | 'live'
-  onPageChange?: (page: {
-    id: string
-    index: number
-    name: string
-    fromId?: string
-    fromIndex?: number
-    fromName?: string
-  }) => void
-  onPageComplete?: (page: {
-    id: string
-    index: number
-    name: string
-    values: Values
-    fromId?: string
-    fromIndex?: number
-    fromName?: string
-  }) => void
+  onPageChange?: (page: { id: string; index: number; name: string }) => void
+  onPageComplete?: (page: { id: string; index: number; name: string; values: Values }) => void
   onComplete?: (values: Values) => Promise<void> | void
 }
 
@@ -261,7 +246,6 @@ export function Quiz({ quiz, mode = 'live', onComplete, onPageChange, onPageComp
   const VALUES_STORAGE_KEY = `sf_quiz_${quiz.id}_values`
 
   const canNextRef = useRef(true)
-  const fromPageRef = useRef<{ id?: string; index?: number; name?: string }>({})
 
   const [currentPageIndex, setCurrentPageIndex] = useState(0)
 
@@ -298,17 +282,13 @@ export function Quiz({ quiz, mode = 'live', onComplete, onPageChange, onPageComp
   }, [VALUES_STORAGE_KEY, mode])
 
   useEffect(() => {
-    const page = quiz.pages[currentPageIndex]
-    if (!page) return
+    if (!currentPage) return
     onPageChange?.({
-      id: page.id,
+      id: currentPage.id,
       index: currentPageIndex,
-      name: page.name,
-      fromId: fromPageRef.current.id,
-      fromIndex: fromPageRef.current.index,
-      fromName: fromPageRef.current.name,
+      name: currentPage.name,
     })
-  }, [currentPageIndex, quiz.pages])
+  }, [currentPage, currentPageIndex])
 
   const handleBlockValueChange = (blockId: string, value: unknown) => {
     const newValues = { ...values, [blockId]: value }
@@ -368,9 +348,6 @@ export function Quiz({ quiz, mode = 'live', onComplete, onPageChange, onPageComp
       index: currentPageIndex,
       name: currentPage!.name,
       values: currentPageValues,
-      fromId: fromPageRef.current.id,
-      fromIndex: fromPageRef.current.index,
-      fromName: fromPageRef.current.name,
     })
 
     const redirectUrl = currentPage.properties.redirectUrl
@@ -380,7 +357,6 @@ export function Quiz({ quiz, mode = 'live', onComplete, onPageChange, onPageComp
       window.location.href = redirectUrl
     } else {
       canNextRef.current = true
-      fromPageRef.current = { id: currentPage.id, index: currentPageIndex, name: currentPage.name }
       setCurrentPageIndex(nextPageIndex)
       setHiddenBlockIds(nextHiddenBlockIds)
       setVariables(nextVariables)

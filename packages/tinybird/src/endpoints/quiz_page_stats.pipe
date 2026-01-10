@@ -1,0 +1,23 @@
+DESCRIPTION >
+    Returns page-level stats including views, completions, and avg duration
+
+TOKEN api READ
+
+NODE page_stats
+SQL >
+    %
+    SELECT
+        page_id,
+        any(page_name) as page_name,
+        max(page_index) as page_index,
+        countDistinctIf(session_id, type = 'page_view') as page_views,
+        countDistinctIf(session_id, type = 'page_complete') as page_completions,
+        round(avgIf(page_duration, type = 'page_complete' AND page_duration IS NOT NULL)) as avg_duration
+    FROM quiz_events
+    WHERE quiz_id = {{String(quiz_id, required=True)}}
+      AND quiz_version = {{UInt32(quiz_version, required=True)}}
+      AND page_id IS NOT NULL
+    GROUP BY page_id
+    ORDER BY page_index
+
+TYPE ENDPOINT
