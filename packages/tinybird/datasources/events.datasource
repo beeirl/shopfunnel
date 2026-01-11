@@ -1,5 +1,5 @@
 DESCRIPTION >
-    Quiz analytics events with JSON payload
+    Funnel analytics events with JSON payload
 
 TOKEN api APPEND
 
@@ -8,12 +8,12 @@ SCHEMA >
     `visitor_id` String `json:$.visitor_id`,
     `session_id` String `json:$.session_id`,
     `workspace_id` String `json:$.workspace_id`,
-    `quiz_id` String `json:$.quiz_id`,
-    `quiz_version` UInt32 `json:$.quiz_version`,
+    `funnel_id` String `json:$.funnel_id`,
+    `funnel_version` UInt32 `json:$.funnel_version`,
     `version` LowCardinality(String) `json:$.version`,
     `payload` String `json:$.payload`,
     `timestamp` DateTime64(3) `json:$.timestamp`
 
 ENGINE MergeTree
 ENGINE_PARTITION_KEY toYYYYMM(timestamp)
-ENGINE_SORTING_KEY workspace_id, quiz_id, timestamp
+ENGINE_SORTING_KEY workspace_id, funnel_id, timestamp

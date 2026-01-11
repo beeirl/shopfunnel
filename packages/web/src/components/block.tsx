@@ -22,7 +22,7 @@ import type {
   PictureChoiceBlock as PictureChoiceBlockType,
   SpacerBlock as SpacerBlockType,
   TextInputBlock as TextInputBlockType,
-} from '@shopfunnel/core/quiz/types'
+} from '@shopfunnel/core/funnel/types'
 import {
   IconArrowsVertical as ArrowsVerticalIcon,
   IconChevronDown as ChevronDownIcon,

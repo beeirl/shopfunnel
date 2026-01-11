@@ -3,39 +3,40 @@ import { z } from 'zod'
 import { Actor } from '../actor'
 import { AnswerTable, AnswerValueTable } from '../answer/index.sql'
 import { Database } from '../database'
+import { Funnel } from '../funnel'
+import { INPUT_BLOCKS, type Block, type InputBlock } from '../funnel/types'
 import { Identifier } from '../identifier'
-import { Quiz } from '../quiz'
-import { INPUT_BLOCKS, type Block, type InputBlock } from '../quiz/types'
 import { fn } from '../utils/fn'
 import { QuestionTable } from './index.sql'
 
 export namespace Question {
-  export const list = fn(Identifier.schema('quiz'), (quizId) => {
+  export const list = fn(Identifier.schema('funnel'), (funnelId) => {
     return Database.use((tx) =>
       tx
         .select()
         .from(QuestionTable)
-        .where(eq(QuestionTable.quizId, quizId))
+        .where(eq(QuestionTable.funnelId, funnelId))
         .orderBy(isNotNull(QuestionTable.archivedAt), QuestionTable.index),
     )
   })
 
   export const sync = fn(
     z.object({
-      quizId: Identifier.schema('quiz'),
+      funnelId: Identifier.schema('funnel'),
     }),
     async (input) => {
       await Database.use(async (tx) => {
-        const quiz = await Quiz.getCurrentVersion(input.quizId)
+        const funnel = await Funnel.getCurrentVersion(input.funnelId)
+        if (!funnel) return
 
-        // Get existing non-archived questions for this quiz
+        // Get existing non-archived questions for this funnel
         const existingQuestions = await tx
           .select()
           .from(QuestionTable)
           .where(
             and(
               eq(QuestionTable.workspaceId, Actor.workspaceId()),
-              eq(QuestionTable.quizId, input.quizId),
+              eq(QuestionTable.funnelId, input.funnelId),
               isNull(QuestionTable.archivedAt),
             ),
           )
@@ -73,7 +74,7 @@ export namespace Question {
           }
         }
 
-        const inputBlocks = quiz.pages.flatMap((page) =>
+        const inputBlocks = funnel.pages.flatMap((page) =>
           page.blocks
             .filter((block): block is Block & { type: InputBlock } => INPUT_BLOCKS.includes(block.type as InputBlock))
             .map((block) => ({
@@ -82,7 +83,7 @@ export namespace Question {
               title: block.properties.name,
             })),
         )
-        const blockByBlockId = new Map(quiz.pages.flatMap((page) => page.blocks.map((block) => [block.id, block])))
+        const blockByBlockId = new Map(funnel.pages.flatMap((page) => page.blocks.map((block) => [block.id, block])))
         const questionsToUpsert = inputBlocks.map((inputBlock, index) => {
           const question = existingQuestionByBlockId.get(inputBlock.blockId)
           const block = blockByBlockId.get(inputBlock.blockId)
@@ -99,7 +100,7 @@ export namespace Question {
           if (options) {
             const currentIds = new Set(options.map((o) => o.id))
 
-            // Current options in quiz order
+            // Current options in funnel order
             questionOptions = options.map((o) => ({ id: o.id, label: o.label }))
 
             // Append archived options that have answers
@@ -115,7 +116,7 @@ export namespace Question {
           return {
             id: question?.id ?? Identifier.create('question'),
             workspaceId: Actor.workspaceId(),
-            quizId: input.quizId,
+            funnelId: input.funnelId,
             blockId: inputBlock.blockId,
             type: inputBlock.blockType,
             title: inputBlock.title,

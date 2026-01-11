@@ -27,13 +27,13 @@ NODE current_period_node
 SQL >
     %
     SELECT
-        uniqIf(session_id, type = 'quiz_view') AS total_views,
-        uniqIf(session_id, type = 'quiz_start') AS total_starts,
-        uniqIf(session_id, type = 'quiz_complete') AS total_completions
+        uniqIf(session_id, type = 'funnel_view') AS total_views,
+        uniqIf(session_id, type = 'funnel_start') AS total_starts,
+        uniqIf(session_id, type = 'funnel_complete') AS total_completions
     FROM events
     WHERE workspace_id = {{ String(workspace_id, required=True) }}
-        AND quiz_id = {{ String(quiz_id, required=True) }}
-        AND quiz_version = {{ UInt32(quiz_version, required=True) }}
+        AND funnel_id = {{ String(funnel_id, required=True) }}
+        AND funnel_version = {{ UInt32(funnel_version, required=True) }}
         AND toDate(timestamp) >= (SELECT current_start FROM date_calculations_node)
         AND toDate(timestamp) <= (SELECT current_end FROM date_calculations_node)
 

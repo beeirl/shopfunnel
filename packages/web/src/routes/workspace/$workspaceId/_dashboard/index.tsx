@@ -7,38 +7,38 @@ import { Button } from '@/components/ui/button'
 import { Empty } from '@/components/ui/empty'
 import { Item } from '@/components/ui/item'
 import { withActor } from '@/context/auth.withActor'
+import { Funnel } from '@shopfunnel/core/funnel/index'
 import { Identifier } from '@shopfunnel/core/identifier'
-import { Quiz } from '@shopfunnel/core/quiz/index'
 import { Heading } from './-components/heading'
 
-const listQuizzes = createServerFn()
+const listFunnels = createServerFn()
   .inputValidator(Identifier.schema('workspace'))
   .handler(({ data: workspaceId }) => {
-    return withActor(() => Quiz.list(), workspaceId)
+    return withActor(() => Funnel.list(), workspaceId)
   })
 
-const listQuizzesQueryOptions = (workspaceId: string) =>
+const listFunnelsQueryOptions = (workspaceId: string) =>
   queryOptions({
-    queryKey: ['quizzes', workspaceId],
-    queryFn: () => listQuizzes({ data: workspaceId }),
+    queryKey: ['funnels', workspaceId],
+    queryFn: () => listFunnels({ data: workspaceId }),
   })
 
-const createQuiz = createServerFn({ method: 'POST' })
+const createFunnel = createServerFn({ method: 'POST' })
   .inputValidator(Identifier.schema('workspace'))
   .handler(({ data: workspaceId }) => {
-    return withActor(() => Quiz.create(), workspaceId)
+    return withActor(() => Funnel.create(), workspaceId)
   })
 
-const createQuizMutationOptions = (workspaceId: string) =>
+const createFunnelMutationOptions = (workspaceId: string) =>
   mutationOptions({
-    mutationFn: () => createQuiz({ data: workspaceId }),
+    mutationFn: () => createFunnel({ data: workspaceId }),
   })
 
 export const Route = createFileRoute('/workspace/$workspaceId/_dashboard/')({
   component: RouteComponent,
   ssr: false,
   loader: async ({ context, params }) => {
-    await context.queryClient.ensureQueryData(listQuizzesQueryOptions(params.workspaceId))
+    await context.queryClient.ensureQueryData(listFunnelsQueryOptions(params.workspaceId))
   },
 })
 
@@ -47,18 +47,18 @@ function RouteComponent() {
   const navigate = Route.useNavigate()
   const queryClient = useQueryClient()
 
-  const listQuizzesQuery = useSuspenseQuery(listQuizzesQueryOptions(params.workspaceId))
-  const quizzes = listQuizzesQuery.data ?? []
+  const listFunnelsQuery = useSuspenseQuery(listFunnelsQueryOptions(params.workspaceId))
+  const funnels = listFunnelsQuery.data ?? []
 
-  const createQuizMutation = useMutation(createQuizMutationOptions(params.workspaceId))
+  const createFunnelMutation = useMutation(createFunnelMutationOptions(params.workspaceId))
 
-  async function handleQuizCreate() {
-    const id = await createQuizMutation.mutateAsync()
-    await navigate({ to: 'quizzes/$id/edit', params: { id } })
-    queryClient.invalidateQueries(listQuizzesQueryOptions(params.workspaceId))
+  async function handleFunnelCreate() {
+    const id = await createFunnelMutation.mutateAsync()
+    await navigate({ to: 'funnels/$id/edit', params: { id } })
+    queryClient.invalidateQueries(listFunnelsQueryOptions(params.workspaceId))
   }
 
-  if (quizzes.length === 0) {
+  if (funnels.length === 0) {
     return (
       <div className="flex h-full w-full flex-1 items-center justify-center">
         <Empty.Root>
@@ -66,10 +66,10 @@ function RouteComponent() {
             <Empty.Media variant="icon">
               <FileTextIcon />
             </Empty.Media>
-            <Empty.Title>No quizzes yet</Empty.Title>
-            <Empty.Description>Create your first quiz to get started.</Empty.Description>
+            <Empty.Title>No funnels yet</Empty.Title>
+            <Empty.Description>Create your first funnel to get started.</Empty.Description>
           </Empty.Header>
-          <Button onClick={handleQuizCreate}>Create quiz</Button>
+          <Button onClick={handleFunnelCreate}>Create funnel</Button>
         </Empty.Root>
       </div>
     )
@@ -79,10 +79,10 @@ function RouteComponent() {
     <div className="flex h-full w-full flex-col gap-2">
       <Heading.Root>
         <Heading.Content>
-          <Heading.Title>Quizzes</Heading.Title>
+          <Heading.Title>Funnels</Heading.Title>
         </Heading.Content>
         <Heading.Actions>
-          <Button onClick={handleQuizCreate}>
+          <Button onClick={handleFunnelCreate}>
             <PlusIcon />
             Create
           </Button>
@@ -90,14 +90,14 @@ function RouteComponent() {
       </Heading.Root>
 
       <Item.Group>
-        {quizzes.map((quiz) => (
+        {funnels.map((funnel) => (
           <Item.Root
-            key={quiz.id}
+            key={funnel.id}
             variant="outline"
-            render={<Link from={Route.fullPath} to="quizzes/$id/edit" params={{ id: quiz.id }} />}
+            render={<Link from={Route.fullPath} to="funnels/$id/edit" params={{ id: funnel.id }} />}
           >
             <Item.Content>
-              <Item.Title>{quiz.title}</Item.Title>
+              <Item.Title>{funnel.title}</Item.Title>
             </Item.Content>
           </Item.Root>
         ))}

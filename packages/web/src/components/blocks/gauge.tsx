@@ -1,4 +1,4 @@
-import type { GaugeBlock as BlockType } from '@shopfunnel/core/quiz/types'
+import type { GaugeBlock as BlockType } from '@shopfunnel/core/funnel/types'
 
 export interface GaugeBlockProps {
   block: BlockType
@@ -16,7 +16,7 @@ export function GaugeBlock(props: GaugeBlockProps) {
     <div className="w-full pt-14 group-not-data-first/block:mt-6">
       <div className="relative">
         <div
-          className="h-2.5 w-full rounded-[calc(var(--qz-radius)-5px)]"
+          className="h-2.5 w-full rounded-[calc(var(--fun-radius)-5px)]"
           style={{
             background: 'linear-gradient(to right, #ef4444, #f97316, #eab308, #22c55e, #06b6d4, #3b82f6)',
           }}
@@ -24,18 +24,18 @@ export function GaugeBlock(props: GaugeBlockProps) {
 
         <div className="absolute top-1/2 -translate-x-1/2 -translate-y-1/2" style={{ left: `${percentage}%` }}>
           <div className="absolute bottom-full left-1/2 mb-2 flex -translate-x-1/2 flex-col items-center">
-            <div className="rounded-[calc(var(--qz-radius)-2px)] bg-(--qz-foreground) px-3 py-1.5 text-sm font-medium whitespace-nowrap text-(--qz-background)">
+            <div className="rounded-[calc(var(--fun-radius)-2px)] bg-(--fun-foreground) px-3 py-1.5 text-sm font-medium whitespace-nowrap text-(--fun-background)">
               {tooltipLabel ? `${tooltipLabel} - ${value.toFixed(1)}` : value.toFixed(1)}
             </div>
-            <div className="h-0 w-0 border-x-[6px] border-t-[6px] border-x-transparent border-t-(--qz-foreground)" />
+            <div className="h-0 w-0 border-x-[6px] border-t-[6px] border-x-transparent border-t-(--fun-foreground)" />
           </div>
-          <div className="size-6 rounded-full border-2 border-(--qz-border) bg-(--qz-background)" />
+          <div className="size-6 rounded-full border-2 border-(--fun-border) bg-(--fun-background)" />
         </div>
       </div>
 
       <div className="mt-3 flex h-4 items-center justify-between">
         {marks?.map((mark, index) => (
-          <span key={index} className="text-xs font-medium tracking-wide text-(--qz-muted-foreground) uppercase">
+          <span key={index} className="text-xs font-medium tracking-wide text-(--fun-muted-foreground) uppercase">
             {mark}
           </span>
         ))}

@@ -1,9 +1,9 @@
 import { and, eq, isNull } from 'drizzle-orm'
 import { z } from 'zod'
 import { Database } from '../database'
+import { Funnel } from '../funnel'
 import { Identifier } from '../identifier'
 import { QuestionTable } from '../question/index.sql'
-import { Quiz } from '../quiz'
 import { Submission } from '../submission'
 import { fn } from '../utils/fn'
 import { AnswerTable, AnswerValueTable } from './index.sql'
@@ -11,7 +11,7 @@ import { AnswerTable, AnswerValueTable } from './index.sql'
 export namespace Answer {
   export const submit = fn(
     z.object({
-      quizId: Identifier.schema('quiz'),
+      funnelId: Identifier.schema('funnel'),
       sessionId: z.string(),
       answers: z.array(
         z.object({
@@ -23,14 +23,14 @@ export namespace Answer {
     async (input) => {
       if (input.answers.length === 0) return
 
-      const quiz = await Quiz.getPublishedVersion(input.quizId)
-      if (!quiz) throw new Error('Quiz not found')
+      const funnel = await Funnel.getPublishedVersion(input.funnelId)
+      if (!funnel) throw new Error('Funnel not found')
 
       let submissionId = await Submission.fromSessionId(input.sessionId)
       if (!submissionId) {
         submissionId = await Submission.create({
-          quizId: quiz.id,
-          workspaceId: quiz.workspaceId,
+          funnelId: funnel.id,
+          workspaceId: funnel.workspaceId,
           sessionId: input.sessionId,
         })
       }
@@ -42,13 +42,13 @@ export namespace Answer {
           .from(QuestionTable)
           .where(
             and(
-              eq(QuestionTable.workspaceId, quiz.workspaceId),
-              eq(QuestionTable.quizId, quiz.id),
+              eq(QuestionTable.workspaceId, funnel.workspaceId),
+              eq(QuestionTable.funnelId, funnel.id),
               isNull(QuestionTable.archivedAt),
             ),
           )
 
-        const blocks = new Map(quiz.pages.flatMap((page) => page.blocks.map((block) => [block.id, block])))
+        const blocks = new Map(funnel.pages.flatMap((page) => page.blocks.map((block) => [block.id, block])))
         const questionIds = new Map(questions.map((q) => [q.blockId, q.id]))
 
         for (const answer of input.answers) {
@@ -64,7 +64,7 @@ export namespace Answer {
             .from(AnswerTable)
             .where(
               and(
-                eq(AnswerTable.workspaceId, quiz.workspaceId),
+                eq(AnswerTable.workspaceId, funnel.workspaceId),
                 eq(AnswerTable.submissionId, submissionId),
                 eq(AnswerTable.questionId, questionId),
               ),
@@ -80,7 +80,7 @@ export namespace Answer {
               .delete(AnswerValueTable)
               .where(
                 and(
-                  eq(AnswerValueTable.workspaceId, quiz.workspaceId),
+                  eq(AnswerValueTable.workspaceId, funnel.workspaceId),
                   eq(AnswerValueTable.answerId, existingAnswer.id),
                 ),
               )
@@ -88,7 +88,7 @@ export namespace Answer {
             answerId = Identifier.create('answer')
             await tx.insert(AnswerTable).values({
               id: answerId,
-              workspaceId: quiz.workspaceId,
+              workspaceId: funnel.workspaceId,
               submissionId,
               questionId,
             })
@@ -115,7 +115,7 @@ export namespace Answer {
             await tx.insert(AnswerValueTable).values(
               values.map((value) => ({
                 id: Identifier.create('answer_value'),
-                workspaceId: quiz.workspaceId,
+                workspaceId: funnel.workspaceId,
                 answerId,
                 ...value,
               })),

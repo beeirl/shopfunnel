@@ -11,7 +11,7 @@ import { SubmissionTable } from './index.sql'
 export namespace Submission {
   export const create = fn(
     z.object({
-      quizId: Identifier.schema('quiz'),
+      funnelId: Identifier.schema('funnel'),
       workspaceId: Identifier.schema('workspace'),
       sessionId: z.string(),
     }),
@@ -20,7 +20,7 @@ export namespace Submission {
       await Database.use((tx) =>
         tx.insert(SubmissionTable).values({
           id,
-          quizId: input.quizId,
+          funnelId: input.funnelId,
           workspaceId: input.workspaceId,
           sessionId: input.sessionId,
         }),
@@ -50,33 +50,33 @@ export namespace Submission {
 
   export const list = fn(
     z.object({
-      quizId: Identifier.schema('quiz'),
+      funnelId: Identifier.schema('funnel'),
       page: z.number().int().positive().default(1),
       limit: z.number().int().min(1).max(100).default(50),
     }),
     async (input) => {
-      const { quizId, page, limit } = input
+      const { funnelId, page, limit } = input
       const offset = (page - 1) * limit
 
-      const questions = await Question.list(quizId)
+      const questions = await Question.list(funnelId)
 
       // Get total count
       const countResult = await Database.use((tx) =>
         tx
           .select({ count: sql<number>`COUNT(*)` })
           .from(SubmissionTable)
-          .where(and(eq(SubmissionTable.workspaceId, Actor.workspaceId()), eq(SubmissionTable.quizId, quizId))),
+          .where(and(eq(SubmissionTable.workspaceId, Actor.workspaceId()), eq(SubmissionTable.funnelId, funnelId))),
       )
       const total = countResult[0]?.count ?? 0
 
       const totalPages = Math.ceil(total / limit)
 
-      // Fetch paginated submissions for this quiz
+      // Fetch paginated submissions for this funnel
       const submissions = await Database.use((tx) =>
         tx
           .select()
           .from(SubmissionTable)
-          .where(and(eq(SubmissionTable.workspaceId, Actor.workspaceId()), eq(SubmissionTable.quizId, quizId)))
+          .where(and(eq(SubmissionTable.workspaceId, Actor.workspaceId()), eq(SubmissionTable.funnelId, funnelId)))
           .orderBy(desc(SubmissionTable.createdAt))
           .limit(limit)
           .offset(offset),

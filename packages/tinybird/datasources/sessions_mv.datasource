@@ -1,8 +1,8 @@
 SCHEMA >
     `date` Date,
     `workspace_id` String,
-    `quiz_id` String,
-    `quiz_version` UInt32,
+    `funnel_id` String,
+    `funnel_version` UInt32,
     `session_id` String,
     `visitor_id` SimpleAggregateFunction(any, String),
     `device` SimpleAggregateFunction(any, String),
@@ -17,4 +17,4 @@ SCHEMA >
 
 ENGINE AggregatingMergeTree
 ENGINE_PARTITION_KEY toYYYYMM(date)
-ENGINE_SORTING_KEY workspace_id, quiz_id, quiz_version, date, session_id
+ENGINE_SORTING_KEY workspace_id, funnel_id, funnel_version, date, session_id

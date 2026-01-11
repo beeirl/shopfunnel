@@ -1,5 +1,5 @@
 import { cn } from '@/lib/utils'
-import type { ParagraphBlock as BlockType } from '@shopfunnel/core/quiz/types'
+import type { ParagraphBlock as BlockType } from '@shopfunnel/core/funnel/types'
 
 export interface ParagraphBlockProps {
   block: BlockType
@@ -11,7 +11,7 @@ export function ParagraphBlock(props: ParagraphBlockProps) {
     <div
       className={cn('group-not-data-first/block:mt-3', props.block.properties.alignment === 'center' && 'text-center')}
     >
-      <span className="text-[0.9375rem] tracking-tight text-balance text-(--qz-muted-foreground)">
+      <span className="text-[0.9375rem] tracking-tight text-balance text-(--fun-muted-foreground)">
         {props.block.properties.text}
       </span>
     </div>

@@ -5,15 +5,15 @@ export namespace Analytics {
     visitor_id: z.string(),
     session_id: z.string(),
     workspace_id: z.string(),
-    quiz_id: z.string(),
-    quiz_version: z.number(),
+    funnel_id: z.string(),
+    funnel_version: z.number(),
     version: z.string(),
     timestamp: z.string(),
   })
 
-  const QuizViewEvent = z.object({
+  const FunnelViewEvent = z.object({
     ...EventBase.shape,
-    type: z.literal('quiz_view'),
+    type: z.literal('funnel_view'),
     payload: z.object({
       device: z.enum(['mobile', 'desktop']).optional(),
       os: z.string().optional(),
@@ -25,15 +25,15 @@ export namespace Analytics {
     }),
   })
 
-  const QuizStartEvent = z.object({
+  const FunnelStartEvent = z.object({
     ...EventBase.shape,
-    type: z.literal('quiz_start'),
+    type: z.literal('funnel_start'),
     payload: z.object({}),
   })
 
-  const QuizCompleteEvent = z.object({
+  const FunnelCompleteEvent = z.object({
     ...EventBase.shape,
-    type: z.literal('quiz_complete'),
+    type: z.literal('funnel_complete'),
     payload: z.object({}),
   })
 
@@ -76,9 +76,9 @@ export namespace Analytics {
   })
 
   export const Event = z.discriminatedUnion('type', [
-    QuizViewEvent,
-    QuizStartEvent,
-    QuizCompleteEvent,
+    FunnelViewEvent,
+    FunnelStartEvent,
+    FunnelCompleteEvent,
     PageViewEvent,
     PageCompleteEvent,
     QuestionAnswerEvent,

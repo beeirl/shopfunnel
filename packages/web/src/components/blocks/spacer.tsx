@@ -1,5 +1,5 @@
 import { cn } from '@/lib/utils'
-import type { SpacerBlock as BlockType } from '@shopfunnel/core/quiz/types'
+import type { SpacerBlock as BlockType } from '@shopfunnel/core/funnel/types'
 
 export interface SpacerBlockProps {
   block: BlockType

@@ -6,8 +6,8 @@ SQL >
     SELECT
         toDate(timestamp) AS date,
         workspace_id,
-        quiz_id,
-        quiz_version,
+        funnel_id,
+        funnel_version,
         session_id,
         anySimpleState(visitor_id) AS visitor_id,
         anySimpleState(device) AS device,
@@ -19,8 +19,8 @@ SQL >
         anySimpleState(referrer) AS referrer,
         minSimpleState(timestamp) AS first_hit,
         maxSimpleState(timestamp) AS latest_hit
-    FROM quiz_view_events
-    GROUP BY date, workspace_id, quiz_id, quiz_version, session_id
+    FROM funnel_view_events
+    GROUP BY date, workspace_id, funnel_id, funnel_version, session_id
 
 TYPE MATERIALIZED
 DATASOURCE sessions_mv

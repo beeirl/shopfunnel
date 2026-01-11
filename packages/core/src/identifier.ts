@@ -11,7 +11,7 @@ export namespace Identifier {
     domain: 'dom',
     file: 'fil',
     question: 'qst',
-    quiz: 'qiz',
+    funnel: 'fun',
     submission: 'sbm',
     usage: 'usg',
     user: 'usr',

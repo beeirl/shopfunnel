@@ -1,0 +1,25 @@
+DESCRIPTION >
+    Parsed funnel_view events with session metadata.
+
+TOKEN api READ
+
+NODE funnel_view_events_node
+SQL >
+    SELECT
+        timestamp,
+        session_id,
+        visitor_id,
+        workspace_id,
+        funnel_id,
+        funnel_version,
+        JSONExtractString(payload, 'device') AS device,
+        JSONExtractString(payload, 'os') AS os,
+        JSONExtractString(payload, 'browser') AS browser,
+        JSONExtractString(payload, 'country') AS country,
+        JSONExtractString(payload, 'region') AS region,
+        JSONExtractString(payload, 'city') AS city,
+        JSONExtractString(payload, 'referrer') AS referrer
+    FROM events
+    WHERE type = 'funnel_view'
+
+TYPE endpoint

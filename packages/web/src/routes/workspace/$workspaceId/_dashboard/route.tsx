@@ -120,7 +120,7 @@ function CreateDomainButton() {
           </Alert.Description>
         </Alert.Root>
         <Field.Root data-invalid={!!error}>
-          <Input placeholder="quiz.example.com" value={hostname} onValueChange={(value) => setHostname(value)} />
+          <Input placeholder="funnel.example.com" value={hostname} onValueChange={(value) => setHostname(value)} />
           <Field.Error>{error}</Field.Error>
         </Field.Root>
         <Dialog.Footer>

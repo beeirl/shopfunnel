@@ -1,4 +1,4 @@
-import type { ListBlock as BlockType } from '@shopfunnel/core/quiz/types'
+import type { ListBlock as BlockType } from '@shopfunnel/core/funnel/types'
 
 export interface ListBlockProps {
   block: BlockType
@@ -7,7 +7,7 @@ export interface ListBlockProps {
 
 export function ListBlock(_props: ListBlockProps) {
   return (
-    <div className="flex h-12 items-center justify-center rounded-(--qz-radius) bg-(--qz-muted) text-sm text-(--qz-muted-foreground)">
+    <div className="flex h-12 items-center justify-center rounded-(--fun-radius) bg-(--fun-muted) text-sm text-(--fun-muted-foreground)">
       List block
     </div>
   )

@@ -1,4 +1,4 @@
-import type { LoaderBlock as BlockType } from '@shopfunnel/core/quiz/types'
+import type { LoaderBlock as BlockType } from '@shopfunnel/core/funnel/types'
 import * as React from 'react'
 
 export interface LoaderBlockProps {
@@ -94,14 +94,14 @@ export function LoaderBlock(props: LoaderBlockProps) {
 
   return (
     <div className="flex w-full flex-col items-center py-6 group-not-data-first/block:mt-6">
-      <div className="mb-6 text-5xl font-bold text-(--qz-foreground)">{progress}%</div>
-      <div className="h-2.5 w-full overflow-hidden rounded-[calc(var(--qz-radius)-5px)] bg-(--qz-muted)">
+      <div className="mb-6 text-5xl font-bold text-(--fun-foreground)">{progress}%</div>
+      <div className="h-2.5 w-full overflow-hidden rounded-[calc(var(--fun-radius)-5px)] bg-(--fun-muted)">
         <div
-          className="h-full rounded-[calc(var(--qz-radius)-5px)] bg-(--qz-primary) transition-[width] duration-75 ease-out"
+          className="h-full rounded-[calc(var(--fun-radius)-5px)] bg-(--fun-primary) transition-[width] duration-75 ease-out"
           style={{ width: `${progress}%` }}
         />
       </div>
-      {description && <p className="mt-4 text-center text-sm text-(--qz-muted-foreground)">{description}</p>}
+      {description && <p className="mt-4 text-center text-sm text-(--fun-muted-foreground)">{description}</p>}
     </div>
   )
 }

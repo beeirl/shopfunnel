@@ -13,8 +13,8 @@ export default {
         type: event.type,
         version: event.version,
         workspace_id: event.workspace_id,
-        quiz_id: event.quiz_id,
-        quiz_version: event.quiz_version,
+        funnel_id: event.funnel_id,
+        funnel_version: event.funnel_version,
         payload: JSON.stringify(event.payload),
       }
     })
