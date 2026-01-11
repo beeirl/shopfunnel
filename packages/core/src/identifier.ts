@@ -8,6 +8,7 @@ export namespace Identifier {
     answer_value: 'asv',
     auth: 'aut',
     billing: 'bil',
+    domain: 'dom',
     file: 'fil',
     question: 'qst',
     quiz: 'qiz',

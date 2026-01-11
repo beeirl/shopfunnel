@@ -8,13 +8,10 @@ export interface ParagraphBlockProps {
 
 export function ParagraphBlock(props: ParagraphBlockProps) {
   return (
-    <div className="group-not-data-first/block:mt-3">
-      <span
-        className={cn(
-          'text-[0.9375rem] tracking-tight text-balance text-(--qz-muted-foreground)',
-          props.block.properties.alignment === 'center' && 'text-center',
-        )}
-      >
+    <div
+      className={cn('group-not-data-first/block:mt-3', props.block.properties.alignment === 'center' && 'text-center')}
+    >
+      <span className="text-[0.9375rem] tracking-tight text-balance text-(--qz-muted-foreground)">
         {props.block.properties.text}
       </span>
     </div>

@@ -1,6 +1,7 @@
 import { Quiz, QuizProps } from '@/components/quiz'
 import { Analytics } from '@shopfunnel/core/analytics/index'
 import { Answer } from '@shopfunnel/core/answer/index'
+import { Domain } from '@shopfunnel/core/domain/index'
 import { Identifier } from '@shopfunnel/core/identifier'
 import { Question } from '@shopfunnel/core/question/index'
 import { Quiz as QuizCore } from '@shopfunnel/core/quiz/index'
@@ -20,6 +21,17 @@ const getQuiz = createServerFn()
   .handler(async ({ data }) => {
     const quiz = await QuizCore.getPublishedVersion(data.shortId)
     if (!quiz) throw notFound()
+
+    // Check if request is from a custom domain
+    const host = getRequestHeader('host')
+    if (host && !host.endsWith('shopfunnel.app')) {
+      const domain = await Domain.fromHostname(host)
+      // If on a custom domain, verify the quiz belongs to that workspace
+      if (!domain || domain.workspaceId !== quiz.workspaceId) {
+        throw notFound()
+      }
+    }
+
     return quiz
   })
 

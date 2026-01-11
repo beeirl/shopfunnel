@@ -37,6 +37,10 @@ declare module "sst" {
       "type": "sst.sst.Secret"
       "value": string
     }
+    "CLOUDFLARE_ZONE_ID": {
+      "type": "sst.sst.Secret"
+      "value": string
+    }
     "Database": {
       "database": string
       "host": string

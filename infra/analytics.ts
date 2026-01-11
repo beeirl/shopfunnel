@@ -33,6 +33,5 @@ new cloudflare.QueueConsumer('AnalyticsQueueConsumer', {
   settings: {
     batchSize: 100,
     maxRetries: 3,
-    maxWaitTimeMs: 5000,
   },
 })

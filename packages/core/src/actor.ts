@@ -1,6 +1,5 @@
 import { z } from 'zod'
 import { Context } from './utils/context'
-import { VisibleError, VisibleErrorCodes } from './utils/error'
 
 export const UserRole = ['admin', 'member'] as const
 
@@ -63,22 +62,14 @@ export namespace Actor {
   export function assert<T extends Info['type']>(type: T) {
     const actor = use()
     if (actor.type !== type) {
-      throw new VisibleError(
-        'authentication',
-        VisibleErrorCodes.Authentication.UNAUTHORIZED,
-        `Expected actor type ${type}, got ${actor.type}`,
-      )
+      throw new Error(`Expected actor type ${type}, got ${actor.type}`)
     }
     return actor as Extract<Info, { type: T }>
   }
 
   export function assertAdmin() {
     if (userRole() === 'admin') return
-    throw new VisibleError(
-      'forbidden',
-      VisibleErrorCodes.Permission.INSUFFICIENT_PERMISSIONS,
-      'Action not allowed. Ask your workspace admin to perform this action.',
-    )
+    throw new Error('Action not allowed. Ask your workspace admin to perform this action.')
   }
 
   export function workspaceId() {
@@ -86,11 +77,7 @@ export namespace Actor {
     if ('workspaceId' in actor.properties) {
       return actor.properties.workspaceId
     }
-    throw new VisibleError(
-      'authentication',
-      VisibleErrorCodes.Authentication.UNAUTHORIZED,
-      `actor of type "${actor.type}" is not associated with a workspace`,
-    )
+    throw new Error(`Actor of type "${actor.type}" is not associated with a workspace`)
   }
 
   export function workspace() {
@@ -102,11 +89,7 @@ export namespace Actor {
     if ('accountId' in actor.properties) {
       return actor.properties.accountId
     }
-    throw new VisibleError(
-      'authentication',
-      VisibleErrorCodes.Authentication.UNAUTHORIZED,
-      `actor of type "${actor.type}" is not associated with an account`,
-    )
+    throw new Error(`Actor of type "${actor.type}" is not associated with an account`)
   }
 
   export function userId() {
