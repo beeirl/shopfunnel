@@ -1,10 +1,10 @@
 import { createMiddleware, createStart } from '@tanstack/react-start'
 
 const customDomainGuard = createMiddleware().server(async ({ request, next }) => {
-  const stage = process.env.SST_STAGE
-  const domain = process.env.DOMAIN
+  const appStage = process.env.APP_STAGE
+  const appDomain = process.env.APP_DOMAIN
 
-  if (stage !== 'production' || !domain) {
+  if (appStage !== 'production' || !appDomain) {
     return next()
   }
 
@@ -12,7 +12,7 @@ const customDomainGuard = createMiddleware().server(async ({ request, next }) =>
   const host = request.headers.get('host') || ''
   const acceptHeader = request.headers.get('accept') || ''
   const isHtmlRequest = acceptHeader.includes('text/html')
-  if (!host.endsWith(domain) && isHtmlRequest && !url.pathname.startsWith('/q')) {
+  if (!host.endsWith(appDomain) && isHtmlRequest && !url.pathname.startsWith('/q')) {
     return new Response('Not Found', { status: 404 })
   }
 

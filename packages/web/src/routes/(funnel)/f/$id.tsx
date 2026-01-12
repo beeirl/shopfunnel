@@ -19,12 +19,12 @@ const getFunnel = createServerFn()
     const funnel = await FunnelCore.getPublishedVersion(data.shortId)
     if (!funnel) throw notFound()
 
-    const stage = process.env.SST_STAGE
-    const domain = process.env.DOMAIN
+    const appStage = process.env.APP_STAGE
+    const appDomain = process.env.APP_DOMAIN
     const host = getRequestHeader('host')
-    if (stage === 'production' && domain && host && !host.endsWith(domain)) {
-      const customDomain = await Domain.fromHostname(host)
-      if (!customDomain || customDomain.workspaceId !== funnel.workspaceId) {
+    if (appStage === 'production' && appDomain && host && !host.endsWith(appDomain)) {
+      const domain = await Domain.fromHostname(host)
+      if (!domain || domain.workspaceId !== funnel.workspaceId) {
         throw notFound()
       }
     }
