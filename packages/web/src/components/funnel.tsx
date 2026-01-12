@@ -220,18 +220,20 @@ export function shouldAutoAdvance(blocks: BlockType[]): boolean {
   return blocks.some(advancesAutomatically)
 }
 
-export function getThemeCssVars(theme: ThemeType) {
-  return {
-    '--sf-radius': theme.radius,
-    '--sf-primary': theme.colors.primary,
-    '--sf-primary-foreground': theme.colors.primaryForeground,
-    '--sf-muted': '#F5F5F5',
-    '--sf-muted-foreground': '#737373',
-    '--sf-background': '#FFFFFF',
-    '--sf-foreground': '#0A0A0A',
-    '--sf-border': '#E5E5E5',
-    '--sf-ring': '#A1A1A1',
-  } as React.CSSProperties
+export function FunnelStyle({ theme }: { theme: ThemeType }) {
+  return (
+    <style>{`:root {
+    --sf-radius: ${theme.radius};
+    --sf-primary: ${theme.colors.primary};
+    --sf-primary-foreground: ${theme.colors.primaryForeground};
+    --sf-muted: #F5F5F5;
+    --sf-muted-foreground: #737373;
+    --sf-background: #FFFFFF;
+    --sf-foreground: #0A0A0A;
+    --sf-border: #E5E5E5;
+    --sf-ring: #A1A1A1;
+  }`}</style>
+  )
 }
 
 export interface FunnelProps {
@@ -375,82 +377,87 @@ export function Funnel({ funnel, mode = 'live', onComplete, onPageChange, onPage
   }
 
   return (
-    <div className="relative flex min-h-dvh flex-col bg-(--sf-background) px-6" style={getThemeCssVars(funnel.theme)}>
-      <div className="mx-auto flex w-full max-w-sm flex-1 flex-col">
-        <div className="flex h-16 w-full items-center justify-center">
-          {funnel.theme.logo ? (
-            <img src={funnel.theme.logo} alt="Logo" className="h-9 w-auto object-contain" />
-          ) : (
-            <span className="text-xl font-bold text-(--sf-foreground)">{funnel.title}</span>
-          )}
-        </div>
-        <div className="h-1.5 w-full rounded-(--sf-radius) bg-(--sf-muted)">
-          <motion.div
-            className="h-full rounded-(--sf-radius) bg-(--sf-primary)"
-            initial={{ width: 0 }}
-            animate={{ width: `${(currentPageIndex / funnel.pages.length) * 100}%` }}
-            transition={{ duration: 0.3, ease: 'easeOut' }}
-          />
-        </div>
-        <AnimatePresence mode="wait">
-          <motion.div
-            key={`funnel-page-${currentPageIndex}`}
-            className="flex flex-1 flex-col"
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 20 }}
-            transition={{ duration: 0.3, ease: 'easeOut' }}
-          >
-            {currentPage && (
-              <>
-                <div className="pt-8">
-                  {resolvedBlocks.map((block, index) => (
-                    <div key={block.id}>
-                      <Block
-                        block={block}
-                        index={index}
-                        variant={funnel.theme.style}
-                        value={values[block.id]}
-                        onValueChange={(value) => handleBlockValueChange(block.id, value)}
-                        onLoadingValueChange={(value) => handleBlockLoadingValueChange(block.id, value)}
-                      />
-                      {errors[block.id] && <span className="mt-2 block text-sm text-red-500">{errors[block.id]}</span>}
-                    </div>
-                  ))}
-                </div>
-                <div className="sticky bottom-0 mt-auto flex w-full flex-col gap-4 bg-(--sf-background) py-6">
-                  {!shouldAutoAdvance(visibleBlocks) && (
-                    <NextButton onClick={() => next(values)}>{currentPage.properties.buttonText}</NextButton>
-                  )}
-                  {currentPageIndex === 0 && funnel.settings.privacyUrl && funnel.settings.termsUrl && (
-                    <span className="text-center text-xs text-balance text-(--sf-muted-foreground)">
-                      By clicking any of the options above, you agree with the{' '}
-                      <a
-                        className="underline"
-                        href={funnel.settings.termsUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                      >
-                        Terms of Use
-                      </a>{' '}
-                      and{' '}
-                      <a
-                        className="underline"
-                        href={funnel.settings.privacyUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                      >
-                        Privacy Policy
-                      </a>
-                      .
-                    </span>
-                  )}
-                </div>
-              </>
+    <>
+      <FunnelStyle theme={funnel.theme} />
+      <div className="relative flex min-h-dvh flex-col bg-(--sf-background) px-6">
+        <div className="mx-auto flex w-full max-w-sm flex-1 flex-col">
+          <div className="flex h-16 w-full items-center justify-center">
+            {funnel.theme.logo ? (
+              <img src={funnel.theme.logo} alt="Logo" className="h-9 w-auto object-contain" />
+            ) : (
+              <span className="text-xl font-bold text-(--sf-foreground)">{funnel.title}</span>
             )}
-          </motion.div>
-        </AnimatePresence>
+          </div>
+          <div className="h-1.5 w-full rounded-(--sf-radius) bg-(--sf-muted)">
+            <motion.div
+              className="h-full rounded-(--sf-radius) bg-(--sf-primary)"
+              initial={{ width: 0 }}
+              animate={{ width: `${(currentPageIndex / funnel.pages.length) * 100}%` }}
+              transition={{ duration: 0.3, ease: 'easeOut' }}
+            />
+          </div>
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={`funnel-page-${currentPageIndex}`}
+              className="flex flex-1 flex-col"
+              initial={{ opacity: 0, y: -20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 20 }}
+              transition={{ duration: 0.3, ease: 'easeOut' }}
+            >
+              {currentPage && (
+                <>
+                  <div className="pt-8">
+                    {resolvedBlocks.map((block, index) => (
+                      <div key={block.id}>
+                        <Block
+                          block={block}
+                          index={index}
+                          variant={funnel.theme.style}
+                          value={values[block.id]}
+                          onValueChange={(value) => handleBlockValueChange(block.id, value)}
+                          onLoadingValueChange={(value) => handleBlockLoadingValueChange(block.id, value)}
+                        />
+                        {errors[block.id] && (
+                          <span className="mt-2 block text-sm text-red-500">{errors[block.id]}</span>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                  <div className="sticky bottom-0 mt-auto flex w-full flex-col gap-4 bg-(--sf-background) py-6">
+                    {!shouldAutoAdvance(visibleBlocks) && (
+                      <NextButton onClick={() => next(values)}>{currentPage.properties.buttonText}</NextButton>
+                    )}
+                    {currentPageIndex === 0 && funnel.settings.privacyUrl && funnel.settings.termsUrl && (
+                      <span className="text-center text-xs text-balance text-(--sf-muted-foreground)">
+                        By clicking any of the options above, you agree with the{' '}
+                        <a
+                          className="underline"
+                          href={funnel.settings.termsUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                        >
+                          Terms of Use
+                        </a>{' '}
+                        and{' '}
+                        <a
+                          className="underline"
+                          href={funnel.settings.privacyUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                        >
+                          Privacy Policy
+                        </a>
+                        .
+                      </span>
+                    )}
+                  </div>
+                </>
+              )}
+            </motion.div>
+          </AnimatePresence>
+        </div>
       </div>
-    </div>
+    </>
   )
 }

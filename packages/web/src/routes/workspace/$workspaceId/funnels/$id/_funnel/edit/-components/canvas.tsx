@@ -1,5 +1,5 @@
 import { Block, getBlockInfo } from '@/components/block'
-import { getThemeCssVars, shouldAutoAdvance } from '@/components/funnel'
+import { FunnelStyle, shouldAutoAdvance } from '@/components/funnel'
 import { NextButton } from '@/components/next-button'
 import { Button } from '@/components/ui/button'
 import { ButtonGroup } from '@/components/ui/button-group'
@@ -139,7 +139,7 @@ function PageNode({ data }: { data: PageNodeData }) {
         style={{ width: PAGE_WIDTH, height: PAGE_HEIGHT }}
       >
         {/* Scrollable content area */}
-        <div className="nowheel flex h-full flex-col overflow-y-auto" style={getThemeCssVars(theme)}>
+        <div className="nowheel flex h-full flex-col overflow-y-auto">
           <div className="mx-auto flex w-full max-w-sm flex-1 flex-col px-6 pt-8">
             {page.blocks.length === 0 ? (
               <Empty.Root>
@@ -475,20 +475,23 @@ export function Canvas({
   }, [pages, rules, theme, selectedPageId, selectedBlockId, handlePageSelect, handleBlockSelect, onLogicClick])
 
   return (
-    <div className="size-full bg-background" data-slot="canvas">
-      <ReactFlowProvider>
-        <CanvasInner
-          nodes={nodes}
-          edges={edges}
-          pages={pages}
-          selectedPageId={selectedPageId}
-          selectedBlockId={selectedBlockId}
-          selectionSource={selectionSource}
-          onPaneClick={handlePaneClick}
-          onNodeClick={handleNodeClick}
-          onThemeButtonClick={onThemeButtonClick}
-        />
-      </ReactFlowProvider>
-    </div>
+    <>
+      <FunnelStyle theme={theme} />
+      <div className="size-full bg-background" data-slot="canvas">
+        <ReactFlowProvider>
+          <CanvasInner
+            nodes={nodes}
+            edges={edges}
+            pages={pages}
+            selectedPageId={selectedPageId}
+            selectedBlockId={selectedBlockId}
+            selectionSource={selectionSource}
+            onPaneClick={handlePaneClick}
+            onNodeClick={handleNodeClick}
+            onThemeButtonClick={onThemeButtonClick}
+          />
+        </ReactFlowProvider>
+      </div>
+    </>
   )
 }
