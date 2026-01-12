@@ -33,13 +33,13 @@ export function MultipleChoiceBlock(props: MultipleChoiceBlockProps) {
             className={cn(
               // Base
               choice.media ? 'min-h-18 grid-cols-[auto_1fr]' : 'min-h-14 grid-cols-1',
-              'group relative grid cursor-pointer overflow-hidden rounded-(--fun-radius) border-2 border-transparent bg-(--fun-muted) text-left transition-all outline-none',
+              'group relative grid cursor-pointer overflow-hidden rounded-(--sf-radius) border-2 border-transparent bg-(--sf-muted) text-left transition-all outline-none',
               // Hover
               'hover:scale-[1.01]',
               // Focus
-              'data-focus-visible:ring-3 data-focus-visible:ring-(--fun-ring)/50',
+              'data-focus-visible:ring-3 data-focus-visible:ring-(--sf-ring)/50',
               // Selected
-              'data-selected:border-(--fun-primary) data-selected:bg-(--fun-primary)/20 data-selected:text-(--fun-primary)',
+              'data-selected:border-(--sf-primary) data-selected:bg-(--sf-primary)/20 data-selected:text-(--sf-primary)',
               props.static && 'pointer-events-none',
             )}
             onClick={() => {
@@ -54,7 +54,7 @@ export function MultipleChoiceBlock(props: MultipleChoiceBlockProps) {
             }}
           >
             {choice.media && (
-              <div className="flex aspect-square h-full items-center justify-center">
+              <div className="flex w-18 items-center justify-center self-stretch">
                 {choice.media.type === 'emoji' && <span className="text-[2.5rem]">{choice.media.value}</span>}
                 {choice.media.type === 'image' && (
                   <img className="size-full object-cover" src={choice.media.value} alt="" />
@@ -62,11 +62,11 @@ export function MultipleChoiceBlock(props: MultipleChoiceBlockProps) {
               </div>
             )}
             <div className="flex flex-col justify-center py-3 pr-4 first:pl-4">
-              <span className="text-base font-semibold text-(--fun-foreground) group-data-selected:text-(--fun-primary)">
+              <span className="text-base font-semibold text-(--sf-foreground) group-data-selected:text-(--sf-primary)">
                 {choice.label}
               </span>
               {choice.description && (
-                <span className="text-sm text-(--fun-muted-foreground) group-data-selected:text-(--fun-primary)/70">
+                <span className="text-sm text-(--sf-muted-foreground) group-data-selected:text-(--sf-primary)/70">
                   {choice.description}
                 </span>
               )}

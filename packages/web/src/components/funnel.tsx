@@ -222,15 +222,15 @@ export function shouldAutoAdvance(blocks: BlockType[]): boolean {
 
 export function getThemeCssVars(theme: ThemeType) {
   return {
-    '--fun-radius': theme.radius.value,
-    '--fun-primary': theme.colors.primary,
-    '--fun-primary-foreground': theme.colors.primaryForeground,
-    '--fun-muted': '#F5F5F5',
-    '--fun-muted-foreground': '#737373',
-    '--fun-background': '#FFFFFF',
-    '--fun-foreground': '#0A0A0A',
-    '--fun-border': '#E5E5E5',
-    '--fun-ring': '#A1A1A1',
+    '--sf-radius': theme.radius.value,
+    '--sf-primary': theme.colors.primary,
+    '--sf-primary-foreground': theme.colors.primaryForeground,
+    '--sf-muted': '#F5F5F5',
+    '--sf-muted-foreground': '#737373',
+    '--sf-background': '#FFFFFF',
+    '--sf-foreground': '#0A0A0A',
+    '--sf-border': '#E5E5E5',
+    '--sf-ring': '#A1A1A1',
   } as React.CSSProperties
 }
 
@@ -375,18 +375,18 @@ export function Funnel({ funnel, mode = 'live', onComplete, onPageChange, onPage
   }
 
   return (
-    <div className="relative flex min-h-dvh flex-col bg-(--fun-background) px-6" style={getThemeCssVars(funnel.theme)}>
+    <div className="relative flex min-h-dvh flex-col bg-(--sf-background) px-6" style={getThemeCssVars(funnel.theme)}>
       <div className="mx-auto flex w-full max-w-sm flex-1 flex-col">
         <div className="flex h-16 w-full items-center justify-center">
           {funnel.theme.logo ? (
             <img src={funnel.theme.logo} alt="Logo" className="h-9 w-auto object-contain" />
           ) : (
-            <span className="text-xl font-bold text-(--fun-foreground)">{funnel.title}</span>
+            <span className="text-xl font-bold text-(--sf-foreground)">{funnel.title}</span>
           )}
         </div>
-        <div className="h-1.5 w-full rounded-(--fun-radius) bg-(--fun-muted)">
+        <div className="h-1.5 w-full rounded-(--sf-radius) bg-(--sf-muted)">
           <motion.div
-            className="h-full rounded-(--fun-radius) bg-(--fun-primary)"
+            className="h-full rounded-(--sf-radius) bg-(--sf-primary)"
             initial={{ width: 0 }}
             animate={{ width: `${(currentPageIndex / funnel.pages.length) * 100}%` }}
             transition={{ duration: 0.3, ease: 'easeOut' }}
@@ -417,12 +417,12 @@ export function Funnel({ funnel, mode = 'live', onComplete, onPageChange, onPage
                     </div>
                   ))}
                 </div>
-                <div className="sticky bottom-0 mt-auto flex w-full flex-col gap-4 bg-(--fun-background) py-6">
+                <div className="sticky bottom-0 mt-auto flex w-full flex-col gap-4 bg-(--sf-background) py-6">
                   {!shouldAutoAdvance(visibleBlocks) && (
                     <NextButton onClick={() => next(values)}>{currentPage.properties.buttonText}</NextButton>
                   )}
                   {currentPageIndex === 0 && funnel.settings.privacyUrl && funnel.settings.termsUrl && (
-                    <span className="text-center text-xs text-balance text-(--fun-muted-foreground)">
+                    <span className="text-center text-xs text-balance text-(--sf-muted-foreground)">
                       By clicking any of the options above, you agree with the{' '}
                       <a
                         className="underline"

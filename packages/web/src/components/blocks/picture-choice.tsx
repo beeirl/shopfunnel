@@ -43,31 +43,31 @@ export function PictureChoiceBlock(props: PictureChoiceBlockProps) {
             }}
             className={cn(
               // Base
-              'group relative flex cursor-pointer flex-col overflow-hidden rounded-(--fun-radius) border-2 border-(--fun-border) transition-all outline-none',
+              'group relative flex cursor-pointer flex-col overflow-hidden rounded-(--sf-radius) border-2 border-(--sf-border) transition-all outline-none',
               // Hover
               'hover:scale-[1.02]',
               // Focus
-              'data-focus-visible:ring-3 data-focus-visible:ring-(--fun-ring)/50',
+              'data-focus-visible:ring-3 data-focus-visible:ring-(--sf-ring)/50',
               // Selected
-              'data-selected:border-(--fun-primary)',
+              'data-selected:border-(--sf-primary)',
               props.static && 'pointer-events-none',
             )}
           >
-            <div className="relative aspect-4/3 w-full overflow-hidden bg-(--fun-muted)/50 group-data-selected:bg-(--fun-primary)/5">
+            <div className="relative aspect-4/3 w-full overflow-hidden bg-(--sf-muted)/50 group-data-selected:bg-(--sf-primary)/5">
               {choice.media?.value ? (
                 <img src={choice.media.value} alt={choice.label} className="size-full object-cover" />
               ) : (
                 <div className="flex size-full items-center justify-center">
-                  <PhotoIcon className="size-12 text-(--fun-foreground) opacity-20 group-data-selected:text-(--fun-primary)" />
+                  <PhotoIcon className="size-12 text-(--sf-foreground) opacity-20 group-data-selected:text-(--sf-primary)" />
                 </div>
               )}
             </div>
-            <div className="flex flex-col gap-0.5 bg-(--fun-muted) px-3 py-2.5 group-data-selected:bg-(--fun-primary)/20">
-              <span className="text-center text-sm font-semibold text-(--fun-foreground) group-data-selected:text-(--fun-primary)">
+            <div className="flex flex-1 flex-col gap-0.5 bg-(--sf-muted) px-3 py-2.5 group-data-selected:bg-(--sf-primary)/20">
+              <span className="text-center text-sm font-semibold text-(--sf-foreground) group-data-selected:text-(--sf-primary)">
                 {choice.label}
               </span>
               {choice.description && (
-                <span className="text-center text-xs text-(--fun-muted-foreground) group-data-selected:text-(--fun-primary)/70">
+                <span className="text-center text-xs text-(--sf-muted-foreground) group-data-selected:text-(--sf-primary)/70">
                   {choice.description}
                 </span>
               )}

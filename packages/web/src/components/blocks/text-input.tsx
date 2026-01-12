@@ -15,9 +15,9 @@ export function TextInputBlock(props: TextInputBlockProps) {
       <BaseInput
         className={cn(
           // Base
-          'h-14 w-full rounded-(--fun-radius) border-2 border-(--fun-border) bg-(--fun-background) px-4 text-base text-(--fun-foreground) transition-all outline-none placeholder:text-(--fun-foreground)/50',
+          'h-14 w-full rounded-(--sf-radius) border-2 border-(--sf-border) bg-(--sf-background) px-4 text-base text-(--sf-foreground) transition-all outline-none placeholder:text-(--sf-foreground)/50',
           // Focus
-          'focus-visible:border-(--fun-ring) focus-visible:ring-3 focus-visible:ring-(--fun-ring)/50',
+          'focus-visible:border-(--sf-ring) focus-visible:ring-3 focus-visible:ring-(--sf-ring)/50',
           props.static && 'pointer-events-none',
         )}
         autoFocus
