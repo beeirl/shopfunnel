@@ -150,6 +150,18 @@ export interface SpacerBlock {
   }
 }
 
+export interface HtmlBlock {
+  id: string
+  type: 'html'
+  properties: {
+    html: string
+    media: Array<{
+      type: 'image'
+      value: string
+    }>
+  }
+}
+
 export type Block =
   | TextInputBlock
   | MultipleChoiceBlock
@@ -162,6 +174,7 @@ export type Block =
   | ImageBlock
   | LoaderBlock
   | SpacerBlock
+  | HtmlBlock
 
 export const INPUT_BLOCKS = ['text_input', 'multiple_choice', 'picture_choice', 'dropdown'] as const
 export type InputBlock = (typeof INPUT_BLOCKS)[number]

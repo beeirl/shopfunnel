@@ -235,6 +235,23 @@ function RouteComponent() {
     saveDebouncer.maybeExecute({ pages: updatedFunnel.pages })
   }
 
+  // HTML block change - updates state for live preview but does NOT trigger save
+  const handleHtmlBlockChange = (id: string, html: string) => {
+    const updatedPages = funnel.pages.map((page) => ({
+      ...page,
+      blocks: page.blocks.map((block) =>
+        block.id === id && block.type === 'html' ? { ...block, properties: { ...block.properties, html } } : block,
+      ),
+    }))
+    setFunnel({ ...funnel, pages: updatedPages, published: false })
+    // Note: NO saveDebouncer.maybeExecute() call here - only save on explicit Save button click
+  }
+
+  // HTML block save - triggers save with current funnel state
+  const handleHtmlBlockSave = () => {
+    saveDebouncer.maybeExecute({ pages: funnel.pages })
+  }
+
   const handlePageUpdate = (pageId: string, updates: Partial<Page>) => {
     const updatedPages = funnel.pages.map((page) => (page.id === pageId ? { ...page, ...updates } : page))
     const updatedFunnel = { ...funnel, pages: updatedPages, published: false }
@@ -407,6 +424,8 @@ function RouteComponent() {
           onBlockUpdate={(block) => handleBlockUpdate(selectedBlock.id, block)}
           onImageUpload={handleImageUpload}
           onBlockRemove={() => setDeleteDialogOpen(true)}
+          onHtmlChange={(html) => handleHtmlBlockChange(selectedBlock.id, html)}
+          onHtmlSave={handleHtmlBlockSave}
         />
       ) : selectedPage ? (
         <PagePanel

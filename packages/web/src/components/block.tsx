@@ -1,6 +1,7 @@
 import { DropdownBlock } from '@/components/blocks/dropdown'
 import { GaugeBlock } from '@/components/blocks/gauge'
 import { HeadingBlock } from '@/components/blocks/heading'
+import { HtmlBlock } from '@/components/blocks/html'
 import { ImageBlock } from '@/components/blocks/image'
 import { ListBlock } from '@/components/blocks/list'
 import { LoaderBlock } from '@/components/blocks/loader'
@@ -14,6 +15,7 @@ import type {
   DropdownBlock as DropdownBlockType,
   GaugeBlock as GaugeBlockType,
   HeadingBlock as HeadingBlockType,
+  HtmlBlock as HtmlBlockType,
   ImageBlock as ImageBlockType,
   ListBlock as ListBlockType,
   LoaderBlock as LoaderBlockType,
@@ -26,6 +28,7 @@ import type {
 import {
   IconArrowsVertical as ArrowsVerticalIcon,
   IconChevronDown as ChevronDownIcon,
+  IconCode as CodeIcon,
   IconGauge as GaugeIcon,
   IconHeading as HeadingIcon,
   IconLayoutGrid as LayoutGridIcon,
@@ -136,6 +139,13 @@ export function getBlockInfo(type: Block['type']): BlockInfo {
         description: 'Add vertical space between blocks.',
         icon: ArrowsVerticalIcon,
       }
+    case 'html':
+      return {
+        type: 'html',
+        name: 'HTML',
+        description: 'Embed custom HTML content in a sandboxed iframe.',
+        icon: CodeIcon,
+      }
   }
 }
 
@@ -206,6 +216,8 @@ BLOCKS['loader'] = (props) => (
 )
 
 BLOCKS['spacer'] = (props) => <SpacerBlock block={props.block as SpacerBlockType} static={props.static} />
+
+BLOCKS['html'] = (props) => <HtmlBlock block={props.block as HtmlBlockType} static={props.static} />
 
 export function Block(props: BlockProps) {
   return (

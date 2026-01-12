@@ -2,6 +2,7 @@ import type { Block as BlockType } from '@shopfunnel/core/funnel/types'
 import { DropdownBlockPanel } from './block-panels/dropdown'
 import { GaugeBlockPanel } from './block-panels/gauge'
 import { HeadingBlockPanel } from './block-panels/heading'
+import { HtmlBlockPanel } from './block-panels/html'
 import { ImageBlockPanel } from './block-panels/image'
 import { LoaderBlockPanel } from './block-panels/loader'
 import { MultipleChoiceBlockPanel } from './block-panels/multiple-choice'
@@ -15,11 +16,15 @@ export function BlockPanel({
   onBlockUpdate,
   onImageUpload,
   onBlockRemove,
+  onHtmlChange,
+  onHtmlSave,
 }: {
   block: BlockType
   onBlockUpdate: (block: Partial<BlockType>) => void
   onImageUpload: (file: File) => Promise<string>
   onBlockRemove: () => void
+  onHtmlChange?: (html: string) => void
+  onHtmlSave?: () => void
 }) {
   switch (block.type) {
     case 'text_input':
@@ -63,5 +68,16 @@ export function BlockPanel({
       return <ParagraphBlockPanel block={block} onBlockUpdate={onBlockUpdate} onBlockRemove={onBlockRemove} />
     case 'spacer':
       return <SpacerBlockPanel block={block} onBlockUpdate={onBlockUpdate} onBlockRemove={onBlockRemove} />
+    case 'html':
+      return (
+        <HtmlBlockPanel
+          block={block}
+          onBlockUpdate={onBlockUpdate}
+          onImageUpload={onImageUpload}
+          onBlockRemove={onBlockRemove}
+          onHtmlChange={onHtmlChange!}
+          onHtmlSave={onHtmlSave!}
+        />
+      )
   }
 }

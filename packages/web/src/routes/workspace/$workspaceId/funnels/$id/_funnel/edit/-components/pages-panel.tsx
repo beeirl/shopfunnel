@@ -84,6 +84,8 @@ function createBlock(type: Block['type']): Block {
       return { id: ulid(), type: 'loader', properties: { duration: 3000 } }
     case 'spacer':
       return { id: ulid(), type: 'spacer', properties: { size: 'md' } }
+    case 'html':
+      return { id: ulid(), type: 'html', properties: { html: '', media: [] } }
   }
 }
 
@@ -177,7 +179,7 @@ function AddBlockMenu({ children, existingBlocks, onBlockAdd, onBlockSelect, onP
     ['text_input', 'multiple_choice', 'picture_choice', 'dropdown', 'loader'].includes(block.type),
   )
 
-  const displayBlocks: Block['type'][] = ['heading', 'paragraph', 'gauge', 'list', 'image', 'spacer']
+  const displayBlocks: Block['type'][] = ['heading', 'paragraph', 'gauge', 'list', 'image', 'html', 'spacer']
   const inputBlocks: Block['type'][] = ['text_input', 'multiple_choice', 'picture_choice', 'dropdown', 'loader']
 
   const availableBlocks: Block['type'][] = hasInputOrLoader ? displayBlocks : [...inputBlocks, ...displayBlocks]
