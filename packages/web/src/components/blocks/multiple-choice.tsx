@@ -33,8 +33,7 @@ export function MultipleChoiceBlock(props: MultipleChoiceBlockProps) {
             isDisabled={props.static}
             className={cn(
               // Base
-              'group relative flex min-h-14 cursor-pointer items-center overflow-hidden rounded-(--sf-radius) border-2 text-left transition-all outline-none hover:scale-[1.01]',
-
+              'group relative flex min-h-14 cursor-pointer items-center overflow-hidden rounded-(--sf-radius) border-2 px-4 py-2 text-left transition-all outline-none hover:scale-[1.01]',
               props.variant === 'soft' &&
                 'border-transparent bg-(--sf-muted) data-selected:border-(--sf-primary) data-selected:bg-(--sf-primary)/20 data-selected:text-(--sf-primary)',
               props.variant === 'outline' &&
@@ -55,14 +54,14 @@ export function MultipleChoiceBlock(props: MultipleChoiceBlockProps) {
             }}
           >
             {choice.media && (
-              <div className="flex size-14 items-center justify-center self-stretch">
+              <div className="-my-4 mr-2 -ml-4 flex size-14 items-center justify-center">
                 {choice.media.type === 'emoji' && <span className="pl-1 text-[2rem]">{choice.media.value}</span>}
                 {choice.media.type === 'image' && (
                   <img className="size-full object-cover" src={choice.media.value} alt="" />
                 )}
               </div>
             )}
-            <div className="flex flex-col justify-center p-2">
+            <div className="flex flex-col justify-center">
               <span className="text-base font-semibold">{choice.label}</span>
               {choice.description && <span className="text-sm opacity-70">{choice.description}</span>}
             </div>
