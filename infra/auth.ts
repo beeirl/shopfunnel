@@ -9,6 +9,9 @@ export const auth = new sst.cloudflare.Worker('AuthApi', {
   url: true,
   domain: `auth.${domain}`,
   link: [authStorage, database, secret.GOOGLE_CLIENT_ID],
+  environment: {
+    APP_STAGE: $app.stage,
+  },
   transform: {
     worker: {
       observability: {

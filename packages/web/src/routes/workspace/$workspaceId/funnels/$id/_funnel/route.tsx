@@ -13,6 +13,7 @@ import { createServerFn } from '@tanstack/react-start'
 import * as React from 'react'
 import { z } from 'zod'
 import { getFunnelQueryOptions } from '../-common'
+import { getSessionQueryOptions } from '../../../-common'
 
 const publishFunnel = createServerFn({ method: 'POST' })
   .inputValidator(
@@ -68,7 +69,10 @@ export const Route = createFileRoute('/workspace/$workspaceId/funnels/$id/_funne
   component: RouteComponent,
   ssr: false,
   loader: async ({ context, params }) => {
-    await context.queryClient.ensureQueryData(getFunnelQueryOptions(params.workspaceId, params.id))
+    await Promise.all([
+      context.queryClient.ensureQueryData(getFunnelQueryOptions(params.workspaceId, params.id)),
+      context.queryClient.ensureQueryData(getSessionQueryOptions(params.workspaceId)),
+    ])
   },
 })
 
@@ -200,10 +204,10 @@ function Settings({ settings }: { settings: SettingsType }) {
   )
 }
 
-const tabs = [
-  { title: 'Edit', linkOptions: linkOptions({ from: Route.fullPath, to: './edit' }) },
-  { title: 'Insights', linkOptions: linkOptions({ from: Route.fullPath, to: './insights' }) },
-  { title: 'Responses', linkOptions: linkOptions({ from: Route.fullPath, to: './responses' }) },
+const allTabs = [
+  { title: 'Edit', linkOptions: linkOptions({ from: Route.fullPath, to: './edit' }), adminOnly: true },
+  { title: 'Insights', linkOptions: linkOptions({ from: Route.fullPath, to: './insights' }), adminOnly: false },
+  { title: 'Responses', linkOptions: linkOptions({ from: Route.fullPath, to: './responses' }), adminOnly: false },
 ]
 
 function RouteComponent() {
@@ -212,6 +216,11 @@ function RouteComponent() {
 
   const funnelQuery = useSuspenseQuery(getFunnelQueryOptions(params.workspaceId, params.id))
   const funnel = funnelQuery.data
+
+  const sessionQuery = useSuspenseQuery(getSessionQueryOptions(params.workspaceId))
+  const isAdmin = sessionQuery.data.isAdmin
+
+  const tabs = allTabs.filter((tab) => !tab.adminOnly || isAdmin)
 
   const publishMutation = useMutation(publishFunnelMutationOptions(params.workspaceId, params.id))
 
@@ -242,13 +251,15 @@ function RouteComponent() {
           <Settings settings={funnel.settings} />
         </div>
         <div className="flex items-center justify-end gap-1">
-          <Button
-            variant="ghost"
-            aria-label="Preview"
-            render={<Link from={Route.fullPath} to="preview" target="_blank" />}
-          >
-            Preview
-          </Button>
+          {isAdmin && (
+            <Button
+              variant="ghost"
+              aria-label="Preview"
+              render={<Link from={Route.fullPath} to="preview" target="_blank" />}
+            >
+              Preview
+            </Button>
+          )}
           <Button
             variant="ghost"
             aria-label="Share"
@@ -256,19 +267,21 @@ function RouteComponent() {
           >
             Share
           </Button>
-          <Button
-            disabled={funnel.published || publishMutation.isPending}
-            variant={funnel.published ? 'ghost' : 'default'}
-            onClick={() => {
-              publishMutation.mutate(undefined, {
-                onSuccess: () => {
-                  queryClient.invalidateQueries(getFunnelQueryOptions(params.workspaceId, params.id))
-                },
-              })
-            }}
-          >
-            Publish
-          </Button>
+          {isAdmin && (
+            <Button
+              disabled={funnel.published || publishMutation.isPending}
+              variant={funnel.published ? 'ghost' : 'default'}
+              onClick={() => {
+                publishMutation.mutate(undefined, {
+                  onSuccess: () => {
+                    queryClient.invalidateQueries(getFunnelQueryOptions(params.workspaceId, params.id))
+                  },
+                })
+              }}
+            >
+              Publish
+            </Button>
+          )}
         </div>
       </div>
       <Outlet />

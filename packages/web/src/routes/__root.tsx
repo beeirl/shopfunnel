@@ -42,7 +42,7 @@ function RootDocument({ children }: Readonly<{ children: ReactNode }>) {
         <script dangerouslySetInnerHTML={{ __html: esbuildPolyfill }} />
         <HeadContent />
       </head>
-      <body className="bg-background antialiased" data-accent-color="azure" data-gray-color="zinc">
+      <body className="bg-background antialiased">
         {children}
         <Scripts />
       </body>

@@ -56,19 +56,18 @@ export default {
         if (!email) throw new Error('No email found')
         if (!subject) throw new Error('No subject found')
 
-        if (!['christoph@5head.org', 'kaisternyen@gmail.com'].includes(email)) throw new Error('Not allowed')
-
         const accountId = await Account.findOrCreate({
           email,
           provider: response.provider,
           subject,
         })
-
+        console.log('APP_STAGE', process.env.APP_STAGE)
         // Get workspace
         await Actor.provide('account', { accountId, email }, async () => {
           await User.joinInvitedWorkspaces()
           const workspaces = await Account.workspaces()
           if (workspaces.length === 0) {
+            if (process.env.APP_STAGE === 'production') throw new Error('Not allowed')
             await Workspace.create({ name: 'Default' })
           }
         })

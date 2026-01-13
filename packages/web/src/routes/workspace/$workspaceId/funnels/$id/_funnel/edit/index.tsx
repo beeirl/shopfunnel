@@ -5,11 +5,12 @@ import type { Block, Info, Page, Rule, RuleAction, Theme } from '@shopfunnel/cor
 import { Identifier } from '@shopfunnel/core/identifier'
 import { useDebouncer } from '@tanstack/react-pacer'
 import { mutationOptions, useMutation, useQueryClient, useSuspenseQuery } from '@tanstack/react-query'
-import { createFileRoute } from '@tanstack/react-router'
+import { createFileRoute, redirect } from '@tanstack/react-router'
 import { createServerFn } from '@tanstack/react-start'
 import * as React from 'react'
 import { z } from 'zod'
 import { getFunnelQueryOptions } from '../../-common'
+import { getSessionQueryOptions } from '../../../../-common'
 import { BlockPanel } from './-components/block-panel'
 import { Canvas } from './-components/canvas'
 import { LogicPanel } from './-components/logic-panel'
@@ -80,6 +81,12 @@ const uploadFunnelFile = createServerFn({ method: 'POST' })
 export const Route = createFileRoute('/workspace/$workspaceId/funnels/$id/_funnel/edit/')({
   component: RouteComponent,
   ssr: false,
+  beforeLoad: async ({ context, params }) => {
+    const session = await context.queryClient.ensureQueryData(getSessionQueryOptions(params.workspaceId))
+    if (!session.isAdmin) {
+      throw redirect({ to: '/workspace/$workspaceId/funnels/$id/insights', params })
+    }
+  },
 })
 
 function RouteComponent() {

@@ -9,6 +9,7 @@ import { Item } from '@/components/ui/item'
 import { withActor } from '@/context/auth.withActor'
 import { Funnel } from '@shopfunnel/core/funnel/index'
 import { Identifier } from '@shopfunnel/core/identifier'
+import { getSessionQueryOptions } from '../-common'
 import { Heading } from './-components/heading'
 
 const listFunnels = createServerFn()
@@ -38,7 +39,10 @@ export const Route = createFileRoute('/workspace/$workspaceId/_dashboard/')({
   component: RouteComponent,
   ssr: false,
   loader: async ({ context, params }) => {
-    await context.queryClient.ensureQueryData(listFunnelsQueryOptions(params.workspaceId))
+    await Promise.all([
+      context.queryClient.ensureQueryData(listFunnelsQueryOptions(params.workspaceId)),
+      context.queryClient.ensureQueryData(getSessionQueryOptions(params.workspaceId)),
+    ])
   },
 })
 
@@ -49,6 +53,9 @@ function RouteComponent() {
 
   const listFunnelsQuery = useSuspenseQuery(listFunnelsQueryOptions(params.workspaceId))
   const funnels = listFunnelsQuery.data ?? []
+
+  const sessionQuery = useSuspenseQuery(getSessionQueryOptions(params.workspaceId))
+  const isAdmin = sessionQuery.data.isAdmin
 
   const createFunnelMutation = useMutation(createFunnelMutationOptions(params.workspaceId))
 
@@ -67,9 +74,9 @@ function RouteComponent() {
               <FileTextIcon />
             </Empty.Media>
             <Empty.Title>No funnels yet</Empty.Title>
-            <Empty.Description>Create your first funnel to get started.</Empty.Description>
+            {isAdmin && <Empty.Description>Create your first funnel to get started.</Empty.Description>}
           </Empty.Header>
-          <Button onClick={handleFunnelCreate}>Create funnel</Button>
+          {isAdmin && <Button onClick={handleFunnelCreate}>Create funnel</Button>}
         </Empty.Root>
       </div>
     )
@@ -81,12 +88,14 @@ function RouteComponent() {
         <Heading.Content>
           <Heading.Title>Funnels</Heading.Title>
         </Heading.Content>
-        <Heading.Actions>
-          <Button onClick={handleFunnelCreate}>
-            <PlusIcon />
-            Create
-          </Button>
-        </Heading.Actions>
+        {isAdmin && (
+          <Heading.Actions>
+            <Button onClick={handleFunnelCreate}>
+              <PlusIcon />
+              Create
+            </Button>
+          </Heading.Actions>
+        )}
       </Heading.Root>
 
       <Item.Group>

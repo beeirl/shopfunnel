@@ -12,7 +12,7 @@ const customDomainGuard = createMiddleware().server(async ({ request, next }) =>
   const host = request.headers.get('host') || ''
   const acceptHeader = request.headers.get('accept') || ''
   const isHtmlRequest = acceptHeader.includes('text/html')
-  if (!host.endsWith(appDomain) && isHtmlRequest && !url.pathname.startsWith('/q')) {
+  if (!host.endsWith(appDomain) && isHtmlRequest && !url.pathname.startsWith('/f')) {
     return new Response('Not Found', { status: 404 })
   }
 

@@ -80,10 +80,12 @@ export const Route = createFileRoute('/(funnel)/f/$id')({
   head: ({ loaderData }) => {
     let scripts: AnyRouteMatch['headScripts'] = []
 
+    const title = loaderData?.funnel.title
+
     const metaPixelId = loaderData?.funnel.settings.metaPixelId
     if (metaPixelId) scripts.push({ children: SCRIPTS.metaPixel(metaPixelId) })
 
-    return { scripts }
+    return { meta: [{ title }], scripts }
   },
 })
 
