@@ -8,8 +8,9 @@ import { UserTable } from '../src/user/index.sql'
 const [workspaceId, email, role = 'admin'] = process.argv.slice(2)
 
 // Validate arguments
-if (!workspaceId || !email) {
+if (!workspaceId?.startsWith('wrk_') || !email) {
   console.error('Usage: bun scripts/invite-user.ts <workspace-id> <email> [role]')
+  console.error('  workspace-id: wrk_xxxx...')
   console.error('  role: admin (default) | member')
   process.exit(1)
 }

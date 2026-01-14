@@ -81,7 +81,7 @@ export function ThemePanel({ theme, onThemeUpdate, onImageUpload }: ThemePanelPr
               <InputGroup.Input
                 readOnly
                 placeholder="Upload logo"
-                value={isUploading ? 'Uploading...' : theme.logo ? 'Logo uploaded' : ''}
+                value={isUploading ? 'Uploading...' : theme.logo ? 'Image' : ''}
                 className="cursor-pointer"
                 onClick={() => fileInputRef.current?.click()}
               />

@@ -1,13 +1,10 @@
 import { CopyObjectCommand, S3Client } from '@aws-sdk/client-s3'
-import { eq } from 'drizzle-orm'
+import { and, eq, inArray } from 'drizzle-orm'
 import { Resource } from 'sst'
-import { AnswerTable, AnswerValueTable } from '../src/answer/index.sql'
 import { Database } from '../src/database'
 import { FileTable } from '../src/file/index.sql'
 import { FunnelFileTable, FunnelTable, FunnelVersionTable } from '../src/funnel/index.sql'
 import { Identifier } from '../src/identifier'
-import { QuestionTable } from '../src/question/index.sql'
-import { SubmissionTable } from '../src/submission/index.sql'
 import { WorkspaceTable } from '../src/workspace/index.sql'
 
 // Parse arguments
@@ -59,38 +56,44 @@ if (!funnel) {
 }
 const sourceWorkspaceId = funnel.workspaceId
 
-// Fetch all related data
-const [versions, funnelFiles, files, submissions, questions, answers, answerValues] = await Promise.all([
-  Database.use((tx) => tx.select().from(FunnelVersionTable).where(eq(FunnelVersionTable.funnelId, funnelId))),
-  Database.use((tx) => tx.select().from(FunnelFileTable).where(eq(FunnelFileTable.funnelId, funnelId))),
-  Database.use((tx) =>
-    tx
-      .select({ file: FileTable })
-      .from(FileTable)
-      .innerJoin(FunnelFileTable, eq(FileTable.id, FunnelFileTable.fileId))
-      .where(eq(FunnelFileTable.funnelId, funnelId))
-      .then((rows) => rows.map((r) => r.file)),
-  ),
-  Database.use((tx) => tx.select().from(SubmissionTable).where(eq(SubmissionTable.funnelId, funnelId))),
-  Database.use((tx) => tx.select().from(QuestionTable).where(eq(QuestionTable.funnelId, funnelId))),
-  Database.use((tx) =>
-    tx
-      .select({ answer: AnswerTable })
-      .from(AnswerTable)
-      .innerJoin(SubmissionTable, eq(AnswerTable.submissionId, SubmissionTable.id))
-      .where(eq(SubmissionTable.funnelId, funnelId))
-      .then((rows) => rows.map((r) => r.answer)),
-  ),
-  Database.use((tx) =>
-    tx
-      .select({ answer_value: AnswerValueTable })
-      .from(AnswerValueTable)
-      .innerJoin(AnswerTable, eq(AnswerValueTable.answerId, AnswerTable.id))
-      .innerJoin(SubmissionTable, eq(AnswerTable.submissionId, SubmissionTable.id))
-      .where(eq(SubmissionTable.funnelId, funnelId))
-      .then((rows) => rows.map((r) => r.answer_value)),
-  ),
-])
+// Fetch only the current version
+const currentVersionData = await Database.use((tx) =>
+  tx
+    .select()
+    .from(FunnelVersionTable)
+    .where(and(eq(FunnelVersionTable.funnelId, funnelId), eq(FunnelVersionTable.version, funnel.currentVersion)))
+    .then((r) => r[0]),
+)
+if (!currentVersionData) {
+  console.error(`Current version ${funnel.currentVersion} not found for funnel ${funnelId}`)
+  process.exit(1)
+}
+
+// Extract file IDs that are actually used in the pages JSON
+const extractFileIdsFromPages = (pages: unknown[], workspaceId: string): Set<string> => {
+  const json = JSON.stringify(pages)
+  const regex = new RegExp(`workspace/${workspaceId}/(fil_[a-zA-Z0-9]+)`, 'g')
+  const fileIds = new Set<string>()
+  let match
+  while ((match = regex.exec(json)) !== null) {
+    fileIds.add(match[1])
+  }
+  return fileIds
+}
+
+const usedFileIds = extractFileIdsFromPages(currentVersionData.pages, sourceWorkspaceId)
+const usedFileIdsArray = Array.from(usedFileIds)
+
+// Fetch only the files that are actually used in the current version
+const files =
+  usedFileIdsArray.length > 0
+    ? await Database.use((tx) =>
+        tx
+          .select()
+          .from(FileTable)
+          .where(and(eq(FileTable.workspaceId, sourceWorkspaceId), inArray(FileTable.id, usedFileIdsArray))),
+      )
+    : []
 
 // Generate new IDs and mappings
 const newFunnelId = Identifier.create('funnel')
@@ -99,26 +102,6 @@ const newShortId = newFunnelId.slice(-8)
 const fileIdMap = new Map<string, string>()
 for (const file of files) {
   fileIdMap.set(file.id, Identifier.create('file'))
-}
-
-const submissionIdMap = new Map<string, string>()
-for (const sub of submissions) {
-  submissionIdMap.set(sub.id, Identifier.create('submission'))
-}
-
-const questionIdMap = new Map<string, string>()
-for (const q of questions) {
-  questionIdMap.set(q.id, Identifier.create('question'))
-}
-
-const answerIdMap = new Map<string, string>()
-for (const a of answers) {
-  answerIdMap.set(a.id, Identifier.create('answer'))
-}
-
-const answerValueIdMap = new Map<string, string>()
-for (const av of answerValues) {
-  answerValueIdMap.set(av.id, Identifier.create('answer_value'))
 }
 
 // Transform page JSON - replace file URLs
@@ -162,97 +145,41 @@ await Database.transaction(async (tx) => {
     )
   }
 
-  // Funnel
+  // Funnel (always starts as draft - user must publish manually)
   await tx.insert(FunnelTable).values({
     ...funnel,
     id: newFunnelId,
     workspaceId: targetWorkspaceId,
     shortId: newShortId,
+    currentVersion: 1,
+    publishedVersion: null,
+    publishedAt: null,
     createdAt: new Date(),
     updatedAt: new Date(),
     archivedAt: null,
   })
 
-  // Versions
-  if (versions.length > 0) {
-    await tx.insert(FunnelVersionTable).values(
-      versions.map((v) => ({
-        ...v,
-        workspaceId: targetWorkspaceId,
-        funnelId: newFunnelId,
-        pages: transformPages(v.pages),
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      })),
-    )
-  }
+  // Version (only the current version, reset to version 1)
+  await tx.insert(FunnelVersionTable).values({
+    workspaceId: targetWorkspaceId,
+    funnelId: newFunnelId,
+    version: 1,
+    pages: transformPages(currentVersionData.pages),
+    rules: currentVersionData.rules,
+    variables: currentVersionData.variables,
+    theme: currentVersionData.theme,
+    publishedAt: null,
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  })
 
-  // FunnelFile junction
-  if (funnelFiles.length > 0) {
+  // FunnelFile junction (only for files that are actually used)
+  if (files.length > 0) {
     await tx.insert(FunnelFileTable).values(
-      funnelFiles.map((ff) => ({
+      files.map((f) => ({
         workspaceId: targetWorkspaceId,
         funnelId: newFunnelId,
-        fileId: fileIdMap.get(ff.fileId)!,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      })),
-    )
-  }
-
-  // Questions
-  if (questions.length > 0) {
-    await tx.insert(QuestionTable).values(
-      questions.map((q) => ({
-        ...q,
-        id: questionIdMap.get(q.id)!,
-        workspaceId: targetWorkspaceId,
-        funnelId: newFunnelId,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-        archivedAt: null,
-      })),
-    )
-  }
-
-  // Submissions
-  if (submissions.length > 0) {
-    await tx.insert(SubmissionTable).values(
-      submissions.map((s) => ({
-        ...s,
-        id: submissionIdMap.get(s.id)!,
-        workspaceId: targetWorkspaceId,
-        funnelId: newFunnelId,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-        archivedAt: null,
-      })),
-    )
-  }
-
-  // Answers
-  if (answers.length > 0) {
-    await tx.insert(AnswerTable).values(
-      answers.map((a) => ({
-        ...a,
-        id: answerIdMap.get(a.id)!,
-        workspaceId: targetWorkspaceId,
-        submissionId: submissionIdMap.get(a.submissionId)!,
-        questionId: questionIdMap.get(a.questionId)!,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      })),
-    )
-  }
-
-  // Answer Values
-  if (answerValues.length > 0) {
-    await tx.insert(AnswerValueTable).values(
-      answerValues.map((av) => ({
-        ...av,
-        id: answerValueIdMap.get(av.id)!,
-        workspaceId: targetWorkspaceId,
-        answerId: answerIdMap.get(av.answerId)!,
+        fileId: fileIdMap.get(f.id)!,
         createdAt: new Date(),
         updatedAt: new Date(),
       })),
@@ -269,10 +196,6 @@ console.log(`Target:    ${newFunnelId}`)
 console.log(`ShortId:   ${newShortId}`)
 console.log(`Workspace: ${targetWorkspaceId} (${targetWorkspace.name})`)
 console.log('─'.repeat(40))
-console.log(`Versions:      ${versions.length}`)
+console.log(`Version:       ${funnel.currentVersion} -> 1 (draft)`)
 console.log(`Files:         ${files.length}`)
-console.log(`Submissions:   ${submissions.length}`)
-console.log(`Questions:     ${questions.length}`)
-console.log(`Answers:       ${answers.length}`)
-console.log(`Answer Values: ${answerValues.length}`)
 console.log('─'.repeat(40))

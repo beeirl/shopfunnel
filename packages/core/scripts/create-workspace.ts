@@ -3,7 +3,17 @@ import { Identifier } from '../src/identifier'
 import { WorkspaceTable } from '../src/workspace/index.sql'
 
 // Parse arguments
-const [name = 'Default'] = process.argv.slice(2)
+const [nameOrId] = process.argv.slice(2)
+
+// Check if user accidentally passed an ID instead of a name
+if (nameOrId?.startsWith('wrk_')) {
+  console.error('Error: Received workspace ID instead of name')
+  console.error('Usage: bun scripts/create-workspace.ts [name]')
+  console.error('  name: Workspace name (default: "Default")')
+  process.exit(1)
+}
+
+const name = nameOrId || 'Default'
 
 // Generate workspace ID
 const workspaceId = Identifier.create('workspace')
