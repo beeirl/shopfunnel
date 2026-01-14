@@ -92,12 +92,11 @@ function RouteComponent() {
           <Heading.Actions>
             <Button onClick={handleFunnelCreate}>
               <PlusIcon />
-              Create
+              Create funnel
             </Button>
           </Heading.Actions>
         )}
       </Heading.Root>
-
       <Item.Group>
         {funnels.map((funnel) => (
           <Item.Root

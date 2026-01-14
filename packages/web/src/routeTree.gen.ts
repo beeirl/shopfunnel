@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthIndexRouteImport } from './routes/auth/index'
+import { Route as AuthLogoutRouteImport } from './routes/auth/logout'
 import { Route as AuthCallbackRouteImport } from './routes/auth/callback'
 import { Route as AuthAuthorizeRouteImport } from './routes/auth/authorize'
 import { Route as WorkspaceWorkspaceIdRouteRouteImport } from './routes/workspace/$workspaceId/route'
@@ -32,6 +33,11 @@ const IndexRoute = IndexRouteImport.update({
 const AuthIndexRoute = AuthIndexRouteImport.update({
   id: '/auth/',
   path: '/auth/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthLogoutRoute = AuthLogoutRouteImport.update({
+  id: '/auth/logout',
+  path: '/auth/logout',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthCallbackRoute = AuthCallbackRouteImport.update({
@@ -107,6 +113,7 @@ export interface FileRoutesByFullPath {
   '/workspace/$workspaceId': typeof WorkspaceWorkspaceIdDashboardRouteRouteWithChildren
   '/auth/authorize': typeof AuthAuthorizeRoute
   '/auth/callback': typeof AuthCallbackRoute
+  '/auth/logout': typeof AuthLogoutRoute
   '/auth': typeof AuthIndexRoute
   '/f/$id': typeof funnelFIdRoute
   '/f/event': typeof funnelFEventRoute
@@ -122,6 +129,7 @@ export interface FileRoutesByTo {
   '/workspace/$workspaceId': typeof WorkspaceWorkspaceIdDashboardIndexRoute
   '/auth/authorize': typeof AuthAuthorizeRoute
   '/auth/callback': typeof AuthCallbackRoute
+  '/auth/logout': typeof AuthLogoutRoute
   '/auth': typeof AuthIndexRoute
   '/f/$id': typeof funnelFIdRoute
   '/f/event': typeof funnelFEventRoute
@@ -137,6 +145,7 @@ export interface FileRoutesById {
   '/workspace/$workspaceId': typeof WorkspaceWorkspaceIdRouteRouteWithChildren
   '/auth/authorize': typeof AuthAuthorizeRoute
   '/auth/callback': typeof AuthCallbackRoute
+  '/auth/logout': typeof AuthLogoutRoute
   '/auth/': typeof AuthIndexRoute
   '/workspace/$workspaceId/_dashboard': typeof WorkspaceWorkspaceIdDashboardRouteRouteWithChildren
   '/(funnel)/f/$id': typeof funnelFIdRoute
@@ -155,6 +164,7 @@ export interface FileRouteTypes {
     | '/workspace/$workspaceId'
     | '/auth/authorize'
     | '/auth/callback'
+    | '/auth/logout'
     | '/auth'
     | '/f/$id'
     | '/f/event'
@@ -170,6 +180,7 @@ export interface FileRouteTypes {
     | '/workspace/$workspaceId'
     | '/auth/authorize'
     | '/auth/callback'
+    | '/auth/logout'
     | '/auth'
     | '/f/$id'
     | '/f/event'
@@ -184,6 +195,7 @@ export interface FileRouteTypes {
     | '/workspace/$workspaceId'
     | '/auth/authorize'
     | '/auth/callback'
+    | '/auth/logout'
     | '/auth/'
     | '/workspace/$workspaceId/_dashboard'
     | '/(funnel)/f/$id'
@@ -201,6 +213,7 @@ export interface RootRouteChildren {
   WorkspaceWorkspaceIdRouteRoute: typeof WorkspaceWorkspaceIdRouteRouteWithChildren
   AuthAuthorizeRoute: typeof AuthAuthorizeRoute
   AuthCallbackRoute: typeof AuthCallbackRoute
+  AuthLogoutRoute: typeof AuthLogoutRoute
   AuthIndexRoute: typeof AuthIndexRoute
   funnelFIdRoute: typeof funnelFIdRoute
   funnelFEventRoute: typeof funnelFEventRoute
@@ -220,6 +233,13 @@ declare module '@tanstack/react-router' {
       path: '/auth'
       fullPath: '/auth'
       preLoaderRoute: typeof AuthIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/auth/logout': {
+      id: '/auth/logout'
+      path: '/auth/logout'
+      fullPath: '/auth/logout'
+      preLoaderRoute: typeof AuthLogoutRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/auth/callback': {
@@ -371,6 +391,7 @@ const rootRouteChildren: RootRouteChildren = {
   WorkspaceWorkspaceIdRouteRoute: WorkspaceWorkspaceIdRouteRouteWithChildren,
   AuthAuthorizeRoute: AuthAuthorizeRoute,
   AuthCallbackRoute: AuthCallbackRoute,
+  AuthLogoutRoute: AuthLogoutRoute,
   AuthIndexRoute: AuthIndexRoute,
   funnelFIdRoute: funnelFIdRoute,
   funnelFEventRoute: funnelFEventRoute,

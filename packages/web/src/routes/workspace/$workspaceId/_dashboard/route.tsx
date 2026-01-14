@@ -1,17 +1,18 @@
 import { Alert } from '@/components/ui/alert'
-import { Avatar } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
 import { Dialog } from '@/components/ui/dialog'
 import { Field } from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
+import { Menu } from '@/components/ui/menu'
 import { withActor } from '@/context/auth.withActor'
+import { Account } from '@shopfunnel/core/account/index'
 import { Actor } from '@shopfunnel/core/actor'
 import { Domain } from '@shopfunnel/core/domain/index'
 import { Identifier } from '@shopfunnel/core/identifier'
 import { User } from '@shopfunnel/core/user/index'
-import { IconUser as UserIcon, IconWorldWww as WorldIcon } from '@tabler/icons-react'
+import { IconBuildingSkyscraper as WorkspaceIcon } from '@tabler/icons-react'
 import { queryOptions, useMutation, useSuspenseQuery } from '@tanstack/react-query'
-import { createFileRoute, Link, Outlet } from '@tanstack/react-router'
+import { createFileRoute, Outlet } from '@tanstack/react-router'
 import { createServerFn } from '@tanstack/react-start'
 import * as React from 'react'
 import { z } from 'zod'
@@ -48,6 +49,18 @@ const getDomainQueryOptions = (workspaceId: string) =>
     queryFn: () => getDomain({ data: workspaceId }),
   })
 
+const getWorkspaces = createServerFn({ method: 'GET' })
+  .inputValidator(Identifier.schema('workspace'))
+  .handler(({ data: workspaceId }) => {
+    return withActor(() => Account.workspaces(), workspaceId)
+  })
+
+const getWorkspacesQueryOptions = (workspaceId: string) =>
+  queryOptions({
+    queryKey: ['workspaces', workspaceId],
+    queryFn: () => getWorkspaces({ data: workspaceId }),
+  })
+
 const upsertDomain = createServerFn()
   .inputValidator(
     z.object({
@@ -68,17 +81,17 @@ export const Route = createFileRoute('/workspace/$workspaceId/_dashboard')({
     await Promise.all([
       context.queryClient.ensureQueryData(getUserQueryOptions(params.workspaceId)),
       context.queryClient.ensureQueryData(getDomainQueryOptions(params.workspaceId)),
+      context.queryClient.ensureQueryData(getWorkspacesQueryOptions(params.workspaceId)),
     ])
   },
 })
 
-function CreateDomainButton() {
+function CustomDomainDialog({ open, onOpenChange }: { open: boolean; onOpenChange: (open: boolean) => void }) {
   const params = Route.useParams()
 
   const domainQuery = useSuspenseQuery(getDomainQueryOptions(params.workspaceId))
   const domain = domainQuery.data
 
-  const [open, setOpen] = React.useState(false)
   const [hostname, setHostname] = React.useState(domain?.hostname ?? '')
   const [error, setError] = React.useState<string | null>(null)
 
@@ -90,7 +103,7 @@ function CreateDomainButton() {
     try {
       if (!hostname.trim()) return
       await upsertDomainMutation.mutateAsync(hostname)
-      setOpen(false)
+      onOpenChange(false)
       setError(null)
     } catch (e) {
       if (!(e instanceof Error)) return
@@ -99,18 +112,10 @@ function CreateDomainButton() {
   }
 
   return (
-    <Dialog.Root open={open} onOpenChange={setOpen}>
-      <Dialog.Trigger
-        render={
-          <Button className="rounded-full border border-border" variant="secondary">
-            <WorldIcon />
-            Custom Domain
-          </Button>
-        }
-      />
+    <Dialog.Root open={open} onOpenChange={onOpenChange}>
       <Dialog.Content>
         <Dialog.Header>
-          <Dialog.Title>Custom domain</Dialog.Title>
+          <Dialog.Title>Manage custom domain</Dialog.Title>
         </Dialog.Header>
         <Alert.Root>
           <Alert.Title>DNS Configuration</Alert.Title>
@@ -137,26 +142,62 @@ function CreateDomainButton() {
 function DashboardLayoutRoute() {
   const params = Route.useParams()
 
-  const userQuery = useSuspenseQuery(getUserQueryOptions(params.workspaceId))
-  const user = userQuery.data
+  const workspacesQuery = useSuspenseQuery(getWorkspacesQueryOptions(params.workspaceId))
+  const workspaces = workspacesQuery.data
+  const currentWorkspace = workspaces.find((workspace) => workspace.id === params.workspaceId)
+
+  const [domainDialogOpen, setDomainDialogOpen] = React.useState(false)
+
+  const handleWorkspaceSwitch = (workspaceId: string) => {
+    if (workspaceId === params.workspaceId) return
+    window.location.href = `/workspace/${workspaceId}`
+  }
 
   return (
     <div className="mx-auto flex min-h-screen max-w-3xl flex-col gap-6 px-8 py-5">
-      <nav className="flex justify-between gap-5">
-        <div className="flex">
-          <Link from={Route.fullPath} to=".">
-            <span className="text-lg font-semibold">Shopfunnel</span>
-          </Link>
-        </div>
+      <nav className="flex items-center justify-between gap-5">
+        <div className="text-lg font-semibold">Shopfunnel</div>
         <div className="flex gap-2">
-          <CreateDomainButton />
-          <Avatar.Root>
-            <Avatar.GroupCount>
-              <UserIcon />
-            </Avatar.GroupCount>
-          </Avatar.Root>
+          <Menu.Root>
+            <Menu.Trigger
+              render={
+                <Button className="rounded-full border border-border" variant="secondary">
+                  <WorkspaceIcon />
+                  {currentWorkspace?.name ?? 'Workspace'}
+                </Button>
+              }
+            />
+            <Menu.Content align="end">
+              <Menu.Item onClick={() => setDomainDialogOpen(true)}>Manage custom domain</Menu.Item>
+              {workspaces.length > 1 && (
+                <Menu.Sub>
+                  <Menu.SubTrigger>Switch workspace</Menu.SubTrigger>
+                  <Menu.SubContent sideOffset={3}>
+                    <Menu.RadioGroup value={params.workspaceId}>
+                      {workspaces.map((workspace) => (
+                        <Menu.RadioItem
+                          key={workspace.id}
+                          value={workspace.id}
+                          onClick={() => handleWorkspaceSwitch(workspace.id)}
+                        >
+                          {workspace.name}
+                        </Menu.RadioItem>
+                      ))}
+                    </Menu.RadioGroup>
+                  </Menu.SubContent>
+                </Menu.Sub>
+              )}
+              <Menu.Separator />
+              <Menu.Item variant="destructive" render={<a href="/auth/logout" />}>
+                Logout
+              </Menu.Item>
+            </Menu.Content>
+          </Menu.Root>
         </div>
       </nav>
+
+      <CustomDomainDialog open={domainDialogOpen} onOpenChange={setDomainDialogOpen} />
+
       <div className="flex flex-1 flex-col">
         <Outlet />
       </div>
