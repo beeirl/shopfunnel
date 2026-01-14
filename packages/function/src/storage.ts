@@ -6,11 +6,23 @@ type Env = {
 
 export default {
   async fetch(request: Request, env: Env): Promise<Response> {
+    const corsHeaders = {
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Methods': 'GET, HEAD, OPTIONS',
+      'Access-Control-Allow-Headers': 'Content-Type',
+      'Access-Control-Max-Age': '86400',
+    }
+
+    // Handle CORS preflight
+    if (request.method === 'OPTIONS') {
+      return new Response(null, { headers: corsHeaders })
+    }
+
     const url = new URL(request.url)
     const key = url.pathname.slice(1)
 
     if (!key) {
-      return new Response('Not Found', { status: 404 })
+      return new Response('Not Found', { status: 404, headers: corsHeaders })
     }
 
     const width = url.searchParams.get('w')
@@ -23,11 +35,12 @@ export default {
       const object = await env.Storage.get(key)
 
       if (!object) {
-        return new Response('Not Found', { status: 404 })
+        return new Response('Not Found', { status: 404, headers: corsHeaders })
       }
 
       return new Response(object.body, {
         headers: {
+          ...corsHeaders,
           'Content-Type': object.httpMetadata?.contentType || 'application/octet-stream',
           'Cache-Control': 'public, max-age=31536000, immutable',
           ETag: object.httpEtag,
@@ -58,12 +71,16 @@ export default {
     })
 
     if (!response.ok) {
-      return response
+      return new Response(response.body, {
+        status: response.status,
+        headers: corsHeaders,
+      })
     }
 
     return new Response(response.body, {
       status: response.status,
       headers: {
+        ...corsHeaders,
         'Content-Type': response.headers.get('Content-Type') || 'image/jpeg',
         'Cache-Control': 'public, max-age=31536000, immutable',
       },

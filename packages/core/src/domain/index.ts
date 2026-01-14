@@ -80,8 +80,7 @@ export namespace Domain {
 
         await Database.use((tx) =>
           tx
-            .update(DomainTable)
-            .set({ archivedAt: new Date() })
+            .delete(DomainTable)
             .where(and(eq(DomainTable.workspaceId, Actor.workspaceId()), eq(DomainTable.id, existingDomain.id))),
         )
       }
