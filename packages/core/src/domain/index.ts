@@ -113,7 +113,7 @@ export namespace Domain {
                 min_tls_version: '1.2',
               },
             },
-            custom_origin_server: 'shopfunnel.app',
+            custom_origin_server: 'shopfunnel.com',
           }),
         },
       )

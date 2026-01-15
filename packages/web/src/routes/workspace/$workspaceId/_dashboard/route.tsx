@@ -121,7 +121,7 @@ function CustomDomainDialog({ open, onOpenChange }: { open: boolean; onOpenChang
           <Alert.Title>DNS Configuration</Alert.Title>
           <Alert.Description>
             Point your domain to Shopfunnel by creating a CNAME record with your DNS provider. Set the record name to
-            your subdomain (e.g., shop) and the target to cname.shopfunnel.app.
+            your subdomain (e.g., shop) and the target to cname.shopfunnel.com.
           </Alert.Description>
         </Alert.Root>
         <Field.Root data-invalid={!!error}>
