@@ -15,9 +15,9 @@ export const Route = createFileRoute('/(funnel)/f/event')({
 
         if (event.type === 'funnel_enter') {
           const userAgent = request.headers.get('user-agent') || ''
-          const country = request.headers.get('cf-ipcountry') || undefined
-          const region = request.headers.get('cf-region') || undefined
-          const city = request.headers.get('cf-ipcity') || undefined
+          const country = (request.cf?.country as string) || undefined
+          const region = (request.cf?.region as string) || undefined
+          const city = (request.cf?.city as string) || undefined
           const referrer = request.headers.get('referer') || undefined
 
           const parser = new UAParser(userAgent)

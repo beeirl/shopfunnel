@@ -11,13 +11,42 @@ export function HtmlBlock(props: HtmlBlockProps) {
   const [height, setHeight] = React.useState(100)
   const iframeRef = React.useRef<HTMLIFrameElement>(null)
 
-  const updateHeight = () => {
-    const body = iframeRef.current?.contentDocument?.body
-    if (body) setHeight(body.scrollHeight)
-  }
-
   React.useEffect(() => {
-    updateHeight()
+    const iframe = iframeRef.current
+    if (!iframe) return
+
+    let resizeObserver: ResizeObserver | undefined
+
+    const setupObserver = () => {
+      const body = iframe.contentDocument?.body
+      if (!body) return
+
+      resizeObserver = new ResizeObserver(() => {
+        setHeight(body.scrollHeight)
+      })
+      resizeObserver.observe(body)
+    }
+
+    const handleLoad = () => {
+      setupObserver()
+      // Wait for fonts to load and recalculate height
+      iframe.contentDocument?.fonts.ready.then(() => {
+        const body = iframe.contentDocument?.body
+        if (body) setHeight(body.scrollHeight)
+      })
+    }
+
+    iframe.addEventListener('load', handleLoad)
+
+    // If iframe is already loaded, set up immediately
+    if (iframe.contentDocument?.readyState === 'complete') {
+      handleLoad()
+    }
+
+    return () => {
+      iframe.removeEventListener('load', handleLoad)
+      resizeObserver?.disconnect()
+    }
   }, [props.block.properties.html])
 
   return (
@@ -26,7 +55,6 @@ export function HtmlBlock(props: HtmlBlockProps) {
         ref={iframeRef}
         className="w-full"
         sandbox="allow-same-origin"
-        onLoad={updateHeight}
         style={{ height }}
         srcDoc={`
           <!DOCTYPE html>

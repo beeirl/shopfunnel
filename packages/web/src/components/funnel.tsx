@@ -250,6 +250,7 @@ export function Funnel({ funnel, mode = 'live', onComplete, onPageChange, onPage
 
   const canChangePageRef = useRef(true)
   const [currentPageIndex, setCurrentPageIndex] = useState(0)
+  const [redirecting, setRedirecting] = useState(false)
 
   const [values, setValues] = useState<Record<string, unknown>>({})
   const [loadingValues, setLoadingValues] = useState<Record<string, boolean>>({})
@@ -366,6 +367,7 @@ export function Funnel({ funnel, mode = 'live', onComplete, onPageChange, onPage
 
     const redirectUrl = currentPage.properties.redirectUrl
     if (redirectUrl) {
+      setRedirecting(true)
       localStorage.removeItem(VALUES_STORAGE_KEY)
       await onComplete?.(values)
       window.location.href = redirectUrl
@@ -435,7 +437,9 @@ export function Funnel({ funnel, mode = 'live', onComplete, onPageChange, onPage
                   </div>
                   {showNextButton && (
                     <div className="sticky bottom-0 bg-(--sf-background) pb-6">
-                      <NextButton onClick={() => next(values)}>{currentPage.properties.buttonText}</NextButton>
+                      <NextButton loading={redirecting} onClick={() => next(values)}>
+                        {currentPage.properties.buttonText}
+                      </NextButton>
                     </div>
                   )}
                   {showLegalDisclaimer && (

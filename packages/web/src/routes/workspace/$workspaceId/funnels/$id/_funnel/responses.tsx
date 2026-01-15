@@ -6,8 +6,8 @@ import { cn } from '@/lib/utils'
 import { Identifier } from '@shopfunnel/core/identifier'
 import { Submission } from '@shopfunnel/core/submission/index'
 import {
-  IconArrowLeft as ArrowLeftIcon,
-  IconArrowRight as ArrowRightIcon,
+  IconChevronLeft as ChevronLeftIcon,
+  IconChevronRight as ChevronRightIcon,
   IconInbox as InboxIcon,
 } from '@tabler/icons-react'
 import { keepPreviousData, queryOptions, useSuspenseQuery } from '@tanstack/react-query'
@@ -212,14 +212,14 @@ function RouteComponent() {
           </div>
           {hasMore && (
             <div className="sticky bottom-0 flex items-center justify-between gap-4 bg-background px-6 py-1.5 sm:px-12">
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1">
                 <Button
                   disabled={currentPage === 1 || isFetching}
                   size="icon-sm"
                   variant="ghost"
                   onClick={() => goToPage(currentPage - 1)}
                 >
-                  <ArrowLeftIcon />
+                  <ChevronLeftIcon />
                 </Button>
                 {pages().map((page) => (
                   <Button
@@ -239,7 +239,7 @@ function RouteComponent() {
                   variant="ghost"
                   onClick={() => goToPage(currentPage + 1)}
                 >
-                  <ArrowRightIcon />
+                  <ChevronRightIcon />
                 </Button>
               </div>
               <div className="text-sm text-muted-foreground">{data.total.toLocaleString('en-US')} results</div>

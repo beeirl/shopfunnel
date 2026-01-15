@@ -1,24 +1,28 @@
 import { cn } from '@/lib/utils'
-import * as React from 'react'
+import { Button } from '@base-ui/react/button'
+import { IconLoader2 as LoaderIcon } from '@tabler/icons-react'
 
-export interface NextButtonProps extends Omit<React.ComponentProps<'button'>, 'disabled'> {
+export type NextButtonProps = Button.Props & {
+  loading?: boolean
   static?: boolean
 }
 
-export function NextButton({ className, children, static: isStatic, ...props }: NextButtonProps) {
+export function NextButton({ className, children, loading, static: isStatic, ...props }: NextButtonProps) {
   return (
-    <button
+    <Button
       className={cn(
-        'block h-12 w-full rounded-(--sf-radius) text-base font-semibold transition-all outline-none',
+        'flex h-12 w-full items-center justify-center gap-2 rounded-(--sf-radius) text-base font-semibold transition-all outline-none',
         'bg-(--sf-primary) text-(--sf-primary-foreground)',
+        loading && 'pointer-events-none opacity-50',
         !isStatic && 'hover:bg-(--sf-primary)/90',
         'focus-visible:ring-3 focus-visible:ring-(--sf-ring)/50',
         className,
       )}
-      disabled={isStatic}
+      disabled={isStatic || loading}
       {...props}
     >
-      {children}
-    </button>
+      {loading && <LoaderIcon className="size-4.5 animate-spin" />}
+      {loading ? 'Loading...' : children}
+    </Button>
   )
 }
