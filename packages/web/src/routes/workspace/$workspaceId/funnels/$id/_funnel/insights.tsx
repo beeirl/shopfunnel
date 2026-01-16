@@ -160,10 +160,10 @@ export const Route = createFileRoute('/workspace/$workspaceId/funnels/$id/_funne
   validateSearch: (search) =>
     z
       .object({
-        filter: z.enum(['today', 'yesterday', '7d', '30d', 'all']).optional(),
+        range: z.enum(['today', 'yesterday', '7d', '30d', 'all']).optional(),
       })
       .parse(search),
-  loaderDeps: ({ search }) => ({ filter: search.filter }),
+  loaderDeps: ({ search }) => ({ range: search.range }),
   component: RouteComponent,
   ssr: false,
   loader: async ({ context, params, deps }) => {
@@ -172,7 +172,7 @@ export const Route = createFileRoute('/workspace/$workspaceId/funnels/$id/_funne
     )
     const latestPublishedVersion = publishedVersions.at(-1)
     if (latestPublishedVersion) {
-      const filterOption = DATE_FILTER_OPTIONS.find((o) => o.value === (deps.filter ?? 'today'))!
+      const filterOption = DATE_FILTER_OPTIONS.find((o) => o.value === (deps.range ?? 'today'))!
       const filter = filterOption.range()
       await context.queryClient.ensureQueryData(
         getInsightsQueryOptions(params.workspaceId, params.id, latestPublishedVersion, filter),
@@ -258,8 +258,7 @@ function Insights({
               </Empty.Media>
               <Empty.Title>No data for this period</Empty.Title>
               <Empty.Description>
-                There's no traffic data for the selected time range. Try selecting a different period or share your
-                funnel link to start collecting insights.
+                No traffic was recorded for this time range. Try selecting a different period.
               </Empty.Description>
             </Empty.Header>
           </Empty.Root>
@@ -274,24 +273,24 @@ function RouteComponent() {
   const search = Route.useSearch()
   const navigate = Route.useNavigate()
 
-  const filter = search.filter ?? 'today'
+  const range = search.range ?? 'today'
 
-  const handleFilterChange = (value: typeof filter) => {
-    navigate({ search: { filter: value } })
+  const handleRangeChange = (value: typeof range) => {
+    navigate({ search: { range: value } })
   }
 
   const publishedVersionsQuery = useSuspenseQuery(getPublishedVersionsQueryOptions(params.workspaceId, params.id))
   const latestPublishedVersion = publishedVersionsQuery.data.at(-1)
 
-  const filterOption = DATE_FILTER_OPTIONS.find((o) => o.value === filter)!
-  const filterRange = filterOption.range()
+  const rangeOption = DATE_FILTER_OPTIONS.find((o) => o.value === range)!
+  const dateRange = rangeOption.range()
 
   return (
     <div className="p-6 sm:pt-10">
       <div className="mx-auto flex w-full max-w-4xl flex-col gap-6">
         <div className="flex items-center justify-between">
           <div className="text-2xl font-bold">Insights</div>
-          <Select.Root items={DATE_FILTER_OPTIONS} value={filter} onValueChange={handleFilterChange}>
+          <Select.Root items={DATE_FILTER_OPTIONS} value={range} onValueChange={handleRangeChange}>
             <Select.Trigger>
               <Select.Value />
             </Select.Trigger>
@@ -311,7 +310,7 @@ function RouteComponent() {
             workspaceId={params.workspaceId}
             funnelId={params.id}
             funnelVersion={latestPublishedVersion}
-            filter={filterRange}
+            filter={dateRange}
           />
         ) : (
           <div className="rounded-3xl bg-muted p-2">
