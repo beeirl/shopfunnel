@@ -12,11 +12,12 @@ SQL >
         any(page_index) AS page_index,
         uniqMerge(views) AS page_views,
         uniqMerge(completions) AS page_completions,
+        greatest(0, uniqMerge(views) - uniqMerge(completions)) AS exits,
         if(countMerge(duration_count) > 0,
            round(sumMerge(total_duration) / countMerge(duration_count)),
            0) AS avg_duration,
         if(uniqMerge(views) > 0,
-           round((uniqMerge(views) - uniqMerge(completions)) * 100.0 / uniqMerge(views), 1),
+           greatest(0, round((uniqMerge(views) - uniqMerge(completions)) * 100.0 / uniqMerge(views), 1)),
            0) AS dropoff_rate
     FROM pages_mv
     WHERE workspace_id = {{ String(workspace_id, required=True) }}

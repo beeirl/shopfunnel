@@ -106,7 +106,6 @@ function RouteComponent() {
   const funnelStartedRef = useRef(false)
 
   const prevPageRef = useRef<{ id: string; index: number; name: string } | undefined>(undefined)
-  const lastTrackedPageIdRef = useRef<string | undefined>(undefined)
 
   const currentPageViewedAtRef = useRef<number | undefined>(undefined)
   const [currentPage, setCurrentPage] = useState<{ id: string; index: number; name: string } | undefined>(undefined)
@@ -174,7 +173,6 @@ function RouteComponent() {
   useEffect(() => {
     if (!currentPage) return
     if (prevPageRef.current?.id === currentPage.id) return
-    if (lastTrackedPageIdRef.current === currentPage.id) return
 
     trackEvent('page_view', {
       prev_page_id: prevPageRef.current?.id,
@@ -184,8 +182,6 @@ function RouteComponent() {
       page_index: currentPage.index,
       page_name: currentPage.name,
     })
-
-    lastTrackedPageIdRef.current = currentPage.id
   }, [currentPage])
 
   const trackEvent = (type: Analytics.Event['type'], payload: Analytics.Event['payload'] = {}) => {
@@ -262,7 +258,6 @@ function RouteComponent() {
     funnelStartedRef.current = false
     currentPageViewedAtRef.current = undefined
     prevPageRef.current = undefined
-    lastTrackedPageIdRef.current = undefined
     setCurrentPage(undefined)
     session.clear()
   }

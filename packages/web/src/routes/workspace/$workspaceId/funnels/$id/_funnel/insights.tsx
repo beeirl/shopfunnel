@@ -165,9 +165,7 @@ function Insights({
                   <Table.Row key={page.page_id} className="hover:bg-transparent">
                     <Table.Cell>{page.page_name || page.page_id}</Table.Cell>
                     <Table.Cell className="text-right">{formatNumber(page.page_views)}</Table.Cell>
-                    <Table.Cell className="text-right">
-                      {formatNumber(page.page_views - page.page_completions)}
-                    </Table.Cell>
+                    <Table.Cell className="text-right">{formatNumber(page.exits)}</Table.Cell>
                     <Table.Cell className="text-right">{formatPercentage(page.dropoff_rate)}</Table.Cell>
                     <Table.Cell className="text-right">{formatDuration(page.avg_duration)}</Table.Cell>
                   </Table.Row>
