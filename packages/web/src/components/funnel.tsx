@@ -83,14 +83,16 @@ function evaluateRule(rule: Rule, values: Values, variables: Variables) {
   let nextPageId: string | undefined
   const hiddenBlockIds = new Set<string>()
   let updatedVariables = { ...variables }
+  let jumpFound = false
 
   for (const action of rule.actions) {
     if (!evaluateCondition(action.condition, values, updatedVariables)) continue
 
     switch (action.type) {
       case 'jump':
-        if (action.details.to?.value) {
+        if (!jumpFound && action.details.to?.value) {
           nextPageId = action.details.to.value
+          jumpFound = true
         }
         break
 
