@@ -1,3 +1,4 @@
+import ShopfunnelIcon from '@/assets/shopfunnel-icon.svg?react'
 import { Alert } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
 import { Dialog } from '@/components/ui/dialog'
@@ -156,7 +157,10 @@ function DashboardLayoutRoute() {
   return (
     <div className="mx-auto flex min-h-screen max-w-3xl flex-col gap-6 px-8 py-5">
       <nav className="flex items-center justify-between gap-5">
-        <div className="text-lg font-semibold">Shopfunnel</div>
+        <div className="flex items-center gap-1">
+          <ShopfunnelIcon className="size-3.5" />
+          <span className="text-lg font-bold">Shopfunnel</span>
+        </div>
         <div className="flex gap-2">
           <Menu.Root>
             <Menu.Trigger
