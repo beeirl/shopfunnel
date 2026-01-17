@@ -10,8 +10,10 @@ import type {
   Theme as ThemeType,
   Variables,
 } from '@shopfunnel/core/funnel/types'
+import { IconLoader2 as LoaderIcon } from '@tabler/icons-react'
 import { AnimatePresence, motion } from 'motion/react'
 import { useEffect, useMemo, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
 
 export type Values = Record<string, unknown>
 
@@ -320,6 +322,7 @@ export function Funnel({ funnel, mode = 'live', onComplete, onPageChange, onPage
   }
 
   const handlePageChangeComplete = () => {
+    if (redirecting) return
     canChangePageRef.current = true
   }
 
@@ -371,7 +374,7 @@ export function Funnel({ funnel, mode = 'live', onComplete, onPageChange, onPage
     if (redirectUrl) {
       setRedirecting(true)
       localStorage.removeItem(VALUES_STORAGE_KEY)
-      await onComplete?.(values)
+      await Promise.all([new Promise((resolve) => setTimeout(resolve, 2000)), onComplete?.(values)])
       window.location.href = redirectUrl
     } else {
       setCurrentPageIndex(nextPageIndex)
@@ -439,9 +442,7 @@ export function Funnel({ funnel, mode = 'live', onComplete, onPageChange, onPage
                   </div>
                   {showNextButton && (
                     <div className="sticky bottom-0 bg-(--sf-background) pb-6">
-                      <NextButton loading={redirecting} onClick={() => next(values)}>
-                        {currentPage.properties.buttonText}
-                      </NextButton>
+                      <NextButton onClick={() => next(values)}>{currentPage.properties.buttonText}</NextButton>
                     </div>
                   )}
                   {showLegalDisclaimer && (
@@ -478,6 +479,14 @@ export function Funnel({ funnel, mode = 'live', onComplete, onPageChange, onPage
           </AnimatePresence>
         </div>
       </div>
+      {redirecting &&
+        createPortal(
+          <div className="fixed inset-0 z-50 flex animate-in flex-col items-center justify-center gap-1 bg-(--sf-background)/70 duration-500 fade-in supports-backdrop-filter:backdrop-blur-sm">
+            <LoaderIcon className="size-4.5 animate-spin text-(--sf-foreground)" />
+            <div className="text-sm text-(--sf-foreground)">Please wait...</div>
+          </div>,
+          document.body,
+        )}
     </>
   )
 }

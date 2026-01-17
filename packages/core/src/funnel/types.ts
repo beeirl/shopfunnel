@@ -130,7 +130,12 @@ export interface LoaderBlock {
   type: 'loader'
   properties: {
     description?: string
-    duration: number
+    duration?: number
+    showProgress?: boolean
+    steps?: {
+      variant: 'checklist' | 'fade' | 'slide'
+      items: string[]
+    }
   }
 }
 
