@@ -423,7 +423,7 @@ export function Funnel({ funnel, mode = 'live', onComplete, onPageChange, onPage
             >
               {currentPage && (
                 <>
-                  <div className="flex-1 pt-8">
+                  <div className="flex-1 py-6">
                     {resolvedBlocks.map((block, index) => (
                       <div key={block.id}>
                         <Block
@@ -441,7 +441,7 @@ export function Funnel({ funnel, mode = 'live', onComplete, onPageChange, onPage
                     ))}
                   </div>
                   {showNextButton && (
-                    <div className="sticky bottom-0 bg-(--sf-background) pb-6">
+                    <div className="sticky bottom-0 pb-6">
                       <NextButton onClick={() => next(values)}>{currentPage.properties.buttonText}</NextButton>
                     </div>
                   )}
