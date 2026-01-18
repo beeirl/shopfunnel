@@ -103,7 +103,7 @@ function RouteComponent() {
   const tableData: RowData[] = React.useMemo(() => {
     return data.submissions.map((submission) => {
       const row: RowData = {
-        submittedAt: formatDate(new Date(submission.completedAt ?? submission.createdAt)),
+        submittedAt: formatDate(new Date(submission.updatedAt)),
       }
       for (const question of data.questions) {
         const answers = submission.answers[question.id]

@@ -77,7 +77,7 @@ export namespace Submission {
           .select()
           .from(SubmissionTable)
           .where(and(eq(SubmissionTable.workspaceId, Actor.workspaceId()), eq(SubmissionTable.funnelId, funnelId)))
-          .orderBy(desc(SubmissionTable.createdAt))
+          .orderBy(desc(SubmissionTable.updatedAt))
           .limit(limit)
           .offset(offset),
       )
@@ -163,8 +163,7 @@ export namespace Submission {
           }
           return {
             id: s.id,
-            createdAt: s.createdAt,
-            completedAt: s.completedAt,
+            updatedAt: s.updatedAt,
             answers,
           }
         }),
