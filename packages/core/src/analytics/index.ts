@@ -11,9 +11,9 @@ export namespace Analytics {
     timestamp: z.string(),
   })
 
-  const FunnelEnterEvent = z.object({
+  const FunnelViewedEvent = z.object({
     ...EventBase.shape,
-    type: z.literal('funnel_enter'),
+    type: z.literal('funnel_viewed'),
     payload: z.object({
       device: z.enum(['mobile', 'desktop']).optional(),
       os: z.string().optional(),
@@ -25,21 +25,21 @@ export namespace Analytics {
     }),
   })
 
-  const FunnelStartEvent = z.object({
+  const FunnelStartedEvent = z.object({
     ...EventBase.shape,
-    type: z.literal('funnel_start'),
+    type: z.literal('funnel_started'),
     payload: z.object({}),
   })
 
-  const FunnelEndEvent = z.object({
+  const FunnelCompletedEvent = z.object({
     ...EventBase.shape,
-    type: z.literal('funnel_end'),
+    type: z.literal('funnel_completed'),
     payload: z.object({}),
   })
 
-  const PageViewEvent = z.object({
+  const PageViewedEvent = z.object({
     ...EventBase.shape,
-    type: z.literal('page_view'),
+    type: z.literal('page_viewed'),
     payload: z.object({
       page_id: z.string(),
       page_name: z.string(),
@@ -50,9 +50,9 @@ export namespace Analytics {
     }),
   })
 
-  const PageCompleteEvent = z.object({
+  const PageCompletedEvent = z.object({
     ...EventBase.shape,
-    type: z.literal('page_complete'),
+    type: z.literal('page_completed'),
     payload: z.object({
       page_id: z.string(),
       page_name: z.string(),
@@ -61,9 +61,9 @@ export namespace Analytics {
     }),
   })
 
-  const QuestionAnswerEvent = z.object({
+  const QuestionAnsweredEvent = z.object({
     ...EventBase.shape,
-    type: z.literal('question_answer'),
+    type: z.literal('question_answered'),
     payload: z.object({
       page_id: z.string(),
       question_id: z.string(),
@@ -75,18 +75,18 @@ export namespace Analytics {
     }),
   })
 
-  const ExternalPageViewEvent = z.object({
+  const ExternalPageViewedEvent = z.object({
     ...EventBase.shape,
-    type: z.literal('external_page_view'),
+    type: z.literal('external_page_viewed'),
     payload: z.object({
       integration_id: z.string(),
       integration_provider: z.enum(['shopify']),
     }),
   })
 
-  const ExternalCheckoutCompleteEvent = z.object({
+  const ExternalCheckoutCompletedEvent = z.object({
     ...EventBase.shape,
-    type: z.literal('external_checkout_complete'),
+    type: z.literal('external_checkout_completed'),
     payload: z.object({
       integration_id: z.string(),
       integration_provider: z.enum(['shopify']),
@@ -97,14 +97,14 @@ export namespace Analytics {
   })
 
   export const Event = z.discriminatedUnion('type', [
-    FunnelEnterEvent,
-    FunnelStartEvent,
-    FunnelEndEvent,
-    PageViewEvent,
-    PageCompleteEvent,
-    QuestionAnswerEvent,
-    ExternalCheckoutCompleteEvent,
-    ExternalPageViewEvent,
+    FunnelViewedEvent,
+    FunnelStartedEvent,
+    FunnelCompletedEvent,
+    PageViewedEvent,
+    PageCompletedEvent,
+    QuestionAnsweredEvent,
+    ExternalCheckoutCompletedEvent,
+    ExternalPageViewedEvent,
   ])
   export type Event = z.infer<typeof Event>
 }

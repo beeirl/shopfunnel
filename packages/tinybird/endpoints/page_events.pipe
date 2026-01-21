@@ -1,5 +1,5 @@
 DESCRIPTION >
-    Parsed page_view and page_complete events.
+    Parsed page_viewed and page_completed events.
 
 TOKEN api READ
 
@@ -20,6 +20,6 @@ SQL >
         JSONExtractUInt(payload, 'prev_page_index') AS prev_page_index,
         JSONExtractUInt(payload, 'page_duration') AS page_duration
     FROM events
-    WHERE type IN ('page_view', 'page_complete')
+    WHERE type IN ('page_view', 'page_viewed', 'page_complete', 'page_completed')
 
 TYPE endpoint

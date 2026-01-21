@@ -16,9 +16,10 @@ SQL >
         anySimpleState(toUInt32(page_index)) AS page_index,
         uniqState(session_id) AS transitions
     FROM page_events
-    WHERE type = 'page_view'
+    WHERE type IN ('page_view', 'page_viewed')
         AND prev_page_id != ''
     GROUP BY date, workspace_id, funnel_id, funnel_version, prev_page_id, page_id
 
 TYPE MATERIALIZED
 DATASOURCE paths_mv
+DEPLOYMENT_METHOD alter

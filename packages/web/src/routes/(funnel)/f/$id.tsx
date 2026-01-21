@@ -175,14 +175,14 @@ function RouteComponent() {
   useEffect(() => {
     if (funnelEnteredRef.current) return
     funnelEnteredRef.current = true
-    trackEvent('funnel_enter')
+    trackEvent('funnel_viewed')
   }, [])
 
   useEffect(() => {
     if (!currentPage) return
     if (prevPageRef.current?.id === currentPage.id) return
 
-    trackEvent('page_view', {
+    trackEvent('page_viewed', {
       prev_page_id: prevPageRef.current?.id,
       prev_page_index: prevPageRef.current?.index,
       prev_page_name: prevPageRef.current?.name,
@@ -218,14 +218,14 @@ function RouteComponent() {
   const handlePageComplete: FunnelProps['onPageComplete'] = (page) => {
     if (!funnelStartedRef.current) {
       funnelStartedRef.current = true
-      trackEvent('funnel_start')
+      trackEvent('funnel_started')
     }
 
     const questionsByBlockId = new Map(questions.map((q) => [q.blockId, q]))
     for (const [blockId, value] of Object.entries(page.values)) {
       const question = questionsByBlockId.get(blockId)
       if (!question) continue
-      trackEvent('question_answer', {
+      trackEvent('question_answered', {
         page_id: page.id,
         question_id: question.id,
         question_type: question.type,
@@ -236,7 +236,7 @@ function RouteComponent() {
       })
     }
 
-    trackEvent('page_complete', {
+    trackEvent('page_completed', {
       page_id: page.id,
       page_index: page.index,
       page_name: page.name,
@@ -263,7 +263,7 @@ function RouteComponent() {
     await Promise.allSettled(pendingAnswerSubmissionsRef.current)
     await completeSubmission({ data: { sessionId } })
 
-    trackEvent('funnel_end')
+    trackEvent('funnel_completed')
 
     funnelEnteredRef.current = false
     funnelStartedRef.current = false

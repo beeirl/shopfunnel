@@ -35,7 +35,7 @@ register(({ analytics, browser, settings, init }) => {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        type: 'external_page_view',
+        type: 'external_page_viewed',
         visitor_id: session.visitorId,
         session_id: session.id,
         workspace_id: session.workspaceId,
@@ -66,7 +66,7 @@ register(({ analytics, browser, settings, init }) => {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        type: 'external_checkout_complete',
+        type: 'external_checkout_completed',
         visitor_id: session.visitorId,
         session_id: session.id,
         workspace_id: session.workspaceId,

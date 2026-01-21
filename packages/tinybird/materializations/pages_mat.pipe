@@ -11,13 +11,14 @@ SQL >
         page_id,
         anySimpleState(page_name) AS page_name,
         anySimpleState(toUInt32(page_index)) AS page_index,
-        uniqStateIf(session_id, type = 'page_view') AS views,
-        uniqStateIf(session_id, type = 'page_complete') AS completions,
-        sumStateIf(toUInt64(page_duration), type = 'page_complete' AND page_duration > 0) AS total_duration,
-        countStateIf(type = 'page_complete' AND page_duration > 0) AS duration_count
+        uniqStateIf(session_id, type IN ('page_view', 'page_viewed')) AS views,
+        uniqStateIf(session_id, type IN ('page_complete', 'page_completed')) AS completions,
+        sumStateIf(toUInt64(page_duration), type IN ('page_complete', 'page_completed') AND page_duration > 0) AS total_duration,
+        countStateIf(type IN ('page_complete', 'page_completed') AND page_duration > 0) AS duration_count
     FROM page_events
     WHERE page_id != ''
     GROUP BY date, workspace_id, funnel_id, funnel_version, page_id
 
 TYPE MATERIALIZED
 DATASOURCE pages_mv
+DEPLOYMENT_METHOD alter

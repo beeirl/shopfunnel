@@ -1,5 +1,5 @@
 DESCRIPTION >
-    Parsed funnel_enter events with session metadata.
+    Parsed funnel_viewed events with session metadata.
 
 TOKEN api READ
 
@@ -20,6 +20,6 @@ SQL >
         JSONExtractString(payload, 'city') AS city,
         JSONExtractString(payload, 'referrer') AS referrer
     FROM events
-    WHERE type = 'funnel_enter'
+    WHERE type IN ('funnel_enter', 'funnel_viewed')
 
 TYPE endpoint
