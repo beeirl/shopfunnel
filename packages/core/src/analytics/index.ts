@@ -81,6 +81,27 @@ export namespace Analytics {
     }),
   })
 
+  const ExternalPageViewEvent = z.object({
+    ...EventBase.shape,
+    type: z.literal('external_page_view'),
+    payload: z.object({
+      integration_id: z.string(),
+      integration_provider: z.enum(['shopify']),
+    }),
+  })
+
+  const ExternalCheckoutCompleteEvent = z.object({
+    ...EventBase.shape,
+    type: z.literal('external_checkout_complete'),
+    payload: z.object({
+      integration_id: z.string(),
+      integration_provider: z.enum(['shopify']),
+      external_id: z.string(),
+      amount: z.number(),
+      currency: z.string(),
+    }),
+  })
+
   export const Event = z.discriminatedUnion('type', [
     FunnelEnterEvent,
     FunnelStartEvent,
@@ -89,6 +110,8 @@ export namespace Analytics {
     PageViewEvent,
     PageCompleteEvent,
     QuestionAnswerEvent,
+    ExternalCheckoutCompleteEvent,
+    ExternalPageViewEvent,
   ])
   export type Event = z.infer<typeof Event>
 }

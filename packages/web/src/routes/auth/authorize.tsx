@@ -5,8 +5,22 @@ export const Route = createFileRoute('/auth/authorize')({
   server: {
     handlers: {
       GET: async ({ request }) => {
-        const result = await AuthClient.authorize(new URL('./callback', request.url).toString(), 'code')
-        return Response.redirect(result.url, 302)
+        const url = new URL(request.url)
+        const callback = url.searchParams.get('callback')
+
+        const redirectUrl = new URL('./callback', request.url)
+        const result = await AuthClient.authorize(redirectUrl.toString(), 'code')
+
+        const authUrl = new URL(result.url)
+        const state = btoa(
+          JSON.stringify({
+            challenge: result.challenge.state,
+            callback: callback?.startsWith('/') ? callback : undefined,
+          }),
+        )
+        authUrl.searchParams.set('state', state)
+
+        return Response.redirect(authUrl.toString(), 302)
       },
     },
   },

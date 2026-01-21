@@ -61,7 +61,7 @@ export default {
           provider: response.provider,
           subject,
         })
-        console.log('APP_STAGE', process.env.APP_STAGE)
+
         // Get workspace
         await Actor.provide('account', { accountId, email }, async () => {
           await User.joinInvitedWorkspaces()
@@ -71,6 +71,7 @@ export default {
             await Workspace.create({ name: 'Default' })
           }
         })
+
         return ctx.subject('account', accountId, { accountId, email })
       },
     }).fetch(request, env, ctx)

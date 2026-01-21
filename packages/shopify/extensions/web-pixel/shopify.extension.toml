@@ -1,0 +1,26 @@
+
+uid = "33831cd7-cd1e-3fb5-e140-47fd559d069005acb3e1"
+type = "web_pixel_extension"
+name = "shopfunnel-pixel"
+runtime_context = "strict"
+
+[customer_privacy]
+analytics = true
+marketing = true
+preferences = false
+sale_of_data = "enabled"
+
+[settings]
+type = "object"
+
+[settings.fields.apiUrl]
+name = "API URL"
+description = "Auto-configured during installation"
+type = "single_line_text_field"
+validations = [{ name = "min", value = "1" }]
+
+[settings.fields.shopifyShopId]
+name = "Shopify Shop ID"
+description = "Auto-configured during installation"
+type = "single_line_text_field"
+validations = [{ name = "min", value = "1" }]

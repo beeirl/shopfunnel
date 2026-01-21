@@ -8,7 +8,7 @@ import { storage, STORAGE_URL, storageWorker } from './storage'
 export const web = new sst.cloudflare.x.SolidStart('Web', {
   path: 'packages/web',
   domain,
-  link: [database, storage, storageWorker, STORAGE_URL, analyticsQueue, ...allSecrets],
+  link: [analyticsQueue, database, storage, storageWorker, STORAGE_URL, ...allSecrets],
   environment: {
     APP_DOMAIN: domain,
     APP_STAGE: $app.stage,
@@ -32,6 +32,12 @@ if ($app.stage === 'production') {
   new cloudflare.WorkersRoute('WebWorkerRoute', {
     zoneId: secret.CLOUDFLARE_ZONE_ID.value,
     pattern: '*/*',
+    script: web.nodes.server.nodes.worker.scriptName,
+  })
+} else {
+  new cloudflare.WorkersRoute('WebWorkerRoute', {
+    zoneId: secret.CLOUDFLARE_ZONE_ID.value,
+    pattern: `${domain}/*`,
     script: web.nodes.server.nodes.worker.scriptName,
   })
 }

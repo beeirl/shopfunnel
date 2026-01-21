@@ -6,19 +6,15 @@
 import "sst"
 declare module "sst" {
   export interface Resource {
-    "CLOUDFLARE_API_TOKEN": {
-      "type": "sst.sst.Secret"
-      "value": string
-    }
-    "CLOUDFLARE_DEFAULT_ACCOUNT_ID": {
-      "type": "sst.sst.Secret"
-      "value": string
-    }
     "CLOUDFLARE_R2_ACCESS_KEY_ID": {
       "type": "sst.sst.Secret"
       "value": string
     }
     "CLOUDFLARE_R2_SECRET_ACCESS_KEY": {
+      "type": "sst.sst.Secret"
+      "value": string
+    }
+    "CLOUDFLARE_SSL_API_TOKEN": {
       "type": "sst.sst.Secret"
       "value": string
     }
@@ -35,6 +31,14 @@ declare module "sst" {
       "username": string
     }
     "GOOGLE_CLIENT_ID": {
+      "type": "sst.sst.Secret"
+      "value": string
+    }
+    "SHOPIFY_CLIENT_ID": {
+      "type": "sst.sst.Secret"
+      "value": string
+    }
+    "SHOPIFY_CLIENT_SECRET": {
       "type": "sst.sst.Secret"
       "value": string
     }

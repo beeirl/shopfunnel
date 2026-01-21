@@ -4,15 +4,17 @@ import { Button } from '@/components/ui/button'
 import { Dialog } from '@/components/ui/dialog'
 import { Field } from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
+import { Item } from '@/components/ui/item'
 import { Menu } from '@/components/ui/menu'
 import { withActor } from '@/context/auth.withActor'
 import { Account } from '@shopfunnel/core/account/index'
 import { Actor } from '@shopfunnel/core/actor'
 import { Domain } from '@shopfunnel/core/domain/index'
 import { Identifier } from '@shopfunnel/core/identifier'
+import { Integration } from '@shopfunnel/core/integration/index'
 import { User } from '@shopfunnel/core/user/index'
 import { IconBuildingSkyscraper as WorkspaceIcon } from '@tabler/icons-react'
-import { queryOptions, useMutation, useSuspenseQuery } from '@tanstack/react-query'
+import { queryOptions, useMutation, useQueryClient, useSuspenseQuery } from '@tanstack/react-query'
 import { createFileRoute, Outlet } from '@tanstack/react-router'
 import { createServerFn } from '@tanstack/react-start'
 import * as React from 'react'
@@ -75,6 +77,38 @@ const upsertDomain = createServerFn()
     }, data.workspaceId)
   })
 
+const getShopifyIntegration = createServerFn()
+  .inputValidator(Identifier.schema('workspace'))
+  .handler(async ({ data: workspaceId }) => {
+    const integration = await withActor(() => Integration.fromProvider('shopify'), workspaceId)
+    return integration ?? null
+  })
+
+const getShopifyIntegrationQueryOptions = (workspaceId: string) =>
+  queryOptions({
+    queryKey: ['shopify-integration', workspaceId],
+    queryFn: () => getShopifyIntegration({ data: workspaceId }),
+  })
+
+const disconnectShopifyIntegration = createServerFn()
+  .inputValidator(
+    z.object({
+      workspaceId: Identifier.schema('workspace'),
+      integrationId: Identifier.schema('integration'),
+    }),
+  )
+  .handler(({ data }) => {
+    return withActor(() => Integration.disconnect({ integrationId: data.integrationId }), data.workspaceId)
+  })
+
+function formatDate(date: Date): string {
+  return new Intl.DateTimeFormat('en-US', {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+  }).format(date)
+}
+
 export const Route = createFileRoute('/workspace/$workspaceId/_dashboard')({
   component: DashboardLayoutRoute,
   ssr: false,
@@ -83,6 +117,7 @@ export const Route = createFileRoute('/workspace/$workspaceId/_dashboard')({
       context.queryClient.ensureQueryData(getUserQueryOptions(params.workspaceId)),
       context.queryClient.ensureQueryData(getDomainQueryOptions(params.workspaceId)),
       context.queryClient.ensureQueryData(getWorkspacesQueryOptions(params.workspaceId)),
+      context.queryClient.ensureQueryData(getShopifyIntegrationQueryOptions(params.workspaceId)),
     ])
   },
 })
@@ -140,6 +175,66 @@ function CustomDomainDialog({ open, onOpenChange }: { open: boolean; onOpenChang
   )
 }
 
+function ShopifyIntegrationDialog({ open, onOpenChange }: { open: boolean; onOpenChange: (open: boolean) => void }) {
+  const params = Route.useParams()
+  const queryClient = useQueryClient()
+
+  const integrationQuery = useSuspenseQuery(getShopifyIntegrationQueryOptions(params.workspaceId))
+  const integration = integrationQuery.data
+
+  const disconnectMutation = useMutation({
+    mutationFn: (integrationId: string) =>
+      disconnectShopifyIntegration({ data: { workspaceId: params.workspaceId, integrationId } }),
+  })
+
+  const [disconnecting, setDisconnecting] = React.useState(false)
+
+  const handleDisconnect = async () => {
+    if (!integration) return
+    setDisconnecting(true)
+    await disconnectMutation.mutateAsync(integration.id)
+    await queryClient.invalidateQueries(getShopifyIntegrationQueryOptions(params.workspaceId))
+    setDisconnecting(false)
+  }
+
+  return (
+    <Dialog.Root open={open} onOpenChange={onOpenChange}>
+      <Dialog.Content>
+        <Dialog.Header>
+          <Dialog.Title>Shopify Integration</Dialog.Title>
+          <Dialog.Description>
+            Automatically track page views and conversions when visitors from your funnels complete a checkout on
+            Shopify.
+          </Dialog.Description>
+        </Dialog.Header>
+        {integration ? (
+          <Item.Root variant="outline">
+            <Item.Content className="overflow-hidden">
+              <Item.Title className="truncate">{integration.title}</Item.Title>
+              <Item.Description className="truncate">
+                Connected on {formatDate(new Date(integration.createdAt))}
+              </Item.Description>
+            </Item.Content>
+            <Item.Actions>
+              <Button disabled={disconnecting} variant="secondary" onClick={handleDisconnect}>
+                Disconnect
+              </Button>
+            </Item.Actions>
+          </Item.Root>
+        ) : (
+          <Button
+            size="lg"
+            nativeButton={false}
+            render={<a href="https://apps.shopify.com" target="_blank" rel="noopener noreferrer" />}
+          >
+            Connect shop
+          </Button>
+        )}
+      </Dialog.Content>
+    </Dialog.Root>
+  )
+}
+
 function DashboardLayoutRoute() {
   const params = Route.useParams()
 
@@ -148,6 +243,7 @@ function DashboardLayoutRoute() {
   const currentWorkspace = workspaces.find((workspace) => workspace.id === params.workspaceId)
 
   const [domainDialogOpen, setDomainDialogOpen] = React.useState(false)
+  const [shopifyDialogOpen, setShopifyDialogOpen] = React.useState(false)
 
   const handleWorkspaceSwitch = (workspaceId: string) => {
     if (workspaceId === params.workspaceId) return
@@ -172,6 +268,7 @@ function DashboardLayoutRoute() {
               }
             />
             <Menu.Content align="end">
+              <Menu.Item onClick={() => setShopifyDialogOpen(true)}>Shopify integration</Menu.Item>
               <Menu.Item onClick={() => setDomainDialogOpen(true)}>Manage custom domain</Menu.Item>
               {workspaces.length > 1 && (
                 <Menu.Sub>
@@ -201,6 +298,7 @@ function DashboardLayoutRoute() {
       </nav>
 
       <CustomDomainDialog open={domainDialogOpen} onOpenChange={setDomainDialogOpen} />
+      <ShopifyIntegrationDialog open={shopifyDialogOpen} onOpenChange={setShopifyDialogOpen} />
 
       <div className="flex flex-1 flex-col">
         <Outlet />

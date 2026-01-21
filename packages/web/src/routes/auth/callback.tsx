@@ -7,29 +7,45 @@ export const Route = createFileRoute('/auth/callback')({
     handlers: {
       GET: async ({ request }) => {
         const url = new URL(request.url)
+
         const code = url.searchParams.get('code')
         if (!code) throw new Error('No code found')
+
         const result = await AuthClient.exchange(code, `${url.origin}${url.pathname}`)
-        if (result.err) {
-          throw new Error(result.err.message)
-        }
+        if (result.err) throw new Error(result.err.message)
+
         const decoded = AuthClient.decode(result.tokens.access, {} as any)
         if (decoded.err) throw new Error(decoded.err.message)
+
         const session = await useAuthSession()
-        const id = decoded.subject.properties.accountId
+        const accountId = decoded.subject.properties.accountId
         await session.update((value) => {
           return {
             ...value,
             account: {
-              [id]: {
-                id,
+              [accountId]: {
+                id: accountId,
                 email: decoded.subject.properties.email,
               },
             },
-            current: id,
+            current: accountId,
           }
         })
-        throw redirect({ to: '/auth' })
+
+        const callback = (() => {
+          const state = url.searchParams.get('state')
+          if (state) {
+            try {
+              const result = JSON.parse(atob(state))
+              if (result.callback && result.callback.startsWith('/')) {
+                return result.callback
+              }
+            } catch {}
+          }
+          return '/auth'
+        })()
+
+        throw redirect({ to: callback })
       },
     },
   },

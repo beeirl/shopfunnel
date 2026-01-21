@@ -9,45 +9,27 @@ const root = path.resolve(dir, '..', '..')
 const TOKEN_NAME = 'api'
 
 // Parse arguments
-const stageArg = process.argv.includes('--stage') ? process.argv[process.argv.indexOf('--stage') + 1] : undefined
-const branchArg = process.argv.includes('--branch') ? process.argv[process.argv.indexOf('--branch') + 1] : undefined
+// Usage: bun run deploy dev, bun run deploy production
+const stage = process.argv[2]
 
-if (!stageArg && !branchArg) {
-  throw new Error('Either --stage or --branch is required')
+if (!stage) {
+  throw new Error('Stage is required. Usage: bun run deploy <stage>')
 }
 
-const stage = stageArg ?? branchArg!
-const branch = branchArg ?? stageArg!
 const force = process.argv.includes('--force')
-const isProduction = stage === 'production'
 
-console.log(`Stage: ${stage}`)
-console.log(`Target: ${isProduction ? 'Tinybird Cloud' : `Tinybird Branch "${branch}"`}`)
+// Determine target workspace based on stage
+// production stage -> shopfunnel_production workspace
+// all other stages -> shopfunnel_dev workspace
+const workspace = stage === 'production' ? 'shopfunnel_production' : 'shopfunnel_dev'
 
-// Deploy
-if (isProduction) {
-  console.log('Deploying to Tinybird Cloud...')
-  await $`TB_VERSION_WARNING=0 tb --cloud deploy --wait`.cwd(dir)
-} else {
-  const branches = await $`TB_VERSION_WARNING=0 tb --cloud branch ls`
-    .cwd(dir)
-    .text()
-    .catch(() => '')
-
-  const branchExists = new RegExp(`\\b${branch}\\b`).test(branches)
-  if (!branchExists) {
-    console.log(`Creating branch "${branch}"...`)
-    await $`TB_VERSION_WARNING=0 tb --cloud branch create ${branch}`.cwd(dir)
-  }
-
-  console.log(`Deploying to branch "${branch}"...`)
-  await $`TB_VERSION_WARNING=0 tb --branch ${branch} deploy --wait`.cwd(dir)
-}
+// Switch to the correct workspace and deploy
+await $`TB_VERSION_WARNING=0 tb --cloud workspace use ${workspace}`.cwd(dir)
+await $`TB_VERSION_WARNING=0 tb --cloud deploy --wait`.cwd(dir)
 
 console.log(`Retrieving ${TOKEN_NAME} token...`)
 const token = await (async () => {
-  const tbArgs = isProduction ? ['--cloud'] : ['--branch', branch]
-  const output = await $`TB_VERSION_WARNING=0 tb ${tbArgs} --show-tokens token ls`.cwd(dir).text()
+  const output = await $`TB_VERSION_WARNING=0 tb --cloud --show-tokens token ls`.cwd(dir).text()
 
   const lines = output.split('\n')
   for (let i = 0; i < lines.length; i++) {

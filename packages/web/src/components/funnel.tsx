@@ -246,10 +246,10 @@ export interface FunnelProps {
   mode?: 'preview' | 'live'
   onPageChange?: (page: { id: string; index: number; name: string }) => void
   onPageComplete?: (page: { id: string; index: number; name: string; values: Values }) => void
-  onComplete?: (values: Values) => Promise<void> | void
+  onComplete?: (values: Values, redirectUrl?: string) => Promise<void> | void
 }
 
-export function Funnel({ funnel, mode = 'live', onComplete, onPageChange, onPageComplete }: FunnelProps) {
+export function Funnel({ funnel, mode = 'live', onPageChange, onPageComplete, onComplete }: FunnelProps) {
   const VALUES_STORAGE_KEY = `sf_funnel_${funnel.id}_values`
 
   const canChangePageRef = useRef(true)
@@ -374,8 +374,8 @@ export function Funnel({ funnel, mode = 'live', onComplete, onPageChange, onPage
     if (redirectUrl) {
       setRedirecting(true)
       localStorage.removeItem(VALUES_STORAGE_KEY)
-      await Promise.all([new Promise((resolve) => setTimeout(resolve, 2000)), onComplete?.(values)])
-      window.location.href = redirectUrl
+      await new Promise((resolve) => setTimeout(resolve, 2000))
+      await onComplete?.(values, redirectUrl)
     } else {
       setCurrentPageIndex(nextPageIndex)
       setHiddenBlockIds(nextHiddenBlockIds)

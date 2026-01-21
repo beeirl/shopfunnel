@@ -1,0 +1,1 @@
+ALTER TABLE `external_order` MODIFY COLUMN `integration_id` char(30) NOT NULL;

@@ -101,7 +101,7 @@ export namespace Domain {
         {
           method: 'POST',
           headers: {
-            Authorization: `Bearer ${Resource.CLOUDFLARE_API_TOKEN.value}`,
+            Authorization: `Bearer ${Resource.CLOUDFLARE_SSL_API_TOKEN.value}`,
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
@@ -144,10 +144,9 @@ export namespace Domain {
       tx
         .select()
         .from(DomainTable)
-        .where(and(eq(DomainTable.workspaceId, Actor.workspace()), isNull(DomainTable.archivedAt)))
+        .where(and(eq(DomainTable.workspaceId, Actor.workspace())))
         .then((rows) => rows[0]),
     )
-
     if (!domain) {
       throw new Error('No custom domain found for this workspace.')
     }
@@ -158,7 +157,7 @@ export namespace Domain {
         {
           method: 'DELETE',
           headers: {
-            Authorization: `Bearer ${Resource.CLOUDFLARE_API_TOKEN.value}`,
+            Authorization: `Bearer ${Resource.CLOUDFLARE_SSL_API_TOKEN.value}`,
           },
         },
       )
@@ -171,8 +170,7 @@ export namespace Domain {
 
     await Database.use((tx) =>
       tx
-        .update(DomainTable)
-        .set({ archivedAt: new Date() })
+        .delete(DomainTable)
         .where(and(eq(DomainTable.workspaceId, Actor.workspaceId()), eq(DomainTable.id, domain.id))),
     )
   })

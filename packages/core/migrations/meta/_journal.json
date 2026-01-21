@@ -8,6 +8,27 @@
       "when": 1768472965827,
       "tag": "0000_wild_omega_sentinel",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "5",
+      "when": 1768847372036,
+      "tag": "0001_noisy_khan",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "5",
+      "when": 1768909029838,
+      "tag": "0002_premium_avengers",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "5",
+      "when": 1768930613018,
+      "tag": "0003_clear_the_captain",
+      "breakpoints": true
     }
   ]
 }

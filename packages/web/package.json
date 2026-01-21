@@ -5,6 +5,7 @@
   "version": "0.0.0",
   "scripts": {
     "dev": "vite dev",
+    "dev:remote": "VITE_AUTH_URL=https://auth.dev.shopfunnel.com bun sst shell --stage=dev bun dev",
     "build": "vite build",
     "start": "node .output/server/index.mjs",
     "shadcn": "bunx --bun shadcn"
@@ -18,6 +19,7 @@
     "@dnd-kit/sortable": "10.0.0",
     "@dnd-kit/utilities": "3.2.2",
     "@fontsource-variable/inter": "5.2.8",
+    "@hono/zod-validator": "0.7.6",
     "@openauthjs/openauth": "catalog:",
     "@shopfunnel/core": "workspace:*",
     "@shopfunnel/resource": "workspace:*",
@@ -34,6 +36,7 @@
     "cva": "1.0.0-beta.4",
     "drizzle-orm": "catalog:",
     "frimousse": "0.3.0",
+    "hono": "4.11.4",
     "motion": "12.24.0",
     "react": "catalog:",
     "react-aria-components": "1.14.0",

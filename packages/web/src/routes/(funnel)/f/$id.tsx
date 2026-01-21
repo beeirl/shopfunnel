@@ -1,9 +1,11 @@
 import { Funnel, FunnelProps } from '@/components/funnel'
+import { Actor } from '@shopfunnel/core/actor'
 import { Analytics } from '@shopfunnel/core/analytics/index'
 import { Answer } from '@shopfunnel/core/answer/index'
 import { Domain } from '@shopfunnel/core/domain/index'
 import { Funnel as FunnelCore } from '@shopfunnel/core/funnel/index'
 import { Identifier } from '@shopfunnel/core/identifier'
+import { Integration } from '@shopfunnel/core/integration/index'
 import { Question } from '@shopfunnel/core/question/index'
 import { Submission } from '@shopfunnel/core/submission/index'
 import { AnyRouteMatch, createFileRoute, notFound } from '@tanstack/react-router'
@@ -69,13 +71,27 @@ const completeSubmission = createServerFn()
     }
   })
 
+const getShopifyIntegration = createServerFn()
+  .inputValidator(z.object({ workspaceId: Identifier.schema('workspace') }))
+  .handler(async ({ data }) => {
+    const integration = await Actor.provide('system', { workspaceId: data.workspaceId }, () =>
+      Integration.fromProvider('shopify'),
+    )
+    return integration ?? null
+  })
+
 export const Route = createFileRoute('/(funnel)/f/$id')({
   component: RouteComponent,
   loader: async ({ params }) => {
     const funnel = await getFunnel({ data: { shortId: params.id } })
     if (!funnel) throw notFound()
-    const questions = await getQuestions({ data: { funnelId: funnel.id } })
-    return { funnel, questions }
+
+    const [questions, shopifyIntegration] = await Promise.all([
+      getQuestions({ data: { funnelId: funnel.id } }),
+      getShopifyIntegration({ data: { workspaceId: funnel.workspaceId } }),
+    ])
+
+    return { funnel, questions, shopifyIntegration }
   },
   head: ({ loaderData }) => {
     const scripts: AnyRouteMatch['headScripts'] = []
@@ -100,7 +116,7 @@ export const Route = createFileRoute('/(funnel)/f/$id')({
 })
 
 function RouteComponent() {
-  const { funnel, questions } = Route.useLoaderData()
+  const { funnel, questions, shopifyIntegration } = Route.useLoaderData()
 
   const funnelEnteredRef = useRef(false)
   const funnelStartedRef = useRef(false)
@@ -132,9 +148,7 @@ function RouteComponent() {
         try {
           id = undefined
           localStorage.removeItem(key)
-        } catch {
-          // noop
-        }
+        } catch {}
       },
     }
   })
@@ -157,12 +171,6 @@ function RouteComponent() {
       },
     }
   })
-
-  useEffect(() => {
-    const handlePageHide = () => trackEvent('funnel_exit')
-    window.addEventListener('pagehide', handlePageHide)
-    return () => window.removeEventListener('pagehide', handlePageHide)
-  }, [])
 
   useEffect(() => {
     if (funnelEnteredRef.current) return
@@ -197,8 +205,8 @@ function RouteComponent() {
       timestamp: new Date().toISOString(),
     }
     const blob = new Blob([JSON.stringify(event)], { type: 'application/json' })
-    const success = navigator.sendBeacon?.('/f/event', blob)
-    if (!success) fetch('/f/event', { method: 'POST', body: blob, keepalive: true })
+    const success = navigator.sendBeacon?.('/api/event', blob)
+    if (!success) fetch('/api/event', { method: 'POST', body: blob, keepalive: true })
   }
 
   const handlePageChange: FunnelProps['onPageChange'] = (page) => {
@@ -248,9 +256,12 @@ function RouteComponent() {
     }
   }
 
-  const handleFunnelComplete: FunnelProps['onComplete'] = async () => {
+  const handleComplete: FunnelProps['onComplete'] = async (values, redirectUrl) => {
+    const sessionId = session.id()
+    const visitorId = visitor.id()
+
     await Promise.allSettled(pendingAnswerSubmissionsRef.current)
-    await completeSubmission({ data: { sessionId: session.id() } })
+    await completeSubmission({ data: { sessionId } })
 
     trackEvent('funnel_end')
 
@@ -260,6 +271,27 @@ function RouteComponent() {
     prevPageRef.current = undefined
     setCurrentPage(undefined)
     session.clear()
+
+    if (redirectUrl) {
+      const url = new URL(redirectUrl, window.location.origin)
+      if (shopifyIntegration) {
+        url.searchParams.set(
+          '_sfs',
+          btoa(
+            JSON.stringify({
+              id: sessionId,
+              visitorId,
+              workspaceId: funnel.workspaceId,
+              funnelId: funnel.id,
+              funnelVersion: funnel.version,
+              integrationId: shopifyIntegration.id,
+              integrationProvider: shopifyIntegration.provider,
+            }),
+          ),
+        )
+      }
+      window.location.href = url.toString()
+    }
   }
 
   return (
@@ -269,7 +301,7 @@ function RouteComponent() {
         mode="live"
         onPageChange={handlePageChange}
         onPageComplete={handlePageComplete}
-        onComplete={handleFunnelComplete}
+        onComplete={handleComplete}
       />
     </div>
   )

@@ -17,6 +17,7 @@
     "typecheck": "tsgo --noEmit"
   },
   "dependencies": {
+    "@openauthjs/openauth": "catalog:",
     "@planetscale/database": "1.19.0",
     "@shopfunnel/resource": "workspace:*",
     "drizzle-orm": "catalog:",
