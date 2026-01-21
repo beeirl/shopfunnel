@@ -9,7 +9,7 @@ SQL >
     SELECT
         page_id,
         any(page_name) AS page_name,
-        any(page_index) AS page_index,
+        min(page_index) AS page_index,
         uniqMerge(views) AS page_views,
         uniqMerge(completions) AS page_completions,
         greatest(0, uniqMerge(views) - uniqMerge(completions)) AS exits,
@@ -56,9 +56,11 @@ SQL >
 
 NODE endpoint_node
 SQL >
-    SELECT * FROM pages_node
-    UNION ALL
-    SELECT * FROM external_page_node WHERE page_views > 0
+    SELECT * FROM (
+        SELECT * FROM pages_node
+        UNION ALL
+        SELECT * FROM external_page_node WHERE page_views > 0
+    )
     ORDER BY page_index
 
 TYPE endpoint
