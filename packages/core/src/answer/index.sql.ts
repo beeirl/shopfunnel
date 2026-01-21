@@ -1,4 +1,4 @@
-import { bigint, index, mysqlTable, varchar } from 'drizzle-orm/mysql-core'
+import { bigint, index, mysqlTable, uniqueIndex, varchar } from 'drizzle-orm/mysql-core'
 import { id, timestampColumns, ulid, workspaceColumns, workspaceIndexes } from '../database/types'
 
 export const AnswerTable = mysqlTable(
@@ -9,7 +9,11 @@ export const AnswerTable = mysqlTable(
     submissionId: id('submission_id').notNull(),
     questionId: id('question_id').notNull(),
   },
-  (table) => [...workspaceIndexes(table), index('question').on(table.workspaceId, table.questionId)],
+  (table) => [
+    ...workspaceIndexes(table),
+    index('question').on(table.workspaceId, table.questionId),
+    uniqueIndex('submission_question').on(table.workspaceId, table.submissionId, table.questionId),
+  ],
 )
 
 export const AnswerValueTable = mysqlTable(

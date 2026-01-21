@@ -1,0 +1,2 @@
+ALTER TABLE `answer` ADD CONSTRAINT `submission_question` UNIQUE(`workspace_id`,`submission_id`,`question_id`);--> statement-breakpoint
+CREATE INDEX `funnel` ON `submission` (`workspace_id`,`funnel_id`);

@@ -85,13 +85,17 @@ export namespace Answer {
                 ),
               )
           } else {
-            answerId = Identifier.create('answer')
-            await tx.insert(AnswerTable).values({
-              id: answerId,
-              workspaceId: funnel.workspaceId,
-              submissionId,
-              questionId,
-            })
+            try {
+              answerId = Identifier.create('answer')
+              await tx.insert(AnswerTable).values({
+                id: answerId,
+                workspaceId: funnel.workspaceId,
+                submissionId,
+                questionId,
+              })
+            } catch {
+              continue
+            }
           }
 
           const values = (() => {

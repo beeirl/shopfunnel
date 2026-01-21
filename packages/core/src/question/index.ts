@@ -52,7 +52,13 @@ export namespace Question {
               optionId: AnswerValueTable.optionId,
             })
             .from(AnswerValueTable)
-            .innerJoin(AnswerTable, eq(AnswerValueTable.answerId, AnswerTable.id))
+            .innerJoin(
+              AnswerTable,
+              and(
+                eq(AnswerValueTable.workspaceId, AnswerTable.workspaceId),
+                eq(AnswerValueTable.answerId, AnswerTable.id),
+              ),
+            )
             .where(
               and(
                 eq(AnswerTable.workspaceId, Actor.workspaceId()),

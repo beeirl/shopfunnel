@@ -110,7 +110,13 @@ export namespace Submission {
             optionId: AnswerValueTable.optionId,
           })
           .from(AnswerTable)
-          .innerJoin(AnswerValueTable, eq(AnswerValueTable.answerId, AnswerTable.id))
+          .innerJoin(
+            AnswerValueTable,
+            and(
+              eq(AnswerValueTable.workspaceId, AnswerTable.workspaceId),
+              eq(AnswerValueTable.answerId, AnswerTable.id),
+            ),
+          )
           .where(
             and(eq(AnswerTable.workspaceId, Actor.workspaceId()), inArray(AnswerTable.submissionId, submissionIds)),
           ),

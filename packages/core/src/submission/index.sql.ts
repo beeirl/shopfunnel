@@ -10,5 +10,9 @@ export const SubmissionTable = mysqlTable(
     sessionId: ulid('session_id').notNull(),
     completedAt: timestamp('completed_at'),
   },
-  (table) => [...workspaceIndexes(table), index('session').on(table.sessionId)],
+  (table) => [
+    ...workspaceIndexes(table),
+    index('session').on(table.sessionId),
+    index('funnel').on(table.workspaceId, table.funnelId),
+  ],
 )
