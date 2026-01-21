@@ -57,7 +57,6 @@ export namespace Answer {
           const block = blocks.get(answer.blockId)
           if (!block) continue
 
-          // Check for existing answer
           const existingAnswer = await tx
             .select({ id: AnswerTable.id })
             .from(AnswerTable)
@@ -71,10 +70,8 @@ export namespace Answer {
             .then((rows) => rows[0])
 
           let answerId: string
-
           if (existingAnswer) {
             answerId = existingAnswer.id
-            // Delete existing values before inserting new ones
             await tx
               .delete(AnswerValueTable)
               .where(

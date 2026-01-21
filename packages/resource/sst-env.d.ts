@@ -34,6 +34,10 @@ declare module "sst" {
       "type": "sst.sst.Secret"
       "value": string
     }
+    "RESEND_API_KEY": {
+      "type": "sst.sst.Secret"
+      "value": string
+    }
     "SHOPIFY_CLIENT_ID": {
       "type": "sst.sst.Secret"
       "value": string

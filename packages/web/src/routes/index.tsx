@@ -11,7 +11,9 @@ const checkAuth = createServerFn().handler(async () => {
 
 export const Route = createFileRoute('/')({
   component: RouteComponent,
-  beforeLoad: () => checkAuth(),
+  beforeLoad: () => {
+    throw redirect({ to: '/auth' })
+  },
 })
 
 function RouteComponent() {

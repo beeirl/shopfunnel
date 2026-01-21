@@ -21,10 +21,6 @@ export namespace Account {
     }),
   )
 
-  export const test = () => {
-    return 'YOOO'
-  }
-
   export const create = fn(
     z.object({
       id: z.string().optional(),

@@ -1,11 +1,13 @@
 import type { KVNamespace } from '@cloudflare/workers-types'
 import { issuer } from '@openauthjs/openauth'
 import { GoogleOidcProvider } from '@openauthjs/openauth/provider/google'
+import { PasswordProvider } from '@openauthjs/openauth/provider/password'
 import { CloudflareStorage } from '@openauthjs/openauth/storage/cloudflare'
 import { createSubjects } from '@openauthjs/openauth/subject'
-import { THEME_OPENAUTH } from '@openauthjs/openauth/ui/theme'
+import { PasswordUI } from '@openauthjs/openauth/ui/password'
 import { Account } from '@shopfunnel/core/account/index'
 import { Actor } from '@shopfunnel/core/actor'
+import { Resend } from '@shopfunnel/core/resend/index'
 import { User } from '@shopfunnel/core/user/index'
 import { Workspace } from '@shopfunnel/core/workspace/index'
 import { Resource } from '@shopfunnel/resource'
@@ -29,12 +31,44 @@ export const subjects = createSubjects({
 export default {
   async fetch(request: Request, env: Env, ctx: ExecutionContext) {
     const result = await issuer({
-      theme: THEME_OPENAUTH,
+      theme: {
+        title: 'Shopfunnel',
+        logo: `${process.env.APP_URL}/shopfunnel-logo.svg`,
+        favicon: `${process.env.APP_URL}/favicon.svg`,
+        css: [
+          "@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');",
+          "[data-component='logo'] { height: 1.625rem; }",
+        ].join('\n'),
+        font: {
+          family: 'Inter, sans-serif',
+        },
+        background: {
+          light: '#FFFFFF',
+          dark: '#FFFFFF',
+        },
+        primary: {
+          light: '#000000',
+          dark: '#000000',
+        },
+        radius: 'lg',
+      },
       providers: {
         google: GoogleOidcProvider({
           clientID: Resource.GOOGLE_CLIENT_ID.value,
           scopes: ['openid', 'email'],
         }),
+        email: PasswordProvider(
+          PasswordUI({
+            sendCode: async (email, code) => {
+              await Resend.sendEmail({
+                from: 'Shopfunnel <auth@shopfunnel.com>',
+                to: email,
+                subject: `Shopfunnel Pin Code: ${code}`,
+                body: `Your pin code is <strong>${code}</strong>.`,
+              })
+            },
+          }),
+        ),
       },
       storage: CloudflareStorage({
         // @ts-ignore
@@ -49,6 +83,9 @@ export default {
           if (!response.id?.email_verified) throw new Error('Google email not verified')
           subject = response.id.sub as string
           email = response.id.email as string
+        } else if (response.provider === 'email') {
+          subject = response.email
+          email = response.email
         } else {
           throw new Error('Unsupported provider')
         }
@@ -62,12 +99,11 @@ export default {
           subject,
         })
 
-        // Get workspace
         await Actor.provide('account', { accountId, email }, async () => {
           await User.joinInvitedWorkspaces()
           const workspaces = await Account.workspaces()
           if (workspaces.length === 0) {
-            if (process.env.APP_STAGE === 'production') throw new Error('Not allowed')
+            if (process.env.APP_STAGE !== 'beeirl') throw new Error('Not allowed')
             await Workspace.create({ name: 'Default' })
           }
         })

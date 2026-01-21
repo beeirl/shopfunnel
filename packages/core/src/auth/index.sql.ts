@@ -1,7 +1,7 @@
 import { index, mysqlEnum, mysqlTable, primaryKey, uniqueIndex, varchar } from 'drizzle-orm/mysql-core'
 import { id, timestampColumns } from '../database/types'
 
-export const AuthProvider = ['email', 'github', 'google'] as const
+export const AuthProvider = ['email', 'google'] as const
 
 export const AuthTable = mysqlTable(
   'auth',
