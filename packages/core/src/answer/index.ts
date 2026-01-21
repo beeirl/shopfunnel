@@ -26,16 +26,15 @@ export namespace Answer {
       const funnel = await Funnel.getPublishedVersion(input.funnelId)
       if (!funnel) throw new Error('Funnel not found')
 
-      let submissionId = await Submission.fromSessionId(input.sessionId)
-      if (!submissionId) {
-        submissionId = await Submission.create({
-          funnelId: funnel.id,
-          workspaceId: funnel.workspaceId,
-          sessionId: input.sessionId,
-        })
-      }
-
-      await Database.use(async (tx) => {
+      await Database.transaction(async (tx) => {
+        let submissionId = await Submission.fromSessionId(input.sessionId)
+        if (!submissionId) {
+          submissionId = await Submission.create({
+            funnelId: funnel.id,
+            workspaceId: funnel.workspaceId,
+            sessionId: input.sessionId,
+          })
+        }
         // Resolve blockIds to questionIds
         const questions = await tx
           .select({ id: QuestionTable.id, blockId: QuestionTable.blockId })

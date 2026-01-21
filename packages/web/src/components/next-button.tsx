@@ -11,10 +11,11 @@ export function NextButton({ className, children, loading, static: isStatic, ...
   return (
     <Button
       className={cn(
-        'flex h-12 w-full items-center justify-center gap-2 rounded-(--sf-radius) text-base font-semibold transition-all outline-none',
+        'relative flex h-12 w-full items-center justify-center gap-2 rounded-(--sf-radius) text-base font-semibold transition-all outline-none',
         'bg-(--sf-primary) text-(--sf-primary-foreground)',
         loading && 'pointer-events-none opacity-50',
-        !isStatic && 'hover:bg-(--sf-primary)/90',
+        !isStatic &&
+          'before:absolute before:inset-0 before:-z-10 before:rounded-(--sf-radius) before:bg-(--sf-background) hover:bg-(--sf-primary)/90',
         'focus-visible:ring-3 focus-visible:ring-(--sf-ring)/50',
         className,
       )}
