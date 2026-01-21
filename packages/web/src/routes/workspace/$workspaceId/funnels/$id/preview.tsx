@@ -27,5 +27,14 @@ function RouteComponent() {
   const funnelQuery = useSuspenseQuery(getFunnelQueryOptions(params.workspaceId, params.id))
   const funnel = funnelQuery.data
 
-  return <Funnel funnel={funnel} mode="preview" />
+  return (
+    <Funnel
+      funnel={funnel}
+      mode="preview"
+      onComplete={(_, redirectUrl) => {
+        if (!redirectUrl) return
+        window.location.href = redirectUrl
+      }}
+    />
+  )
 }
