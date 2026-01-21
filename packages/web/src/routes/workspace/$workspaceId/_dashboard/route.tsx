@@ -19,6 +19,7 @@ import { createFileRoute, Outlet } from '@tanstack/react-router'
 import { createServerFn } from '@tanstack/react-start'
 import * as React from 'react'
 import { z } from 'zod'
+import { getShopifyIntegrationQueryOptions } from '../-common'
 
 const getUser = createServerFn()
   .inputValidator(Identifier.schema('workspace'))
@@ -75,19 +76,6 @@ const upsertDomain = createServerFn()
     return withActor(async () => {
       return Domain.upsert({ hostname: data.hostname })
     }, data.workspaceId)
-  })
-
-const getShopifyIntegration = createServerFn()
-  .inputValidator(Identifier.schema('workspace'))
-  .handler(async ({ data: workspaceId }) => {
-    const integration = await withActor(() => Integration.fromProvider('shopify'), workspaceId)
-    return integration ?? null
-  })
-
-const getShopifyIntegrationQueryOptions = (workspaceId: string) =>
-  queryOptions({
-    queryKey: ['shopify-integration', workspaceId],
-    queryFn: () => getShopifyIntegration({ data: workspaceId }),
   })
 
 const disconnectShopifyIntegration = createServerFn()

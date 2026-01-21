@@ -201,12 +201,21 @@ export const ShopifyRoute = new Hono()
     if (!hmacValid) return c.json({ error: 'Invalid HMAC signature' }, 400)
 
     const topic = c.req.header('X-Shopify-Topic')
-    if (topic === 'shop/redact') {
-      const payload = JSON.parse(body)
-      await Integration.disconnect({
-        provider: 'shopify',
-        externalId: String(payload.shop_id),
-      })
+    const payload = JSON.parse(body)
+
+    switch (topic) {
+      case 'app/uninstalled':
+        await Integration.disconnect({
+          provider: 'shopify',
+          externalId: String(payload.id),
+        })
+        break
+      case 'shop/redact':
+        await Integration.disconnect({
+          provider: 'shopify',
+          externalId: String(payload.shop_id),
+        })
+        break
     }
 
     return c.json('ok', 200)

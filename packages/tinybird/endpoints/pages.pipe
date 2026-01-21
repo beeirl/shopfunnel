@@ -30,6 +30,35 @@ SQL >
         AND date <= toDate({{ String(date_to) }})
         {% end %}
     GROUP BY page_id
+
+NODE external_page_node
+SQL >
+    %
+    SELECT
+        'external' AS page_id,
+        'External Page' AS page_name,
+        toUInt32(9999) AS page_index,
+        uniqMerge(external_page_views) AS page_views,
+        toUInt64(0) AS page_completions,
+        toInt64(0) AS exits,
+        toFloat64(0) AS avg_duration,
+        toFloat64(0) AS dropoff_rate
+    FROM kpis_mv
+    WHERE workspace_id = {{ String(workspace_id, required=True) }}
+        AND funnel_id = {{ String(funnel_id, required=True) }}
+        AND funnel_version = {{ UInt32(funnel_version, required=True) }}
+        {% if defined(date_from) %}
+        AND date >= toDate({{ String(date_from) }})
+        {% end %}
+        {% if defined(date_to) %}
+        AND date <= toDate({{ String(date_to) }})
+        {% end %}
+
+NODE endpoint_node
+SQL >
+    SELECT * FROM pages_node
+    UNION ALL
+    SELECT * FROM external_page_node WHERE page_views > 0
     ORDER BY page_index
 
 TYPE endpoint

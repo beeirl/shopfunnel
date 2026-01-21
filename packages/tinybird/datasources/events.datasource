@@ -16,4 +16,4 @@ SCHEMA >
 
 ENGINE MergeTree
 ENGINE_PARTITION_KEY toYYYYMM(timestamp)
-ENGINE_SORTING_KEY workspace_id, funnel_id, timestamp
+ENGINE_SORTING_KEY workspace_id, funnel_id, funnel_version, timestamp

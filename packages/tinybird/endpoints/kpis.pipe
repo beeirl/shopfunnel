@@ -4,38 +4,24 @@ DESCRIPTION >
 
 TOKEN api READ
 
-NODE date_calculations_node
-SQL >
-    %
-    WITH
-        {% if defined(date_from) %}
-            toDate({{ String(date_from) }}) AS current_start,
-        {% else %}
-            toDate(timestampAdd(today(), INTERVAL -30 DAY)) AS current_start,
-        {% end %}
-        {% if defined(date_to) %}
-            toDate({{ String(date_to) }}) AS current_end
-        {% else %}
-            toDate(today()) AS current_end
-        {% end %}
-    SELECT
-        current_start,
-        current_end,
-        dateDiff('day', current_start, current_end) + 1 AS period_days
-
-NODE current_period_node
+NODE kpis_node
 SQL >
     %
     SELECT
-        uniqIf(session_id, type = 'funnel_enter') AS total_views,
-        uniqIf(session_id, type = 'funnel_start') AS total_starts,
-        uniqIf(session_id, type = 'funnel_end') AS total_completions
-    FROM events
+        uniqMerge(views) AS total_views,
+        uniqMerge(starts) AS total_starts,
+        uniqMerge(completions) AS total_completions,
+        uniqMerge(orders) AS total_orders
+    FROM kpis_mv
     WHERE workspace_id = {{ String(workspace_id, required=True) }}
         AND funnel_id = {{ String(funnel_id, required=True) }}
         AND funnel_version = {{ UInt32(funnel_version, required=True) }}
-        AND toDate(timestamp) >= (SELECT current_start FROM date_calculations_node)
-        AND toDate(timestamp) <= (SELECT current_end FROM date_calculations_node)
+        {% if defined(date_from) %}
+        AND date >= toDate({{ String(date_from) }})
+        {% end %}
+        {% if defined(date_to) %}
+        AND date <= toDate({{ String(date_to) }})
+        {% end %}
 
 NODE endpoint_node
 SQL >
@@ -43,8 +29,10 @@ SQL >
         total_views,
         total_starts,
         total_completions,
+        total_orders,
         if(total_views > 0, round(total_starts / total_views * 100, 1), 0) AS start_rate,
-        if(total_starts > 0, round(total_completions / total_starts * 100, 1), 0) AS completion_rate
-    FROM current_period_node
+        if(total_starts > 0, round(total_completions / total_starts * 100, 1), 0) AS completion_rate,
+        if(total_views > 0, round(total_orders / total_views * 100, 1), 0) AS conversion_rate
+    FROM kpis_node
 
 TYPE endpoint

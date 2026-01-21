@@ -41,11 +41,12 @@ const token = await (async () => {
         return tokenLine.replace('token: ', '').trim()
       }
     }
-    // Table format: "| api | p.xxx... |" - find row with exact name match in first column
+    // Table format: "| id | name | token |" - find row with exact name match
     if (line?.includes('|')) {
       const columns = line.split('|').map((col) => col.trim())
-      if (columns[1] === TOKEN_NAME && columns[2]?.startsWith('p.')) {
-        return columns[2]
+      // columns[0] is empty (before first |), columns[1] is id, columns[2] is name, columns[3] is token
+      if (columns[2] === TOKEN_NAME && columns[3]?.startsWith('p.')) {
+        return columns[3]
       }
     }
   }

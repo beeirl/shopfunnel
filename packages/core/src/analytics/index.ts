@@ -37,12 +37,6 @@ export namespace Analytics {
     payload: z.object({}),
   })
 
-  const FunnelExitEvent = z.object({
-    ...EventBase.shape,
-    type: z.literal('funnel_exit'),
-    payload: z.object({}),
-  })
-
   const PageViewEvent = z.object({
     ...EventBase.shape,
     type: z.literal('page_view'),
@@ -106,7 +100,6 @@ export namespace Analytics {
     FunnelEnterEvent,
     FunnelStartEvent,
     FunnelEndEvent,
-    FunnelExitEvent,
     PageViewEvent,
     PageCompleteEvent,
     QuestionAnswerEvent,

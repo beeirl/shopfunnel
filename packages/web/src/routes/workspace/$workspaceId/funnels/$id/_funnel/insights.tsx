@@ -3,6 +3,7 @@ import { Empty } from '@/components/ui/empty'
 import { Select } from '@/components/ui/select'
 import { Table } from '@/components/ui/table'
 import { withActor } from '@/context/auth.withActor'
+import { getShopifyIntegrationQueryOptions } from '@/routes/workspace/$workspaceId/-common'
 import { Funnel } from '@shopfunnel/core/funnel/index'
 import { Identifier } from '@shopfunnel/core/identifier'
 import { Resource } from '@shopfunnel/resource'
@@ -167,9 +168,10 @@ export const Route = createFileRoute('/workspace/$workspaceId/funnels/$id/_funne
   component: RouteComponent,
   ssr: false,
   loader: async ({ context, params, deps }) => {
-    const publishedVersions = await context.queryClient.ensureQueryData(
-      getPublishedVersionsQueryOptions(params.workspaceId, params.id),
-    )
+    const [publishedVersions] = await Promise.all([
+      context.queryClient.ensureQueryData(getPublishedVersionsQueryOptions(params.workspaceId, params.id)),
+      context.queryClient.ensureQueryData(getShopifyIntegrationQueryOptions(params.workspaceId)),
+    ])
     const latestPublishedVersion = publishedVersions.at(-1)
     if (latestPublishedVersion) {
       const filterOption = DATE_FILTER_OPTIONS.find((o) => o.value === (deps.range ?? 'today'))!
@@ -186,34 +188,56 @@ function Insights({
   funnelId,
   funnelVersion,
   filter,
+  hasShopifyIntegration,
 }: {
   workspaceId: string
   funnelId: string
   funnelVersion: number
   filter: { dateFrom: string | undefined; dateTo: string | undefined }
+  hasShopifyIntegration: boolean
 }) {
   const insightsQuery = useSuspenseQuery(getInsightsQueryOptions(workspaceId, funnelId, funnelVersion, filter))
   const insights = insightsQuery.data
   const hasData = insights?.kpis?.total_views > 0
 
-  const kpis = hasData
+  const kpis: { label: string; value: string; external?: boolean }[] = hasData
     ? [
         { label: 'Total Views', value: formatNumber(insights.kpis.total_views, true) },
         { label: 'Started', value: formatNumber(insights.kpis.total_starts, true) },
         { label: 'Start Rate', value: formatPercentage(insights.kpis.start_rate) },
         { label: 'Completions', value: formatNumber(insights.kpis.total_completions, true) },
         { label: 'Completion Rate', value: formatPercentage(insights.kpis.completion_rate) },
+        {
+          label: 'Orders',
+          value:
+            hasShopifyIntegration || insights.kpis.total_orders > 0
+              ? formatNumber(insights.kpis.total_orders, true)
+              : '-',
+          external: !hasShopifyIntegration && insights.kpis.total_orders === 0,
+        },
+        {
+          label: 'Conversion Rate',
+          value:
+            hasShopifyIntegration || insights.kpis.total_orders > 0
+              ? formatPercentage(insights.kpis.conversion_rate)
+              : '-',
+          external: !hasShopifyIntegration && insights.kpis.total_orders === 0,
+        },
       ]
     : []
 
   return hasData ? (
     <div className="flex flex-col gap-2 rounded-3xl bg-muted p-2">
-      <div className="grid grid-cols-5 gap-2">
+      <div className="grid grid-cols-7 gap-2">
         {kpis.map((kpi) => (
           <Card.Root key={kpi.label} size="sm">
             <Card.Header>
               <Card.Title className="text-muted-foreground">{kpi.label}</Card.Title>
-              <Card.Description className="font-medium text-foreground">{kpi.value}</Card.Description>
+              <Card.Description
+                className={kpi.external ? 'font-medium text-muted-foreground' : 'font-medium text-foreground'}
+              >
+                {kpi.value}
+              </Card.Description>
             </Card.Header>
           </Card.Root>
         ))}
@@ -232,15 +256,22 @@ function Insights({
                 </Table.Row>
               </Table.Header>
               <Table.Body>
-                {insights.pages.map((page) => (
-                  <Table.Row key={page.page_id} className="hover:bg-transparent">
-                    <Table.Cell className="truncate">{page.page_name || page.page_id}</Table.Cell>
-                    <Table.Cell className="text-right">{formatNumber(page.page_views)}</Table.Cell>
-                    <Table.Cell className="text-right">{formatNumber(page.exits)}</Table.Cell>
-                    <Table.Cell className="text-right">{formatPercentage(page.dropoff_rate)}</Table.Cell>
-                    <Table.Cell className="text-right">{formatDuration(page.avg_duration)}</Table.Cell>
-                  </Table.Row>
-                ))}
+                {insights.pages.map((page) => {
+                  const isExternal = page.page_id === 'external'
+                  return (
+                    <Table.Row key={page.page_id} className="hover:bg-transparent">
+                      <Table.Cell className="truncate">{page.page_name || page.page_id}</Table.Cell>
+                      <Table.Cell className="text-right">{formatNumber(page.page_views)}</Table.Cell>
+                      <Table.Cell className="text-right">{isExternal ? '-' : formatNumber(page.exits)}</Table.Cell>
+                      <Table.Cell className="text-right">
+                        {isExternal ? '-' : formatPercentage(page.dropoff_rate)}
+                      </Table.Cell>
+                      <Table.Cell className="text-right">
+                        {isExternal ? '-' : formatDuration(page.avg_duration)}
+                      </Table.Cell>
+                    </Table.Row>
+                  )
+                })}
               </Table.Body>
             </Table.Root>
           </Card.Content>
@@ -282,12 +313,15 @@ function RouteComponent() {
   const publishedVersionsQuery = useSuspenseQuery(getPublishedVersionsQueryOptions(params.workspaceId, params.id))
   const latestPublishedVersion = publishedVersionsQuery.data.at(-1)
 
+  const shopifyIntegrationQuery = useSuspenseQuery(getShopifyIntegrationQueryOptions(params.workspaceId))
+  const hasShopifyIntegration = shopifyIntegrationQuery.data !== null
+
   const rangeOption = DATE_FILTER_OPTIONS.find((o) => o.value === range)!
   const dateRange = rangeOption.range()
 
   return (
     <div className="p-6 sm:pt-10">
-      <div className="mx-auto flex w-full max-w-4xl flex-col gap-6">
+      <div className="mx-auto flex w-full max-w-5xl flex-col gap-6">
         <div className="flex items-center justify-between">
           <div className="text-2xl font-bold">Insights</div>
           <Select.Root items={DATE_FILTER_OPTIONS} value={range} onValueChange={handleRangeChange}>
@@ -311,6 +345,7 @@ function RouteComponent() {
             funnelId={params.id}
             funnelVersion={latestPublishedVersion}
             filter={dateRange}
+            hasShopifyIntegration={hasShopifyIntegration}
           />
         ) : (
           <div className="rounded-3xl bg-muted p-2">

@@ -1,0 +1,14 @@
+SCHEMA >
+    `date` Date,
+    `workspace_id` String,
+    `funnel_id` String,
+    `funnel_version` UInt32,
+    `views` AggregateFunction(uniq, String),
+    `starts` AggregateFunction(uniq, String),
+    `completions` AggregateFunction(uniq, String),
+    `orders` AggregateFunction(uniq, String),
+    `external_page_views` AggregateFunction(uniq, String)
+
+ENGINE AggregatingMergeTree
+ENGINE_PARTITION_KEY toYYYYMM(date)
+ENGINE_SORTING_KEY workspace_id, funnel_id, funnel_version, date

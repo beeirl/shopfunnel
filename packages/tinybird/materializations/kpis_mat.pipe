@@ -1,0 +1,20 @@
+NODE kpis_node
+DESCRIPTION >
+    Aggregate funnel-level KPIs by date
+
+SQL >
+    SELECT
+        toDate(timestamp) AS date,
+        workspace_id,
+        funnel_id,
+        funnel_version,
+        uniqStateIf(session_id, type = 'funnel_enter') AS views,
+        uniqStateIf(session_id, type = 'funnel_start') AS starts,
+        uniqStateIf(session_id, type = 'funnel_end') AS completions,
+        uniqStateIf(session_id, type = 'external_checkout_complete') AS orders,
+        uniqStateIf(session_id, type = 'external_page_view') AS external_page_views
+    FROM events
+    GROUP BY date, workspace_id, funnel_id, funnel_version
+
+TYPE MATERIALIZED
+DATASOURCE kpis_mv

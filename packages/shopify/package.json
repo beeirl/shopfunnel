@@ -3,7 +3,8 @@
   "private": true,
   "scripts": {
     "dev": "shopify app dev",
-    "deploy": "shopify app deploy",
+    "deploy:dev": "shopify app deploy --config shopify.app.dev.toml",
+    "deploy:prod": "shopify app deploy --config shopify.app.toml",
     "link": "shopify app config link"
   },
   "dependencies": {
