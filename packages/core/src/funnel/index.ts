@@ -1,4 +1,4 @@
-import { and, eq, isNotNull, isNull, sql } from 'drizzle-orm'
+import { and, desc, eq, isNotNull, isNull, sql } from 'drizzle-orm'
 import { groupBy, map, pipe, values } from 'remeda'
 import { ulid } from 'ulid'
 import z from 'zod'
@@ -93,6 +93,7 @@ export namespace Funnel {
         .from(FunnelTable)
         .leftJoin(DomainTable, eq(DomainTable.workspaceId, FunnelTable.workspaceId))
         .where(and(eq(FunnelTable.workspaceId, Actor.workspace()), isNull(FunnelTable.archivedAt)))
+        .orderBy(desc(FunnelTable.createdAt))
         .then((rows) => rows.map(serialize)),
     ),
   )
@@ -134,6 +135,57 @@ export namespace Funnel {
 
     return id
   }
+
+  export const duplicate = fn(
+    z.object({
+      id: Identifier.schema('funnel'),
+      title: z.string().optional(),
+    }),
+    async (input) => {
+      await Database.use(async (tx) => {
+        const funnelToDuplicate = await Funnel.getCurrentVersion(input.id)
+        if (!funnelToDuplicate) throw new Error('Funnel not found')
+
+        const id = Identifier.create('funnel')
+        const shortId = id.slice(-8)
+        const title = input.title || `${funnelToDuplicate.title} copy`
+
+        await tx.insert(FunnelTable).values({
+          id,
+          workspaceId: Actor.workspace(),
+          shortId,
+          title,
+          settings: funnelToDuplicate.settings,
+          currentVersion: 1,
+        })
+
+        await tx.insert(FunnelVersionTable).values({
+          funnelId: id,
+          workspaceId: Actor.workspace(),
+          version: 1,
+          pages: funnelToDuplicate.pages,
+          rules: funnelToDuplicate.rules,
+          variables: funnelToDuplicate.variables,
+          theme: funnelToDuplicate.theme,
+        })
+
+        const files = await tx
+          .select()
+          .from(FunnelFileTable)
+          .where(and(eq(FunnelFileTable.workspaceId, Actor.workspace()), eq(FunnelFileTable.funnelId, input.id)))
+
+        if (files.length > 0) {
+          await tx.insert(FunnelFileTable).values(
+            files.map((f) => ({
+              funnelId: id,
+              workspaceId: Actor.workspace(),
+              fileId: f.fileId,
+            })),
+          )
+        }
+      })
+    },
+  )
 
   export const createFile = fn(
     z.object({

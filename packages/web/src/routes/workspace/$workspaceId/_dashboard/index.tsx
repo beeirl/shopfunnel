@@ -1,12 +1,15 @@
 import { DataGrid } from '@/components/data-grid'
 import { Button } from '@/components/ui/button'
+import { Dialog } from '@/components/ui/dialog'
 import { Empty } from '@/components/ui/empty'
+import { Input } from '@/components/ui/input'
 import { Menu } from '@/components/ui/menu'
 import { Tooltip } from '@/components/ui/tooltip'
 import { withActor } from '@/context/auth.withActor'
 import { Funnel } from '@shopfunnel/core/funnel/index'
 import { Identifier } from '@shopfunnel/core/identifier'
 import {
+  IconCopy as CopyIcon,
   IconDots as DotsIcon,
   IconExternalLink as ExternalLinkIcon,
   IconFileText as FileTextIcon,
@@ -15,6 +18,8 @@ import { mutationOptions, queryOptions, useMutation, useQueryClient, useSuspense
 import { createFileRoute, Link } from '@tanstack/react-router'
 import { createServerFn } from '@tanstack/react-start'
 import { DateTime } from 'luxon'
+import * as React from 'react'
+import { z } from 'zod'
 import { getSessionQueryOptions } from '../-common'
 import { Heading } from './-components/heading'
 
@@ -41,6 +46,18 @@ const createFunnelMutationOptions = (workspaceId: string) =>
     mutationFn: () => createFunnel({ data: workspaceId }),
   })
 
+const duplicateFunnel = createServerFn({ method: 'POST' })
+  .inputValidator(
+    z.object({
+      workspaceId: Identifier.schema('workspace'),
+      id: Identifier.schema('funnel'),
+      title: z.string().optional(),
+    }),
+  )
+  .handler(({ data }) => {
+    return withActor(() => Funnel.duplicate({ id: data.id, title: data.title }), data.workspaceId)
+  })
+
 export const Route = createFileRoute('/workspace/$workspaceId/_dashboard/')({
   staticData: { title: 'Funnels' },
   component: RouteComponent,
@@ -52,6 +69,71 @@ export const Route = createFileRoute('/workspace/$workspaceId/_dashboard/')({
     ])
   },
 })
+
+function DuplicateFunnelDialog({
+  open,
+  onOpenChange,
+  funnel,
+  onSuccess,
+}: {
+  open: boolean
+  onOpenChange: (open: boolean) => void
+  funnel: { id: string; title: string } | null
+  onSuccess: () => void
+}) {
+  const params = Route.useParams()
+  const [title, setTitle] = React.useState('')
+
+  const duplicateFunnelMutation = useMutation({
+    mutationFn: (data: { id: string; title?: string }) =>
+      duplicateFunnel({ data: { workspaceId: params.workspaceId, ...data } }),
+    onSuccess: () => {
+      onSuccess()
+      onOpenChange(false)
+    },
+  })
+
+  const handleDuplicate = () => {
+    if (!funnel) return
+    duplicateFunnelMutation.mutate({
+      id: funnel.id,
+      title: title.trim() || undefined,
+    })
+  }
+
+  React.useEffect(() => {
+    if (open && funnel) {
+      setTitle(`${funnel.title} copy`)
+    }
+  }, [open, funnel])
+
+  React.useEffect(() => {
+    if (!open) {
+      setTitle('')
+    }
+  }, [open])
+
+  if (!funnel) return null
+
+  return (
+    <Dialog.Root open={open} onOpenChange={onOpenChange}>
+      <Dialog.Content>
+        <Dialog.Header>
+          <Dialog.Title>Duplicate Funnel</Dialog.Title>
+          <Dialog.Description>Enter a name for the duplicated funnel.</Dialog.Description>
+        </Dialog.Header>
+
+        <Input placeholder={`${funnel.title} copy`} value={title} onValueChange={setTitle} />
+
+        <Dialog.Footer>
+          <Button onClick={handleDuplicate} disabled={duplicateFunnelMutation.isPending}>
+            Duplicate
+          </Button>
+        </Dialog.Footer>
+      </Dialog.Content>
+    </Dialog.Root>
+  )
+}
 
 function RouteComponent() {
   const params = Route.useParams()
@@ -65,6 +147,9 @@ function RouteComponent() {
   const isAdmin = sessionQuery.data.isAdmin
 
   const createFunnelMutation = useMutation(createFunnelMutationOptions(params.workspaceId))
+
+  const [duplicateDialogOpen, setDuplicateDialogOpen] = React.useState(false)
+  const [selectedFunnel, setSelectedFunnel] = React.useState<{ id: string; title: string } | null>(null)
 
   async function handleFunnelCreate() {
     const id = await createFunnelMutation.mutateAsync()
@@ -149,6 +234,18 @@ function RouteComponent() {
                       <ExternalLinkIcon />
                       Open
                     </Menu.Item>
+                    {isAdmin && (
+                      <Menu.Item
+                        onClick={(e) => {
+                          e.preventDefault()
+                          setSelectedFunnel({ id: funnel.id, title: funnel.title })
+                          setDuplicateDialogOpen(true)
+                        }}
+                      >
+                        <CopyIcon />
+                        Duplicate
+                      </Menu.Item>
+                    )}
                   </Menu.Content>
                 </Menu.Root>
               </DataGrid.Cell>
@@ -156,6 +253,13 @@ function RouteComponent() {
           ))}
         </DataGrid.Body>
       </DataGrid.Root>
+
+      <DuplicateFunnelDialog
+        open={duplicateDialogOpen}
+        onOpenChange={setDuplicateDialogOpen}
+        funnel={selectedFunnel}
+        onSuccess={() => queryClient.invalidateQueries(listFunnelsQueryOptions(params.workspaceId))}
+      />
     </div>
   )
 }
