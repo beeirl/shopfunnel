@@ -11,8 +11,8 @@ import { Identifier } from '@shopfunnel/core/identifier'
 import {
   IconCopy as CopyIcon,
   IconDots as DotsIcon,
-  IconExternalLink as ExternalLinkIcon,
   IconFileText as FileTextIcon,
+  IconShare3 as ShareIcon,
 } from '@tabler/icons-react'
 import { mutationOptions, queryOptions, useMutation, useQueryClient, useSuspenseQuery } from '@tanstack/react-query'
 import { createFileRoute, Link } from '@tanstack/react-router'
@@ -188,10 +188,11 @@ function RouteComponent() {
           </Heading.Actions>
         )}
       </Heading.Root>
-      <DataGrid.Root className="grid-cols-[1fr_min-content] md:grid-cols-[auto_120px_100px]">
+      <DataGrid.Root className="grid-cols-[1fr_min-content] md:grid-cols-[auto_120px_120px_100px]">
         <DataGrid.Header>
           <DataGrid.Head>Name</DataGrid.Head>
           <DataGrid.Head hideOnMobile>Created</DataGrid.Head>
+          <DataGrid.Head hideOnMobile>Edited</DataGrid.Head>
           <DataGrid.Head srOnly>Actions</DataGrid.Head>
         </DataGrid.Header>
 
@@ -219,6 +220,17 @@ function RouteComponent() {
                 </Tooltip.Root>
               </DataGrid.Cell>
 
+              <DataGrid.Cell hideOnMobile>
+                <Tooltip.Root>
+                  <Tooltip.Trigger render={<span className="text-sm text-muted-foreground" />}>
+                    {DateTime.fromJSDate(funnel.updatedAt).toRelative()}
+                  </Tooltip.Trigger>
+                  <Tooltip.Content>
+                    {DateTime.fromJSDate(funnel.updatedAt).toLocaleString(DateTime.DATETIME_MED)}
+                  </Tooltip.Content>
+                </Tooltip.Root>
+              </DataGrid.Cell>
+
               <DataGrid.Cell className="relative z-10 shrink-0 justify-end gap-1">
                 <Menu.Root>
                   <Menu.Trigger render={<Button size="icon-sm" variant="ghost" />} onClick={(e) => e.preventDefault()}>
@@ -226,14 +238,13 @@ function RouteComponent() {
                   </Menu.Trigger>
                   <Menu.Content align="end">
                     <Menu.Item
-                      onClick={(e) => {
-                        e.preventDefault()
-                        window.open(funnel.url, '_blank')
-                      }}
-                    >
-                      <ExternalLinkIcon />
-                      Open
-                    </Menu.Item>
+                      render={
+                        <a href={funnel.url} target="_blank" rel="noopener noreferrer">
+                          <ShareIcon />
+                          Share
+                        </a>
+                      }
+                    />
                     {isAdmin && (
                       <Menu.Item
                         onClick={(e) => {

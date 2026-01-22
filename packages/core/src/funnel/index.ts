@@ -366,6 +366,7 @@ export namespace Funnel {
       published: row.funnel.currentVersion === row.funnel.publishedVersion,
       url: url(row.funnel.shortId, row.domain?.hostname),
       createdAt: row.funnel.createdAt,
+      updatedAt: row.funnel.updatedAt,
       publishedAt: row.funnel.publishedAt,
     }
   }
