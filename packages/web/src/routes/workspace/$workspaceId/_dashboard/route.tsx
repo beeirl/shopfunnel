@@ -186,7 +186,7 @@ function DashboardLayoutRoute() {
           </Menu.Root>
         </header>
 
-        <main className="flex flex-1 flex-col items-center overflow-y-auto px-5 py-20">
+        <main className="flex flex-1 flex-col items-center overflow-y-auto px-5 py-5 md:py-20">
           <div className="w-full max-w-6xl">
             <Outlet />
           </div>

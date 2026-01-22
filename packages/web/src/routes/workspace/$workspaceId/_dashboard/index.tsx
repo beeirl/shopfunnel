@@ -191,8 +191,8 @@ function RouteComponent() {
       <DataGrid.Root className="grid-cols-[1fr_min-content] md:grid-cols-[auto_120px_120px_100px]">
         <DataGrid.Header>
           <DataGrid.Head>Name</DataGrid.Head>
-          <DataGrid.Head hideOnMobile>Created</DataGrid.Head>
           <DataGrid.Head hideOnMobile>Edited</DataGrid.Head>
+          <DataGrid.Head hideOnMobile>Created</DataGrid.Head>
           <DataGrid.Head srOnly>Actions</DataGrid.Head>
         </DataGrid.Header>
 
@@ -212,10 +212,10 @@ function RouteComponent() {
               <DataGrid.Cell hideOnMobile>
                 <Tooltip.Root>
                   <Tooltip.Trigger render={<span className="text-sm text-muted-foreground" />}>
-                    {DateTime.fromJSDate(funnel.createdAt).toRelative()}
+                    {DateTime.fromJSDate(funnel.updatedAt).toRelative()}
                   </Tooltip.Trigger>
                   <Tooltip.Content>
-                    {DateTime.fromJSDate(funnel.createdAt).toLocaleString(DateTime.DATETIME_MED)}
+                    {DateTime.fromJSDate(funnel.updatedAt).toLocaleString(DateTime.DATETIME_MED)}
                   </Tooltip.Content>
                 </Tooltip.Root>
               </DataGrid.Cell>
@@ -223,10 +223,10 @@ function RouteComponent() {
               <DataGrid.Cell hideOnMobile>
                 <Tooltip.Root>
                   <Tooltip.Trigger render={<span className="text-sm text-muted-foreground" />}>
-                    {DateTime.fromJSDate(funnel.updatedAt).toRelative()}
+                    {DateTime.fromJSDate(funnel.createdAt).toRelative()}
                   </Tooltip.Trigger>
                   <Tooltip.Content>
-                    {DateTime.fromJSDate(funnel.updatedAt).toLocaleString(DateTime.DATETIME_MED)}
+                    {DateTime.fromJSDate(funnel.createdAt).toLocaleString(DateTime.DATETIME_MED)}
                   </Tooltip.Content>
                 </Tooltip.Root>
               </DataGrid.Cell>

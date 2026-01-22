@@ -93,7 +93,7 @@ export namespace Funnel {
         .from(FunnelTable)
         .leftJoin(DomainTable, eq(DomainTable.workspaceId, FunnelTable.workspaceId))
         .where(and(eq(FunnelTable.workspaceId, Actor.workspace()), isNull(FunnelTable.archivedAt)))
-        .orderBy(desc(FunnelTable.createdAt))
+        .orderBy(desc(FunnelTable.updatedAt))
         .then((rows) => rows.map(serialize)),
     ),
   )
