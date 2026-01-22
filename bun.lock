@@ -114,6 +114,7 @@
         "drizzle-orm": "catalog:",
         "frimousse": "0.3.0",
         "hono": "4.11.4",
+        "luxon": "3.7.2",
         "motion": "12.24.0",
         "react": "catalog:",
         "react-aria-components": "1.14.0",

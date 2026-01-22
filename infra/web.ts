@@ -10,6 +10,7 @@ export const web = new sst.cloudflare.x.SolidStart('Web', {
   domain,
   link: [analyticsQueue, database, storage, storageWorker, STORAGE_URL, ...allSecrets],
   environment: {
+    IS_DEV: $dev ? 'true' : 'false',
     APP_DOMAIN: domain,
     APP_STAGE: $app.stage,
     VITE_AUTH_URL: auth.url.apply((url) => url!),

@@ -18,3 +18,5 @@ export const {
     onComplete: (className) => twMerge(className),
   },
 })
+
+export type { VariantProps } from 'cva'

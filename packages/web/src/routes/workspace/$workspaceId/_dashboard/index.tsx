@@ -1,14 +1,20 @@
-import { IconFileText as FileTextIcon, IconPlus as PlusIcon } from '@tabler/icons-react'
-import { mutationOptions, queryOptions, useMutation, useQueryClient, useSuspenseQuery } from '@tanstack/react-query'
-import { createFileRoute, Link } from '@tanstack/react-router'
-import { createServerFn } from '@tanstack/react-start'
-
+import { DataGrid } from '@/components/data-grid'
 import { Button } from '@/components/ui/button'
 import { Empty } from '@/components/ui/empty'
-import { Item } from '@/components/ui/item'
+import { Menu } from '@/components/ui/menu'
+import { Tooltip } from '@/components/ui/tooltip'
 import { withActor } from '@/context/auth.withActor'
 import { Funnel } from '@shopfunnel/core/funnel/index'
 import { Identifier } from '@shopfunnel/core/identifier'
+import {
+  IconDots as DotsIcon,
+  IconExternalLink as ExternalLinkIcon,
+  IconFileText as FileTextIcon,
+} from '@tabler/icons-react'
+import { mutationOptions, queryOptions, useMutation, useQueryClient, useSuspenseQuery } from '@tanstack/react-query'
+import { createFileRoute, Link } from '@tanstack/react-router'
+import { createServerFn } from '@tanstack/react-start'
+import { DateTime } from 'luxon'
 import { getSessionQueryOptions } from '../-common'
 import { Heading } from './-components/heading'
 
@@ -36,6 +42,7 @@ const createFunnelMutationOptions = (workspaceId: string) =>
   })
 
 export const Route = createFileRoute('/workspace/$workspaceId/_dashboard/')({
+  staticData: { title: 'Funnels' },
   component: RouteComponent,
   ssr: false,
   loader: async ({ context, params }) => {
@@ -83,34 +90,72 @@ function RouteComponent() {
   }
 
   return (
-    <div className="flex h-full w-full flex-col gap-2">
+    <div className="flex h-full w-full flex-col gap-4">
       <Heading.Root>
         <Heading.Content>
           <Heading.Title>Funnels</Heading.Title>
         </Heading.Content>
         {isAdmin && (
           <Heading.Actions>
-            <Button onClick={handleFunnelCreate}>
-              <PlusIcon />
-              Create funnel
+            <Button size="lg" onClick={handleFunnelCreate}>
+              Create a Funnel
             </Button>
           </Heading.Actions>
         )}
       </Heading.Root>
-      <Item.Group>
-        {funnels.map((funnel) => (
-          <Item.Root
-            key={funnel.id}
-            size="xs"
-            variant="outline"
-            render={<Link from={Route.fullPath} to="funnels/$id/edit" params={{ id: funnel.id }} />}
-          >
-            <Item.Content>
-              <Item.Title>{funnel.title}</Item.Title>
-            </Item.Content>
-          </Item.Root>
-        ))}
-      </Item.Group>
+      <DataGrid.Root className="grid-cols-[1fr_min-content] md:grid-cols-[auto_120px_100px]">
+        <DataGrid.Header>
+          <DataGrid.Head>Name</DataGrid.Head>
+          <DataGrid.Head hideOnMobile>Created</DataGrid.Head>
+          <DataGrid.Head srOnly>Actions</DataGrid.Head>
+        </DataGrid.Header>
+
+        <DataGrid.Body>
+          {funnels.map((funnel) => (
+            <DataGrid.Row
+              key={funnel.id}
+              render={<Link from={Route.fullPath} to="funnels/$id/edit" params={{ id: funnel.id }} />}
+            >
+              <DataGrid.Cell className="flex-col items-start justify-center overflow-hidden pr-2 md:pr-8">
+                <span className="truncate text-sm font-medium text-foreground">{funnel.title}</span>
+                <span className="truncate text-xs text-muted-foreground md:hidden">
+                  {DateTime.fromJSDate(funnel.createdAt).toRelative()}
+                </span>
+              </DataGrid.Cell>
+
+              <DataGrid.Cell hideOnMobile>
+                <Tooltip.Root>
+                  <Tooltip.Trigger render={<span className="text-sm text-muted-foreground" />}>
+                    {DateTime.fromJSDate(funnel.createdAt).toRelative()}
+                  </Tooltip.Trigger>
+                  <Tooltip.Content>
+                    {DateTime.fromJSDate(funnel.createdAt).toLocaleString(DateTime.DATETIME_MED)}
+                  </Tooltip.Content>
+                </Tooltip.Root>
+              </DataGrid.Cell>
+
+              <DataGrid.Cell className="relative z-10 shrink-0 justify-end gap-1">
+                <Menu.Root>
+                  <Menu.Trigger render={<Button size="icon-sm" variant="ghost" />} onClick={(e) => e.preventDefault()}>
+                    <DotsIcon className="text-muted-foreground" />
+                  </Menu.Trigger>
+                  <Menu.Content align="end">
+                    <Menu.Item
+                      onClick={(e) => {
+                        e.preventDefault()
+                        window.open(funnel.url, '_blank')
+                      }}
+                    >
+                      <ExternalLinkIcon />
+                      Open
+                    </Menu.Item>
+                  </Menu.Content>
+                </Menu.Root>
+              </DataGrid.Cell>
+            </DataGrid.Row>
+          ))}
+        </DataGrid.Body>
+      </DataGrid.Root>
     </div>
   )
 }

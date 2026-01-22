@@ -4,6 +4,7 @@ import { ulid } from 'ulid'
 import z from 'zod'
 import { Actor } from '../actor'
 import { Database } from '../database'
+import { DomainTable } from '../domain/index.sql'
 import { File } from '../file'
 import { Identifier } from '../identifier'
 import { Question } from '../question'
@@ -38,6 +39,7 @@ export namespace Funnel {
             eq(FunnelVersionTable.version, FunnelTable.currentVersion),
           ),
         )
+        .leftJoin(DomainTable, eq(DomainTable.workspaceId, FunnelTable.workspaceId))
         .where(
           and(eq(FunnelTable.workspaceId, Actor.workspace()), eq(FunnelTable.id, id), isNull(FunnelTable.archivedAt)),
         )
@@ -59,6 +61,7 @@ export namespace Funnel {
             eq(FunnelVersionTable.version, FunnelTable.publishedVersion),
           ),
         )
+        .leftJoin(DomainTable, eq(DomainTable.workspaceId, FunnelTable.workspaceId))
         .where(
           and(isShortId ? eq(FunnelTable.shortId, input) : eq(FunnelTable.id, input), isNull(FunnelTable.archivedAt)),
         )
@@ -88,6 +91,7 @@ export namespace Funnel {
       tx
         .select()
         .from(FunnelTable)
+        .leftJoin(DomainTable, eq(DomainTable.workspaceId, FunnelTable.workspaceId))
         .where(and(eq(FunnelTable.workspaceId, Actor.workspace()), isNull(FunnelTable.archivedAt)))
         .then((rows) => rows.map(serialize)),
     ),
@@ -302,14 +306,15 @@ export namespace Funnel {
     await Question.sync({ funnelId: id })
   })
 
-  function serialize(rows: typeof FunnelTable.$inferSelect) {
+  function serialize(row: { funnel: typeof FunnelTable.$inferSelect; domain: typeof DomainTable.$inferSelect | null }) {
     return {
-      id: rows.id,
-      shortId: rows.shortId,
-      title: rows.title,
-      published: rows.currentVersion === rows.publishedVersion,
-      createdAt: rows.createdAt,
-      publishedAt: rows.publishedAt,
+      id: row.funnel.id,
+      shortId: row.funnel.shortId,
+      title: row.funnel.title,
+      published: row.funnel.currentVersion === row.funnel.publishedVersion,
+      url: url(row.funnel.shortId, row.domain?.hostname),
+      createdAt: row.funnel.createdAt,
+      publishedAt: row.funnel.publishedAt,
     }
   }
 
@@ -317,6 +322,7 @@ export namespace Funnel {
     rows: {
       funnel: typeof FunnelTable.$inferSelect
       funnel_version: typeof FunnelVersionTable.$inferSelect
+      domain: typeof DomainTable.$inferSelect | null
     }[],
   ) {
     return pipe(
@@ -336,10 +342,16 @@ export namespace Funnel {
           theme: group[0].funnel_version.theme,
           settings: group[0].funnel.settings,
           published: group[0].funnel.currentVersion === group[0].funnel.publishedVersion,
+          url: url(group[0].funnel.shortId, group[0].domain?.hostname),
           createdAt: group[0].funnel.createdAt,
           publishedAt: group[0].funnel.publishedAt,
         }),
       ),
     )
+  }
+
+  function url(shortId: string, hostname?: string) {
+    if (process.env.IS_DEV === 'true') return `http://localhost:3000/f/${shortId}`
+    return `https://${hostname ?? process.env.APP_DOMAIN}/f/${shortId}`
   }
 }

@@ -4,7 +4,7 @@ import { cn } from '@/lib/utils'
 
 function HeadingRoot({ className, ...props }: React.ComponentProps<'div'>) {
   return (
-    <div data-slot="heading" className={cn('flex min-h-10 items-center justify-between gap-4', className)} {...props} />
+    <div data-slot="heading" className={cn('flex min-h-9 items-center justify-between gap-4', className)} {...props} />
   )
 }
 
@@ -13,7 +13,7 @@ function HeadingContent({ className, ...props }: React.ComponentProps<'div'>) {
 }
 
 function HeadingTitle({ className, ...props }: React.ComponentProps<'span'>) {
-  return <span data-slot="heading-title" className={cn('block text-lg font-semibold', className)} {...props} />
+  return <span data-slot="heading-title" className={cn('block text-2xl font-bold', className)} {...props} />
 }
 
 function HeadingDescription({ className, ...props }: React.ComponentProps<'span'>) {

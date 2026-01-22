@@ -1,56 +1,37 @@
 import ShopfunnelLogo from '@/assets/shopfunnel-logo.svg?react'
-import { Alert } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
-import { Dialog } from '@/components/ui/dialog'
-import { Field } from '@/components/ui/field'
-import { Input } from '@/components/ui/input'
-import { Item } from '@/components/ui/item'
 import { Menu } from '@/components/ui/menu'
+import { Sidebar } from '@/components/ui/sidebar'
 import { withActor } from '@/context/auth.withActor'
 import { Account } from '@shopfunnel/core/account/index'
 import { Actor } from '@shopfunnel/core/actor'
-import { Domain } from '@shopfunnel/core/domain/index'
 import { Identifier } from '@shopfunnel/core/identifier'
-import { Integration } from '@shopfunnel/core/integration/index'
 import { User } from '@shopfunnel/core/user/index'
-import { IconBuildingSkyscraper as WorkspaceIcon } from '@tabler/icons-react'
-import { queryOptions, useMutation, useQueryClient, useSuspenseQuery } from '@tanstack/react-query'
-import { createFileRoute, Outlet } from '@tanstack/react-router'
+import {
+  IconBlocks as BlocksIcon,
+  IconFilter2 as FilterIcon,
+  IconLogout as LogoutIcon,
+  IconSelector as SelectorIcon,
+  IconWorld as WorldIcon,
+} from '@tabler/icons-react'
+import { queryOptions, useSuspenseQuery } from '@tanstack/react-query'
+import { createFileRoute, Link, Outlet, useLocation, useMatches } from '@tanstack/react-router'
 import { createServerFn } from '@tanstack/react-start'
-import * as React from 'react'
-import { z } from 'zod'
-import { getShopifyIntegrationQueryOptions } from '../-common'
 
-const getUser = createServerFn()
+const getUserEmail = createServerFn()
   .inputValidator(Identifier.schema('workspace'))
   .handler(({ data: workspaceId }) => {
     return withActor(async () => {
       const actor = Actor.assert('user')
-      const user = await User.fromId(actor.properties.userId)
+      const user = await User.getAuthEmail(actor.properties.userId)
       return user!
     }, workspaceId)
   })
 
-const getUserQueryOptions = (workspaceId: string) =>
+const getUserEmailQueryOptions = (workspaceId: string) =>
   queryOptions({
-    queryKey: ['user', workspaceId],
-    queryFn: () => getUser({ data: workspaceId }),
-  })
-
-const getDomain = createServerFn()
-  .inputValidator(Identifier.schema('workspace'))
-  .handler(({ data: workspaceId }) => {
-    return withActor(async () => {
-      const domain = await Domain.get()
-      if (!domain) return null
-      return domain
-    }, workspaceId)
-  })
-
-const getDomainQueryOptions = (workspaceId: string) =>
-  queryOptions({
-    queryKey: ['domain', workspaceId],
-    queryFn: () => getDomain({ data: workspaceId }),
+    queryKey: ['user-email', workspaceId],
+    queryFn: () => getUserEmail({ data: workspaceId }),
   })
 
 const getWorkspaces = createServerFn({ method: 'GET' })
@@ -65,200 +46,89 @@ const getWorkspacesQueryOptions = (workspaceId: string) =>
     queryFn: () => getWorkspaces({ data: workspaceId }),
   })
 
-const upsertDomain = createServerFn()
-  .inputValidator(
-    z.object({
-      workspaceId: Identifier.schema('workspace'),
-      hostname: z.string().regex(/^(?!-)[a-zA-Z0-9-]+(\.[a-zA-Z0-9-]+)*\.[a-zA-Z]{2,}$/, 'Invalid hostname format'),
-    }),
-  )
-  .handler(({ data }) => {
-    return withActor(async () => {
-      return Domain.upsert({ hostname: data.hostname })
-    }, data.workspaceId)
-  })
-
-const disconnectShopifyIntegration = createServerFn()
-  .inputValidator(
-    z.object({
-      workspaceId: Identifier.schema('workspace'),
-      integrationId: Identifier.schema('integration'),
-    }),
-  )
-  .handler(({ data }) => {
-    return withActor(() => Integration.disconnect({ integrationId: data.integrationId }), data.workspaceId)
-  })
-
-function formatDate(date: Date): string {
-  return new Intl.DateTimeFormat('en-US', {
-    month: 'short',
-    day: 'numeric',
-    year: 'numeric',
-  }).format(date)
-}
-
 export const Route = createFileRoute('/workspace/$workspaceId/_dashboard')({
   component: DashboardLayoutRoute,
   ssr: false,
   loader: async ({ context, params }) => {
     await Promise.all([
-      context.queryClient.ensureQueryData(getUserQueryOptions(params.workspaceId)),
-      context.queryClient.ensureQueryData(getDomainQueryOptions(params.workspaceId)),
+      context.queryClient.ensureQueryData(getUserEmailQueryOptions(params.workspaceId)),
       context.queryClient.ensureQueryData(getWorkspacesQueryOptions(params.workspaceId)),
-      context.queryClient.ensureQueryData(getShopifyIntegrationQueryOptions(params.workspaceId)),
     ])
   },
 })
 
-function CustomDomainDialog({ open, onOpenChange }: { open: boolean; onOpenChange: (open: boolean) => void }) {
-  const params = Route.useParams()
-
-  const domainQuery = useSuspenseQuery(getDomainQueryOptions(params.workspaceId))
-  const domain = domainQuery.data
-
-  const [hostname, setHostname] = React.useState(domain?.hostname ?? '')
-  const [error, setError] = React.useState<string | null>(null)
-
-  const upsertDomainMutation = useMutation({
-    mutationFn: (hostname: string) => upsertDomain({ data: { workspaceId: params.workspaceId, hostname } }),
-  })
-
-  const handleSave = async () => {
-    try {
-      if (!hostname.trim()) return
-      await upsertDomainMutation.mutateAsync(hostname)
-      onOpenChange(false)
-      setError(null)
-    } catch (e) {
-      if (!(e instanceof Error)) return
-      setError(e.message)
-    }
-  }
-
-  return (
-    <Dialog.Root open={open} onOpenChange={onOpenChange}>
-      <Dialog.Content>
-        <Dialog.Header>
-          <Dialog.Title>Manage custom domain</Dialog.Title>
-        </Dialog.Header>
-        <Alert.Root>
-          <Alert.Title>DNS Configuration</Alert.Title>
-          <Alert.Description>
-            Point your domain to Shopfunnel by creating a CNAME record with your DNS provider. Set the record name to
-            your subdomain (e.g., shop) and the target to cname.shopfunnel.com.
-          </Alert.Description>
-        </Alert.Root>
-        <Field.Root data-invalid={!!error}>
-          <Input placeholder="funnel.example.com" value={hostname} onValueChange={(value) => setHostname(value)} />
-          <Field.Error>{error}</Field.Error>
-        </Field.Root>
-        <Dialog.Footer>
-          <Dialog.Close render={<Button variant="outline" />}>Cancel</Dialog.Close>
-          <Button onClick={handleSave} disabled={upsertDomainMutation.isPending}>
-            Save
-          </Button>
-        </Dialog.Footer>
-      </Dialog.Content>
-    </Dialog.Root>
-  )
-}
-
-function ShopifyIntegrationDialog({ open, onOpenChange }: { open: boolean; onOpenChange: (open: boolean) => void }) {
-  const params = Route.useParams()
-  const queryClient = useQueryClient()
-
-  const integrationQuery = useSuspenseQuery(getShopifyIntegrationQueryOptions(params.workspaceId))
-  const integration = integrationQuery.data
-
-  const disconnectMutation = useMutation({
-    mutationFn: (integrationId: string) =>
-      disconnectShopifyIntegration({ data: { workspaceId: params.workspaceId, integrationId } }),
-  })
-
-  const [disconnecting, setDisconnecting] = React.useState(false)
-
-  const handleDisconnect = async () => {
-    if (!integration) return
-    setDisconnecting(true)
-    await disconnectMutation.mutateAsync(integration.id)
-    await queryClient.invalidateQueries(getShopifyIntegrationQueryOptions(params.workspaceId))
-    setDisconnecting(false)
-  }
-
-  return (
-    <Dialog.Root open={open} onOpenChange={onOpenChange}>
-      <Dialog.Content>
-        <Dialog.Header>
-          <Dialog.Title>Shopify Integration</Dialog.Title>
-          <Dialog.Description>
-            Automatically track page views and conversions when visitors from your funnels complete a checkout on
-            Shopify.
-          </Dialog.Description>
-        </Dialog.Header>
-        {integration ? (
-          <Item.Root variant="outline">
-            <Item.Content className="overflow-hidden">
-              <Item.Title className="truncate">{integration.title}</Item.Title>
-              <Item.Description className="truncate">
-                Connected on {formatDate(new Date(integration.createdAt))}
-              </Item.Description>
-            </Item.Content>
-            <Item.Actions>
-              <Button disabled={disconnecting} variant="secondary" onClick={handleDisconnect}>
-                Disconnect
-              </Button>
-            </Item.Actions>
-          </Item.Root>
-        ) : (
-          <Button
-            size="lg"
-            nativeButton={false}
-            render={<a href="https://apps.shopify.com" target="_blank" rel="noopener noreferrer" />}
-          >
-            Connect shop
-          </Button>
-        )}
-      </Dialog.Content>
-    </Dialog.Root>
-  )
-}
+const navItems = [
+  {
+    title: 'Funnels',
+    to: '/workspace/$workspaceId' as const,
+    icon: FilterIcon,
+    exact: true,
+  },
+  {
+    title: 'Domains',
+    to: '/workspace/$workspaceId/domains' as const,
+    icon: WorldIcon,
+    exact: false,
+  },
+  {
+    title: 'Integrations',
+    to: '/workspace/$workspaceId/integrations' as const,
+    icon: BlocksIcon,
+    exact: false,
+  },
+]
 
 function DashboardLayoutRoute() {
   const params = Route.useParams()
+  const location = useLocation()
+
+  const getUserEmailQuery = useSuspenseQuery(getUserEmailQueryOptions(params.workspaceId))
+  const userEmail = getUserEmailQuery.data
 
   const workspacesQuery = useSuspenseQuery(getWorkspacesQueryOptions(params.workspaceId))
   const workspaces = workspacesQuery.data
   const currentWorkspace = workspaces.find((workspace) => workspace.id === params.workspaceId)
-
-  const [domainDialogOpen, setDomainDialogOpen] = React.useState(false)
-  const [shopifyDialogOpen, setShopifyDialogOpen] = React.useState(false)
 
   const handleWorkspaceSwitch = (workspaceId: string) => {
     if (workspaceId === params.workspaceId) return
     window.location.href = `/workspace/${workspaceId}`
   }
 
+  const isRouteActive = (to: string, exact?: boolean) => {
+    const resolvedPath = to.replace('$workspaceId', params.workspaceId)
+    if (exact) {
+      return location.pathname === resolvedPath
+    }
+    return location.pathname.startsWith(resolvedPath)
+  }
+
+  const matches = useMatches()
+  const currentMatch = matches[matches.length - 1]
+  const pageTitle = (currentMatch?.staticData as { title?: string })?.title ?? 'Dashboard'
+
   return (
-    <div className="mx-auto flex min-h-screen max-w-3xl flex-col gap-6 px-8 py-5">
-      <nav className="flex items-center justify-between gap-5">
-        <ShopfunnelLogo className="h-4.5 w-auto" />
-        <div className="flex gap-2">
-          <Menu.Root>
-            <Menu.Trigger
-              render={
-                <Button className="rounded-full border border-border" variant="secondary">
-                  <WorkspaceIcon />
-                  {currentWorkspace?.name ?? 'Workspace'}
-                </Button>
-              }
-            />
-            <Menu.Content align="end">
-              <Menu.Item onClick={() => setShopifyDialogOpen(true)}>Shopify integration</Menu.Item>
-              <Menu.Item onClick={() => setDomainDialogOpen(true)}>Manage custom domain</Menu.Item>
-              {workspaces.length > 1 && (
-                <Menu.Sub>
-                  <Menu.SubTrigger>Switch workspace</Menu.SubTrigger>
-                  <Menu.SubContent sideOffset={3}>
+    <Sidebar.Provider name="dashboard">
+      <Sidebar.Root>
+        <Sidebar.Header>
+          <div className="flex h-9.5 items-center px-2">
+            <Link className="focus:outline-none" to="/workspace/$workspaceId" params={params}>
+              <ShopfunnelLogo className="h-4 w-auto" />
+            </Link>
+          </div>
+          <Sidebar.Menu>
+            <Sidebar.MenuItem>
+              <Menu.Root>
+                <Menu.Trigger
+                  render={
+                    <Sidebar.MenuButton className="h-9 rounded-lg pl-3" variant="outline">
+                      {currentWorkspace?.name ?? 'Workspace'}
+                      <SelectorIcon className="ml-auto" />
+                    </Sidebar.MenuButton>
+                  }
+                />
+                <Menu.Content className="w-(--anchor-width)" side="bottom" align="start">
+                  <Menu.Group>
+                    <Menu.Label>Workspaces</Menu.Label>
                     <Menu.RadioGroup value={params.workspaceId}>
                       {workspaces.map((workspace) => (
                         <Menu.RadioItem
@@ -270,24 +140,58 @@ function DashboardLayoutRoute() {
                         </Menu.RadioItem>
                       ))}
                     </Menu.RadioGroup>
-                  </Menu.SubContent>
-                </Menu.Sub>
-              )}
-              <Menu.Separator />
+                  </Menu.Group>
+                </Menu.Content>
+              </Menu.Root>
+            </Sidebar.MenuItem>
+          </Sidebar.Menu>
+        </Sidebar.Header>
+
+        <Sidebar.Content>
+          <Sidebar.Group>
+            <Sidebar.GroupContent>
+              <Sidebar.Menu className="gap-1">
+                {navItems.map((item) => (
+                  <Sidebar.MenuItem key={item.title}>
+                    <Sidebar.MenuButton
+                      render={<Link to={item.to} params={params} />}
+                      isActive={isRouteActive(item.to, item.exact)}
+                    >
+                      <item.icon />
+                      <span>{item.title}</span>
+                    </Sidebar.MenuButton>
+                  </Sidebar.MenuItem>
+                ))}
+              </Sidebar.Menu>
+            </Sidebar.GroupContent>
+          </Sidebar.Group>
+        </Sidebar.Content>
+      </Sidebar.Root>
+
+      <Sidebar.Inset className="flex flex-col">
+        <header className="sticky top-0 z-10 flex h-12 shrink-0 items-center justify-between border-b border-border bg-background pr-5 pl-3">
+          <div className="flex items-center gap-2">
+            <Sidebar.Trigger className="text-muted-foreground" />
+            <span className="text-sm font-medium text-foreground">{pageTitle}</span>
+          </div>
+
+          <Menu.Root>
+            <Menu.Trigger render={<Button variant="outline">{userEmail}</Button>} />
+            <Menu.Content align="end">
               <Menu.Item variant="destructive" render={<a href="/auth/logout" />}>
+                <LogoutIcon />
                 Logout
               </Menu.Item>
             </Menu.Content>
           </Menu.Root>
-        </div>
-      </nav>
+        </header>
 
-      <CustomDomainDialog open={domainDialogOpen} onOpenChange={setDomainDialogOpen} />
-      <ShopifyIntegrationDialog open={shopifyDialogOpen} onOpenChange={setShopifyDialogOpen} />
-
-      <div className="flex flex-1 flex-col">
-        <Outlet />
-      </div>
-    </div>
+        <main className="flex flex-1 flex-col items-center overflow-y-auto px-5 py-20">
+          <div className="w-full max-w-6xl">
+            <Outlet />
+          </div>
+        </main>
+      </Sidebar.Inset>
+    </Sidebar.Provider>
   )
 }

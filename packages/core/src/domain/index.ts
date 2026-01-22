@@ -38,13 +38,14 @@ export namespace Domain {
     ),
   )
 
-  export const upsert = fn(
+  export const create = fn(
     z.object({
       hostname: z.string(),
     }),
     async (input) => {
       const hostname = input.hostname.toLowerCase()
 
+      // Check if workspace already has a domain
       const existingDomain = await Database.use((tx) =>
         tx
           .select()
@@ -52,39 +53,11 @@ export namespace Domain {
           .where(and(eq(DomainTable.workspaceId, Actor.workspaceId()), isNull(DomainTable.archivedAt)))
           .then((rows) => rows[0]),
       )
-
-      // If same hostname already exists, no-op - return existing domain id
-      if (existingDomain && existingDomain.hostname === hostname) {
-        return existingDomain.id
-      }
-
-      // If different hostname exists, archive the old one first
       if (existingDomain) {
-        if (existingDomain.cloudflareHostnameId) {
-          const deleteResponse = await fetch(
-            `https://api.cloudflare.com/client/v4/zones/${Resource.CLOUDFLARE_ZONE_ID.value}/custom_hostnames/${existingDomain.cloudflareHostnameId}`,
-            {
-              method: 'DELETE',
-              headers: {
-                Authorization: `Bearer ${Resource.CLOUDFLARE_API_TOKEN.value}`,
-              },
-            },
-          )
-          const deleteJson = (await deleteResponse.json()) as any
-          if (!deleteJson.success && deleteJson.errors?.[0]?.code !== 1410) {
-            const errorMessage =
-              deleteJson.errors?.[0]?.message || 'Failed to delete old custom hostname from Cloudflare'
-            throw new Error(errorMessage)
-          }
-        }
-
-        await Database.use((tx) =>
-          tx
-            .delete(DomainTable)
-            .where(and(eq(DomainTable.workspaceId, Actor.workspaceId()), eq(DomainTable.id, existingDomain.id))),
-        )
+        throw new Error('A domain already exists for this workspace. Remove it before adding a new one.')
       }
 
+      // Check if hostname is claimed by another workspace
       const claimedDomain = await Database.use((tx) =>
         tx
           .select()
