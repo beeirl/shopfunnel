@@ -8,7 +8,20 @@ import { storage, STORAGE_URL, storageWorker } from './storage'
 export const web = new sst.cloudflare.x.SolidStart('Web', {
   path: 'packages/web',
   domain,
-  link: [analyticsQueue, database, storage, storageWorker, STORAGE_URL, ...allSecrets],
+  link: [
+    analyticsQueue,
+    database,
+    storage,
+    storageWorker,
+    STORAGE_URL,
+    ...($dev
+      ? [
+          new sst.Secret('CLOUDFLARE_API_TOKEN', process.env.CLOUDFLARE_API_TOKEN!),
+          new sst.Secret('CLOUDFLARE_DEFAULT_ACCOUNT_ID', process.env.CLOUDFLARE_DEFAULT_ACCOUNT_ID!),
+        ]
+      : []),
+    ...allSecrets,
+  ],
   environment: {
     IS_DEV: $dev ? 'true' : 'false',
     APP_DOMAIN: domain,

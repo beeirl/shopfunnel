@@ -15,7 +15,7 @@ export const Resource = new Proxy(
       if ('type' in value) {
         // @ts-ignore
         if (value.type === 'sst.cloudflare.Bucket') {
-          const accountId = process.env.CLOUDFLARE_DEFAULT_ACCOUNT_ID!
+          const accountId = ResourceBase.CLOUDFLARE_DEFAULT_ACCOUNT_ID.value
           const s3Client = new S3Client({
             region: 'auto',
             endpoint: `https://${accountId}.r2.cloudflarestorage.com`,
@@ -54,7 +54,7 @@ export const Resource = new Proxy(
         // cloudflare.Queue wrapped with Linkable.wrap
         if ((value.type as string) === 'cloudflare:index/queue:Queue' || 'queueId' in value) {
           // @ts-ignore
-          const accountId = value.accountId ?? process.env.CLOUDFLARE_DEFAULT_ACCOUNT_ID!
+          const accountId = value.accountId ?? ResourceBase.CLOUDFLARE_DEFAULT_ACCOUNT_ID.value
           // @ts-ignore
           const queueId = value.queueId as string
           return {
@@ -64,7 +64,7 @@ export const Resource = new Proxy(
                 {
                   method: 'POST',
                   headers: {
-                    Authorization: `Bearer ${process.env.CLOUDFLARE_API_TOKEN!}`,
+                    Authorization: `Bearer ${ResourceBase.CLOUDFLARE_API_TOKEN.value}`,
                     'Content-Type': 'application/json',
                   },
                   body: JSON.stringify({ body }),
@@ -80,7 +80,7 @@ export const Resource = new Proxy(
                 {
                   method: 'POST',
                   headers: {
-                    Authorization: `Bearer ${process.env.CLOUDFLARE_API_TOKEN}`,
+                    Authorization: `Bearer ${ResourceBase.CLOUDFLARE_API_TOKEN.value}`,
                     'Content-Type': 'application/json',
                   },
                   body: JSON.stringify({ messages }),
@@ -95,11 +95,11 @@ export const Resource = new Proxy(
         // @ts-ignore
         if (value.type === 'sst.cloudflare.Kv') {
           const client = new Cloudflare({
-            apiToken: process.env.CLOUDFLARE_API_TOKEN,
+            apiToken: ResourceBase.CLOUDFLARE_API_TOKEN.value,
           })
           // @ts-ignore
           const namespaceId = value.namespaceId
-          const accountId = process.env.CLOUDFLARE_DEFAULT_ACCOUNT_ID!
+          const accountId = ResourceBase.CLOUDFLARE_DEFAULT_ACCOUNT_ID.value
           return {
             get: (k: string | string[]) => {
               const isMulti = Array.isArray(k)
