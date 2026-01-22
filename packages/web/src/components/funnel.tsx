@@ -1,4 +1,5 @@
 import { Block } from '@/components/block'
+import { Image } from '@/components/image'
 import { NextButton } from '@/components/next-button'
 import { cn } from '@/lib/utils'
 import type {
@@ -399,7 +400,7 @@ export function Funnel({ funnel, mode = 'live', onPageChange, onPageComplete, on
         <div className="mx-auto flex w-full max-w-sm flex-1 flex-col">
           <div className="flex h-16 w-full items-center justify-center">
             {funnel.theme.logo ? (
-              <img src={funnel.theme.logo} alt="Logo" className="h-9 w-auto object-contain" />
+              <Image src={funnel.theme.logo} alt="Logo" size="sm" className="h-9 w-auto object-contain" />
             ) : (
               <span className="text-xl font-bold text-(--sf-foreground)">{funnel.title}</span>
             )}

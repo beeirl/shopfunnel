@@ -1,3 +1,4 @@
+import { Image } from '@/components/image'
 import { cn } from '@/lib/utils'
 import type { PictureChoiceBlock as BlockType } from '@shopfunnel/core/funnel/types'
 import { IconPhoto as PhotoIcon } from '@tabler/icons-react'
@@ -55,7 +56,7 @@ export function PictureChoiceBlock(props: PictureChoiceBlockProps) {
           >
             <div className="relative aspect-4/3 w-full overflow-hidden bg-(--sf-muted)/40 group-data-selected:bg-(--sf-primary)/5">
               {choice.media?.value ? (
-                <img src={choice.media.value} alt={choice.label} className="size-full object-cover" />
+                <Image src={choice.media.value} alt={choice.label} size="sm" className="size-full object-cover" />
               ) : (
                 <div className="flex size-full items-center justify-center">
                   <PhotoIcon className="size-12 text-(--sf-foreground) opacity-20 group-data-selected:text-(--sf-primary)" />

@@ -1,3 +1,4 @@
+import { Image } from '@/components/image'
 import { cn } from '@/lib/utils'
 import type { MultipleChoiceBlock as BlockType } from '@shopfunnel/core/funnel/types'
 import { ListBox as ReactAriaListbox, ListBoxItem as ReactAriaListboxItem } from 'react-aria-components'
@@ -59,7 +60,7 @@ export function MultipleChoiceBlock(props: MultipleChoiceBlockProps) {
               <div className="-my-4 mr-2 -ml-4 flex size-14 items-center justify-center">
                 {choice.media.type === 'emoji' && <span className="pl-1 text-[2rem]">{choice.media.value}</span>}
                 {choice.media.type === 'image' && (
-                  <img className="size-full object-cover" src={choice.media.value} alt="" />
+                  <Image className="size-full object-cover" src={choice.media.value} alt="" size="xs" />
                 )}
               </div>
             )}
