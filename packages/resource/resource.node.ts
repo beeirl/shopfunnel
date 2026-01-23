@@ -3,9 +3,6 @@ import type { KVNamespaceListOptions, KVNamespaceListResult, KVNamespacePutOptio
 import Cloudflare from 'cloudflare'
 import { Resource as ResourceBase } from 'sst'
 
-const ACCOUNT_ID = process.env.CLOUDFLARE_DEFAULT_ACCOUNT_ID! ?? ResourceBase.CLOUDFLARE_DEFAULT_ACCOUNT_ID.value
-const API_TOKEN = process.env.CLOUDFLARE_API_TOKEN! ?? ResourceBase.CLOUDFLARE_API_TOKEN.value
-
 export const waitUntil = async (promise: Promise<any>) => {
   await promise
 }
@@ -14,6 +11,8 @@ export const Resource = new Proxy(
   {},
   {
     get(_target, prop: keyof typeof ResourceBase) {
+      const ACCOUNT_ID = process.env.CLOUDFLARE_DEFAULT_ACCOUNT_ID! ?? ResourceBase.CLOUDFLARE_DEFAULT_ACCOUNT_ID.value
+      const API_TOKEN = process.env.CLOUDFLARE_API_TOKEN! ?? ResourceBase.CLOUDFLARE_API_TOKEN.value
       const value = ResourceBase[prop]
       if ('type' in value) {
         // @ts-ignore
