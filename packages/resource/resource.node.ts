@@ -11,13 +11,14 @@ export const Resource = new Proxy(
   {},
   {
     get(_target, prop: keyof typeof ResourceBase) {
-      const ACCOUNT_ID = process.env.CLOUDFLARE_DEFAULT_ACCOUNT_ID! ?? ResourceBase.CLOUDFLARE_DEFAULT_ACCOUNT_ID.value
-      const API_TOKEN = process.env.CLOUDFLARE_API_TOKEN! ?? ResourceBase.CLOUDFLARE_API_TOKEN.value
       const value = ResourceBase[prop]
       if ('type' in value) {
         // @ts-ignore
         if (value.type === 'sst.cloudflare.Bucket') {
-          const s3Client = new S3Client({ region: 'auto', endpoint: `https://${ACCOUNT_ID}.r2.cloudflarestorage.com` })
+          // @ts-ignore
+          // prettier-ignore
+          const accountId = process.env.CLOUDFLARE_DEFAULT_ACCOUNT_ID ?? ResourceBase.CLOUDFLARE_DEFAULT_ACCOUNT_ID.value
+          const s3Client = new S3Client({ region: 'auto', endpoint: `https://${accountId}.r2.cloudflarestorage.com` })
           // @ts-ignore
           const bucketName = value.name as string
           return {
@@ -45,6 +46,8 @@ export const Resource = new Proxy(
         // cloudflare.Queue wrapped with Linkable.wrap
         if ((value.type as string) === 'cloudflare:index/queue:Queue' || 'queueId' in value) {
           // @ts-ignore
+          const apiToken = process.env.CLOUDFLARE_API_TOKEN ?? ResourceBase.CLOUDFLARE_API_TOKEN.value
+          // @ts-ignore
           const accountId = value.accountId ?? ResourceBase.CLOUDFLARE_DEFAULT_ACCOUNT_ID.value
           // @ts-ignore
           const queueId = value.queueId as string
@@ -55,7 +58,7 @@ export const Resource = new Proxy(
                 {
                   method: 'POST',
                   headers: {
-                    Authorization: `Bearer ${API_TOKEN}`,
+                    Authorization: `Bearer ${apiToken}`,
                     'Content-Type': 'application/json',
                   },
                   body: JSON.stringify({ body }),
@@ -71,7 +74,7 @@ export const Resource = new Proxy(
                 {
                   method: 'POST',
                   headers: {
-                    Authorization: `Bearer ${API_TOKEN}`,
+                    Authorization: `Bearer ${apiToken}`,
                     'Content-Type': 'application/json',
                   },
                   body: JSON.stringify({ messages }),
@@ -85,8 +88,14 @@ export const Resource = new Proxy(
         }
         // @ts-ignore
         if (value.type === 'sst.cloudflare.Kv') {
+          // @ts-ignore
+          // prettier-ignore
+          const apiToken = process.env.CLOUDFLARE_API_TOKEN ?? ResourceBase.CLOUDFLARE_API_TOKEN.value
+          // @ts-ignore
+          // prettier-ignore
+          const accountId = process.env.CLOUDFLARE_DEFAULT_ACCOUNT_ID ?? ResourceBase.CLOUDFLARE_DEFAULT_ACCOUNT_ID.value
           const client = new Cloudflare({
-            apiToken: API_TOKEN,
+            apiToken,
           })
           // @ts-ignore
           const namespaceId = value.namespaceId
@@ -96,13 +105,13 @@ export const Resource = new Proxy(
               return client.kv.namespaces
                 .bulkGet(namespaceId, {
                   keys: Array.isArray(k) ? k : [k],
-                  account_id: ACCOUNT_ID,
+                  account_id: accountId,
                 })
                 .then((result) => (isMulti ? new Map(Object.entries(result?.values ?? {})) : result?.values?.[k]))
             },
             put: (k: string, v: string, opts?: KVNamespacePutOptions) =>
               client.kv.namespaces.values.update(namespaceId, k, {
-                account_id: ACCOUNT_ID,
+                account_id: accountId,
                 value: v,
                 expiration: opts?.expiration,
                 expiration_ttl: opts?.expirationTtl,
@@ -110,12 +119,12 @@ export const Resource = new Proxy(
               }),
             delete: (k: string) =>
               client.kv.namespaces.values.delete(namespaceId, k, {
-                account_id: ACCOUNT_ID,
+                account_id: accountId,
               }),
             list: (opts?: KVNamespaceListOptions): Promise<KVNamespaceListResult<unknown, string>> =>
               client.kv.namespaces.keys
                 .list(namespaceId, {
-                  account_id: ACCOUNT_ID,
+                  account_id: accountId,
                   prefix: opts?.prefix ?? undefined,
                 })
                 .then((result) => {
