@@ -400,7 +400,17 @@ export function Funnel({ funnel, mode = 'live', onPageChange, onPageComplete, on
         <div className="mx-auto flex w-full max-w-sm flex-1 flex-col">
           <div className="flex h-16 w-full items-center justify-center">
             {funnel.theme.logo ? (
-              <Image src={funnel.theme.logo} alt="Logo" size="sm" className="h-9 w-auto object-contain" />
+              <Image
+                src={funnel.theme.logo}
+                alt={`${funnel.title} logo`}
+                className="h-9 w-auto"
+                layout="fixed"
+                width={300}
+                height={36}
+                operations={{ fit: 'contain' }}
+                unstyled
+                priority
+              />
             ) : (
               <span className="text-xl font-bold text-(--sf-foreground)">{funnel.title}</span>
             )}

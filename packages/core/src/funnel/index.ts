@@ -201,6 +201,7 @@ export namespace Funnel {
         data: input.data,
         name: input.name,
         size: input.size,
+        cacheControl: 'public, max-age=31536000, immutable',
       })
       await Database.use((tx) =>
         tx.insert(FunnelFileTable).values({
@@ -404,7 +405,7 @@ export namespace Funnel {
   }
 
   function url(shortId: string, hostname?: string) {
-    if (process.env.IS_DEV === 'true') return `http://localhost:3000/f/${shortId}`
-    return `https://${hostname ?? process.env.APP_DOMAIN}/f/${shortId}`
+    if (process.env.DEV === 'true') return `http://localhost:3000/f/${shortId}`
+    return `https://${hostname ?? process.env.WEB_DOMAIN}/f/${shortId}`
   }
 }

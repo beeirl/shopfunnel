@@ -69,7 +69,6 @@ declare module "sst" {
     "AuthApi": cloudflare.Service
     "AuthStorage": cloudflare.KVNamespace
     "Storage": cloudflare.R2Bucket
-    "StorageWorker": cloudflare.Service
   }
 }
 

@@ -1,4 +1,5 @@
 import { getBlockInfo } from '@/components/block'
+import { Image } from '@/components/image'
 import { Button } from '@/components/ui/button'
 import { InputGroup } from '@/components/ui/input-group'
 import { Textarea } from '@/components/ui/textarea'
@@ -98,7 +99,14 @@ export function HtmlBlockPanel({
                   <InputGroup.Addon>
                     <InputGroup.Button size="icon-xs" variant="ghost" className="size-6 overflow-hidden">
                       {item.value ? (
-                        <img src={item.value} alt="" className="size-full rounded object-cover" />
+                        <Image
+                          src={item.value}
+                          alt=""
+                          layout="fixed"
+                          width={24}
+                          height={24}
+                          className="rounded object-cover"
+                        />
                       ) : (
                         <PhotoIcon />
                       )}

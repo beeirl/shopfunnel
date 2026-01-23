@@ -1,4 +1,5 @@
 import { getBlockInfo } from '@/components/block'
+import { Image } from '@/components/image'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { InputGroup } from '@/components/ui/input-group'
@@ -68,7 +69,14 @@ function ChoiceItem({
                     choice.media.type === 'emoji' ? (
                       <span className="text-base">{choice.media.value}</span>
                     ) : (
-                      <img src={choice.media.value} alt="" className="size-6 rounded object-cover" />
+                      <Image
+                        src={choice.media.value}
+                        alt=""
+                        layout="fixed"
+                        width={24}
+                        height={24}
+                        className="rounded object-cover"
+                      />
                     )
                   ) : (
                     <PhotoIcon />

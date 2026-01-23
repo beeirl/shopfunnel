@@ -10,21 +10,27 @@ import { FileTable } from './index.sql'
 export namespace File {
   export const create = fn(
     z.object({
-      contentType: z.string(),
-      data: z.instanceof(Buffer),
       name: z.string(),
+      data: z.instanceof(Buffer),
       size: z.number(),
+      contentType: z.string(),
+      cacheControl: z.string().optional(),
     }),
     async (input) => {
       const id = Identifier.create('file')
-      await Resource.Storage.put(key(id), input.data)
+      await Resource.Storage.put(key(id), input.data, {
+        httpMetadata: {
+          contentType: input.contentType,
+          cacheControl: input.cacheControl,
+        },
+      })
       await Database.use((tx) =>
         tx.insert(FileTable).values({
           id,
           workspaceId: Actor.workspaceId(),
-          contentType: input.contentType,
           name: input.name,
           size: input.data.length,
+          contentType: input.contentType,
         }),
       )
       return {

@@ -26,8 +26,8 @@ const getFunnel = createServerFn()
     const funnel = await FunnelCore.getPublishedVersion(data.shortId)
     if (!funnel) throw notFound()
 
-    const appStage = process.env.APP_STAGE
-    const appDomain = process.env.APP_DOMAIN
+    const appStage = process.env.VITE_STAGE
+    const appDomain = process.env.VITE_DOMAIN
     const host = getRequestHeader('host')
     if (appStage === 'production' && appDomain && host && !host.endsWith(appDomain)) {
       const domain = await Domain.fromHostname(host)

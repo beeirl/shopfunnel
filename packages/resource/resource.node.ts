@@ -3,6 +3,9 @@ import type { KVNamespaceListOptions, KVNamespaceListResult, KVNamespacePutOptio
 import Cloudflare from 'cloudflare'
 import { Resource as ResourceBase } from 'sst'
 
+const ACCOUNT_ID = process.env.CLOUDFLARE_DEFAULT_ACCOUNT_ID! ?? ResourceBase.CLOUDFLARE_DEFAULT_ACCOUNT_ID.value
+const API_TOKEN = process.env.CLOUDFLARE_API_TOKEN! ?? ResourceBase.CLOUDFLARE_API_TOKEN.value
+
 export const waitUntil = async (promise: Promise<any>) => {
   await promise
 }
@@ -15,29 +18,18 @@ export const Resource = new Proxy(
       if ('type' in value) {
         // @ts-ignore
         if (value.type === 'sst.cloudflare.Bucket') {
-          const accountId = ResourceBase.CLOUDFLARE_DEFAULT_ACCOUNT_ID.value
-          const s3Client = new S3Client({
-            region: 'auto',
-            endpoint: `https://${accountId}.r2.cloudflarestorage.com`,
-            credentials: {
-              accessKeyId: ResourceBase.CLOUDFLARE_R2_ACCESS_KEY_ID.value,
-              secretAccessKey: ResourceBase.CLOUDFLARE_R2_SECRET_ACCESS_KEY.value,
-            },
-          })
+          const s3Client = new S3Client({ region: 'auto', endpoint: `https://${ACCOUNT_ID}.r2.cloudflarestorage.com` })
           // @ts-ignore
           const bucketName = value.name as string
           return {
-            put: async (
-              key: string,
-              data: Buffer | Uint8Array | string,
-              options?: { httpMetadata?: { contentType?: string } },
-            ) => {
+            put: async (key: string, data: Buffer | Uint8Array | string, options?: any) => {
               await s3Client.send(
                 new PutObjectCommand({
                   Bucket: bucketName,
                   Key: key,
                   Body: data,
                   ContentType: options?.httpMetadata?.contentType,
+                  CacheControl: options?.httpMetadata?.cacheControl,
                 }),
               )
             },
@@ -64,7 +56,7 @@ export const Resource = new Proxy(
                 {
                   method: 'POST',
                   headers: {
-                    Authorization: `Bearer ${ResourceBase.CLOUDFLARE_API_TOKEN.value}`,
+                    Authorization: `Bearer ${API_TOKEN}`,
                     'Content-Type': 'application/json',
                   },
                   body: JSON.stringify({ body }),
@@ -80,7 +72,7 @@ export const Resource = new Proxy(
                 {
                   method: 'POST',
                   headers: {
-                    Authorization: `Bearer ${ResourceBase.CLOUDFLARE_API_TOKEN.value}`,
+                    Authorization: `Bearer ${API_TOKEN}`,
                     'Content-Type': 'application/json',
                   },
                   body: JSON.stringify({ messages }),
@@ -95,24 +87,23 @@ export const Resource = new Proxy(
         // @ts-ignore
         if (value.type === 'sst.cloudflare.Kv') {
           const client = new Cloudflare({
-            apiToken: ResourceBase.CLOUDFLARE_API_TOKEN.value,
+            apiToken: API_TOKEN,
           })
           // @ts-ignore
           const namespaceId = value.namespaceId
-          const accountId = ResourceBase.CLOUDFLARE_DEFAULT_ACCOUNT_ID.value
           return {
             get: (k: string | string[]) => {
               const isMulti = Array.isArray(k)
               return client.kv.namespaces
                 .bulkGet(namespaceId, {
                   keys: Array.isArray(k) ? k : [k],
-                  account_id: accountId,
+                  account_id: ACCOUNT_ID,
                 })
                 .then((result) => (isMulti ? new Map(Object.entries(result?.values ?? {})) : result?.values?.[k]))
             },
             put: (k: string, v: string, opts?: KVNamespacePutOptions) =>
               client.kv.namespaces.values.update(namespaceId, k, {
-                account_id: accountId,
+                account_id: ACCOUNT_ID,
                 value: v,
                 expiration: opts?.expiration,
                 expiration_ttl: opts?.expirationTtl,
@@ -120,12 +111,12 @@ export const Resource = new Proxy(
               }),
             delete: (k: string) =>
               client.kv.namespaces.values.delete(namespaceId, k, {
-                account_id: accountId,
+                account_id: ACCOUNT_ID,
               }),
             list: (opts?: KVNamespaceListOptions): Promise<KVNamespaceListResult<unknown, string>> =>
               client.kv.namespaces.keys
                 .list(namespaceId, {
-                  account_id: accountId,
+                  account_id: ACCOUNT_ID,
                   prefix: opts?.prefix ?? undefined,
                 })
                 .then((result) => {

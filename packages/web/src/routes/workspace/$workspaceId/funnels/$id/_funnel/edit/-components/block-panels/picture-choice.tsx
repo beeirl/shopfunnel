@@ -1,4 +1,5 @@
 import { getBlockInfo } from '@/components/block'
+import { Image } from '@/components/image'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { InputGroup } from '@/components/ui/input-group'
@@ -77,7 +78,14 @@ function ChoiceItem({
             className="size-6 overflow-hidden"
           >
             {choice.media?.value ? (
-              <img src={choice.media.value} alt="" className="size-full rounded object-cover" />
+              <Image
+                src={choice.media.value}
+                alt=""
+                layout="fixed"
+                width={24}
+                height={24}
+                className="rounded object-cover"
+              />
             ) : (
               <PhotoIcon className="size-4" />
             )}

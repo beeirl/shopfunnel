@@ -60,7 +60,15 @@ export function MultipleChoiceBlock(props: MultipleChoiceBlockProps) {
               <div className="-my-4 mr-2 -ml-4 flex size-14 items-center justify-center">
                 {choice.media.type === 'emoji' && <span className="pl-1 text-[2rem]">{choice.media.value}</span>}
                 {choice.media.type === 'image' && (
-                  <Image className="size-full object-cover" src={choice.media.value} alt="" size="xs" />
+                  <Image
+                    src={choice.media.value}
+                    alt=""
+                    layout="fixed"
+                    width={56}
+                    height={56}
+                    className="object-cover"
+                    priority={!props.static}
+                  />
                 )}
               </div>
             )}

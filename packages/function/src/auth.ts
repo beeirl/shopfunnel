@@ -33,8 +33,8 @@ export default {
     const result = await issuer({
       theme: {
         title: 'Shopfunnel',
-        logo: `${process.env.APP_URL}/shopfunnel-logo.svg`,
-        favicon: `${process.env.APP_URL}/favicon.svg`,
+        logo: `${process.env.WEB_URL}/shopfunnel-logo.svg`,
+        favicon: `${process.env.WEB_URL}/favicon.svg`,
         css: [
           "@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');",
           "[data-component='logo'] { height: 1.625rem; }",
@@ -103,7 +103,7 @@ export default {
           await User.joinInvitedWorkspaces()
           const workspaces = await Account.workspaces()
           if (workspaces.length === 0) {
-            if (process.env.APP_STAGE !== 'beeirl') throw new Error('Not allowed')
+            if (process.env.STAGE !== 'beeirl') throw new Error('Not allowed')
             await Workspace.create({ name: 'Default' })
           }
         })

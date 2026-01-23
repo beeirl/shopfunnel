@@ -3,7 +3,7 @@ import { auth } from './auth'
 import { database } from './database'
 import { allSecrets, secret } from './secret'
 import { domain } from './stage'
-import { storage, STORAGE_URL, storageWorker } from './storage'
+import { storage, STORAGE_URL } from './storage'
 
 export const web = new sst.cloudflare.x.SolidStart('Web', {
   path: 'packages/web',
@@ -12,7 +12,6 @@ export const web = new sst.cloudflare.x.SolidStart('Web', {
     analyticsQueue,
     database,
     storage,
-    storageWorker,
     STORAGE_URL,
     ...($dev
       ? [
@@ -23,9 +22,13 @@ export const web = new sst.cloudflare.x.SolidStart('Web', {
     ...allSecrets,
   ],
   environment: {
-    IS_DEV: $dev ? 'true' : 'false',
-    APP_DOMAIN: domain,
-    APP_STAGE: $app.stage,
+    ...($dev && {
+      DEV: 'true',
+      VITE_DEV: 'true',
+    }),
+    WEB_DOMAIN: domain,
+    VITE_DOMAIN: domain,
+    VITE_STAGE: $app.stage,
     VITE_AUTH_URL: auth.url.apply((url) => url!),
   },
   transform: {

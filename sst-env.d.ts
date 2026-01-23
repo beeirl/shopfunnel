@@ -69,10 +69,6 @@ declare module "sst" {
       "name": string
       "type": "sst.cloudflare.Bucket"
     }
-    "StorageWorker": {
-      "type": "sst.cloudflare.Worker"
-      "url": string
-    }
     "TINYBIRD_TOKEN": {
       "type": "sst.sst.Secret"
       "value": string

@@ -175,7 +175,7 @@ export const ShopifyRoute = new Hono()
           variables: {
             webPixel: {
               settings: JSON.stringify({
-                apiUrl: `https://${process.env.APP_DOMAIN}`,
+                apiUrl: `https://${process.env.WEB_DOMAIN}`,
                 shopifyShopId: String(shopResponseJson.shop.id),
               }),
             },

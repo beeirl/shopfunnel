@@ -1,4 +1,5 @@
 import { getBlockInfo } from '@/components/block'
+import { Image } from '@/components/image'
 import { Button } from '@/components/ui/button'
 import { InputGroup } from '@/components/ui/input-group'
 import type { ImageBlock as ImageBlockType } from '@shopfunnel/core/funnel/types'
@@ -66,7 +67,14 @@ export function ImageBlockPanel({
                   className="size-6 overflow-hidden"
                 >
                   {block.properties.url ? (
-                    <img src={block.properties.url} alt="" className="size-full rounded object-cover" />
+                    <Image
+                      src={block.properties.url}
+                      alt=""
+                      layout="fixed"
+                      width={24}
+                      height={24}
+                      className="rounded object-cover"
+                    />
                   ) : (
                     <PhotoIcon />
                   )}

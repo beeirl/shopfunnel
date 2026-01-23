@@ -8,16 +8,24 @@ export interface ImageBlockProps {
   static?: boolean
 }
 
-export function ImageBlock({ block }: ImageBlockProps) {
+export function ImageBlock(props: ImageBlockProps) {
   return (
     <div
       className={cn(
         'w-full overflow-hidden rounded-(--sf-radius) group-not-data-first/block:mt-6',
-        !block.properties.url && 'flex aspect-video items-center justify-center bg-(--sf-muted)',
+        !props.block.properties.url && 'flex aspect-video items-center justify-center bg-(--sf-muted)',
       )}
     >
-      {block.properties.url && <Image src={block.properties.url} alt="" size="lg" className="h-auto w-full" />}
-      {!block.properties.url && <PhotoIcon className="size-14 text-(--sf-foreground) opacity-20" />}
+      {props.block.properties.url && (
+        <Image
+          src={props.block.properties.url}
+          alt=""
+          layout="fullWidth"
+          breakpoints={[384, 768, 1080]}
+          priority={!props.static}
+        />
+      )}
+      {!props.block.properties.url && <PhotoIcon className="size-14 text-(--sf-foreground) opacity-20" />}
     </div>
   )
 }

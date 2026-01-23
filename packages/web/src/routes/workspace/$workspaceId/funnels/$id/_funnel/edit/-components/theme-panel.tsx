@@ -1,3 +1,4 @@
+import { Image } from '@/components/image'
 import { ColorPicker } from '@/components/ui/color-picker'
 import { InputGroup } from '@/components/ui/input-group'
 import { Select } from '@/components/ui/select'
@@ -95,7 +96,15 @@ export function ThemePanel({ theme, onThemeUpdate, onImageUpload }: ThemePanelPr
             <InputGroup.Root>
               <InputGroup.Addon>
                 {theme.logo ? (
-                  <img src={theme.logo} alt="Logo" className="size-6 rounded object-contain" />
+                  <Image
+                    src={theme.logo}
+                    alt="Logo"
+                    layout="fixed"
+                    width={24}
+                    height={24}
+                    operations={{ fit: 'contain' }}
+                    className="rounded object-contain"
+                  />
                 ) : (
                   <UploadIcon className="size-4" />
                 )}
@@ -125,7 +134,15 @@ export function ThemePanel({ theme, onThemeUpdate, onImageUpload }: ThemePanelPr
             <InputGroup.Root>
               <InputGroup.Addon>
                 {theme.favicon ? (
-                  <img src={theme.favicon} alt="Favicon" className="size-6 rounded object-contain" />
+                  <Image
+                    src={theme.favicon}
+                    alt="Favicon"
+                    layout="fixed"
+                    width={24}
+                    height={24}
+                    operations={{ fit: 'contain' }}
+                    className="rounded object-contain"
+                  />
                 ) : (
                   <UploadIcon className="size-4" />
                 )}

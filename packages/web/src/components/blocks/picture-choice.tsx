@@ -56,7 +56,15 @@ export function PictureChoiceBlock(props: PictureChoiceBlockProps) {
           >
             <div className="relative aspect-4/3 w-full overflow-hidden bg-(--sf-muted)/40 group-data-selected:bg-(--sf-primary)/5">
               {choice.media?.value ? (
-                <Image src={choice.media.value} alt={choice.label} size="sm" className="size-full object-cover" />
+                <Image
+                  src={choice.media.value}
+                  alt={choice.label}
+                  layout="fullWidth"
+                  aspectRatio={4 / 3}
+                  className="object-cover"
+                  breakpoints={[186, 372, 560]}
+                  priority={!props.static}
+                />
               ) : (
                 <div className="flex size-full items-center justify-center">
                   <PhotoIcon className="size-12 text-(--sf-foreground) opacity-20 group-data-selected:text-(--sf-primary)" />
