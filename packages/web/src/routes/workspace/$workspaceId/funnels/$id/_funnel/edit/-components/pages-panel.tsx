@@ -18,6 +18,8 @@ import {
 } from '@tabler/icons-react'
 import * as React from 'react'
 import { ulid } from 'ulid'
+import { useFunnelEditor } from '../-context'
+import { useFunnel } from '../../-context'
 import { Pane } from './pane'
 import { Panel } from './panel'
 
@@ -409,33 +411,52 @@ function BlocksPane({
 // PagesPanel
 // =============================================================================
 
-export interface PagesPanelProps {
-  pages: Page[]
-  selectedPageId: string | null
-  selectedBlockId: string | null
-  onPageSelect: (pageId: string) => void
-  onBlockSelect: (blockId: string | null) => void
-  onPagesReorder: (pages: Page[]) => void
-  onPageAdd: (page: Page) => void
-  onBlocksReorder: (pageId: string, blocks: Block[]) => void
-  onBlockAdd: (block: Block) => void
-}
+export function PagesPanel() {
+  const { data: funnel, maybeSave } = useFunnel()
+  const { selectedPageId, selectedBlockId, selectPage, selectBlock } = useFunnelEditor()
+  const { pages } = funnel
 
-export function PagesPanel({
-  pages,
-  selectedPageId,
-  selectedBlockId,
-  onPageSelect,
-  onBlockSelect,
-  onPagesReorder,
-  onPageAdd,
-  onBlocksReorder,
-  onBlockAdd,
-}: PagesPanelProps) {
   const selectedPage = pages.find((page) => page.id === selectedPageId)
   const pageForBlocks =
     selectedPage ||
     (selectedBlockId ? pages.find((page) => page.blocks.some((block) => block.id === selectedBlockId)) : null)
+
+  const handlePagesReorder = (reorderedPages: Page[]) => {
+    maybeSave({ pages: reorderedPages })
+  }
+
+  const handlePageAdd = (page: Page) => {
+    maybeSave({ pages: [...pages, page] })
+    selectPage(page.id, 'panel')
+    selectBlock(page.blocks[0]?.id ?? null, 'panel')
+  }
+
+  const handleBlocksReorder = (pageId: string, reorderedBlocks: Block[]) => {
+    const updatedPages = pages.map((page) => (page.id === pageId ? { ...page, blocks: reorderedBlocks } : page))
+    maybeSave({ pages: updatedPages })
+  }
+
+  const handleBlockAdd = (block: Block) => {
+    const pageId =
+      selectedPageId ||
+      (selectedBlockId ? pages.find((page) => page.blocks.some((b) => b.id === selectedBlockId))?.id : null)
+    if (!pageId) return
+
+    const updatedPages = pages.map((page) => {
+      if (page.id !== pageId) return page
+      return { ...page, blocks: [...page.blocks, block] }
+    })
+    maybeSave({ pages: updatedPages })
+    selectBlock(block.id, 'panel')
+  }
+
+  const handlePageSelect = (pageId: string) => {
+    selectPage(pageId, 'panel')
+  }
+
+  const handleBlockSelect = (blockId: string | null) => {
+    selectBlock(blockId, 'panel')
+  }
 
   return (
     <Panel className="w-64 shrink-0">
@@ -445,10 +466,10 @@ export function PagesPanel({
             pages={pages}
             selectedPageId={selectedPageId}
             selectedBlockId={selectedBlockId}
-            onPageSelect={onPageSelect}
-            onBlockSelect={onBlockSelect}
-            onPagesReorder={onPagesReorder}
-            onPageAdd={onPageAdd}
+            onPageSelect={handlePageSelect}
+            onBlockSelect={handleBlockSelect}
+            onPagesReorder={handlePagesReorder}
+            onPageAdd={handlePageAdd}
           />
         </Resizable.Panel>
         {pageForBlocks && (
@@ -459,10 +480,10 @@ export function PagesPanel({
                 pageId={pageForBlocks.id}
                 blocks={pageForBlocks.blocks}
                 selectedBlockId={selectedBlockId}
-                onBlockSelect={onBlockSelect}
-                onPageSelect={onPageSelect}
-                onBlocksReorder={onBlocksReorder}
-                onBlockAdd={onBlockAdd}
+                onBlockSelect={handleBlockSelect}
+                onPageSelect={(pageId) => (pageId ? selectPage(pageId, 'panel') : selectPage(null, 'panel'))}
+                onBlocksReorder={handleBlocksReorder}
+                onBlockAdd={handleBlockAdd}
               />
             </Resizable.Panel>
           </React.Fragment>

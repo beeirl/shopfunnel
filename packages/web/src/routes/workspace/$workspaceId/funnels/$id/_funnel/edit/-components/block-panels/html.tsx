@@ -20,14 +20,12 @@ export function HtmlBlockPanel({
   onImageUpload,
   onBlockRemove,
   onHtmlChange,
-  onHtmlSave,
 }: {
   block: HtmlBlockType
   onBlockUpdate: (block: Partial<HtmlBlockType>) => void
   onImageUpload: (file: File) => Promise<string>
   onBlockRemove: () => void
   onHtmlChange: (html: string) => void
-  onHtmlSave: () => void
 }) {
   const blockInfo = getBlockInfo(block.type)
   const inputRef = React.useRef<HTMLInputElement>(null)
@@ -73,6 +71,7 @@ export function HtmlBlockPanel({
               <Pane.GroupLabel>Content</Pane.GroupLabel>
             </Pane.GroupHeader>
             <Textarea
+              className="max-h-96 overflow-y-auto"
               placeholder="<div>Your HTML here...</div>"
               value={block.properties.html}
               onChange={(e) => onHtmlChange(e.target.value)}
@@ -133,11 +132,6 @@ export function HtmlBlockPanel({
             />
           </Pane.Group>
         </Pane.Content>
-        <Pane.Footer>
-          <Button className="ml-auto" onClick={onHtmlSave}>
-            Save
-          </Button>
-        </Pane.Footer>
       </Pane.Root>
     </Panel>
   )

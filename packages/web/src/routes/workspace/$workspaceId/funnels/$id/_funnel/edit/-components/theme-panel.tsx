@@ -5,6 +5,7 @@ import { Select } from '@/components/ui/select'
 import { type Theme } from '@shopfunnel/core/funnel/types'
 import { IconUpload as UploadIcon, IconX as XIcon } from '@tabler/icons-react'
 import * as React from 'react'
+import { useFunnel } from '../../-context'
 import { Field } from './field'
 import { Pane } from './pane'
 import { Panel } from './panel'
@@ -21,20 +22,21 @@ const STYLES: { value: Theme['style']; label: string }[] = [
   { label: 'Soft', value: 'soft' },
 ]
 
-interface ThemePanelProps {
-  theme: Theme
-  onThemeUpdate: (updates: Partial<Theme>) => void
-  onImageUpload?: (file: File) => Promise<string>
-}
+export function ThemePanel() {
+  const { data: funnel, maybeSave, uploadFile } = useFunnel()
+  const { theme } = funnel
 
-export function ThemePanel({ theme, onThemeUpdate, onImageUpload }: ThemePanelProps) {
   const fileInputRef = React.useRef<HTMLInputElement>(null)
   const faviconInputRef = React.useRef<HTMLInputElement>(null)
   const [isUploading, setIsUploading] = React.useState(false)
   const [isUploadingFavicon, setIsUploadingFavicon] = React.useState(false)
 
+  const handleThemeUpdate = (updates: Partial<Theme>) => {
+    maybeSave({ theme: { ...theme, ...updates } })
+  }
+
   const handleColorChange = (key: keyof Theme['colors'], value: string) => {
-    onThemeUpdate({
+    handleThemeUpdate({
       colors: {
         ...theme.colors,
         [key]: value,
@@ -44,12 +46,12 @@ export function ThemePanel({ theme, onThemeUpdate, onImageUpload }: ThemePanelPr
 
   const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
-    if (!file || !onImageUpload) return
+    if (!file) return
 
     setIsUploading(true)
     try {
-      const url = await onImageUpload(file)
-      onThemeUpdate({ logo: url })
+      const url = await uploadFile(file)
+      handleThemeUpdate({ logo: url })
     } finally {
       setIsUploading(false)
       if (fileInputRef.current) {
@@ -59,17 +61,17 @@ export function ThemePanel({ theme, onThemeUpdate, onImageUpload }: ThemePanelPr
   }
 
   const handleLogoRemove = () => {
-    onThemeUpdate({ logo: undefined })
+    handleThemeUpdate({ logo: undefined })
   }
 
   const handleFaviconUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
-    if (!file || !onImageUpload) return
+    if (!file) return
 
     setIsUploadingFavicon(true)
     try {
-      const url = await onImageUpload(file)
-      onThemeUpdate({ favicon: url })
+      const url = await uploadFile(file)
+      handleThemeUpdate({ favicon: url })
     } finally {
       setIsUploadingFavicon(false)
       if (faviconInputRef.current) {
@@ -79,7 +81,7 @@ export function ThemePanel({ theme, onThemeUpdate, onImageUpload }: ThemePanelPr
   }
 
   const handleFaviconRemove = () => {
-    onThemeUpdate({ favicon: undefined })
+    handleThemeUpdate({ favicon: undefined })
   }
 
   return (
@@ -178,7 +180,7 @@ export function ThemePanel({ theme, onThemeUpdate, onImageUpload }: ThemePanelPr
             <Select.Root
               items={RADII}
               value={theme.radius}
-              onValueChange={(value) => onThemeUpdate({ radius: value! })}
+              onValueChange={(value) => handleThemeUpdate({ radius: value! })}
             >
               <Select.Trigger className="w-full">
                 <svg
@@ -215,7 +217,11 @@ export function ThemePanel({ theme, onThemeUpdate, onImageUpload }: ThemePanelPr
             <Pane.GroupHeader>
               <Pane.GroupLabel>Style</Pane.GroupLabel>
             </Pane.GroupHeader>
-            <Select.Root items={STYLES} value={theme.style} onValueChange={(value) => onThemeUpdate({ style: value! })}>
+            <Select.Root
+              items={STYLES}
+              value={theme.style}
+              onValueChange={(value) => handleThemeUpdate({ style: value! })}
+            >
               <Select.Trigger className="w-full">
                 <Select.Value />
               </Select.Trigger>

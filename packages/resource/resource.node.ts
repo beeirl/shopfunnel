@@ -18,7 +18,15 @@ export const Resource = new Proxy(
           // @ts-ignore
           // prettier-ignore
           const accountId = process.env.CLOUDFLARE_DEFAULT_ACCOUNT_ID ?? ResourceBase.CLOUDFLARE_DEFAULT_ACCOUNT_ID.value
-          const s3Client = new S3Client({ region: 'auto', endpoint: `https://${accountId}.r2.cloudflarestorage.com` })
+          const s3Client = new S3Client({
+            region: 'auto',
+            endpoint: `https://${accountId}.r2.cloudflarestorage.com`,
+            credentials: {
+              accessKeyId: process.env.CLOUDFLARE_R2_ACCESS_KEY_ID ?? ResourceBase.CLOUDFLARE_R2_ACCESS_KEY_ID.value,
+              secretAccessKey:
+                process.env.CLOUDFLARE_R2_SECRET_ACCESS_KEY ?? ResourceBase.CLOUDFLARE_R2_SECRET_ACCESS_KEY.value,
+            },
+          })
           // @ts-ignore
           const bucketName = value.name as string
           return {

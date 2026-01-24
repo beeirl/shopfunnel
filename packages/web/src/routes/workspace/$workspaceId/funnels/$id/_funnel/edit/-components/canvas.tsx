@@ -27,6 +27,8 @@ import {
   type Node,
 } from '@xyflow/react'
 import * as React from 'react'
+import { useFunnelEditor } from '../-context'
+import { useFunnel } from '../../-context'
 
 import '@xyflow/react/dist/style.css'
 
@@ -391,50 +393,29 @@ function CanvasInner({
 // Canvas
 // =============================================================================
 
-export interface CanvasProps {
-  pages: PageType[]
-  rules: Rule[]
-  theme: Theme
-  selectedPageId: string | null
-  selectedBlockId: string | null
-  selectionSource: 'panel' | 'canvas' | null
-  onPageSelect: (pageId: string | null) => void
-  onBlockSelect: (blockId: string | null) => void
-  onThemeButtonClick: () => void
-  onLogicClick: (pageId: string) => void
-}
+export function Canvas() {
+  const { data: funnel } = useFunnel()
+  const { selectedPageId, selectedBlockId, selectionSource, selectPage, selectBlock, showTheme, showLogic } =
+    useFunnelEditor()
 
-export function Canvas({
-  pages,
-  rules,
-  theme,
-  selectedPageId,
-  selectedBlockId,
-  selectionSource,
-  onPageSelect,
-  onBlockSelect,
-  onThemeButtonClick,
-  onLogicClick,
-}: CanvasProps) {
+  const { pages, rules, theme } = funnel
+
   const handlePaneClick = React.useCallback(() => {
-    onPageSelect(null)
-    onBlockSelect(null)
-  }, [onPageSelect, onBlockSelect])
+    selectPage(null, 'canvas')
+  }, [selectPage])
 
   const handlePageSelect = React.useCallback(
     (pageId: string) => {
-      onPageSelect(pageId)
-      onBlockSelect(null)
+      selectPage(pageId, 'canvas')
     },
-    [onPageSelect, onBlockSelect],
+    [selectPage],
   )
 
   const handleBlockSelect = React.useCallback(
     (blockId: string) => {
-      onBlockSelect(blockId)
-      onPageSelect(null)
+      selectBlock(blockId, 'canvas')
     },
-    [onBlockSelect, onPageSelect],
+    [selectBlock],
   )
 
   const handleNodeClick = React.useCallback(
@@ -468,11 +449,11 @@ export function Canvas({
         isEnd: !edges.some((e) => e.source === page.id),
         onPageSelect: handlePageSelect,
         onBlockSelect: handleBlockSelect,
-        onLogicClick: () => onLogicClick(page.id),
+        onLogicClick: () => showLogic(page.id),
       },
     }))
     return getLayoutedElements(nodes, edges)
-  }, [pages, rules, theme, selectedPageId, selectedBlockId, handlePageSelect, handleBlockSelect, onLogicClick])
+  }, [pages, rules, theme, selectedPageId, selectedBlockId, handlePageSelect, handleBlockSelect, showLogic])
 
   return (
     <>
@@ -488,7 +469,7 @@ export function Canvas({
             selectionSource={selectionSource}
             onPaneClick={handlePaneClick}
             onNodeClick={handleNodeClick}
-            onThemeButtonClick={onThemeButtonClick}
+            onThemeButtonClick={showTheme}
           />
         </ReactFlowProvider>
       </div>

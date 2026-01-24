@@ -1,4 +1,5 @@
 import { getBlockInfo } from '@/components/block'
+import { AlertDialog } from '@/components/ui/alert-dialog'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Select } from '@/components/ui/select'
@@ -10,11 +11,12 @@ import type {
   LogicalCondition as LogicalConditionType,
   Page as PageType,
   RuleAction as RuleActionType,
-  Rule as RuleType,
 } from '@shopfunnel/core/funnel/types'
 import { INPUT_BLOCKS } from '@shopfunnel/core/funnel/types'
 import { IconPlus as PlusIcon, IconTrash as TrashIcon } from '@tabler/icons-react'
 import * as React from 'react'
+import { useFunnelEditor } from '../-context'
+import { useFunnel } from '../../-context'
 import { Pane } from './pane'
 import { Panel } from './panel'
 
@@ -31,18 +33,6 @@ interface RuleProps {
   currentPageId: string
   onActionChange: (action: RuleActionType) => void
   onRemove: () => void
-}
-
-interface LogicPanelProps {
-  page: PageType
-  pages: PageType[]
-  pageRule: RuleType | undefined
-  saving: boolean
-  hasChanges: boolean
-  onPageRulesChange: (actions: RuleActionType[]) => void
-  onSave: () => void
-  onReset: () => void
-  onClose: () => void
 }
 
 // =============================================================================
@@ -474,17 +464,14 @@ function Rule({ action, inputBlocks, pages, currentPageId, onActionChange, onRem
 // LogicPanel Component
 // =============================================================================
 
-export function LogicPanel({
-  page,
-  pages,
-  pageRule,
-  saving,
-  hasChanges,
-  onPageRulesChange,
-  onSave,
-  onReset,
-  onClose,
-}: LogicPanelProps) {
+export function LogicPanel() {
+  const { data: funnel, maybeSave } = useFunnel()
+  const { selectedLogicPage } = useFunnelEditor()
+
+  const { pages, rules } = funnel
+  const page = selectedLogicPage!
+  const pageRule = rules.find((r) => r.pageId === page.id)
+
   const inputBlocks = getAvailableInputBlocks(pages, page.id)
   const actions = pageRule?.actions ?? []
   const currentPageIndex = pages.findIndex((p) => p.id === page.id)
@@ -495,6 +482,17 @@ export function LogicPanel({
   const defaultAction = actions.find((a) => a.condition.op === 'always')
   const hasConditionalRules = conditionalActions.length > 0
 
+  // Helper to update rules and trigger auto-save
+  const updatePageRules = React.useCallback(
+    (newActions: RuleActionType[]) => {
+      const updatedRules = pageRule
+        ? rules.map((r) => (r.pageId === page.id ? { ...r, actions: newActions } : r))
+        : [...rules, { pageId: page.id, actions: newActions }]
+      maybeSave({ rules: updatedRules })
+    },
+    [pageRule, rules, page.id, maybeSave],
+  )
+
   const handleActionChange = (index: number, newAction: RuleActionType) => {
     // Find the actual index in the full actions array
     const conditionalAction = conditionalActions[index]
@@ -504,14 +502,14 @@ export function LogicPanel({
 
     const newActions = [...actions]
     newActions[realIndex] = newAction
-    onPageRulesChange(newActions)
+    updatePageRules(newActions)
   }
 
   const handleActionRemove = (index: number) => {
     const conditionalAction = conditionalActions[index]
     if (!conditionalAction) return
     const newActions = actions.filter((a) => a !== conditionalAction)
-    onPageRulesChange(newActions)
+    updatePageRules(newActions)
   }
 
   const handleAddRule = () => {
@@ -525,9 +523,9 @@ export function LogicPanel({
       const defaultIndex = actions.indexOf(defaultAction)
       const newActions = [...actions]
       newActions.splice(defaultIndex, 0, newAction)
-      onPageRulesChange(newActions)
+      updatePageRules(newActions)
     } else {
-      onPageRulesChange([...actions, newAction])
+      updatePageRules([...actions, newAction])
     }
   }
 
@@ -541,25 +539,43 @@ export function LogicPanel({
     if (defaultAction) {
       // Replace existing default action
       const newActions = actions.map((a) => (a === defaultAction ? newDefaultAction : a))
-      onPageRulesChange(newActions)
+      updatePageRules(newActions)
     } else {
       // Add new default action at the end
-      onPageRulesChange([...actions, newDefaultAction])
+      updatePageRules([...actions, newDefaultAction])
     }
   }
 
   const handleDeleteAllRules = () => {
-    onPageRulesChange([])
+    updatePageRules([])
   }
 
   return (
     <Panel>
       <Pane.Root>
         <Pane.Header>
-          <Pane.Title>{page.name || 'Page'} Logic</Pane.Title>
-          <Button size="icon" variant="ghost" onClick={handleAddRule}>
-            <PlusIcon />
-          </Button>
+          <Pane.Title>{page.name || 'Page'} logic</Pane.Title>
+          {actions.length > 0 && (
+            <AlertDialog.Root>
+              <AlertDialog.Trigger render={<Button size="icon" variant="ghost" />}>
+                <TrashIcon />
+              </AlertDialog.Trigger>
+              <AlertDialog.Content>
+                <AlertDialog.Header>
+                  <AlertDialog.Title>Delete all rules?</AlertDialog.Title>
+                  <AlertDialog.Description>
+                    Are you sure you want to delete all rules for this page?
+                  </AlertDialog.Description>
+                </AlertDialog.Header>
+                <AlertDialog.Footer>
+                  <AlertDialog.Cancel>Cancel</AlertDialog.Cancel>
+                  <AlertDialog.Action variant="destructive" onClick={handleDeleteAllRules}>
+                    Delete
+                  </AlertDialog.Action>
+                </AlertDialog.Footer>
+              </AlertDialog.Content>
+            </AlertDialog.Root>
+          )}
         </Pane.Header>
 
         <Pane.Content className="gap-4 py-4">
@@ -578,6 +594,11 @@ export function LogicPanel({
           ))}
 
           {hasConditionalRules && <Pane.Separator />}
+          <Button variant="secondary" className="w-full" onClick={handleAddRule}>
+            <PlusIcon />
+            Add rule
+          </Button>
+          <Pane.Separator />
           <div className="flex flex-col gap-1.5">
             <span className="text-xm text-muted-foreground">
               {hasConditionalRules ? 'All other cases go to' : 'Always go to'}
@@ -604,22 +625,6 @@ export function LogicPanel({
             </Select.Root>
           </div>
         </Pane.Content>
-
-        <Pane.Footer>
-          {actions.length > 0 && (
-            <Button variant="destructive" onClick={handleDeleteAllRules}>
-              Delete all
-            </Button>
-          )}
-          <div className="ml-auto flex items-center gap-2">
-            <Button variant="outline" onClick={onReset}>
-              Reset
-            </Button>
-            <Button onClick={onSave} disabled={saving || !hasChanges}>
-              Save
-            </Button>
-          </div>
-        </Pane.Footer>
       </Pane.Root>
     </Panel>
   )
