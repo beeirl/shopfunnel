@@ -5,6 +5,8 @@ import { allSecrets, secret } from './secret'
 import { domain } from './stage'
 import { storage, STORAGE_URL } from './storage'
 
+const SESSION_SECRET = new sst.Secret('SESSION_SECRET')
+
 export const web = new sst.cloudflare.x.SolidStart('Web', {
   path: 'packages/web',
   domain,
@@ -13,6 +15,7 @@ export const web = new sst.cloudflare.x.SolidStart('Web', {
     database,
     storage,
     STORAGE_URL,
+    SESSION_SECRET,
     ...($dev
       ? [
           new sst.Secret('CLOUDFLARE_API_TOKEN', process.env.CLOUDFLARE_API_TOKEN!),
@@ -36,9 +39,6 @@ export const web = new sst.cloudflare.x.SolidStart('Web', {
       transform: {
         worker: {
           placement: { mode: 'smart' },
-          observability: {
-            enabled: true,
-          },
         },
       },
     },

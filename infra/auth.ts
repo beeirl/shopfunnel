@@ -13,13 +13,6 @@ export const auth = new sst.cloudflare.Worker('AuthApi', {
     STAGE: $app.stage,
     WEB_URL: `https://${domain}`,
   },
-  transform: {
-    worker: {
-      observability: {
-        enabled: true,
-      },
-    },
-  },
 })
 
 new cloudflare.WorkersRoute('AuthWorkerRoute', {

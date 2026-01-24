@@ -1,3 +1,4 @@
+import { Resource } from '@shopfunnel/resource'
 import { useSession } from '@tanstack/react-start/server'
 
 export interface AuthSession {
@@ -13,14 +14,12 @@ export interface AuthSession {
 
 export function useAuthSession() {
   return useSession<AuthSession>({
-    password: process.env.SESSION_SECRET || '0'.repeat(32),
     name: 'auth',
+    password: Resource.SESSION_SECRET.value,
     maxAge: 60 * 60 * 24 * 365,
     cookie: {
-      secure: process.env.NODE_ENV === 'production',
+      secure: !process.env.DEV,
       httpOnly: true,
-      sameSite: 'lax',
     },
   })
 }
-
