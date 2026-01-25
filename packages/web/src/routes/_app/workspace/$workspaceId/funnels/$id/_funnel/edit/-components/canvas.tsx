@@ -73,7 +73,7 @@ function SelectableBlock({ block, index, selected, variant, onSelect }: Selectab
             selected ? 'block' : 'hidden group-hover/block:block',
           )}
         >
-          {'name' in block.properties && block.properties.name ? block.properties.name : blockInfo.name}
+          {blockInfo.name}
         </div>
 
         {/* Block content */}
@@ -99,7 +99,7 @@ interface PageNodeData extends Record<string, unknown> {
   isStart: boolean
   isEnd: boolean
   onPageSelect: (pageId: string) => void
-  onBlockSelect: (blockId: string) => void
+  onBlockSelect: (blockId: string, pageId: string) => void
   onLogicClick: () => void
 }
 
@@ -108,7 +108,7 @@ function PageNode({ data }: { data: PageNodeData }) {
     data
 
   const handleBlockSelect = (blockId: string) => {
-    onBlockSelect(blockId)
+    onBlockSelect(blockId, page.id)
   }
 
   const handleLogicClick = (e: React.MouseEvent) => {
@@ -312,9 +312,7 @@ function createEdges(pages: PageType[], rules: Rule[]): Edge[] {
 interface CanvasInnerProps {
   nodes: Node<PageNodeData>[]
   edges: Edge[]
-  pages: PageType[]
-  selectedPageId: string | null
-  selectedBlockId: string | null
+  activePageId: string | null
   selectionSource: 'panel' | 'canvas' | null
   onPaneClick: () => void
   onNodeClick: (event: React.MouseEvent, node: Node<PageNodeData>) => void
@@ -324,9 +322,7 @@ interface CanvasInnerProps {
 function CanvasInner({
   nodes,
   edges,
-  pages,
-  selectedPageId,
-  selectedBlockId,
+  activePageId,
   selectionSource,
   onPaneClick,
   onNodeClick,
@@ -334,17 +330,12 @@ function CanvasInner({
 }: CanvasInnerProps) {
   const { zoomIn, zoomOut, fitView } = useReactFlow()
 
-  // Derive the page ID to focus on
-  const focusPageId =
-    selectedPageId ||
-    (selectedBlockId ? pages.find((page) => page.blocks.some((block) => block.id === selectedBlockId))?.id : null)
-
-  // Focus viewport on selected page (only from panel selection)
+  // Focus viewport on active page (only from panel selection)
   React.useEffect(() => {
-    if (selectionSource === 'panel' && focusPageId) {
-      fitView({ nodes: [{ id: focusPageId }], maxZoom: 1 })
+    if (selectionSource === 'panel' && activePageId) {
+      fitView({ nodes: [{ id: activePageId }], maxZoom: 1 })
     }
-  }, [selectedPageId, selectedBlockId, selectionSource, fitView, focusPageId])
+  }, [activePageId, selectionSource, fitView])
 
   return (
     <ReactFlow
@@ -395,8 +386,16 @@ function CanvasInner({
 
 export function Canvas() {
   const { data: funnel } = useFunnel()
-  const { selectedPageId, selectedBlockId, selectionSource, selectPage, selectBlock, showTheme, showLogic } =
-    useFunnelEditor()
+  const {
+    activePageId,
+    selectedPageId,
+    selectedBlockId,
+    selectionSource,
+    selectPage,
+    selectBlock,
+    showTheme,
+    showLogic,
+  } = useFunnelEditor()
 
   const { pages, rules, theme } = funnel
 
@@ -412,8 +411,8 @@ export function Canvas() {
   )
 
   const handleBlockSelect = React.useCallback(
-    (blockId: string) => {
-      selectBlock(blockId, 'canvas')
+    (blockId: string, pageId: string) => {
+      selectBlock(blockId, pageId, 'canvas')
     },
     [selectBlock],
   )
@@ -463,9 +462,7 @@ export function Canvas() {
           <CanvasInner
             nodes={nodes}
             edges={edges}
-            pages={pages}
-            selectedPageId={selectedPageId}
-            selectedBlockId={selectedBlockId}
+            activePageId={activePageId}
             selectionSource={selectionSource}
             onPaneClick={handlePaneClick}
             onNodeClick={handleNodeClick}

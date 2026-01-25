@@ -7,24 +7,29 @@ import { useFunnel } from '../-context'
 // =============================================================================
 
 interface FunnelEditorContextValue {
-  // UI State
+  // Left panel state
+  activePageId: string | null
+
+  // Right panel state (mutually exclusive)
   selectedPageId: string | null
   selectedBlockId: string | null
-  selectionSource: 'panel' | 'canvas' | null
   showThemePanel: boolean
-  selectedLogicPageId: string | null
+  showLogicPanel: boolean
 
-  // UI Actions
+  // For viewport panning
+  selectionSource: 'panel' | 'canvas' | null
+
+  // Actions
   selectPage: (pageId: string | null, source?: 'panel' | 'canvas') => void
-  selectBlock: (blockId: string | null, source?: 'panel' | 'canvas') => void
+  selectBlock: (blockId: string | null, pageId: string | null, source?: 'panel' | 'canvas') => void
   showTheme: () => void
   showLogic: (pageId: string) => void
   closeLogic: () => void
 
   // Derived state
+  activePage: Page | null
   selectedPage: Page | null
   selectedBlock: Block | null
-  selectedLogicPage: Page | null
 }
 
 const FunnelEditorContext = React.createContext<FunnelEditorContextValue | null>(null)
@@ -46,82 +51,98 @@ interface FunnelEditorProviderProps {
 export function FunnelEditorProvider({ children }: FunnelEditorProviderProps) {
   const { data: funnel } = useFunnel()
 
-  // UI State
+  // Left panel state
+  const [activePageId, setActivePageId] = React.useState<string | null>(funnel.pages[0]?.id ?? null)
+
+  // Right panel state
   const [selectedPageId, setSelectedPageId] = React.useState<string | null>(funnel.pages[0]?.id ?? null)
   const [selectedBlockId, setSelectedBlockId] = React.useState<string | null>(null)
-  const [selectionSource, setSelectionSource] = React.useState<'panel' | 'canvas' | null>(null)
   const [showThemePanel, setShowThemePanel] = React.useState(false)
-  const [selectedLogicPageId, setSelectedLogicPageId] = React.useState<string | null>(null)
+  const [showLogicPanel, setShowLogicPanel] = React.useState(false)
 
-  // UI Actions
+  // For viewport panning
+  const [selectionSource, setSelectionSource] = React.useState<'panel' | 'canvas' | null>(null)
+
+  // Actions
   const selectPage = React.useCallback((pageId: string | null, source: 'panel' | 'canvas' = 'canvas') => {
+    setActivePageId(pageId)
     setSelectedPageId(pageId)
     setSelectedBlockId(null)
     setSelectionSource(source)
     setShowThemePanel(false)
-    setSelectedLogicPageId(null)
+    setShowLogicPanel(false)
   }, [])
 
-  const selectBlock = React.useCallback((blockId: string | null, source: 'panel' | 'canvas' = 'canvas') => {
-    setSelectedBlockId(blockId)
-    setSelectionSource(source)
-    setShowThemePanel(false)
-    setSelectedLogicPageId(null)
-  }, [])
+  const selectBlock = React.useCallback(
+    (blockId: string | null, pageId: string | null, source: 'panel' | 'canvas' = 'canvas') => {
+      if (pageId) {
+        setActivePageId(pageId)
+      }
+      setSelectedBlockId(blockId)
+      setSelectedPageId(null)
+      setSelectionSource(source)
+      setShowThemePanel(false)
+      setShowLogicPanel(false)
+    },
+    [],
+  )
 
   const showTheme = React.useCallback(() => {
     setSelectedPageId(null)
     setSelectedBlockId(null)
-    setSelectedLogicPageId(null)
+    setShowLogicPanel(false)
     setShowThemePanel(true)
   }, [])
 
   const showLogic = React.useCallback((pageId: string) => {
-    setSelectedLogicPageId(pageId)
-    setSelectedPageId(null)
+    setActivePageId(pageId)
+    setSelectedPageId(pageId)
     setSelectedBlockId(null)
     setShowThemePanel(false)
+    setShowLogicPanel(true)
   }, [])
 
   const closeLogic = React.useCallback(() => {
-    setSelectedLogicPageId(null)
+    setShowLogicPanel(false)
   }, [])
 
   // Derived state
+  const activePage = funnel.pages.find((p) => p.id === activePageId) ?? null
   const selectedPage = funnel.pages.find((p) => p.id === selectedPageId) ?? null
   const selectedBlock = funnel.pages.flatMap((p) => p.blocks).find((b) => b.id === selectedBlockId) ?? null
-  const selectedLogicPage = funnel.pages.find((p) => p.id === selectedLogicPageId) ?? null
 
   const value = React.useMemo<FunnelEditorContextValue>(
     () => ({
+      activePageId,
       selectedPageId,
       selectedBlockId,
-      selectionSource,
       showThemePanel,
-      selectedLogicPageId,
+      showLogicPanel,
+      selectionSource,
       selectPage,
       selectBlock,
       showTheme,
       showLogic,
       closeLogic,
+      activePage,
       selectedPage,
       selectedBlock,
-      selectedLogicPage,
     }),
     [
+      activePageId,
       selectedPageId,
       selectedBlockId,
-      selectionSource,
       showThemePanel,
-      selectedLogicPageId,
+      showLogicPanel,
+      selectionSource,
       selectPage,
       selectBlock,
       showTheme,
       showLogic,
       closeLogic,
+      activePage,
       selectedPage,
       selectedBlock,
-      selectedLogicPage,
     ],
   )
 

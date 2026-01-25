@@ -31,7 +31,7 @@ function RouteComponent() {
 
 function FunnelEditorContent() {
   const { data: funnel, maybeSave } = useFunnel()
-  const { showThemePanel, selectedBlock, selectedPage, selectedLogicPage, selectedBlockId, selectedPageId } =
+  const { showThemePanel, showLogicPanel, selectedBlock, selectedPage, selectedBlockId, selectedPageId } =
     useFunnelEditor()
 
   const [deleteDialogOpen, setDeleteDialogOpen] = React.useState(false)
@@ -77,7 +77,7 @@ function FunnelEditorContent() {
       <PagesPanel />
       <Canvas />
 
-      {selectedLogicPage ? (
+      {showLogicPanel && selectedPage ? (
         <LogicPanel />
       ) : showThemePanel ? (
         <ThemePanel />

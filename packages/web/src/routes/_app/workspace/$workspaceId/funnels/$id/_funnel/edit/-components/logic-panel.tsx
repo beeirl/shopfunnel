@@ -466,10 +466,10 @@ function Rule({ action, inputBlocks, pages, currentPageId, onActionChange, onRem
 
 export function LogicPanel() {
   const { data: funnel, maybeSave } = useFunnel()
-  const { selectedLogicPage } = useFunnelEditor()
+  const { selectedPage } = useFunnelEditor()
 
   const { pages, rules } = funnel
-  const page = selectedLogicPage!
+  const page = selectedPage!
   const pageRule = rules.find((r) => r.pageId === page.id)
 
   const inputBlocks = getAvailableInputBlocks(pages, page.id)

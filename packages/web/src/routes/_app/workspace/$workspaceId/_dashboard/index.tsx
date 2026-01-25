@@ -12,6 +12,7 @@ import {
   IconCopy as CopyIcon,
   IconDots as DotsIcon,
   IconFileText as FileTextIcon,
+  IconLoader2 as LoaderIcon,
   IconShare3 as ShareIcon,
 } from '@tabler/icons-react'
 import { mutationOptions, queryOptions, useMutation, useQueryClient, useSuspenseQuery } from '@tanstack/react-query'
@@ -147,13 +148,19 @@ function RouteComponent() {
 
   const createFunnelMutation = useMutation(createFunnelMutationOptions(params.workspaceId))
 
+  const [isCreating, setIsCreating] = React.useState(false)
   const [duplicateDialogOpen, setDuplicateDialogOpen] = React.useState(false)
   const [selectedFunnel, setSelectedFunnel] = React.useState<{ id: string; title: string } | null>(null)
 
   async function handleFunnelCreate() {
-    const id = await createFunnelMutation.mutateAsync()
-    await navigate({ to: 'funnels/$id/edit', params: { id } })
-    queryClient.invalidateQueries(listFunnelsQueryOptions(params.workspaceId))
+    setIsCreating(true)
+    try {
+      const id = await createFunnelMutation.mutateAsync()
+      await navigate({ to: 'funnels/$id/edit', params: { id } })
+      queryClient.invalidateQueries(listFunnelsQueryOptions(params.workspaceId))
+    } catch {
+      setIsCreating(false)
+    }
   }
 
   if (funnels.length === 0) {
@@ -167,7 +174,12 @@ function RouteComponent() {
             <Empty.Title>No funnels yet</Empty.Title>
             {isAdmin && <Empty.Description>Create your first funnel to get started.</Empty.Description>}
           </Empty.Header>
-          {isAdmin && <Button onClick={handleFunnelCreate}>Create funnel</Button>}
+          {isAdmin && (
+            <Button onClick={handleFunnelCreate} disabled={isCreating}>
+              {isCreating && <LoaderIcon className="animate-spin" />}
+              Create funnel
+            </Button>
+          )}
         </Empty.Root>
       </div>
     )
@@ -181,7 +193,8 @@ function RouteComponent() {
         </Heading.Content>
         {isAdmin && (
           <Heading.Actions>
-            <Button size="lg" onClick={handleFunnelCreate}>
+            <Button size="lg" onClick={handleFunnelCreate} disabled={isCreating}>
+              {isCreating && <LoaderIcon className="animate-spin" />}
               Create a Funnel
             </Button>
           </Heading.Actions>

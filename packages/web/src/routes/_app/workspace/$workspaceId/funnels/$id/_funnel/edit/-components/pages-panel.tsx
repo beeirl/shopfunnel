@@ -6,7 +6,7 @@ import { cn } from '@/lib/utils'
 import { move } from '@dnd-kit/helpers'
 import { DragDropProvider } from '@dnd-kit/react'
 import { useSortable } from '@dnd-kit/react/sortable'
-import type { Block, Page } from '@shopfunnel/core/funnel/types'
+import { INPUT_BLOCKS, type Block, type Page } from '@shopfunnel/core/funnel/types'
 import {
   IconChevronDown as ChevronDownIcon,
   IconFile as FileIcon,
@@ -18,6 +18,7 @@ import {
 } from '@tabler/icons-react'
 import * as React from 'react'
 import { ulid } from 'ulid'
+import { getBlockName, getDefaultPageName } from '../-common'
 import { useFunnelEditor } from '../-context'
 import { useFunnel } from '../../-context'
 import { Pane } from './pane'
@@ -114,13 +115,20 @@ const PAGE_TEMPLATES = [
   { id: 'loader', icon: LoaderIcon, name: 'Loader', blocks: ['loader'] as Block['type'][] },
 ]
 
-function createPage(templateId: string, pageCount: number): Page {
+function createPage(templateId: string, pageIndex: number): Page {
   const template = PAGE_TEMPLATES.find((t) => t.id === templateId)!
-  const blocks = template.blocks.map((type) => createBlock(type))
+  const pageName = getDefaultPageName(pageIndex)
+  const blocks = template.blocks.map((type) => {
+    const block = createBlock(type)
+    if (INPUT_BLOCKS.includes(block.type as (typeof INPUT_BLOCKS)[number]) && 'name' in block.properties) {
+      ;(block.properties as { name: string }).name = getBlockName(pageName, pageIndex)
+    }
+    return block
+  })
 
   return {
     id: ulid(),
-    name: `Page ${pageCount + 1}`,
+    name: pageName,
     blocks,
     properties: { buttonText: 'Continue' },
   }
@@ -134,11 +142,9 @@ interface AddPageMenuProps {
   children: React.ReactNode
   pageCount: number
   onPageAdd: (page: Page) => void
-  onPageSelect: (pageId: string) => void
-  onBlockSelect: (blockId: string | null) => void
 }
 
-function AddPageMenu({ children, pageCount, onPageAdd, onPageSelect, onBlockSelect }: AddPageMenuProps) {
+function AddPageMenu({ children, pageCount, onPageAdd }: AddPageMenuProps) {
   return (
     <Menu.Root>
       {children}
@@ -150,8 +156,6 @@ function AddPageMenu({ children, pageCount, onPageAdd, onPageSelect, onBlockSele
               onClick={() => {
                 const page = createPage(template.id, pageCount)
                 onPageAdd(page)
-                onBlockSelect(null)
-                onPageSelect(page.id)
               }}
             >
               <template.icon className="size-4 text-muted-foreground" />
@@ -172,18 +176,13 @@ interface AddBlockMenuProps {
   children: React.ReactNode
   existingBlocks: Block[]
   onBlockAdd: (block: Block) => void
-  onBlockSelect: (blockId: string | null) => void
-  onPageSelect: (pageId: string | null) => void
 }
 
-function AddBlockMenu({ children, existingBlocks, onBlockAdd, onBlockSelect, onPageSelect }: AddBlockMenuProps) {
-  const hasInputOrLoader = existingBlocks.some((block) =>
-    ['text_input', 'multiple_choice', 'picture_choice', 'dropdown', 'loader'].includes(block.type),
-  )
-
+function AddBlockMenu({ children, existingBlocks, onBlockAdd }: AddBlockMenuProps) {
+  const inputBlocks: Block['type'][] = [...INPUT_BLOCKS, 'loader']
   const displayBlocks: Block['type'][] = ['heading', 'paragraph', 'gauge', 'list', 'image', 'html', 'spacer']
-  const inputBlocks: Block['type'][] = ['text_input', 'multiple_choice', 'picture_choice', 'dropdown', 'loader']
 
+  const hasInputOrLoader = existingBlocks.some((block) => inputBlocks.includes(block.type))
   const availableBlocks: Block['type'][] = hasInputOrLoader ? displayBlocks : [...inputBlocks, ...displayBlocks]
 
   return (
@@ -199,8 +198,6 @@ function AddBlockMenu({ children, existingBlocks, onBlockAdd, onBlockSelect, onP
                 onClick={() => {
                   const block = createBlock(type)
                   onBlockAdd(block)
-                  onPageSelect(null)
-                  onBlockSelect(block.id)
                 }}
               >
                 <blockInfo.icon className="size-4 text-muted-foreground" />
@@ -268,9 +265,7 @@ function BlockItem({ block, index, selected, onSelect }: BlockItemProps) {
       onClick={onSelect}
     >
       <blockInfo.icon className="size-4 shrink-0 text-muted-foreground" />
-      <span className="flex-1 truncate text-xm">
-        {'name' in block.properties && block.properties.name ? block.properties.name : blockInfo.name}
-      </span>
+      <span className="flex-1 truncate text-xm">{blockInfo.name}</span>
     </div>
   )
 }
@@ -281,33 +276,18 @@ function BlockItem({ block, index, selected, onSelect }: BlockItemProps) {
 
 interface PagesPaneProps {
   pages: Page[]
-  selectedPageId: string | null
-  selectedBlockId: string | null
+  activePageId: string | null
   onPageSelect: (pageId: string) => void
-  onBlockSelect: (blockId: string | null) => void
   onPagesReorder: (pages: Page[]) => void
   onPageAdd: (page: Page) => void
 }
 
-function PagesPane({
-  pages,
-  selectedPageId,
-  selectedBlockId,
-  onPageSelect,
-  onBlockSelect,
-  onPagesReorder,
-  onPageAdd,
-}: PagesPaneProps) {
+function PagesPane({ pages, activePageId, onPageSelect, onPagesReorder, onPageAdd }: PagesPaneProps) {
   return (
     <Pane.Root>
       <Pane.Header>
         <Pane.Title>Pages</Pane.Title>
-        <AddPageMenu
-          pageCount={pages.length}
-          onPageAdd={onPageAdd}
-          onPageSelect={onPageSelect}
-          onBlockSelect={onBlockSelect}
-        >
+        <AddPageMenu pageCount={pages.length} onPageAdd={onPageAdd}>
           <Menu.Trigger render={<Button className="-mr-2" size="icon" variant="ghost" />}>
             <PlusIcon />
           </Menu.Trigger>
@@ -326,11 +306,8 @@ function PagesPane({
                   key={page.id}
                   page={page}
                   index={index}
-                  selected={selectedPageId === page.id}
-                  onSelect={() => {
-                    onBlockSelect(null)
-                    onPageSelect(page.id)
-                  }}
+                  selected={activePageId === page.id}
+                  onSelect={() => onPageSelect(page.id)}
                 />
               ))}
             </div>
@@ -350,30 +327,16 @@ interface BlocksPaneProps {
   blocks: Block[]
   selectedBlockId: string | null
   onBlockSelect: (blockId: string | null) => void
-  onPageSelect: (pageId: string | null) => void
   onBlocksReorder: (pageId: string, blocks: Block[]) => void
   onBlockAdd: (block: Block) => void
 }
 
-function BlocksPane({
-  pageId,
-  blocks,
-  selectedBlockId,
-  onBlockSelect,
-  onPageSelect,
-  onBlocksReorder,
-  onBlockAdd,
-}: BlocksPaneProps) {
+function BlocksPane({ pageId, blocks, selectedBlockId, onBlockSelect, onBlocksReorder, onBlockAdd }: BlocksPaneProps) {
   return (
     <Pane.Root>
       <Pane.Header>
         <Pane.Title>Blocks</Pane.Title>
-        <AddBlockMenu
-          existingBlocks={blocks}
-          onBlockAdd={onBlockAdd}
-          onBlockSelect={onBlockSelect}
-          onPageSelect={onPageSelect}
-        >
+        <AddBlockMenu existingBlocks={blocks} onBlockAdd={onBlockAdd}>
           <Menu.Trigger render={<Button className="-mr-2" size="icon" variant="ghost" />}>
             <PlusIcon />
           </Menu.Trigger>
@@ -393,10 +356,7 @@ function BlocksPane({
                   block={block}
                   index={index}
                   selected={selectedBlockId === block.id}
-                  onSelect={() => {
-                    onPageSelect(null)
-                    onBlockSelect(block.id)
-                  }}
+                  onSelect={() => onBlockSelect(block.id)}
                 />
               ))}
             </div>
@@ -413,13 +373,8 @@ function BlocksPane({
 
 export function PagesPanel() {
   const { data: funnel, maybeSave } = useFunnel()
-  const { selectedPageId, selectedBlockId, selectPage, selectBlock } = useFunnelEditor()
+  const { activePageId, selectedBlockId, selectPage, selectBlock, activePage } = useFunnelEditor()
   const { pages } = funnel
-
-  const selectedPage = pages.find((page) => page.id === selectedPageId)
-  const pageForBlocks =
-    selectedPage ||
-    (selectedBlockId ? pages.find((page) => page.blocks.some((block) => block.id === selectedBlockId)) : null)
 
   const handlePagesReorder = (reorderedPages: Page[]) => {
     maybeSave({ pages: reorderedPages })
@@ -428,7 +383,6 @@ export function PagesPanel() {
   const handlePageAdd = (page: Page) => {
     maybeSave({ pages: [...pages, page] })
     selectPage(page.id, 'panel')
-    selectBlock(page.blocks[0]?.id ?? null, 'panel')
   }
 
   const handleBlocksReorder = (pageId: string, reorderedBlocks: Block[]) => {
@@ -437,17 +391,25 @@ export function PagesPanel() {
   }
 
   const handleBlockAdd = (block: Block) => {
-    const pageId =
-      selectedPageId ||
-      (selectedBlockId ? pages.find((page) => page.blocks.some((b) => b.id === selectedBlockId))?.id : null)
-    if (!pageId) return
+    if (!activePageId || !activePage) return
 
-    const updatedPages = pages.map((page) => {
-      if (page.id !== pageId) return page
-      return { ...page, blocks: [...page.blocks, block] }
+    const pageIndex = pages.findIndex((page) => page.id === activePageId)
+
+    // Set block name based on page for input blocks
+    let updatedBlock = block
+    if (INPUT_BLOCKS.includes(block.type as (typeof INPUT_BLOCKS)[number]) && 'name' in block.properties) {
+      updatedBlock = {
+        ...block,
+        properties: { ...block.properties, name: getBlockName(activePage.name, pageIndex) },
+      } as Block
+    }
+
+    const updatedPages = pages.map((p) => {
+      if (p.id !== activePageId) return p
+      return { ...p, blocks: [...p.blocks, updatedBlock] }
     })
     maybeSave({ pages: updatedPages })
-    selectBlock(block.id, 'panel')
+    selectBlock(updatedBlock.id, activePageId, 'panel')
   }
 
   const handlePageSelect = (pageId: string) => {
@@ -455,33 +417,30 @@ export function PagesPanel() {
   }
 
   const handleBlockSelect = (blockId: string | null) => {
-    selectBlock(blockId, 'panel')
+    selectBlock(blockId, activePageId, 'panel')
   }
 
   return (
     <Panel className="w-64 shrink-0">
       <Resizable.PanelGroup direction="vertical">
-        <Resizable.Panel defaultSize={pageForBlocks ? 40 : 100} minSize={20}>
+        <Resizable.Panel defaultSize={activePage ? 40 : 100} minSize={20}>
           <PagesPane
             pages={pages}
-            selectedPageId={selectedPageId}
-            selectedBlockId={selectedBlockId}
+            activePageId={activePageId}
             onPageSelect={handlePageSelect}
-            onBlockSelect={handleBlockSelect}
             onPagesReorder={handlePagesReorder}
             onPageAdd={handlePageAdd}
           />
         </Resizable.Panel>
-        {pageForBlocks && (
+        {activePage && (
           <React.Fragment>
             <Resizable.Handle />
             <Resizable.Panel defaultSize={60} minSize={20}>
               <BlocksPane
-                pageId={pageForBlocks.id}
-                blocks={pageForBlocks.blocks}
+                pageId={activePage.id}
+                blocks={activePage.blocks}
                 selectedBlockId={selectedBlockId}
                 onBlockSelect={handleBlockSelect}
-                onPageSelect={(pageId) => (pageId ? selectPage(pageId, 'panel') : selectPage(null, 'panel'))}
                 onBlocksReorder={handleBlocksReorder}
                 onBlockAdd={handleBlockAdd}
               />

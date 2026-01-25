@@ -185,17 +185,6 @@ export function MultipleChoiceBlockPanel({
         <Pane.Content>
           <Pane.Group>
             <Pane.GroupHeader>
-              <Pane.GroupLabel>Name</Pane.GroupLabel>
-            </Pane.GroupHeader>
-            <Input
-              placeholder="Enter name..."
-              value={block.properties.name}
-              onValueChange={(value) => onBlockUpdate({ properties: { ...block.properties, name: value } })}
-            />
-          </Pane.Group>
-          <Pane.Separator />
-          <Pane.Group>
-            <Pane.GroupHeader>
               <Pane.GroupLabel>Choices</Pane.GroupLabel>
               <Button size="icon" variant="ghost" onClick={handleChoiceAdd}>
                 <PlusIcon />

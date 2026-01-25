@@ -1,12 +1,17 @@
 import { shouldAutoAdvance } from '@/components/funnel'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import type { Page } from '@shopfunnel/core/funnel/types'
+import { INPUT_BLOCKS, type Block, type Page } from '@shopfunnel/core/funnel/types'
 import { IconTrash as TrashIcon } from '@tabler/icons-react'
+import { getBlockName, getDefaultPageName } from '../-common'
 import { useFunnelEditor } from '../-context'
 import { useFunnel } from '../../-context'
 import { Pane } from './pane'
 import { Panel } from './panel'
+
+// =============================================================================
+// PagePanel
+// =============================================================================
 
 export function PagePanel({ onRemove }: { onRemove: () => void }) {
   const { data: funnel, maybeSave } = useFunnel()
@@ -15,10 +20,23 @@ export function PagePanel({ onRemove }: { onRemove: () => void }) {
   if (!selectedPage) return null
 
   const page = selectedPage
+  const pageIndex = funnel.pages.findIndex((p) => p.id === page.id)
   const showButtonText = !shouldAutoAdvance(page.blocks)
 
   const handlePageUpdate = (updates: Partial<Page>) => {
-    const updatedPages = funnel.pages.map((p) => (p.id === page.id ? { ...p, ...updates } : p))
+    // If name is being updated, also update input block names
+    let updatedBlocks: Block[] = page.blocks
+    if ('name' in updates) {
+      const newBlockName = getBlockName(updates.name, pageIndex)
+      updatedBlocks = page.blocks.map((block): Block => {
+        if (INPUT_BLOCKS.includes(block.type as (typeof INPUT_BLOCKS)[number]) && 'name' in block.properties) {
+          return { ...block, properties: { ...block.properties, name: newBlockName } } as Block
+        }
+        return block
+      })
+    }
+
+    const updatedPages = funnel.pages.map((p) => (p.id === page.id ? { ...p, ...updates, blocks: updatedBlocks } : p))
     maybeSave({ pages: updatedPages })
   }
 
@@ -38,7 +56,7 @@ export function PagePanel({ onRemove }: { onRemove: () => void }) {
             </Pane.GroupHeader>
             <Input
               value={page.name}
-              placeholder="Page name..."
+              placeholder={getDefaultPageName(pageIndex)}
               onValueChange={(value) => handlePageUpdate({ name: value })}
             />
           </Pane.Group>

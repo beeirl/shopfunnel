@@ -138,17 +138,6 @@ export function DropdownBlockPanel({
         <Pane.Content>
           <Pane.Group>
             <Pane.GroupHeader>
-              <Pane.GroupLabel>Name</Pane.GroupLabel>
-            </Pane.GroupHeader>
-            <Input
-              placeholder="Enter name..."
-              value={block.properties.name}
-              onValueChange={(value) => onBlockUpdate({ properties: { ...block.properties, name: value } })}
-            />
-          </Pane.Group>
-          <Pane.Separator />
-          <Pane.Group>
-            <Pane.GroupHeader>
               <Pane.GroupLabel>Placeholder</Pane.GroupLabel>
             </Pane.GroupHeader>
             <Input
