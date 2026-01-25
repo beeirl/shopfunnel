@@ -36,7 +36,7 @@ const listSubmissionsQueryOptions = (workspaceId: string, funnelId: string, page
     placeholderData: keepPreviousData,
   })
 
-export const Route = createFileRoute('/workspace/$workspaceId/funnels/$id/_funnel/responses')({
+export const Route = createFileRoute('/_app/workspace/$workspaceId/funnels/$id/_funnel/responses')({
   validateSearch: (search) =>
     z
       .object({

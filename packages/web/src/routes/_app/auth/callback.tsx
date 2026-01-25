@@ -2,7 +2,7 @@ import { AuthClient } from '@/context/auth'
 import { useAuthSession } from '@/context/auth.session'
 import { createFileRoute, redirect } from '@tanstack/react-router'
 
-export const Route = createFileRoute('/auth/callback')({
+export const Route = createFileRoute('/_app/auth/callback')({
   server: {
     handlers: {
       GET: async ({ request }) => {

@@ -1,7 +1,7 @@
+import { getLastSeenWorkspaceId } from '@/routes/-common'
 import { createFileRoute, redirect } from '@tanstack/react-router'
-import { getLastSeenWorkspaceId } from '../-common'
 
-export const Route = createFileRoute('/auth/')({
+export const Route = createFileRoute('/_app/auth/')({
   server: {
     handlers: {
       GET: async () => {

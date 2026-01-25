@@ -58,7 +58,7 @@ const duplicateFunnel = createServerFn({ method: 'POST' })
     return withActor(() => Funnel.duplicate({ id: data.id, title: data.title }), data.workspaceId)
   })
 
-export const Route = createFileRoute('/workspace/$workspaceId/_dashboard/')({
+export const Route = createFileRoute('/_app/workspace/$workspaceId/_dashboard/')({
   staticData: { title: 'Funnels' },
   component: RouteComponent,
   ssr: false,
@@ -238,6 +238,7 @@ function RouteComponent() {
                   </Menu.Trigger>
                   <Menu.Content align="end">
                     <Menu.Item
+                      onClick={(e) => e.stopPropagation()}
                       render={
                         <a href={funnel.url} target="_blank" rel="noopener noreferrer">
                           <ShareIcon />

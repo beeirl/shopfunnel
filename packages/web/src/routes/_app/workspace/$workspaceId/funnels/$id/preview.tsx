@@ -3,7 +3,7 @@ import { useSuspenseQuery } from '@tanstack/react-query'
 import { AnyRouteMatch, createFileRoute } from '@tanstack/react-router'
 import { getFunnelQueryOptions } from './-common'
 
-export const Route = createFileRoute('/workspace/$workspaceId/funnels/$id/preview')({
+export const Route = createFileRoute('/_app/workspace/$workspaceId/funnels/$id/preview')({
   component: RouteComponent,
   loader: async ({ context, params }) => {
     const funnel = await context.queryClient.ensureQueryData(getFunnelQueryOptions(params.workspaceId, params.id))

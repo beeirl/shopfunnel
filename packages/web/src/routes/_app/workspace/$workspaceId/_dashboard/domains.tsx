@@ -56,7 +56,7 @@ const removeDomain = createServerFn()
     }, workspaceId)
   })
 
-export const Route = createFileRoute('/workspace/$workspaceId/_dashboard/domains')({
+export const Route = createFileRoute('/_app/workspace/$workspaceId/_dashboard/domains')({
   staticData: { title: 'Domains' },
   component: DomainsRoute,
   ssr: false,

@@ -1,7 +1,7 @@
 import { useAuthSession } from '@/context/auth.session'
 import { createFileRoute, redirect } from '@tanstack/react-router'
 
-export const Route = createFileRoute('/auth/logout')({
+export const Route = createFileRoute('/_app/auth/logout')({
   server: {
     handlers: {
       GET: async () => {

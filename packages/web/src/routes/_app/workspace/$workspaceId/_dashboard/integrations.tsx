@@ -41,7 +41,7 @@ const disconnectShopifyIntegration = createServerFn()
     return withActor(() => Integration.disconnect({ integrationId: data.integrationId }), data.workspaceId)
   })
 
-export const Route = createFileRoute('/workspace/$workspaceId/_dashboard/integrations')({
+export const Route = createFileRoute('/_app/workspace/$workspaceId/_dashboard/integrations')({
   staticData: { title: 'Integrations' },
   component: IntegrationsRoute,
   ssr: false,

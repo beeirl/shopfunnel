@@ -11,7 +11,7 @@ import { PagesPanel } from './-components/pages-panel'
 import { ThemePanel } from './-components/theme-panel'
 import { FunnelEditorProvider, useFunnelEditor } from './-context'
 
-export const Route = createFileRoute('/workspace/$workspaceId/funnels/$id/_funnel/edit/')({
+export const Route = createFileRoute('/_app/workspace/$workspaceId/funnels/$id/_funnel/edit/')({
   component: RouteComponent,
   ssr: false,
   beforeLoad: async ({ context, params }) => {

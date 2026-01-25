@@ -46,7 +46,7 @@ const getWorkspacesQueryOptions = (workspaceId: string) =>
     queryFn: () => getWorkspaces({ data: workspaceId }),
   })
 
-export const Route = createFileRoute('/workspace/$workspaceId/_dashboard')({
+export const Route = createFileRoute('/_app/workspace/$workspaceId/_dashboard')({
   component: DashboardLayoutRoute,
   ssr: false,
   loader: async ({ context, params }) => {

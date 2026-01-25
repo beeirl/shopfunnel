@@ -3,7 +3,7 @@ import { Empty } from '@/components/ui/empty'
 import { Select } from '@/components/ui/select'
 import { Table } from '@/components/ui/table'
 import { withActor } from '@/context/auth.withActor'
-import { getShopifyIntegrationQueryOptions } from '@/routes/workspace/$workspaceId/-common'
+import { getShopifyIntegrationQueryOptions } from '@/routes/_app/workspace/$workspaceId/-common'
 import { Funnel } from '@shopfunnel/core/funnel/index'
 import { Identifier } from '@shopfunnel/core/identifier'
 import { Resource } from '@shopfunnel/resource'
@@ -157,7 +157,7 @@ const DATE_FILTER_OPTIONS: DateFilterOption[] = [
   },
 ]
 
-export const Route = createFileRoute('/workspace/$workspaceId/funnels/$id/_funnel/insights')({
+export const Route = createFileRoute('/_app/workspace/$workspaceId/funnels/$id/_funnel/insights')({
   validateSearch: (search) =>
     z
       .object({

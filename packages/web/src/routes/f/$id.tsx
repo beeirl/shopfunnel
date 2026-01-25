@@ -80,7 +80,7 @@ const getShopifyIntegration = createServerFn()
     return integration ?? null
   })
 
-export const Route = createFileRoute('/(funnel)/f/$id')({
+export const Route = createFileRoute('/f/$id')({
   component: RouteComponent,
   loader: async ({ params }) => {
     const funnel = await getFunnel({ data: { shortId: params.id } })

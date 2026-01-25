@@ -1,7 +1,7 @@
 import { AuthClient } from '@/context/auth'
 import { createFileRoute } from '@tanstack/react-router'
 
-export const Route = createFileRoute('/auth/authorize')({
+export const Route = createFileRoute('/_app/auth/authorize')({
   server: {
     handlers: {
       GET: async ({ request }) => {
