@@ -359,6 +359,18 @@ export namespace Funnel {
     await Question.sync({ funnelId: id })
   })
 
+  export const unpublish = fn(Identifier.schema('funnel'), async (id) => {
+    await Database.use(async (tx) => {
+      await tx
+        .update(FunnelTable)
+        .set({
+          publishedVersion: null,
+          publishedAt: null,
+        })
+        .where(and(eq(FunnelTable.workspaceId, Actor.workspace()), eq(FunnelTable.id, id)))
+    })
+  })
+
   function serialize(row: { funnel: typeof FunnelTable.$inferSelect; domain: typeof DomainTable.$inferSelect | null }) {
     return {
       id: row.funnel.id,
@@ -395,7 +407,8 @@ export namespace Funnel {
           variables: group[0].funnel_version.variables,
           theme: group[0].funnel_version.theme,
           settings: group[0].funnel.settings,
-          published: group[0].funnel.currentVersion === group[0].funnel.publishedVersion,
+          published: group[0].funnel.publishedVersion !== null,
+          draft: group[0].funnel.currentVersion !== group[0].funnel.publishedVersion,
           url: url(group[0].funnel.shortId, group[0].domain?.hostname),
           createdAt: group[0].funnel.createdAt,
           publishedAt: group[0].funnel.publishedAt,

@@ -71,13 +71,14 @@ export function FunnelProvider({ children, collection }: FunnelProviderProps) {
   const mutate = usePacedMutations<FunnelMutationVariables, Info>({
     onMutate: (values) => {
       setIsSaving(true)
-      collection.update(funnel.id, (draft) => {
-        if (values.pages) draft.pages = values.pages
-        if (values.rules) draft.rules = values.rules
-        if (values.theme) draft.theme = values.theme
-        if (values.title) draft.title = values.title
-        if (values.settings) draft.settings = values.settings
-        draft.published = false
+      collection.update(funnel.id, (funnel) => {
+        if (values.pages) funnel.pages = values.pages
+        if (values.rules) funnel.rules = values.rules
+        if (values.theme) funnel.theme = values.theme
+        if (values.title) funnel.title = values.title
+        if (values.settings) funnel.settings = values.settings
+        funnel.draft = true
+        funnel.published = false
       })
     },
     mutationFn: async ({ transaction }) => {

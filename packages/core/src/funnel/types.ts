@@ -296,6 +296,7 @@ export interface Info {
   theme: Theme
   settings: Settings
   published: boolean
+  draft: boolean
   url: string
   createdAt: Date
   publishedAt: Date | null

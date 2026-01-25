@@ -1,6 +1,6 @@
+import { cn } from '@/lib/utils'
 import { Toast as BaseToast } from '@base-ui/react/toast'
 import * as React from 'react'
-import { cn } from '@/lib/utils'
 
 function AnimatedCheckmarkCircle(props: React.ComponentProps<'svg'>) {
   return (
@@ -87,7 +87,7 @@ function SnackbarRoot(props: SnackbarRootProps) {
       className={cn(
         // Base
         'absolute top-0 z-[calc(1000-var(--toast-index))] mx-auto inline-flex items-start gap-1.5',
-        'rounded-lg bg-background bg-clip-padding px-2 py-1 [box-shadow:rgba(0,0,0,0.05)_0px_0px_0px_0.5px,rgba(0,0,0,0.06)_0px_2px_4px_-1px,rgba(0,0,0,0.08)_0px_6px_40px_-2px] select-none',
+        'rounded-lg bg-primary bg-clip-padding px-2 py-1 [box-shadow:rgba(0,0,0,0.05)_0px_0px_0px_0.5px,rgba(0,0,0,0.06)_0px_2px_4px_-1px,rgba(0,0,0,0.08)_0px_6px_40px_-2px] select-none',
         'after:absolute after:top-full after:left-0 after:h-[calc(var(--gap)+1px)] after:w-full after:content-[""]',
 
         // Transition
@@ -113,8 +113,8 @@ function SnackbarRoot(props: SnackbarRootProps) {
       {type === 'warning' && <AnimatedExclamationMarkCircle className="size-6 shrink-0" />}
       {type === 'loading' && <AnimatedLoaderCircle className="size-6 shrink-0" />}
       <span className="mt-[0.15625rem] leading-none">
-        <BaseToast.Title className="inline text-xm" />
-        <BaseToast.Description className="ml-1 inline text-xs text-muted-foreground" />
+        <BaseToast.Title className="inline text-xm text-primary-foreground" />
+        <BaseToast.Description className="ml-1 inline text-xs text-primary-foreground/70" />
       </span>
     </BaseToast.Root>
   )
