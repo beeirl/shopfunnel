@@ -11,7 +11,7 @@ export const EventRoute = new Hono()
   .post('/', zValidator('json', Analytics.Event), async (c) => {
     let event = c.req.valid('json')
 
-    if (event.type === 'funnel_enter') {
+    if (event.type === 'funnel_viewed') {
       const userAgent = c.req.header('user-agent') || ''
       const country = (c.req.raw.cf?.country as string) || undefined
       const region = (c.req.raw.cf?.region as string) || undefined
