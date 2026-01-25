@@ -1,10 +1,8 @@
 import { getBlockInfo } from '@/components/block'
-import { Image } from '@/components/image'
 import { Button } from '@/components/ui/button'
-import { InputGroup } from '@/components/ui/input-group'
 import type { ImageBlock as ImageBlockType } from '@shopfunnel/core/funnel/types'
-import { IconPhoto as PhotoIcon, IconTrash as TrashIcon, IconX as XIcon } from '@tabler/icons-react'
-import * as React from 'react'
+import { IconTrash as TrashIcon } from '@tabler/icons-react'
+import { MediaPicker } from '../media-picker'
 import { Pane } from '../pane'
 import { Panel } from '../panel'
 
@@ -20,32 +18,6 @@ export function ImageBlockPanel({
   onBlockRemove: () => void
 }) {
   const blockInfo = getBlockInfo(block.type)
-  const inputRef = React.useRef<HTMLInputElement>(null)
-  const [isUploading, setIsUploading] = React.useState(false)
-
-  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (!file) return
-
-    setIsUploading(true)
-    try {
-      const url = await onImageUpload(file)
-      onBlockUpdate({
-        properties: { ...block.properties, url },
-      })
-    } finally {
-      setIsUploading(false)
-      if (inputRef.current) {
-        inputRef.current.value = ''
-      }
-    }
-  }
-
-  const handleImageClear = () => {
-    onBlockUpdate({
-      properties: { ...block.properties, url: '' },
-    })
-  }
 
   return (
     <Panel>
@@ -58,50 +30,22 @@ export function ImageBlockPanel({
         </Pane.Header>
         <Pane.Content>
           <Pane.Group>
-            <InputGroup.Root>
-              <InputGroup.Addon>
-                <InputGroup.Button
-                  size="icon-xs"
-                  variant="ghost"
-                  onClick={() => inputRef.current?.click()}
-                  className="size-6 overflow-hidden"
-                >
-                  {block.properties.url ? (
-                    <Image
-                      src={block.properties.url}
-                      alt=""
-                      layout="fixed"
-                      width={24}
-                      height={24}
-                      className="rounded object-cover"
-                    />
-                  ) : (
-                    <PhotoIcon />
-                  )}
-                </InputGroup.Button>
-              </InputGroup.Addon>
-              <InputGroup.Input
-                readOnly
-                placeholder="Upload image..."
-                value={isUploading ? 'Uploading...' : block.properties.url ? 'Image' : ''}
-                className="cursor-pointer"
-                onClick={() => inputRef.current?.click()}
-              />
-              {block.properties.url && (
-                <InputGroup.Addon align="inline-end">
-                  <InputGroup.Button size="icon-xs" variant="ghost" onClick={handleImageClear}>
-                    <XIcon />
-                  </InputGroup.Button>
-                </InputGroup.Addon>
-              )}
-            </InputGroup.Root>
-            <input
-              ref={inputRef}
-              type="file"
-              accept="image/jpeg,image/png,image/gif,image/webp"
-              onChange={handleFileChange}
-              className="hidden"
-            />
+            <MediaPicker.Root
+              value={block.properties.url ? { type: 'image', value: block.properties.url } : undefined}
+              onValueChange={async (type, value) => {
+                if (type === 'image' && value instanceof File) {
+                  const url = await onImageUpload(value)
+                  onBlockUpdate({ properties: { ...block.properties, url } })
+                } else {
+                  onBlockUpdate({ properties: { ...block.properties, url: '' } })
+                }
+              }}
+            >
+              <MediaPicker.Trigger render={<MediaPicker.Input />} />
+              <MediaPicker.Content side="left" align="start">
+                <MediaPicker.ImagePicker />
+              </MediaPicker.Content>
+            </MediaPicker.Root>
           </Pane.Group>
         </Pane.Content>
       </Pane.Root>

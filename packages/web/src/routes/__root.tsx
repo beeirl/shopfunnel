@@ -1,7 +1,9 @@
 /// <reference types="vite/client" />
 
+import { SnackbarManager } from '@/components/ui/snackbar'
 import esbuildPolyfill from '@/esbuild-polyfill?raw'
-import styles from '@/styles.css?url'
+import { snackbar } from '@/lib/snackbar'
+import styles from '@/styles/index.css?url'
 import { QueryClient } from '@tanstack/react-query'
 import { createRootRouteWithContext, HeadContent, Outlet, Scripts } from '@tanstack/react-router'
 import type { ReactNode } from 'react'
@@ -47,6 +49,7 @@ function RootDocument({ children }: Readonly<{ children: ReactNode }>) {
       </head>
       <body className="bg-background antialiased">
         {children}
+        <SnackbarManager manager={snackbar} />
         <Scripts />
       </body>
     </html>

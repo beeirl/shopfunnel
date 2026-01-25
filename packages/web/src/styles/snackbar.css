@@ -1,0 +1,199 @@
+@layer components {
+  [data-component='animated-checkmark-circle'] {
+    & > circle {
+      animation: animated-checkmark-circle-circle 0.4s ease-out forwards;
+      transform-origin: center;
+    }
+
+    & > path {
+      stroke-dasharray: 20;
+      stroke-dashoffset: 20;
+      animation: animated-checkmark-circle-checkmark 0.25s ease-out 0.2s forwards;
+    }
+  }
+
+  @keyframes animated-checkmark-circle-circle {
+    0% {
+      transform: scale(0.8);
+      opacity: 0;
+    }
+    70% {
+      transform: scale(1.1);
+      opacity: 1;
+    }
+    100% {
+      transform: scale(1);
+      opacity: 1;
+    }
+  }
+
+  @keyframes animated-checkmark-circle-checkmark {
+    0% {
+      stroke-dashoffset: 20;
+      opacity: 0;
+    }
+    10% {
+      opacity: 1;
+    }
+    100% {
+      stroke-dashoffset: 0;
+      opacity: 1;
+    }
+  }
+
+  [data-component='animated-cross-circle'] {
+    & > circle {
+      animation: animated-cross-circle-circle 0.4s ease-out forwards;
+      transform-origin: center;
+    }
+
+    & > path:nth-child(2) {
+      stroke-dasharray: 10;
+      stroke-dashoffset: 10;
+      animation: animated-cross-circle-first-line 0.2s ease-out 0.2s forwards;
+    }
+
+    & > path:nth-child(3) {
+      stroke-dasharray: 10;
+      stroke-dashoffset: 10;
+      animation: animated-cross-circle-second-line 0.2s ease-out 0.35s forwards;
+    }
+  }
+
+  @keyframes animated-cross-circle-circle {
+    0% {
+      transform: scale(0.8);
+      opacity: 0;
+    }
+    70% {
+      transform: scale(1.1);
+      opacity: 1;
+    }
+    100% {
+      transform: scale(1);
+      opacity: 1;
+    }
+  }
+
+  @keyframes animated-cross-circle-first-line {
+    0% {
+      stroke-dashoffset: 10;
+      opacity: 0;
+    }
+    10% {
+      opacity: 1;
+    }
+    100% {
+      stroke-dashoffset: 0;
+      opacity: 1;
+    }
+  }
+
+  @keyframes animated-cross-circle-second-line {
+    0% {
+      stroke-dashoffset: 10;
+      opacity: 0;
+    }
+    10% {
+      opacity: 1;
+    }
+    100% {
+      stroke-dashoffset: 0;
+      opacity: 1;
+    }
+  }
+
+  [data-component='animated-exclamation-mark-circle'] {
+    & > circle:first-child {
+      animation: animated-exclamation-mark-circle-circle 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+      transform-origin: center;
+    }
+
+    & > path {
+      stroke-dasharray: 5;
+      stroke-dashoffset: 5;
+      animation: animated-exclamation-mark-circle-line 0.25s ease-out 0.2s forwards;
+      transform-origin: center;
+    }
+
+    & > circle:last-child {
+      opacity: 0;
+      transform-origin: center;
+      animation: animated-exclamation-mark-circle-dot 0.2s ease-out 0.35s forwards;
+    }
+  }
+
+  @keyframes animated-exclamation-mark-circle-circle {
+    0% {
+      transform: scale(0);
+      opacity: 0;
+    }
+    60% {
+      transform: scale(1.1);
+      opacity: 1;
+    }
+    100% {
+      transform: scale(1);
+      opacity: 1;
+    }
+  }
+
+  @keyframes animated-exclamation-mark-circle-line {
+    0% {
+      stroke-dashoffset: 5;
+      opacity: 0;
+    }
+    10% {
+      opacity: 1;
+    }
+    100% {
+      stroke-dashoffset: 0;
+      opacity: 1;
+    }
+  }
+
+  @keyframes animated-exclamation-mark-circle-dot {
+    0% {
+      opacity: 0;
+    }
+    100% {
+      opacity: 1;
+    }
+  }
+
+  [data-component='animated-loader-circle'] {
+    & > circle:first-child {
+      animation: animated-loader-circle-circle 0.4s ease-out forwards;
+      transform-origin: center;
+    }
+
+    & > circle:last-child {
+      animation: animated-loader-circle-spin 1s linear infinite;
+      transform-origin: center;
+    }
+  }
+
+  @keyframes animated-loader-circle-circle {
+    0% {
+      transform: scale(0.8);
+      opacity: 0;
+    }
+    70% {
+      transform: scale(1.1);
+      opacity: 1;
+    }
+    100% {
+      transform: scale(1);
+      opacity: 1;
+    }
+  }
+
+  @keyframes animated-loader-circle-spin {
+    0% {
+      transform: rotate(0deg);
+    }
+    100% {
+      transform: rotate(360deg);
+    }
+  }
+}

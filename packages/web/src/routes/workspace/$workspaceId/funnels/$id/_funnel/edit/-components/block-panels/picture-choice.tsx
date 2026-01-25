@@ -1,23 +1,16 @@
 import { getBlockInfo } from '@/components/block'
-import { Image } from '@/components/image'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { InputGroup } from '@/components/ui/input-group'
 import { SegmentedControl } from '@/components/ui/segmented-control'
 import { DndContext, PointerSensor, useSensor, useSensors, type DragEndEvent } from '@dnd-kit/core'
 import { arrayMove, SortableContext, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import type { PictureChoiceBlock as PictureChoiceBlockType } from '@shopfunnel/core/funnel/types'
-import {
-  IconGripVertical as GripVerticalIcon,
-  IconPhoto as PhotoIcon,
-  IconPlus as PlusIcon,
-  IconTrash as TrashIcon,
-  IconX as XIcon,
-} from '@tabler/icons-react'
+import { IconGripVertical as GripVerticalIcon, IconPlus as PlusIcon, IconTrash as TrashIcon } from '@tabler/icons-react'
 import * as React from 'react'
 import { ulid } from 'ulid'
 import { Field } from '../field'
+import { MediaPicker } from '../media-picker'
 import { Pane } from '../pane'
 import { Panel } from '../panel'
 
@@ -37,26 +30,10 @@ function ChoiceItem({
   onImageUpload: (file: File) => Promise<string>
 }) {
   const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id: choice.id })
-  const fileInputRef = React.useRef<HTMLInputElement>(null)
 
   const style: React.CSSProperties = {
     transform: CSS.Transform.toString(transform),
     transition,
-  }
-
-  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (file) {
-      const url = await onImageUpload(file)
-      onUpdate({ media: { type: 'image', value: url } })
-    }
-    if (fileInputRef.current) {
-      fileInputRef.current.value = ''
-    }
-  }
-
-  const handleMediaClear = () => {
-    onUpdate({ media: undefined })
   }
 
   return (
@@ -69,44 +46,22 @@ function ChoiceItem({
       >
         <GripVerticalIcon className="size-4" />
       </button>
-      <InputGroup.Root>
-        <InputGroup.Addon>
-          <InputGroup.Button
-            size="icon-xs"
-            variant="ghost"
-            onClick={() => fileInputRef.current?.click()}
-            className="size-6 overflow-hidden"
-          >
-            {choice.media?.value ? (
-              <Image
-                src={choice.media.value}
-                alt=""
-                layout="fixed"
-                width={24}
-                height={24}
-                className="rounded object-cover"
-              />
-            ) : (
-              <PhotoIcon className="size-4" />
-            )}
-          </InputGroup.Button>
-        </InputGroup.Addon>
-        <InputGroup.Input
-          readOnly
-          placeholder="Upload image..."
-          value={choice.media?.value ? 'Image' : ''}
-          className="cursor-pointer"
-          onClick={() => fileInputRef.current?.click()}
-        />
-        {choice.media && (
-          <InputGroup.Addon align="inline-end">
-            <InputGroup.Button size="icon-xs" variant="ghost" onClick={handleMediaClear}>
-              <XIcon className="size-4" />
-            </InputGroup.Button>
-          </InputGroup.Addon>
-        )}
-      </InputGroup.Root>
-      <input ref={fileInputRef} type="file" accept="image/*" onChange={handleFileChange} className="hidden" />
+      <MediaPicker.Root
+        value={choice.media ? { type: 'image', value: choice.media.value } : undefined}
+        onValueChange={async (type, value) => {
+          if (type === 'image' && value instanceof File) {
+            const url = await onImageUpload(value)
+            onUpdate({ media: { type: 'image', value: url } })
+          } else {
+            onUpdate({ media: undefined })
+          }
+        }}
+      >
+        <MediaPicker.Trigger render={<MediaPicker.Input />} />
+        <MediaPicker.Content side="left" align="start">
+          <MediaPicker.ImagePicker />
+        </MediaPicker.Content>
+      </MediaPicker.Root>
       <Button
         size="icon"
         variant="ghost"

@@ -11,6 +11,7 @@ import {
   IconTrash as TrashIcon,
 } from '@tabler/icons-react'
 import * as React from 'react'
+import { MediaPicker } from '../media-picker'
 import { Pane } from '../pane'
 import { Panel } from '../panel'
 
@@ -28,29 +29,6 @@ export function HtmlBlockPanel({
   onHtmlChange: (html: string) => void
 }) {
   const blockInfo = getBlockInfo(block.type)
-  const inputRef = React.useRef<HTMLInputElement>(null)
-  const [isUploading, setIsUploading] = React.useState(false)
-
-  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (!file) return
-
-    setIsUploading(true)
-    try {
-      const url = await onImageUpload(file)
-      onBlockUpdate({
-        properties: {
-          ...block.properties,
-          media: [...block.properties.media, { type: 'image', value: url }],
-        },
-      })
-    } finally {
-      setIsUploading(false)
-      if (inputRef.current) {
-        inputRef.current.value = ''
-      }
-    }
-  }
 
   const handleCopyUrl = async (url: string) => {
     await navigator.clipboard.writeText(url)
@@ -82,17 +60,31 @@ export function HtmlBlockPanel({
           <Pane.Group>
             <Pane.GroupHeader>
               <Pane.GroupLabel>Media</Pane.GroupLabel>
-              <Button
-                className="-mr-2"
-                size="icon"
-                variant="ghost"
-                onClick={() => inputRef.current?.click()}
-                disabled={isUploading}
+              <MediaPicker.Root
+                onValueChange={async (type, value) => {
+                  if (type === 'image' && value instanceof File) {
+                    const url = await onImageUpload(value)
+                    onBlockUpdate({
+                      properties: {
+                        ...block.properties,
+                        media: [...block.properties.media, { type: 'image', value: url }],
+                      },
+                    })
+                  }
+                }}
               >
-                <PlusIcon />
-              </Button>
+                <MediaPicker.Trigger
+                  render={
+                    <Button size="icon-xs" variant="ghost">
+                      <PlusIcon />
+                    </Button>
+                  }
+                />
+                <MediaPicker.Content side="left" align="start">
+                  <MediaPicker.ImagePicker />
+                </MediaPicker.Content>
+              </MediaPicker.Root>
             </Pane.GroupHeader>
-            <div className="flex flex-col gap-2">
               {block.properties.media.map((item, index) => (
                 <InputGroup.Root key={index}>
                   <InputGroup.Addon>
@@ -119,17 +111,6 @@ export function HtmlBlockPanel({
                   </InputGroup.Addon>
                 </InputGroup.Root>
               ))}
-              {block.properties.media.length === 0 && (
-                <span className="text-sm text-muted-foreground">No media uploaded</span>
-              )}
-            </div>
-            <input
-              ref={inputRef}
-              type="file"
-              accept="image/jpeg,image/png,image/gif,image/webp"
-              onChange={handleFileChange}
-              className="hidden"
-            />
           </Pane.Group>
         </Pane.Content>
       </Pane.Root>

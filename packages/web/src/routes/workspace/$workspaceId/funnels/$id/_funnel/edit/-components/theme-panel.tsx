@@ -1,12 +1,10 @@
-import { Image } from '@/components/image'
 import { ColorPicker } from '@/components/ui/color-picker'
 import { InputGroup } from '@/components/ui/input-group'
 import { Select } from '@/components/ui/select'
 import { type Theme } from '@shopfunnel/core/funnel/types'
-import { IconUpload as UploadIcon, IconX as XIcon } from '@tabler/icons-react'
-import * as React from 'react'
 import { useFunnel } from '../../-context'
 import { Field } from './field'
+import { MediaPicker } from './media-picker'
 import { Pane } from './pane'
 import { Panel } from './panel'
 
@@ -26,11 +24,6 @@ export function ThemePanel() {
   const { data: funnel, maybeSave, uploadFile } = useFunnel()
   const { theme } = funnel
 
-  const fileInputRef = React.useRef<HTMLInputElement>(null)
-  const faviconInputRef = React.useRef<HTMLInputElement>(null)
-  const [isUploading, setIsUploading] = React.useState(false)
-  const [isUploadingFavicon, setIsUploadingFavicon] = React.useState(false)
-
   const handleThemeUpdate = (updates: Partial<Theme>) => {
     maybeSave({ theme: { ...theme, ...updates } })
   }
@@ -44,46 +37,6 @@ export function ThemePanel() {
     })
   }
 
-  const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (!file) return
-
-    setIsUploading(true)
-    try {
-      const url = await uploadFile(file)
-      handleThemeUpdate({ logo: url })
-    } finally {
-      setIsUploading(false)
-      if (fileInputRef.current) {
-        fileInputRef.current.value = ''
-      }
-    }
-  }
-
-  const handleLogoRemove = () => {
-    handleThemeUpdate({ logo: undefined })
-  }
-
-  const handleFaviconUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (!file) return
-
-    setIsUploadingFavicon(true)
-    try {
-      const url = await uploadFile(file)
-      handleThemeUpdate({ favicon: url })
-    } finally {
-      setIsUploadingFavicon(false)
-      if (faviconInputRef.current) {
-        faviconInputRef.current.value = ''
-      }
-    }
-  }
-
-  const handleFaviconRemove = () => {
-    handleThemeUpdate({ favicon: undefined })
-  }
-
   return (
     <Panel>
       <Pane.Root>
@@ -95,82 +48,49 @@ export function ThemePanel() {
             <Pane.GroupHeader>
               <Pane.GroupLabel>Logo</Pane.GroupLabel>
             </Pane.GroupHeader>
-            <InputGroup.Root>
-              <InputGroup.Addon>
-                {theme.logo ? (
-                  <Image
-                    src={theme.logo}
-                    alt="Logo"
-                    layout="fixed"
-                    width={24}
-                    height={24}
-                    operations={{ fit: 'contain' }}
-                    className="rounded object-contain"
-                  />
-                ) : (
-                  <UploadIcon className="size-4" />
-                )}
-              </InputGroup.Addon>
-              <InputGroup.Input
-                readOnly
-                placeholder="Upload logo"
-                value={isUploading ? 'Uploading...' : theme.logo ? 'Image' : ''}
-                className="cursor-pointer"
-                onClick={() => fileInputRef.current?.click()}
-              />
-              {theme.logo && (
-                <InputGroup.Addon align="inline-end">
-                  <InputGroup.Button size="icon-xs" variant="ghost" onClick={handleLogoRemove}>
-                    <XIcon className="size-4" />
-                  </InputGroup.Button>
-                </InputGroup.Addon>
-              )}
-            </InputGroup.Root>
-            <input ref={fileInputRef} type="file" accept="image/*" onChange={handleLogoUpload} className="hidden" />
+            <MediaPicker.Root
+              value={theme.logo ? { type: 'image', value: theme.logo } : undefined}
+              onValueChange={async (type, value) => {
+                if (type === 'image' && value instanceof File) {
+                  const url = await uploadFile(value)
+                  handleThemeUpdate({ logo: url })
+                } else {
+                  handleThemeUpdate({ logo: undefined })
+                }
+              }}
+            >
+              <MediaPicker.Trigger render={<MediaPicker.Input />} />
+              <MediaPicker.Content side="left" align="start">
+                <MediaPicker.ImagePicker
+                  accept={['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'image/svg+xml']}
+                />
+              </MediaPicker.Content>
+            </MediaPicker.Root>
           </Pane.Group>
           <Pane.Separator />
           <Pane.Group>
             <Pane.GroupHeader>
               <Pane.GroupLabel>Favicon</Pane.GroupLabel>
             </Pane.GroupHeader>
-            <InputGroup.Root>
-              <InputGroup.Addon>
-                {theme.favicon ? (
-                  <Image
-                    src={theme.favicon}
-                    alt="Favicon"
-                    layout="fixed"
-                    width={24}
-                    height={24}
-                    operations={{ fit: 'contain' }}
-                    className="rounded object-contain"
-                  />
-                ) : (
-                  <UploadIcon className="size-4" />
-                )}
-              </InputGroup.Addon>
-              <InputGroup.Input
-                readOnly
-                placeholder="Upload favicon"
-                value={isUploadingFavicon ? 'Uploading...' : theme.favicon ? 'Image' : ''}
-                className="cursor-pointer"
-                onClick={() => faviconInputRef.current?.click()}
-              />
-              {theme.favicon && (
-                <InputGroup.Addon align="inline-end">
-                  <InputGroup.Button size="icon-xs" variant="ghost" onClick={handleFaviconRemove}>
-                    <XIcon className="size-4" />
-                  </InputGroup.Button>
-                </InputGroup.Addon>
-              )}
-            </InputGroup.Root>
-            <input
-              ref={faviconInputRef}
-              type="file"
-              accept="image/x-icon,image/png,image/svg+xml,image/webp,.ico"
-              onChange={handleFaviconUpload}
-              className="hidden"
-            />
+            <MediaPicker.Root
+              value={theme.favicon ? { type: 'image', value: theme.favicon } : undefined}
+              onValueChange={async (type, value) => {
+                if (type === 'image' && value instanceof File) {
+                  const url = await uploadFile(value)
+                  handleThemeUpdate({ favicon: url })
+                } else {
+                  handleThemeUpdate({ favicon: undefined })
+                }
+              }}
+            >
+              <MediaPicker.Trigger render={<MediaPicker.Input />} />
+              <MediaPicker.Content side="left" align="start">
+                <MediaPicker.ImagePicker
+                  accept={['image/png', 'image/webp', 'image/svg+xml', 'image/x-icon', 'image/vnd.microsoft.icon']}
+                  maxDimensions={{ width: 512, height: 512 }}
+                />
+              </MediaPicker.Content>
+            </MediaPicker.Root>
           </Pane.Group>
           <Pane.Separator />
           <Pane.Group>

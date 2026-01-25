@@ -1,20 +1,12 @@
 import { getBlockInfo } from '@/components/block'
-import { Image } from '@/components/image'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { InputGroup } from '@/components/ui/input-group'
 import { SegmentedControl } from '@/components/ui/segmented-control'
 import { DndContext, PointerSensor, useSensor, useSensors, type DragEndEvent } from '@dnd-kit/core'
 import { arrayMove, SortableContext, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import type { MultipleChoiceBlock as MultipleChoiceBlockType } from '@shopfunnel/core/funnel/types'
-import {
-  IconGripVertical as GripVerticalIcon,
-  IconPhoto as PhotoIcon,
-  IconPlus as PlusIcon,
-  IconTrash as TrashIcon,
-  IconX as XIcon,
-} from '@tabler/icons-react'
+import { IconGripVertical as GripVerticalIcon, IconPlus as PlusIcon, IconTrash as TrashIcon } from '@tabler/icons-react'
 import * as React from 'react'
 import { ulid } from 'ulid'
 import { Field } from '../field'
@@ -38,15 +30,10 @@ function ChoiceItem({
   onImageUpload: (file: File) => Promise<string>
 }) {
   const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id: choice.id })
-  const mediaButtonRef = React.useRef<HTMLDivElement>(null)
 
   const style: React.CSSProperties = {
     transform: CSS.Transform.toString(transform),
     transition,
-  }
-
-  const handleMediaClear = () => {
-    onUpdate({ media: undefined })
   }
 
   return (
@@ -59,63 +46,34 @@ function ChoiceItem({
       >
         <GripVerticalIcon className="size-4" />
       </button>
-      <MediaPicker.Root>
-        <div ref={mediaButtonRef}>
-          <MediaPicker.Trigger
-            render={
-              <InputGroup.Root>
-                <InputGroup.Addon>
-                  {choice.media ? (
-                    choice.media.type === 'emoji' ? (
-                      <span className="text-base">{choice.media.value}</span>
-                    ) : (
-                      <Image
-                        src={choice.media.value}
-                        alt=""
-                        layout="fixed"
-                        width={24}
-                        height={24}
-                        className="rounded object-cover"
-                      />
-                    )
-                  ) : (
-                    <PhotoIcon />
-                  )}
-                </InputGroup.Addon>
-                <InputGroup.Input
-                  readOnly
-                  placeholder="Add media..."
-                  value={choice.media ? (choice.media.type === 'emoji' ? 'Emoji' : 'Image') : ''}
-                  className="cursor-pointer"
-                />
-                {choice.media && (
-                  <InputGroup.Addon align="inline-end">
-                    <InputGroup.Button
-                      size="icon-xs"
-                      variant="ghost"
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        handleMediaClear()
-                      }}
-                    >
-                      <XIcon />
-                    </InputGroup.Button>
-                  </InputGroup.Addon>
-                )}
-              </InputGroup.Root>
-            }
-          />
-        </div>
-        <MediaPicker.Content
-          anchor={mediaButtonRef}
-          side="left"
-          align="start"
-          onEmojiSelect={(emoji) => onUpdate({ media: { type: 'emoji', value: emoji } })}
-          onImageUpload={async (file) => {
-            const url = await onImageUpload(file)
+      <MediaPicker.Root
+        value={choice.media}
+        onValueChange={async (type, value) => {
+          if (type === 'emoji' && typeof value === 'string') {
+            onUpdate({ media: { type: 'emoji', value } })
+          } else if (type === 'image' && value instanceof File) {
+            const url = await onImageUpload(value)
             onUpdate({ media: { type: 'image', value: url } })
-          }}
-        />
+          } else {
+            onUpdate({ media: undefined })
+          }
+        }}
+      >
+        <MediaPicker.Trigger render={<MediaPicker.Input />} />
+        <MediaPicker.Content side="left" align="start">
+          <MediaPicker.Tabs>
+            <MediaPicker.TabList>
+              <MediaPicker.EmojiTab />
+              <MediaPicker.ImageTab />
+            </MediaPicker.TabList>
+            <MediaPicker.EmojiTabContent>
+              <MediaPicker.EmojiPicker />
+            </MediaPicker.EmojiTabContent>
+            <MediaPicker.ImageTabContent>
+              <MediaPicker.ImagePicker />
+            </MediaPicker.ImageTabContent>
+          </MediaPicker.Tabs>
+        </MediaPicker.Content>
       </MediaPicker.Root>
       <Button
         size="icon"
