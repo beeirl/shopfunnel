@@ -13,7 +13,6 @@ import { FunnelEditorProvider, useFunnelEditor } from './-context'
 
 export const Route = createFileRoute('/_app/workspace/$workspaceId/funnels/$id/_funnel/edit/')({
   component: RouteComponent,
-  ssr: false,
   beforeLoad: async ({ context, params }) => {
     const session = await context.queryClient.ensureQueryData(getSessionQueryOptions(params.workspaceId))
     if (!session.isAdmin) {

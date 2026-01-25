@@ -2,6 +2,7 @@ import { createFileRoute } from '@tanstack/react-router'
 import { createMiddleware } from '@tanstack/react-start'
 
 export const Route = createFileRoute('/_app')({
+  ssr: false,
   server: {
     middleware: [
       createMiddleware().server(async ({ request, next }) => {

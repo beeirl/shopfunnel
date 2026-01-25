@@ -59,7 +59,6 @@ const removeDomain = createServerFn()
 export const Route = createFileRoute('/_app/workspace/$workspaceId/_dashboard/domains')({
   staticData: { title: 'Domains' },
   component: DomainsRoute,
-  ssr: false,
   loader: async ({ context, params }) => {
     await context.queryClient.ensureQueryData(getDomainQueryOptions(params.workspaceId))
   },

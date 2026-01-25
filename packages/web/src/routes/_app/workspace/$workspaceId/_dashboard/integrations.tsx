@@ -44,7 +44,6 @@ const disconnectShopifyIntegration = createServerFn()
 export const Route = createFileRoute('/_app/workspace/$workspaceId/_dashboard/integrations')({
   staticData: { title: 'Integrations' },
   component: IntegrationsRoute,
-  ssr: false,
   loader: async ({ context, params }) => {
     await context.queryClient.ensureQueryData(getShopifyIntegrationQueryOptions(params.workspaceId))
   },

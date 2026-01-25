@@ -48,7 +48,6 @@ const getWorkspacesQueryOptions = (workspaceId: string) =>
 
 export const Route = createFileRoute('/_app/workspace/$workspaceId/_dashboard')({
   component: DashboardLayoutRoute,
-  ssr: false,
   loader: async ({ context, params }) => {
     await Promise.all([
       context.queryClient.ensureQueryData(getUserEmailQueryOptions(params.workspaceId)),

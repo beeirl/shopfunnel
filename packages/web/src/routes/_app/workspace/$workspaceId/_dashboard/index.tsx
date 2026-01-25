@@ -61,7 +61,6 @@ const duplicateFunnel = createServerFn({ method: 'POST' })
 export const Route = createFileRoute('/_app/workspace/$workspaceId/_dashboard/')({
   staticData: { title: 'Funnels' },
   component: RouteComponent,
-  ssr: false,
   loader: async ({ context, params }) => {
     await Promise.all([
       context.queryClient.ensureQueryData(listFunnelsQueryOptions(params.workspaceId)),

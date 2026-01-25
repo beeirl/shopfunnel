@@ -36,7 +36,6 @@ const publishFunnelMutationOptions = (workspaceId: string, funnelId: string) =>
 
 export const Route = createFileRoute('/_app/workspace/$workspaceId/funnels/$id/_funnel')({
   component: RouteComponent,
-  ssr: false,
   loader: async ({ context, params }) => {
     const funnelCollection = createFunnelCollection(params.workspaceId, params.id, context.queryClient)
 

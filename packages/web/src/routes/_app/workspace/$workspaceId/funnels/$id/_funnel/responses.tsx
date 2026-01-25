@@ -45,7 +45,6 @@ export const Route = createFileRoute('/_app/workspace/$workspaceId/funnels/$id/_
       .parse(search),
   loaderDeps: ({ search }) => ({ page: search.page }),
   component: RouteComponent,
-  ssr: false,
   loader: async ({ context, params, deps }) => {
     await context.queryClient.ensureQueryData(
       listSubmissionsQueryOptions(params.workspaceId, params.id, deps.page ?? 1),

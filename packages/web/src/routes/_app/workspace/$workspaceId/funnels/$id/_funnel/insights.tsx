@@ -166,7 +166,6 @@ export const Route = createFileRoute('/_app/workspace/$workspaceId/funnels/$id/_
       .parse(search),
   loaderDeps: ({ search }) => ({ range: search.range }),
   component: RouteComponent,
-  ssr: false,
   loader: async ({ context, params, deps }) => {
     const [publishedVersions] = await Promise.all([
       context.queryClient.ensureQueryData(getPublishedVersionsQueryOptions(params.workspaceId, params.id)),
