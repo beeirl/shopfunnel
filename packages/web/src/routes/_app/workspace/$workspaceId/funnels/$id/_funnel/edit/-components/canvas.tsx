@@ -43,6 +43,8 @@ const ROW_GAP = 100
 const ZOOM_MIN = 0.1
 const ZOOM_MAX = 1.5
 
+type CanvasMode = 'select' | 'panzoom'
+
 // =============================================================================
 // SelectableBlock
 // =============================================================================
@@ -188,8 +190,8 @@ function PageNode({ data }: { data: PageNodeData }) {
         )}
 
         {/* Handles for flow edges */}
-        {!isStart && <Handle type="target" position={Position.Left} className="!h-3 !w-3 !bg-border" />}
-        {!isEnd && <Handle type="source" position={Position.Right} className="!h-3 !w-3 !bg-border" />}
+        {!isStart && <Handle type="target" position={Position.Left} className="size-3! bg-border!" />}
+        {!isEnd && <Handle type="source" position={Position.Right} className="size-3! bg-border!" />}
       </div>
     </div>
   )
@@ -399,6 +401,43 @@ export function Canvas() {
 
   const { pages, rules, theme } = funnel
 
+  const [mode, setMode] = React.useState<CanvasMode>('select')
+
+  React.useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.target instanceof HTMLInputElement || event.target instanceof HTMLTextAreaElement) return
+      if (event.code === 'Space' && !event.repeat) {
+        event.preventDefault()
+        setMode('panzoom')
+      }
+      if ((event.code === 'MetaLeft' || event.code === 'MetaRight') && !event.repeat) {
+        setMode('panzoom')
+      }
+    }
+
+    const handleKeyUp = (event: KeyboardEvent) => {
+      if (event.code === 'Space' || event.code === 'MetaLeft' || event.code === 'MetaRight') {
+        setMode('select')
+      }
+    }
+
+    const handleBlur = () => {
+      setMode('select')
+    }
+
+    window.addEventListener('keydown', handleKeyDown)
+    window.addEventListener('keyup', handleKeyUp)
+    window.addEventListener('blur', handleBlur)
+    document.addEventListener('visibilitychange', handleBlur)
+
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown)
+      window.removeEventListener('keyup', handleKeyUp)
+      window.removeEventListener('blur', handleBlur)
+      document.removeEventListener('visibilitychange', handleBlur)
+    }
+  }, [])
+
   const handlePaneClick = React.useCallback(() => {
     selectPage(null, 'canvas')
   }, [selectPage])
@@ -419,6 +458,7 @@ export function Canvas() {
 
   const handleNodeClick = React.useCallback(
     (event: React.MouseEvent, node: Node<PageNodeData>) => {
+      if (mode === 'panzoom') return
       // Check if click was on a block - if so, don't select the page
       const target = event.target as HTMLElement
       if (target.closest('[data-slot="block"]')) {
@@ -427,7 +467,7 @@ export function Canvas() {
       // Select the page
       handlePageSelect(node.id)
     },
-    [handlePageSelect],
+    [mode, handlePageSelect],
   )
 
   const { nodes, edges } = React.useMemo(() => {
@@ -457,7 +497,14 @@ export function Canvas() {
   return (
     <>
       <FunnelStyle theme={theme} />
-      <div className="size-full bg-background" data-slot="canvas">
+      <div
+        className={cn(
+          'size-full bg-background',
+          mode === 'panzoom' &&
+            String.raw`[&_.react-flow\_\_node]:pointer-events-none! [&_.react-flow\_\_node]:cursor-grab!`,
+        )}
+        data-slot="canvas"
+      >
         <ReactFlowProvider>
           <CanvasInner
             nodes={nodes}
