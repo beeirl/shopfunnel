@@ -270,8 +270,8 @@ function NavigationBlocker() {
 }
 
 function DraftBadge() {
-  const { data: funnel } = useFunnel()
-  if (!funnel.draft) return null
+  const funnel = useFunnel()
+  if (!funnel.data.draft) return null
   return <Badge variant="secondary">Draft</Badge>
 }
 

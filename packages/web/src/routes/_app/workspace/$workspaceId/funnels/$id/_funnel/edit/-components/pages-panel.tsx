@@ -361,22 +361,28 @@ function BlocksPane({ pageId, blocks, selectedBlockId, onBlockSelect, onBlocksRe
 // =============================================================================
 
 export function PagesPanel() {
-  const { data: funnel, maybeSave } = useFunnel()
-  const { activePageId, selectedBlockId, selectPage, selectBlock, activePage } = useFunnelEditor()
-  const { pages } = funnel
+  const funnel = useFunnel()
+  const { activePageId, selectedBlockId, selectPage, selectBlock, activePage, save } = useFunnelEditor()
+
+  const [pages, setPages] = React.useState(funnel.data.pages)
+
+  React.useEffect(() => {
+    setPages(funnel.data.pages)
+  }, [funnel.data.pages])
 
   const handlePagesReorder = (reorderedPages: Page[]) => {
-    maybeSave({ pages: reorderedPages })
+    setPages(reorderedPages)
+    save({ pages: reorderedPages }, () => setPages(funnel.data.pages))
   }
 
   const handlePageAdd = (page: Page) => {
-    maybeSave({ pages: [...pages, page] })
+    save({ pages: [...pages, page] })
     selectPage(page.id, 'panel')
   }
 
   const handleBlocksReorder = (pageId: string, reorderedBlocks: Block[]) => {
     const updatedPages = pages.map((page) => (page.id === pageId ? { ...page, blocks: reorderedBlocks } : page))
-    maybeSave({ pages: updatedPages })
+    save({ pages: updatedPages })
   }
 
   const handleBlockAdd = (block: Block) => {
@@ -397,7 +403,7 @@ export function PagesPanel() {
       if (p.id !== activePageId) return p
       return { ...p, blocks: [...p.blocks, updatedBlock] }
     })
-    maybeSave({ pages: updatedPages })
+    save({ pages: updatedPages })
     selectBlock(updatedBlock.id, activePageId, 'panel')
   }
 

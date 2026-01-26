@@ -1,4 +1,3 @@
-import { AlertDialog } from '@/components/ui/alert-dialog'
 import { createFileRoute, redirect } from '@tanstack/react-router'
 import * as React from 'react'
 import { useFunnel } from '../-context'
@@ -30,12 +29,9 @@ function RouteComponent() {
 }
 
 function FunnelEditorContent() {
-  const { data: funnel, maybeSave } = useFunnel()
-  const { showThemePanel, showLogicPanel, selectedBlock, selectedPage, selectedBlockId, selectedPageId } =
+  const { data: funnel } = useFunnel()
+  const { showThemePanel, showLogicPanel, selectedBlock, selectedPage, selectedBlockId, selectedPageId, save } =
     useFunnelEditor()
-
-  const [deleteDialogOpen, setDeleteDialogOpen] = React.useState(false)
-  const deleteTarget = selectedBlockId ? 'block' : selectedPageId ? 'page' : null
 
   // Handle keyboard shortcuts for delete
   React.useEffect(() => {
@@ -45,31 +41,36 @@ function FunnelEditorContent() {
       }
 
       if (event.key === 'Backspace' || event.key === 'Delete') {
-        if (selectedBlockId || selectedPageId) {
+        if (selectedBlockId) {
           event.preventDefault()
-          setDeleteDialogOpen(true)
+          const updatedPages = funnel.pages.map((page) => ({
+            ...page,
+            blocks: page.blocks.filter((block) => block.id !== selectedBlockId),
+          }))
+          save({ pages: updatedPages })
+        } else if (selectedPageId) {
+          event.preventDefault()
+          const updatedPages = funnel.pages.filter((page) => page.id !== selectedPageId)
+          save({ pages: updatedPages })
         }
       }
     }
 
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [selectedBlockId, selectedPageId])
+  }, [selectedBlockId, selectedPageId, funnel.pages, save])
 
-  const handleDeleteConfirm = () => {
+  const handleRemove = () => {
     if (selectedBlockId) {
-      // Delete block
       const updatedPages = funnel.pages.map((page) => ({
         ...page,
         blocks: page.blocks.filter((block) => block.id !== selectedBlockId),
       }))
-      maybeSave({ pages: updatedPages })
+      save({ pages: updatedPages })
     } else if (selectedPageId) {
-      // Delete page
       const updatedPages = funnel.pages.filter((page) => page.id !== selectedPageId)
-      maybeSave({ pages: updatedPages })
+      save({ pages: updatedPages })
     }
-    setDeleteDialogOpen(false)
   }
 
   return (
@@ -82,25 +83,10 @@ function FunnelEditorContent() {
       ) : showThemePanel ? (
         <ThemePanel />
       ) : selectedBlock ? (
-        <BlockPanel onRemove={() => setDeleteDialogOpen(true)} />
+        <BlockPanel onRemove={handleRemove} />
       ) : selectedPage ? (
-        <PagePanel onRemove={() => setDeleteDialogOpen(true)} />
+        <PagePanel onRemove={handleRemove} />
       ) : null}
-
-      <AlertDialog.Root open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
-        <AlertDialog.Content size="sm">
-          <AlertDialog.Header>
-            <AlertDialog.Title>Remove {deleteTarget}?</AlertDialog.Title>
-            <AlertDialog.Description>This action cannot be undone.</AlertDialog.Description>
-          </AlertDialog.Header>
-          <AlertDialog.Footer>
-            <AlertDialog.Cancel>Cancel</AlertDialog.Cancel>
-            <AlertDialog.Action variant="destructive" onClick={handleDeleteConfirm}>
-              Remove
-            </AlertDialog.Action>
-          </AlertDialog.Footer>
-        </AlertDialog.Content>
-      </AlertDialog.Root>
     </div>
   )
 }

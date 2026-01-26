@@ -39,13 +39,13 @@ export const uploadFunnelFile = createServerFn({ method: 'POST' })
     }, data.workspaceId)
   })
 
-type FunnelMutationVariables = Partial<Pick<Info, 'pages' | 'rules' | 'theme' | 'title' | 'settings'>>
+export type SaveFunnelInput = Partial<Pick<Info, 'pages' | 'rules' | 'theme' | 'title' | 'settings'>>
 
 interface FunnelContextValue {
   data: Info
   isSaving: boolean
-  save: (variables: FunnelMutationVariables) => void
-  maybeSave: (variables: FunnelMutationVariables) => void
+  save: (input: SaveFunnelInput) => void
+  maybeSave: (input: SaveFunnelInput) => void
   uploadFile: (file: File) => Promise<string>
 }
 
@@ -68,7 +68,7 @@ export function FunnelProvider({ children, collection }: FunnelProviderProps) {
 
   const [isSaving, setIsSaving] = React.useState(false)
 
-  const mutate = usePacedMutations<FunnelMutationVariables, Info>({
+  const mutate = usePacedMutations<SaveFunnelInput, Info>({
     onMutate: (values) => {
       setIsSaving(true)
       collection.update(funnel.id, (funnel) => {
@@ -102,22 +102,22 @@ export function FunnelProvider({ children, collection }: FunnelProviderProps) {
     strategy: debounceStrategy({ wait: 3000 }),
   })
 
-  const save = async (variables: FunnelMutationVariables) => {
+  const save = async (input: SaveFunnelInput) => {
     setIsSaving(true)
     const tx = collection.update(funnel.id, (draft) => {
-      if (variables.pages) draft.pages = variables.pages
-      if (variables.rules) draft.rules = variables.rules
-      if (variables.theme) draft.theme = variables.theme
-      if (variables.title) draft.title = variables.title
-      if (variables.settings) draft.settings = variables.settings
+      if (input.pages) draft.pages = input.pages
+      if (input.rules) draft.rules = input.rules
+      if (input.theme) draft.theme = input.theme
+      if (input.title) draft.title = input.title
+      if (input.settings) draft.settings = input.settings
       draft.published = false
     })
     await tx.isPersisted.promise
     setIsSaving(false)
   }
 
-  const maybeSave = async (variables: FunnelMutationVariables) => {
-    mutate(variables)
+  const maybeSave = async (input: SaveFunnelInput) => {
+    mutate(input)
   }
 
   const uploadFile = (file: File) => {

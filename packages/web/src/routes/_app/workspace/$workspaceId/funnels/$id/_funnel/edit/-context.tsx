@@ -1,35 +1,109 @@
-import type { Block, Page } from '@shopfunnel/core/funnel/types'
+import { AlertDialog } from '@/components/ui/alert-dialog'
+import type { Block, ComparisonCondition, Condition, Page, Rule, RuleAction } from '@shopfunnel/core/funnel/types'
 import * as React from 'react'
-import { useFunnel } from '../-context'
+import { SaveFunnelInput, useFunnel } from '../-context'
 
-// =============================================================================
-// Context
-// =============================================================================
+function checkBrokenRules(pages: Page[], rules: Rule[]): boolean {
+  const cleaned = cleanBrokenRules(pages, rules)
+  return JSON.stringify(cleaned) !== JSON.stringify(rules)
+}
+
+function cleanBrokenRules(pages: Page[], rules: Rule[]): Rule[] {
+  const pageIndex = new Map(pages.map((p, i) => [p.id, i]))
+  const blockPageIndex = new Map(pages.flatMap((page, i) => page.blocks.map((block) => [block.id, i])))
+  const allBlocks = new Map(pages.flatMap((page) => page.blocks.map((block) => [block.id, block])))
+
+  const getOptionIds = (blockId: string) => {
+    const block = allBlocks.get(blockId)
+    if (!block) return null
+    if (block.type === 'multiple_choice' || block.type === 'picture_choice' || block.type === 'dropdown') {
+      return new Set(block.properties.options.map((o) => o.id))
+    }
+    return null
+  }
+
+  const isComparisonBroken = (cond: ComparisonCondition, rulePageIdx: number) => {
+    if (cond.op === 'always') return false
+    if (!('vars' in cond)) return false
+
+    const blockVar = cond.vars.find((v) => v.type === 'block')
+    if (blockVar) {
+      const blockId = String(blockVar.value)
+      const blockIdx = blockPageIndex.get(blockId)
+      if (blockIdx === undefined || blockIdx > rulePageIdx) return true
+
+      const constantVar = cond.vars.find((v) => v.type === 'constant')
+      if (constantVar) {
+        const optionIds = getOptionIds(blockId)
+        if (optionIds && !optionIds.has(String(constantVar.value))) return true
+      }
+    }
+
+    return false
+  }
+
+  const cleanCondition = (condition: Condition, rulePageIdx: number): Condition | null => {
+    if (condition.op === 'always') return condition
+
+    if (condition.op === 'and' || condition.op === 'or') {
+      const validVars = condition.vars.filter((c) => !isComparisonBroken(c, rulePageIdx))
+      if (validVars.length === 0) return null
+      if (validVars.length === 1) return validVars[0]!
+      return { ...condition, vars: validVars }
+    }
+
+    if (isComparisonBroken(condition as ComparisonCondition, rulePageIdx)) return null
+    return condition
+  }
+
+  const cleanAction = (action: RuleAction, rulePageIdx: number): RuleAction | null => {
+    if (action.details.to?.type === 'page') {
+      const targetIdx = pageIndex.get(action.details.to.value)
+      if (targetIdx === undefined || targetIdx <= rulePageIdx) return null
+    }
+
+    if (action.details.target?.type === 'block') {
+      if (!blockPageIndex.has(action.details.target.value)) return null
+    }
+
+    const cleanedCondition = cleanCondition(action.condition, rulePageIdx)
+    if (!cleanedCondition) return null
+
+    return { ...action, condition: cleanedCondition }
+  }
+
+  return rules
+    .filter((rule) => pageIndex.has(rule.pageId))
+    .map((rule) => {
+      const rulePageIdx = pageIndex.get(rule.pageId)!
+      const cleanedActions = rule.actions
+        .map((action) => cleanAction(action, rulePageIdx))
+        .filter((a): a is RuleAction => a !== null)
+      return { ...rule, actions: cleanedActions }
+    })
+    .filter((rule) => rule.actions.length > 0)
+}
 
 interface FunnelEditorContextValue {
-  // Left panel state
   activePageId: string | null
 
-  // Right panel state (mutually exclusive)
   selectedPageId: string | null
   selectedBlockId: string | null
   showThemePanel: boolean
   showLogicPanel: boolean
 
-  // For viewport panning
+  activePage: Page | null
+  selectedPage: Page | null
+  selectedBlock: Block | null
+
   selectionSource: 'panel' | 'canvas' | null
 
-  // Actions
+  save: (input: SaveFunnelInput, onCancel?: () => void) => void
   selectPage: (pageId: string | null, source?: 'panel' | 'canvas') => void
   selectBlock: (blockId: string | null, pageId: string | null, source?: 'panel' | 'canvas') => void
   showTheme: () => void
   showLogic: (pageId: string) => void
   closeLogic: () => void
-
-  // Derived state
-  activePage: Page | null
-  selectedPage: Page | null
-  selectedBlock: Block | null
 }
 
 const FunnelEditorContext = React.createContext<FunnelEditorContextValue | null>(null)
@@ -40,30 +114,40 @@ export function useFunnelEditor() {
   return context
 }
 
-// =============================================================================
-// Provider
-// =============================================================================
+const confirmationDialogHandle = AlertDialog.createHandle<{
+  input: SaveFunnelInput
+  onCancel?: () => void
+}>()
 
-interface FunnelEditorProviderProps {
-  children: React.ReactNode
-}
+export function FunnelEditorProvider({ children }: { children: React.ReactNode }) {
+  const funnel = useFunnel()
 
-export function FunnelEditorProvider({ children }: FunnelEditorProviderProps) {
-  const { data: funnel } = useFunnel()
+  const [activePageId, setActivePageId] = React.useState<string | null>(funnel.data.pages[0]?.id ?? null)
 
-  // Left panel state
-  const [activePageId, setActivePageId] = React.useState<string | null>(funnel.pages[0]?.id ?? null)
-
-  // Right panel state
-  const [selectedPageId, setSelectedPageId] = React.useState<string | null>(funnel.pages[0]?.id ?? null)
+  const [selectedPageId, setSelectedPageId] = React.useState<string | null>(funnel.data.pages[0]?.id ?? null)
   const [selectedBlockId, setSelectedBlockId] = React.useState<string | null>(null)
   const [showThemePanel, setShowThemePanel] = React.useState(false)
   const [showLogicPanel, setShowLogicPanel] = React.useState(false)
 
-  // For viewport panning
   const [selectionSource, setSelectionSource] = React.useState<'panel' | 'canvas' | null>(null)
 
-  // Actions
+  const save = (input: SaveFunnelInput) => {
+    const pages = input.pages ?? funnel.data.pages
+    const rules = input.rules ?? funnel.data.rules
+    funnel.maybeSave({ ...input, rules: cleanBrokenRules(pages, rules) })
+  }
+
+  const maybeSave = (input: SaveFunnelInput, onCancel?: () => void) => {
+    const pages = input.pages ?? funnel.data.pages
+    const rules = input.rules ?? funnel.data.rules
+    if (checkBrokenRules(pages, rules)) {
+      confirmationDialogHandle.openWithPayload({ input, onCancel })
+      return
+    }
+
+    funnel.maybeSave(input)
+  }
+
   const selectPage = React.useCallback((pageId: string | null, source: 'panel' | 'canvas' = 'canvas') => {
     setActivePageId(pageId)
     setSelectedPageId(pageId)
@@ -106,45 +190,82 @@ export function FunnelEditorProvider({ children }: FunnelEditorProviderProps) {
     setShowLogicPanel(false)
   }, [])
 
-  // Derived state
-  const activePage = funnel.pages.find((p) => p.id === activePageId) ?? null
-  const selectedPage = funnel.pages.find((p) => p.id === selectedPageId) ?? null
-  const selectedBlock = funnel.pages.flatMap((p) => p.blocks).find((b) => b.id === selectedBlockId) ?? null
+  const activePage = funnel.data.pages.find((p) => p.id === activePageId) ?? null
+  const selectedPage = funnel.data.pages.find((p) => p.id === selectedPageId) ?? null
+  const selectedBlock = funnel.data.pages.flatMap((p) => p.blocks).find((b) => b.id === selectedBlockId) ?? null
 
   const value = React.useMemo<FunnelEditorContextValue>(
     () => ({
       activePageId,
       selectedPageId,
       selectedBlockId,
+      activePage,
+      selectedPage,
+      selectedBlock,
       showThemePanel,
       showLogicPanel,
       selectionSource,
+      save: maybeSave,
       selectPage,
       selectBlock,
       showTheme,
       showLogic,
       closeLogic,
-      activePage,
-      selectedPage,
-      selectedBlock,
     }),
     [
       activePageId,
       selectedPageId,
       selectedBlockId,
+      activePage,
+      selectedPage,
+      selectedBlock,
       showThemePanel,
       showLogicPanel,
       selectionSource,
+      maybeSave,
       selectPage,
       selectBlock,
       showTheme,
       showLogic,
       closeLogic,
-      activePage,
-      selectedPage,
-      selectedBlock,
     ],
   )
 
-  return <FunnelEditorContext.Provider value={value}>{children}</FunnelEditorContext.Provider>
+  return (
+    <FunnelEditorContext.Provider value={value}>
+      {children}
+      <AlertDialog.Root handle={confirmationDialogHandle}>
+        {({ payload }) => (
+          <AlertDialog.Content>
+            <AlertDialog.Header>
+              <AlertDialog.Title>Apply change?</AlertDialog.Title>
+              <AlertDialog.Description>
+                Some existing logic rules are incompatible with this change and will be automatically adjusted or
+                removed.
+              </AlertDialog.Description>
+            </AlertDialog.Header>
+            <AlertDialog.Footer>
+              <AlertDialog.Cancel
+                onClick={() => {
+                  if (!payload) return
+                  payload.onCancel?.()
+                }}
+              >
+                Cancel
+              </AlertDialog.Cancel>
+              <AlertDialog.Action
+                variant="destructive"
+                onClick={() => {
+                  if (!payload) return
+                  save(payload.input)
+                }}
+              >
+                Apply
+              </AlertDialog.Action>
+            </AlertDialog.Footer>
+          </AlertDialog.Content>
+        )}
+      </AlertDialog.Root>
+    </FunnelEditorContext.Provider>
+  )
 }

@@ -3,7 +3,7 @@ import { cn } from '@/lib/utils'
 import { AlertDialog as AlertDialogPrimitive } from '@base-ui/react/alert-dialog'
 import * as React from 'react'
 
-function AlertDialogRoot({ ...props }: AlertDialogPrimitive.Root.Props) {
+function AlertDialogRoot<Payload>({ ...props }: AlertDialogPrimitive.Root.Props<Payload>) {
   return <AlertDialogPrimitive.Root data-slot="alert-dialog" {...props} />
 }
 
@@ -164,4 +164,5 @@ export const AlertDialog = {
   Description: AlertDialogDescription,
   Action: AlertDialogAction,
   Cancel: AlertDialogCancel,
+  createHandle: AlertDialogPrimitive.createHandle,
 }

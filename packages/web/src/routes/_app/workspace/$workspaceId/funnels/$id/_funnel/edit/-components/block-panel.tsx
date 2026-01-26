@@ -14,8 +14,8 @@ import { SpacerBlockPanel } from './block-panels/spacer'
 import { TextInputBlockPanel } from './block-panels/text-input'
 
 export function BlockPanel({ onRemove }: { onRemove: () => void }) {
-  const { data: funnel, maybeSave, uploadFile } = useFunnel()
-  const { selectedBlock } = useFunnelEditor()
+  const { data: funnel, uploadFile } = useFunnel()
+  const { selectedBlock, save } = useFunnelEditor()
 
   if (!selectedBlock) return null
 
@@ -26,7 +26,7 @@ export function BlockPanel({ onRemove }: { onRemove: () => void }) {
       ...page,
       blocks: page.blocks.map((b) => (b.id === block.id ? ({ ...b, ...updates } as BlockType) : b)),
     }))
-    maybeSave({ pages: updatedPages })
+    save({ pages: updatedPages })
   }
 
   const handleHtmlChange = (html: string) => {
@@ -36,7 +36,7 @@ export function BlockPanel({ onRemove }: { onRemove: () => void }) {
         b.id === block.id && b.type === 'html' ? { ...b, properties: { ...b.properties, html } } : b,
       ),
     }))
-    maybeSave({ pages: updatedPages })
+    save({ pages: updatedPages })
   }
 
   switch (block.type) {

@@ -9,7 +9,7 @@ export function getPageName(pageName: string | undefined, pageIndex: number): st
 export function getBlockName(pageName: string | undefined, pageIndex: number): string {
   const name = getPageName(pageName, pageIndex)
   if (name === getDefaultPageName(pageIndex)) {
-    return `Question ${pageIndex + 1}a`
+    return `Page ${pageIndex + 1}`
   }
   return name
 }
