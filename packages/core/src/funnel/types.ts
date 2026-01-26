@@ -106,25 +106,6 @@ export interface GaugeBlock {
   }
 }
 
-export interface ListBlock {
-  id: string
-  type: 'list'
-  properties: {
-    orientation: 'horizontal' | 'vertical'
-    textPlacement: 'bottom' | 'right'
-    size: 'sm' | 'lg'
-    items: Array<{
-      id: string
-      title: string
-      subtitle?: string
-      media?: {
-        type: 'emoji' | 'image'
-        value: string
-      }
-    }>
-  }
-}
-
 export interface LoaderBlock {
   id: string
   type: 'loader'
@@ -175,7 +156,6 @@ export type Block =
   | HeadingBlock
   | ParagraphBlock
   | GaugeBlock
-  | ListBlock
   | ImageBlock
   | LoaderBlock
   | SpacerBlock

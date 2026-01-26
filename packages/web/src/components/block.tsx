@@ -3,7 +3,6 @@ import { GaugeBlock } from '@/components/blocks/gauge'
 import { HeadingBlock } from '@/components/blocks/heading'
 import { HtmlBlock } from '@/components/blocks/html'
 import { ImageBlock } from '@/components/blocks/image'
-import { ListBlock } from '@/components/blocks/list'
 import { LoaderBlock } from '@/components/blocks/loader'
 import { MultipleChoiceBlock } from '@/components/blocks/multiple-choice'
 import { ParagraphBlock } from '@/components/blocks/paragraph'
@@ -17,7 +16,6 @@ import type {
   HeadingBlock as HeadingBlockType,
   HtmlBlock as HtmlBlockType,
   ImageBlock as ImageBlockType,
-  ListBlock as ListBlockType,
   LoaderBlock as LoaderBlockType,
   MultipleChoiceBlock as MultipleChoiceBlockType,
   ParagraphBlock as ParagraphBlockType,
@@ -33,7 +31,6 @@ import {
   IconHeading as HeadingIcon,
   IconLayoutGrid as LayoutGridIcon,
   IconLetterCase as LetterCaseIcon,
-  IconListDetails as ListDetailsIcon,
   IconListLetters as ListLettersIcon,
   IconLoader as LoaderIcon,
   IconMenu as MenuIcon,
@@ -110,13 +107,6 @@ export function getBlockInfo(type: Block['type']): BlockInfo {
         name: 'Gauge',
         description: 'Display a visual gauge to show progress or a value within a range.',
         icon: GaugeIcon,
-      }
-    case 'list':
-      return {
-        type: 'list',
-        name: 'List',
-        description: 'Display a list of items with icons and text. Great for showing features or benefits.',
-        icon: ListDetailsIcon,
       }
     case 'image':
       return {
@@ -202,8 +192,6 @@ BLOCKS['heading'] = (props) => <HeadingBlock block={props.block as HeadingBlockT
 BLOCKS['paragraph'] = (props) => <ParagraphBlock block={props.block as ParagraphBlockType} static={props.static} />
 
 BLOCKS['gauge'] = (props) => <GaugeBlock block={props.block as GaugeBlockType} static={props.static} />
-
-BLOCKS['list'] = (props) => <ListBlock block={props.block as ListBlockType} static={props.static} />
 
 BLOCKS['image'] = (props) => <ImageBlock block={props.block as ImageBlockType} static={props.static} />
 

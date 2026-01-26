@@ -70,17 +70,6 @@ function createBlock(type: Block['type']): Block {
       return { id: ulid(), type: 'paragraph', properties: { text: 'Paragraph', alignment: 'left' } }
     case 'gauge':
       return { id: ulid(), type: 'gauge', properties: { value: 50, minValue: 0, maxValue: 100 } }
-    case 'list':
-      return {
-        id: ulid(),
-        type: 'list',
-        properties: {
-          orientation: 'vertical',
-          textPlacement: 'right',
-          size: 'sm',
-          items: [{ id: ulid(), title: 'Item', media: { type: 'emoji', value: '✓' } }],
-        },
-      }
     case 'image':
       return { id: ulid(), type: 'image', properties: {} }
     case 'loader':
@@ -180,7 +169,7 @@ interface AddBlockMenuProps {
 
 function AddBlockMenu({ children, existingBlocks, onBlockAdd }: AddBlockMenuProps) {
   const inputBlocks: Block['type'][] = [...INPUT_BLOCKS, 'loader']
-  const displayBlocks: Block['type'][] = ['heading', 'paragraph', 'gauge', 'list', 'image', 'html', 'spacer']
+  const displayBlocks: Block['type'][] = ['heading', 'paragraph', 'gauge', 'image', 'html', 'spacer']
 
   const hasInputOrLoader = existingBlocks.some((block) => inputBlocks.includes(block.type))
   const availableBlocks: Block['type'][] = hasInputOrLoader ? displayBlocks : [...inputBlocks, ...displayBlocks]
