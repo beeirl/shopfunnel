@@ -59,7 +59,7 @@ export function ThemePanel() {
                 }
               }}
             >
-              <MediaPicker.Trigger render={<MediaPicker.Input />} />
+              <MediaPicker.Trigger nativeButton={false} render={<MediaPicker.Input />} />
               <MediaPicker.Content side="left" align="start">
                 <MediaPicker.ImagePicker
                   accept={['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'image/svg+xml']}
@@ -83,7 +83,7 @@ export function ThemePanel() {
                 }
               }}
             >
-              <MediaPicker.Trigger render={<MediaPicker.Input />} />
+              <MediaPicker.Trigger nativeButton={false} render={<MediaPicker.Input />} />
               <MediaPicker.Content side="left" align="start">
                 <MediaPicker.ImagePicker
                   accept={['image/png', 'image/webp', 'image/svg+xml', 'image/x-icon', 'image/vnd.microsoft.icon']}

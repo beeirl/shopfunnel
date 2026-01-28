@@ -55,11 +55,9 @@ function MediaPickerTrigger(props: MediaPickerTriggerProps) {
   return <Popover.Trigger {...props} />
 }
 
-interface MediaPickerInputProps {
-  disabled?: boolean
-}
+interface MediaPickerInputProps extends React.ComponentProps<typeof InputGroup.Root> {}
 
-function MediaPickerInput({ disabled }: MediaPickerInputProps) {
+function MediaPickerInput(props: MediaPickerInputProps) {
   const { value, onValueChange } = useMediaPicker()
 
   const handleClear = (e: React.MouseEvent) => {
@@ -68,20 +66,13 @@ function MediaPickerInput({ disabled }: MediaPickerInputProps) {
   }
 
   return (
-    <InputGroup.Root data-disabled={disabled || undefined}>
+    <InputGroup.Root {...props}>
       <InputGroup.Addon>
         <InputGroup.Button size="icon-xs">
           {!value && <PhotoIcon className="size-4" />}
           {value?.type === 'emoji' && <span className="text-base">{value.value}</span>}
           {value?.type === 'image' && (
-            <Image
-              src={value.value}
-              alt=""
-              layout="fixed"
-              width={24}
-              height={24}
-              className="rounded object-cover"
-            />
+            <Image src={value.value} alt="" layout="fixed" width={24} height={24} className="rounded object-cover" />
           )}
         </InputGroup.Button>
       </InputGroup.Addon>
@@ -385,7 +376,7 @@ function MediaPickerImagePicker({
           <div
             className={cn(
               'absolute inset-0 flex items-center justify-center rounded-lg opacity-0 transition-opacity group-hover:opacity-100',
-              displayUrl && 'bg-white/80 backdrop-blur-sm'
+              displayUrl && 'bg-white/80 backdrop-blur-sm',
             )}
           >
             <Button className="cursor-pointer">

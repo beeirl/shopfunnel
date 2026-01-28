@@ -57,7 +57,7 @@ function ChoiceItem({
           }
         }}
       >
-        <MediaPicker.Trigger render={<MediaPicker.Input />} />
+        <MediaPicker.Trigger nativeButton={false} render={<MediaPicker.Input />} />
         <MediaPicker.Content side="left" align="start">
           <MediaPicker.ImagePicker />
         </MediaPicker.Content>
