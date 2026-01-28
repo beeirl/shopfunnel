@@ -1,7 +1,5 @@
 import { getBlockInfo } from '@/components/block'
-import { Button } from '@/components/ui/button'
 import type { ImageBlock as ImageBlockType } from '@shopfunnel/core/funnel/types'
-import { IconTrash as TrashIcon } from '@tabler/icons-react'
 import { MediaPicker } from '../media-picker'
 import { Pane } from '../pane'
 import { Panel } from '../panel'
@@ -10,12 +8,10 @@ export function ImageBlockPanel({
   block,
   onBlockUpdate,
   onImageUpload,
-  onBlockRemove,
 }: {
   block: ImageBlockType
   onBlockUpdate: (block: Partial<ImageBlockType>) => void
   onImageUpload: (file: File) => Promise<string>
-  onBlockRemove: () => void
 }) {
   const blockInfo = getBlockInfo(block.type)
 
@@ -24,9 +20,6 @@ export function ImageBlockPanel({
       <Pane.Root>
         <Pane.Header>
           <Pane.Title>{blockInfo?.name}</Pane.Title>
-          <Button className="-mr-2" size="icon" variant="ghost" onClick={onBlockRemove}>
-            <TrashIcon />
-          </Button>
         </Pane.Header>
         <Pane.Content>
           <Pane.Group>

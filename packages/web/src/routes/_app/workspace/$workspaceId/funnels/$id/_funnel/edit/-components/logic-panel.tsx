@@ -483,15 +483,12 @@ export function LogicPanel() {
   const hasConditionalRules = conditionalActions.length > 0
 
   // Helper to update rules and trigger auto-save
-  const updatePageRules = React.useCallback(
-    (newActions: RuleActionType[]) => {
-      const updatedRules = pageRule
-        ? rules.map((r) => (r.pageId === page.id ? { ...r, actions: newActions } : r))
-        : [...rules, { pageId: page.id, actions: newActions }]
-      maybeSave({ rules: updatedRules })
-    },
-    [pageRule, rules, page.id, maybeSave],
-  )
+  const updatePageRules = (newActions: RuleActionType[]) => {
+    const updatedRules = pageRule
+      ? rules.map((r) => (r.pageId === page.id ? { ...r, actions: newActions } : r))
+      : [...rules, { pageId: page.id, actions: newActions }]
+    maybeSave({ rules: updatedRules })
+  }
 
   const handleActionChange = (index: number, newAction: RuleActionType) => {
     // Find the actual index in the full actions array

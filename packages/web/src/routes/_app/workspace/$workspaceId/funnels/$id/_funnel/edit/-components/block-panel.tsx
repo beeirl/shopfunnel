@@ -13,7 +13,7 @@ import { PictureChoiceBlockPanel } from './block-panels/picture-choice'
 import { SpacerBlockPanel } from './block-panels/spacer'
 import { TextInputBlockPanel } from './block-panels/text-input'
 
-export function BlockPanel({ onRemove }: { onRemove: () => void }) {
+export function BlockPanel() {
   const { data: funnel, uploadFile } = useFunnel()
   const { selectedBlock, save } = useFunnelEditor()
 
@@ -41,53 +41,31 @@ export function BlockPanel({ onRemove }: { onRemove: () => void }) {
 
   switch (block.type) {
     case 'text_input':
-      return <TextInputBlockPanel block={block} onBlockUpdate={handleBlockUpdate} onBlockRemove={onRemove} />
+      return <TextInputBlockPanel block={block} onBlockUpdate={handleBlockUpdate} />
     case 'multiple_choice':
-      return (
-        <MultipleChoiceBlockPanel
-          block={block}
-          onBlockUpdate={handleBlockUpdate}
-          onImageUpload={uploadFile}
-          onBlockRemove={onRemove}
-        />
-      )
+      return <MultipleChoiceBlockPanel block={block} onBlockUpdate={handleBlockUpdate} onImageUpload={uploadFile} />
     case 'picture_choice':
-      return (
-        <PictureChoiceBlockPanel
-          block={block}
-          onBlockUpdate={handleBlockUpdate}
-          onImageUpload={uploadFile}
-          onBlockRemove={onRemove}
-        />
-      )
+      return <PictureChoiceBlockPanel block={block} onBlockUpdate={handleBlockUpdate} onImageUpload={uploadFile} />
     case 'dropdown':
-      return <DropdownBlockPanel block={block} onBlockUpdate={handleBlockUpdate} onBlockRemove={onRemove} />
+      return <DropdownBlockPanel block={block} onBlockUpdate={handleBlockUpdate} />
     case 'gauge':
-      return <GaugeBlockPanel block={block} onBlockUpdate={handleBlockUpdate} onBlockRemove={onRemove} />
+      return <GaugeBlockPanel block={block} onBlockUpdate={handleBlockUpdate} />
     case 'image':
-      return (
-        <ImageBlockPanel
-          block={block}
-          onBlockUpdate={handleBlockUpdate}
-          onImageUpload={uploadFile}
-          onBlockRemove={onRemove}
-        />
-      )
+      return <ImageBlockPanel block={block} onBlockUpdate={handleBlockUpdate} onImageUpload={uploadFile} />
     case 'loader':
-      return <LoaderBlockPanel block={block} onBlockUpdate={handleBlockUpdate} onBlockRemove={onRemove} />
+      return <LoaderBlockPanel block={block} onBlockUpdate={handleBlockUpdate} />
     case 'heading':
-      return <HeadingBlockPanel block={block} onBlockUpdate={handleBlockUpdate} onBlockRemove={onRemove} />
+      return <HeadingBlockPanel block={block} onBlockUpdate={handleBlockUpdate} />
     case 'paragraph':
-      return <ParagraphBlockPanel block={block} onBlockUpdate={handleBlockUpdate} onBlockRemove={onRemove} />
+      return <ParagraphBlockPanel block={block} onBlockUpdate={handleBlockUpdate} />
     case 'spacer':
-      return <SpacerBlockPanel block={block} onBlockUpdate={handleBlockUpdate} onBlockRemove={onRemove} />
+      return <SpacerBlockPanel block={block} onBlockUpdate={handleBlockUpdate} />
     case 'html':
       return (
         <HtmlBlockPanel
           block={block}
           onBlockUpdate={handleBlockUpdate}
           onImageUpload={uploadFile}
-          onBlockRemove={onRemove}
           onHtmlChange={handleHtmlChange}
         />
       )

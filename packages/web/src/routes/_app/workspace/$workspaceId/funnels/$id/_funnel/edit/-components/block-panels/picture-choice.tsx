@@ -94,12 +94,10 @@ export function PictureChoiceBlockPanel({
   block,
   onBlockUpdate,
   onImageUpload,
-  onBlockRemove,
 }: {
   block: PictureChoiceBlockType
   onBlockUpdate: (block: Partial<PictureChoiceBlockType>) => void
   onImageUpload: (file: File) => Promise<string>
-  onBlockRemove: () => void
 }) {
   const blockInfo = getBlockInfo(block.type)
   const options = block.properties.options
@@ -165,9 +163,6 @@ export function PictureChoiceBlockPanel({
       <Pane.Root>
         <Pane.Header>
           <Pane.Title>{blockInfo?.name}</Pane.Title>
-          <Button className="-mr-2" size="icon" variant="ghost" onClick={onBlockRemove}>
-            <TrashIcon />
-          </Button>
         </Pane.Header>
         <Pane.Content>
           <Pane.Group>

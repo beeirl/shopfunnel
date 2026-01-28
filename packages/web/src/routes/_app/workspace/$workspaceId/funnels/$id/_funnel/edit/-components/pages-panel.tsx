@@ -1,5 +1,6 @@
 import { getBlockInfo } from '@/components/block'
 import { Button } from '@/components/ui/button'
+import { ContextMenu } from '@/components/ui/context-menu'
 import { Menu } from '@/components/ui/menu'
 import { Resizable } from '@/components/ui/resizable'
 import { cn } from '@/lib/utils'
@@ -9,12 +10,14 @@ import { useSortable } from '@dnd-kit/react/sortable'
 import { INPUT_BLOCKS, type Block, type Page } from '@shopfunnel/core/funnel/types'
 import {
   IconChevronDown as ChevronDownIcon,
+  IconCopy as CopyIcon,
   IconFile as FileIcon,
   IconLayoutGrid as LayoutGridIcon,
   IconListLetters as ListLettersIcon,
   IconLoader as LoaderIcon,
   IconMenu as MenuIcon,
   IconPlus as PlusIcon,
+  IconTrash as TrashIcon,
 } from '@tabler/icons-react'
 import * as React from 'react'
 import { ulid } from 'ulid'
@@ -209,23 +212,41 @@ interface PageItemProps {
   index: number
   selected: boolean
   onSelect: () => void
+  onDelete: () => void
+  onDuplicate: () => void
 }
 
-function PageItem({ page, index, selected, onSelect }: PageItemProps) {
+function PageItem({ page, index, selected, onSelect, onDelete, onDuplicate }: PageItemProps) {
   const { ref } = useSortable({ id: page.id, index })
 
   return (
-    <div
-      ref={ref}
-      className={cn(
-        '-mx-1.5 flex h-8 cursor-default items-center gap-2 rounded-md pr-1 pl-2 transition-all hover:bg-muted',
-        selected && 'bg-muted',
-      )}
-      onClick={onSelect}
-    >
-      <FileIcon className="size-4 shrink-0 text-muted-foreground" />
-      <span className="flex-1 truncate text-xm">{page.name || `Page ${index + 1}`}</span>
-    </div>
+    <ContextMenu.Root>
+      <ContextMenu.Trigger
+        render={
+          <div
+            ref={ref}
+            className={cn(
+              '-mx-1.5 flex h-8 cursor-default items-center gap-2 rounded-md pr-1 pl-2 transition-all hover:bg-muted',
+              selected && 'bg-muted',
+            )}
+            onClick={onSelect}
+          />
+        }
+      >
+        <FileIcon className="size-4 shrink-0 text-muted-foreground" />
+        <span className="flex-1 truncate text-xm">{page.name || `Page ${index + 1}`}</span>
+      </ContextMenu.Trigger>
+      <ContextMenu.Content>
+        <ContextMenu.Item onClick={onDuplicate}>
+          <CopyIcon />
+          Duplicate
+        </ContextMenu.Item>
+        <ContextMenu.Item variant="destructive" onClick={onDelete}>
+          <TrashIcon />
+          Delete
+        </ContextMenu.Item>
+      </ContextMenu.Content>
+    </ContextMenu.Root>
   )
 }
 
@@ -238,24 +259,42 @@ interface BlockItemProps {
   index: number
   selected: boolean
   onSelect: () => void
+  onDelete: () => void
+  onDuplicate: () => void
 }
 
-function BlockItem({ block, index, selected, onSelect }: BlockItemProps) {
+function BlockItem({ block, index, selected, onSelect, onDelete, onDuplicate }: BlockItemProps) {
   const blockInfo = getBlockInfo(block.type)
   const { ref } = useSortable({ id: block.id, index })
 
   return (
-    <div
-      ref={ref}
-      className={cn(
-        '-mx-1.5 flex h-8 cursor-default items-center gap-2 rounded-md pr-1 pl-2 transition-all hover:bg-muted',
-        selected && 'bg-muted',
-      )}
-      onClick={onSelect}
-    >
-      <blockInfo.icon className="size-4 shrink-0 text-muted-foreground" />
-      <span className="flex-1 truncate text-xm">{blockInfo.name}</span>
-    </div>
+    <ContextMenu.Root>
+      <ContextMenu.Trigger
+        render={
+          <div
+            ref={ref}
+            className={cn(
+              '-mx-1.5 flex h-8 cursor-default items-center gap-2 rounded-md pr-1 pl-2 transition-all hover:bg-muted',
+              selected && 'bg-muted',
+            )}
+            onClick={onSelect}
+          />
+        }
+      >
+        <blockInfo.icon className="size-4 shrink-0 text-muted-foreground" />
+        <span className="flex-1 truncate text-xm">{blockInfo.name}</span>
+      </ContextMenu.Trigger>
+      <ContextMenu.Content>
+        <ContextMenu.Item onClick={onDuplicate}>
+          <CopyIcon />
+          Duplicate
+        </ContextMenu.Item>
+        <ContextMenu.Item variant="destructive" onClick={onDelete}>
+          <TrashIcon />
+          Delete
+        </ContextMenu.Item>
+      </ContextMenu.Content>
+    </ContextMenu.Root>
   )
 }
 
@@ -267,11 +306,21 @@ interface PagesPaneProps {
   pages: Page[]
   activePageId: string | null
   onPageSelect: (pageId: string) => void
+  onPageDelete: (pageId: string) => void
+  onPageDuplicate: (pageId: string) => void
   onPagesReorder: (pages: Page[]) => void
   onPageAdd: (page: Page) => void
 }
 
-function PagesPane({ pages, activePageId, onPageSelect, onPagesReorder, onPageAdd }: PagesPaneProps) {
+function PagesPane({
+  pages,
+  activePageId,
+  onPageSelect,
+  onPageDelete,
+  onPageDuplicate,
+  onPagesReorder,
+  onPageAdd,
+}: PagesPaneProps) {
   return (
     <Pane.Root>
       <Pane.Header>
@@ -297,6 +346,8 @@ function PagesPane({ pages, activePageId, onPageSelect, onPagesReorder, onPageAd
                   index={index}
                   selected={activePageId === page.id}
                   onSelect={() => onPageSelect(page.id)}
+                  onDelete={() => onPageDelete(page.id)}
+                  onDuplicate={() => onPageDuplicate(page.id)}
                 />
               ))}
             </div>
@@ -316,11 +367,22 @@ interface BlocksPaneProps {
   blocks: Block[]
   selectedBlockId: string | null
   onBlockSelect: (blockId: string | null) => void
+  onBlockDelete: (blockId: string) => void
+  onBlockDuplicate: (blockId: string) => void
   onBlocksReorder: (pageId: string, blocks: Block[]) => void
   onBlockAdd: (block: Block) => void
 }
 
-function BlocksPane({ pageId, blocks, selectedBlockId, onBlockSelect, onBlocksReorder, onBlockAdd }: BlocksPaneProps) {
+function BlocksPane({
+  pageId,
+  blocks,
+  selectedBlockId,
+  onBlockSelect,
+  onBlockDelete,
+  onBlockDuplicate,
+  onBlocksReorder,
+  onBlockAdd,
+}: BlocksPaneProps) {
   return (
     <Pane.Root>
       <Pane.Header>
@@ -346,6 +408,8 @@ function BlocksPane({ pageId, blocks, selectedBlockId, onBlockSelect, onBlocksRe
                   index={index}
                   selected={selectedBlockId === block.id}
                   onSelect={() => onBlockSelect(block.id)}
+                  onDelete={() => onBlockDelete(block.id)}
+                  onDuplicate={() => onBlockDuplicate(block.id)}
                 />
               ))}
             </div>
@@ -362,7 +426,18 @@ function BlocksPane({ pageId, blocks, selectedBlockId, onBlockSelect, onBlocksRe
 
 export function PagesPanel() {
   const funnel = useFunnel()
-  const { activePageId, selectedBlockId, selectPage, selectBlock, activePage, save } = useFunnelEditor()
+  const {
+    activePageId,
+    selectedBlockId,
+    selectPage,
+    selectBlock,
+    deletePage,
+    deleteBlock,
+    duplicatePage,
+    duplicateBlock,
+    activePage,
+    save,
+  } = useFunnelEditor()
 
   const [pages, setPages] = React.useState(funnel.data.pages)
 
@@ -423,6 +498,8 @@ export function PagesPanel() {
             pages={pages}
             activePageId={activePageId}
             onPageSelect={handlePageSelect}
+            onPageDelete={deletePage}
+            onPageDuplicate={duplicatePage}
             onPagesReorder={handlePagesReorder}
             onPageAdd={handlePageAdd}
           />
@@ -436,6 +513,8 @@ export function PagesPanel() {
                 blocks={activePage.blocks}
                 selectedBlockId={selectedBlockId}
                 onBlockSelect={handleBlockSelect}
+                onBlockDelete={deleteBlock}
+                onBlockDuplicate={duplicateBlock}
                 onBlocksReorder={handleBlocksReorder}
                 onBlockAdd={handleBlockAdd}
               />

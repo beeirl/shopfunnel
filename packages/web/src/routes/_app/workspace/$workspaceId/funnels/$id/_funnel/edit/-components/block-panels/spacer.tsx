@@ -1,8 +1,6 @@
 import { getBlockInfo } from '@/components/block'
-import { Button } from '@/components/ui/button'
 import { Select } from '@/components/ui/select'
 import type { SpacerBlock as SpacerBlockType } from '@shopfunnel/core/funnel/types'
-import { IconTrash as TrashIcon } from '@tabler/icons-react'
 import { Pane } from '../pane'
 import { Panel } from '../panel'
 
@@ -15,11 +13,9 @@ const SIZES = [
 export function SpacerBlockPanel({
   block,
   onBlockUpdate,
-  onBlockRemove,
 }: {
   block: SpacerBlockType
   onBlockUpdate: (block: Partial<SpacerBlockType>) => void
-  onBlockRemove: () => void
 }) {
   const blockInfo = getBlockInfo(block.type)
   return (
@@ -27,9 +23,6 @@ export function SpacerBlockPanel({
       <Pane.Root>
         <Pane.Header>
           <Pane.Title>{blockInfo?.name}</Pane.Title>
-          <Button className="-mr-2" size="icon" variant="ghost" onClick={onBlockRemove}>
-            <TrashIcon />
-          </Button>
         </Pane.Header>
         <Pane.Content>
           <Pane.Group>

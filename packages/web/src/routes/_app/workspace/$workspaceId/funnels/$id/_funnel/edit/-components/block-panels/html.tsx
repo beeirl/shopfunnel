@@ -4,13 +4,7 @@ import { Button } from '@/components/ui/button'
 import { InputGroup } from '@/components/ui/input-group'
 import { Textarea } from '@/components/ui/textarea'
 import type { HtmlBlock as HtmlBlockType } from '@shopfunnel/core/funnel/types'
-import {
-  IconCopy as CopyIcon,
-  IconPhoto as PhotoIcon,
-  IconPlus as PlusIcon,
-  IconTrash as TrashIcon,
-} from '@tabler/icons-react'
-import * as React from 'react'
+import { IconCopy as CopyIcon, IconPhoto as PhotoIcon, IconPlus as PlusIcon } from '@tabler/icons-react'
 import { MediaPicker } from '../media-picker'
 import { Pane } from '../pane'
 import { Panel } from '../panel'
@@ -19,13 +13,11 @@ export function HtmlBlockPanel({
   block,
   onBlockUpdate,
   onImageUpload,
-  onBlockRemove,
   onHtmlChange,
 }: {
   block: HtmlBlockType
   onBlockUpdate: (block: Partial<HtmlBlockType>) => void
   onImageUpload: (file: File) => Promise<string>
-  onBlockRemove: () => void
   onHtmlChange: (html: string) => void
 }) {
   const blockInfo = getBlockInfo(block.type)
@@ -39,9 +31,6 @@ export function HtmlBlockPanel({
       <Pane.Root>
         <Pane.Header>
           <Pane.Title>{blockInfo?.name}</Pane.Title>
-          <Button className="-mr-2" size="icon" variant="ghost" onClick={onBlockRemove}>
-            <TrashIcon />
-          </Button>
         </Pane.Header>
         <Pane.Content>
           <Pane.Group>
@@ -85,32 +74,32 @@ export function HtmlBlockPanel({
                 </MediaPicker.Content>
               </MediaPicker.Root>
             </Pane.GroupHeader>
-              {block.properties.media.map((item, index) => (
-                <InputGroup.Root key={index}>
-                  <InputGroup.Addon>
-                    <InputGroup.Button size="icon-xs" variant="ghost" className="size-6 overflow-hidden">
-                      {item.value ? (
-                        <Image
-                          src={item.value}
-                          alt=""
-                          layout="fixed"
-                          width={24}
-                          height={24}
-                          className="rounded object-cover"
-                        />
-                      ) : (
-                        <PhotoIcon />
-                      )}
-                    </InputGroup.Button>
-                  </InputGroup.Addon>
-                  <InputGroup.Input readOnly value="Image" />
-                  <InputGroup.Addon align="inline-end">
-                    <InputGroup.Button size="icon-xs" variant="ghost" onClick={() => handleCopyUrl(item.value)}>
-                      <CopyIcon />
-                    </InputGroup.Button>
-                  </InputGroup.Addon>
-                </InputGroup.Root>
-              ))}
+            {block.properties.media.map((item, index) => (
+              <InputGroup.Root key={index}>
+                <InputGroup.Addon>
+                  <InputGroup.Button size="icon-xs" variant="ghost" className="size-6 overflow-hidden">
+                    {item.value ? (
+                      <Image
+                        src={item.value}
+                        alt=""
+                        layout="fixed"
+                        width={24}
+                        height={24}
+                        className="rounded object-cover"
+                      />
+                    ) : (
+                      <PhotoIcon />
+                    )}
+                  </InputGroup.Button>
+                </InputGroup.Addon>
+                <InputGroup.Input readOnly value="Image" />
+                <InputGroup.Addon align="inline-end">
+                  <InputGroup.Button size="icon-xs" variant="ghost" onClick={() => handleCopyUrl(item.value)}>
+                    <CopyIcon />
+                  </InputGroup.Button>
+                </InputGroup.Addon>
+              </InputGroup.Root>
+            ))}
           </Pane.Group>
         </Pane.Content>
       </Pane.Root>

@@ -102,31 +102,40 @@ export function FunnelProvider({ children, collection }: FunnelProviderProps) {
     strategy: debounceStrategy({ wait: 3000 }),
   })
 
-  const save = async (input: SaveFunnelInput) => {
-    setIsSaving(true)
-    const tx = collection.update(funnel.id, (draft) => {
-      if (input.pages) draft.pages = input.pages
-      if (input.rules) draft.rules = input.rules
-      if (input.theme) draft.theme = input.theme
-      if (input.title) draft.title = input.title
-      if (input.settings) draft.settings = input.settings
-      draft.published = false
-    })
-    await tx.isPersisted.promise
-    setIsSaving(false)
-  }
+  const save = React.useCallback(
+    async (input: SaveFunnelInput) => {
+      setIsSaving(true)
+      const tx = collection.update(funnel.id, (draft) => {
+        if (input.pages) draft.pages = input.pages
+        if (input.rules) draft.rules = input.rules
+        if (input.theme) draft.theme = input.theme
+        if (input.title) draft.title = input.title
+        if (input.settings) draft.settings = input.settings
+        draft.published = false
+      })
+      await tx.isPersisted.promise
+      setIsSaving(false)
+    },
+    [collection, funnel.id],
+  )
 
-  const maybeSave = async (input: SaveFunnelInput) => {
-    mutate(input)
-  }
+  const maybeSave = React.useCallback(
+    (input: SaveFunnelInput) => {
+      mutate(input)
+    },
+    [mutate],
+  )
 
-  const uploadFile = (file: File) => {
-    const formData = new FormData()
-    formData.append('file', file)
-    formData.append('workspaceId', funnel.workspaceId)
-    formData.append('funnelId', funnel.id)
-    return uploadFunnelFile({ data: formData })
-  }
+  const uploadFile = React.useCallback(
+    (file: File) => {
+      const formData = new FormData()
+      formData.append('file', file)
+      formData.append('workspaceId', funnel.workspaceId)
+      formData.append('funnelId', funnel.id)
+      return uploadFunnelFile({ data: formData })
+    },
+    [funnel.workspaceId, funnel.id],
+  )
 
   const value = React.useMemo<FunnelContextValue>(
     () => ({

@@ -107,12 +107,10 @@ export function MultipleChoiceBlockPanel({
   block,
   onBlockUpdate,
   onImageUpload,
-  onBlockRemove,
 }: {
   block: MultipleChoiceBlockType
   onBlockUpdate: (block: Partial<MultipleChoiceBlockType>) => void
   onImageUpload: (file: File) => Promise<string>
-  onBlockRemove: () => void
 }) {
   const blockInfo = getBlockInfo(block.type)
   const options = block.properties.options
@@ -178,9 +176,6 @@ export function MultipleChoiceBlockPanel({
       <Pane.Root>
         <Pane.Header>
           <Pane.Title>{blockInfo?.name}</Pane.Title>
-          <Button className="-mr-2" size="icon" variant="ghost" onClick={onBlockRemove}>
-            <TrashIcon />
-          </Button>
         </Pane.Header>
         <Pane.Content>
           <Pane.Group>

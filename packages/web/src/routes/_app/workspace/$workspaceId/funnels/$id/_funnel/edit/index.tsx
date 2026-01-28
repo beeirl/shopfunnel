@@ -1,6 +1,5 @@
 import { createFileRoute, redirect } from '@tanstack/react-router'
 import * as React from 'react'
-import { useFunnel } from '../-context'
 import { getSessionQueryOptions } from '../../../../-common'
 import { BlockPanel } from './-components/block-panel'
 import { Canvas } from './-components/canvas'
@@ -29,9 +28,18 @@ function RouteComponent() {
 }
 
 function FunnelEditorContent() {
-  const { data: funnel } = useFunnel()
-  const { showThemePanel, showLogicPanel, selectedBlock, selectedPage, selectedBlockId, selectedPageId, save } =
-    useFunnelEditor()
+  const {
+    showThemePanel,
+    showLogicPanel,
+    selectedBlock,
+    selectedPage,
+    selectedBlockId,
+    selectedPageId,
+    deletePage,
+    deleteBlock,
+    duplicatePage,
+    duplicateBlock,
+  } = useFunnelEditor()
 
   // Handle keyboard shortcuts for delete
   React.useEffect(() => {
@@ -43,35 +51,26 @@ function FunnelEditorContent() {
       if (event.key === 'Backspace' || event.key === 'Delete') {
         if (selectedBlockId) {
           event.preventDefault()
-          const updatedPages = funnel.pages.map((page) => ({
-            ...page,
-            blocks: page.blocks.filter((block) => block.id !== selectedBlockId),
-          }))
-          save({ pages: updatedPages })
+          deleteBlock(selectedBlockId)
         } else if (selectedPageId) {
           event.preventDefault()
-          const updatedPages = funnel.pages.filter((page) => page.id !== selectedPageId)
-          save({ pages: updatedPages })
+          deletePage(selectedPageId)
+        }
+      }
+
+      if ((event.metaKey || event.ctrlKey) && event.key === 'd') {
+        event.preventDefault()
+        if (selectedBlockId) {
+          duplicateBlock(selectedBlockId)
+        } else if (selectedPageId) {
+          duplicatePage(selectedPageId)
         }
       }
     }
 
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [selectedBlockId, selectedPageId, funnel.pages, save])
-
-  const handleRemove = () => {
-    if (selectedBlockId) {
-      const updatedPages = funnel.pages.map((page) => ({
-        ...page,
-        blocks: page.blocks.filter((block) => block.id !== selectedBlockId),
-      }))
-      save({ pages: updatedPages })
-    } else if (selectedPageId) {
-      const updatedPages = funnel.pages.filter((page) => page.id !== selectedPageId)
-      save({ pages: updatedPages })
-    }
-  }
+  }, [selectedBlockId, selectedPageId, deletePage, deleteBlock, duplicatePage, duplicateBlock])
 
   return (
     <div className="flex h-[calc(100vh-var(--dashboard-header-height))]">
@@ -83,9 +82,9 @@ function FunnelEditorContent() {
       ) : showThemePanel ? (
         <ThemePanel />
       ) : selectedBlock ? (
-        <BlockPanel onRemove={handleRemove} />
+        <BlockPanel />
       ) : selectedPage ? (
-        <PagePanel onRemove={handleRemove} />
+        <PagePanel />
       ) : null}
     </div>
   )

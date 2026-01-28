@@ -61,11 +61,9 @@ function OptionItem({
 export function DropdownBlockPanel({
   block,
   onBlockUpdate,
-  onBlockRemove,
 }: {
   block: DropdownBlockType
   onBlockUpdate: (block: Partial<DropdownBlockType>) => void
-  onBlockRemove: () => void
 }) {
   const blockInfo = getBlockInfo(block.type)
   const options = block.properties.options
@@ -131,9 +129,6 @@ export function DropdownBlockPanel({
       <Pane.Root>
         <Pane.Header>
           <Pane.Title>{blockInfo?.name}</Pane.Title>
-          <Button className="-mr-2" size="icon" variant="ghost" onClick={onBlockRemove}>
-            <TrashIcon />
-          </Button>
         </Pane.Header>
         <Pane.Content>
           <Pane.Group>

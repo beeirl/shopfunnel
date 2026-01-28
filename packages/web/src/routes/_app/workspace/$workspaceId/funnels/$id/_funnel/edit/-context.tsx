@@ -1,6 +1,7 @@
 import { AlertDialog } from '@/components/ui/alert-dialog'
 import type { Block, ComparisonCondition, Condition, Page, Rule, RuleAction } from '@shopfunnel/core/funnel/types'
 import * as React from 'react'
+import { ulid } from 'ulid'
 import { SaveFunnelInput, useFunnel } from '../-context'
 
 function checkBrokenRules(pages: Page[], rules: Rule[]): boolean {
@@ -84,6 +85,23 @@ function cleanBrokenRules(pages: Page[], rules: Rule[]): Rule[] {
     .filter((rule) => rule.actions.length > 0)
 }
 
+function cloneBlock(block: Block): Block {
+  const cloned = { ...block, id: ulid() }
+  if (
+    (cloned.type === 'multiple_choice' || cloned.type === 'picture_choice' || cloned.type === 'dropdown') &&
+    'options' in cloned.properties
+  ) {
+    return {
+      ...cloned,
+      properties: {
+        ...cloned.properties,
+        options: cloned.properties.options.map((option) => ({ ...option, id: ulid() })),
+      },
+    } as Block
+  }
+  return cloned
+}
+
 interface FunnelEditorContextValue {
   activePageId: string | null
 
@@ -101,6 +119,10 @@ interface FunnelEditorContextValue {
   save: (input: SaveFunnelInput, onCancel?: () => void) => void
   selectPage: (pageId: string | null, source?: 'panel' | 'canvas') => void
   selectBlock: (blockId: string | null, pageId: string | null, source?: 'panel' | 'canvas') => void
+  deletePage: (pageId: string) => void
+  deleteBlock: (blockId: string) => void
+  duplicatePage: (pageId: string) => void
+  duplicateBlock: (blockId: string) => void
   showTheme: () => void
   showLogic: (pageId: string) => void
   closeLogic: () => void
@@ -190,6 +212,62 @@ export function FunnelEditorProvider({ children }: { children: React.ReactNode }
     setShowLogicPanel(false)
   }, [])
 
+  const deletePage = (pageId: string) => {
+    const updatedPages = funnel.data.pages.filter((page) => page.id !== pageId)
+    maybeSave({ pages: updatedPages })
+    setSelectedPageId(null)
+    setSelectedBlockId(null)
+    setShowThemePanel(false)
+    setShowLogicPanel(false)
+  }
+
+  const deleteBlock = (blockId: string) => {
+    const updatedPages = funnel.data.pages.map((page) => ({
+      ...page,
+      blocks: page.blocks.filter((block) => block.id !== blockId),
+    }))
+    maybeSave({ pages: updatedPages })
+    setSelectedBlockId(null)
+    setSelectedPageId(null)
+    setShowThemePanel(false)
+    setShowLogicPanel(false)
+  }
+
+  const duplicatePage = (pageId: string) => {
+    const pageIndex = funnel.data.pages.findIndex((p) => p.id === pageId)
+    if (pageIndex === -1) return
+    const page = funnel.data.pages[pageIndex]!
+
+    const clonedPage: Page = {
+      ...page,
+      id: ulid(),
+      name: `${page.name} copy`,
+      blocks: page.blocks.map(cloneBlock),
+    }
+
+    const updatedPages = [...funnel.data.pages]
+    updatedPages.splice(pageIndex + 1, 0, clonedPage)
+    maybeSave({ pages: updatedPages })
+    selectPage(clonedPage.id, 'panel')
+  }
+
+  const duplicateBlock = (blockId: string) => {
+    if (!activePageId) return
+    const page = funnel.data.pages.find((p) => p.id === activePageId)
+    if (!page) return
+
+    const blockIndex = page.blocks.findIndex((b) => b.id === blockId)
+    if (blockIndex === -1) return
+
+    const clonedBlock = cloneBlock(page.blocks[blockIndex]!)
+    const updatedBlocks = [...page.blocks]
+    updatedBlocks.splice(blockIndex + 1, 0, clonedBlock)
+
+    const updatedPages = funnel.data.pages.map((p) => (p.id === activePageId ? { ...p, blocks: updatedBlocks } : p))
+    maybeSave({ pages: updatedPages })
+    selectBlock(clonedBlock.id, activePageId, 'panel')
+  }
+
   const activePage = funnel.data.pages.find((p) => p.id === activePageId) ?? null
   const selectedPage = funnel.data.pages.find((p) => p.id === selectedPageId) ?? null
   const selectedBlock = funnel.data.pages.flatMap((p) => p.blocks).find((b) => b.id === selectedBlockId) ?? null
@@ -208,6 +286,10 @@ export function FunnelEditorProvider({ children }: { children: React.ReactNode }
       save: maybeSave,
       selectPage,
       selectBlock,
+      deletePage,
+      deleteBlock,
+      duplicatePage,
+      duplicateBlock,
       showTheme,
       showLogic,
       closeLogic,
@@ -225,6 +307,10 @@ export function FunnelEditorProvider({ children }: { children: React.ReactNode }
       maybeSave,
       selectPage,
       selectBlock,
+      deletePage,
+      deleteBlock,
+      duplicatePage,
+      duplicateBlock,
       showTheme,
       showLogic,
       closeLogic,

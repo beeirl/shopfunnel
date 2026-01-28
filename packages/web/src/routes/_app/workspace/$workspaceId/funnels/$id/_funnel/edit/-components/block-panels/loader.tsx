@@ -21,11 +21,9 @@ const STEP_VARIANT_OPTIONS: { value: StepsVariant; label: string }[] = [
 export function LoaderBlockPanel({
   block,
   onBlockUpdate,
-  onBlockRemove,
 }: {
   block: LoaderBlockType
   onBlockUpdate: (block: Partial<LoaderBlockType>) => void
-  onBlockRemove: () => void
 }) {
   const blockInfo = getBlockInfo(block.type)
   const steps = block.properties.steps
@@ -80,9 +78,6 @@ export function LoaderBlockPanel({
       <Pane.Root>
         <Pane.Header>
           <Pane.Title>{blockInfo?.name}</Pane.Title>
-          <Button className="-mr-2" size="icon" variant="ghost" onClick={onBlockRemove}>
-            <TrashIcon />
-          </Button>
         </Pane.Header>
         <Pane.Content>
           <Pane.Group>

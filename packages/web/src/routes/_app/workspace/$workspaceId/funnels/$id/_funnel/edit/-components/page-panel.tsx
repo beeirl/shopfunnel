@@ -1,8 +1,6 @@
 import { shouldAutoAdvance } from '@/components/funnel'
-import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { INPUT_BLOCKS, type Block, type Page } from '@shopfunnel/core/funnel/types'
-import { IconTrash as TrashIcon } from '@tabler/icons-react'
 import { getBlockName, getDefaultPageName } from '../-common'
 import { useFunnelEditor } from '../-context'
 import { useFunnel } from '../../-context'
@@ -13,7 +11,7 @@ import { Panel } from './panel'
 // PagePanel
 // =============================================================================
 
-export function PagePanel({ onRemove }: { onRemove: () => void }) {
+export function PagePanel() {
   const { data: funnel, maybeSave } = useFunnel()
   const { selectedPage } = useFunnelEditor()
 
@@ -45,9 +43,6 @@ export function PagePanel({ onRemove }: { onRemove: () => void }) {
       <Pane.Root>
         <Pane.Header>
           <Pane.Title>Page</Pane.Title>
-          <Button className="-mr-2" size="icon" variant="ghost" onClick={onRemove}>
-            <TrashIcon />
-          </Button>
         </Pane.Header>
         <Pane.Content>
           <Pane.Group>
