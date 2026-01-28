@@ -371,6 +371,19 @@ export namespace Funnel {
     })
   })
 
+  export const remove = fn(Identifier.schema('funnel'), async (id) => {
+    await Database.use(async (tx) => {
+      await tx
+        .update(FunnelTable)
+        .set({
+          archivedAt: sql`NOW(3)`,
+          publishedVersion: null,
+          publishedAt: null,
+        })
+        .where(and(eq(FunnelTable.workspaceId, Actor.workspace()), eq(FunnelTable.id, id)))
+    })
+  })
+
   function serialize(row: { funnel: typeof FunnelTable.$inferSelect; domain: typeof DomainTable.$inferSelect | null }) {
     return {
       id: row.funnel.id,

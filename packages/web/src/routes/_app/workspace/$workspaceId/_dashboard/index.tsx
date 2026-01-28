@@ -1,4 +1,5 @@
 import { DataGrid } from '@/components/data-grid'
+import { AlertDialog } from '@/components/ui/alert-dialog'
 import { Button } from '@/components/ui/button'
 import { Dialog } from '@/components/ui/dialog'
 import { Empty } from '@/components/ui/empty'
@@ -14,6 +15,7 @@ import {
   IconFileText as FileTextIcon,
   IconLoader2 as LoaderIcon,
   IconShare3 as ShareIcon,
+  IconTrash as TrashIcon,
 } from '@tabler/icons-react'
 import { mutationOptions, queryOptions, useMutation, useQueryClient, useSuspenseQuery } from '@tanstack/react-query'
 import { createFileRoute, Link } from '@tanstack/react-router'
@@ -58,6 +60,24 @@ const duplicateFunnel = createServerFn({ method: 'POST' })
   .handler(({ data }) => {
     return withActor(() => Funnel.duplicate({ id: data.id, title: data.title }), data.workspaceId)
   })
+
+const removeFunnel = createServerFn({ method: 'POST' })
+  .inputValidator(
+    z.object({
+      workspaceId: Identifier.schema('workspace'),
+      id: Identifier.schema('funnel'),
+    }),
+  )
+  .handler(({ data }) => {
+    return withActor(() => Funnel.remove(data.id), data.workspaceId)
+  })
+
+const removeFunnelMutationOptions = (workspaceId: string) =>
+  mutationOptions({
+    mutationFn: (id: string) => removeFunnel({ data: { workspaceId, id } }),
+  })
+
+const deleteDialogHandle = AlertDialog.createHandle<{ id: string; title: string }>()
 
 export const Route = createFileRoute('/_app/workspace/$workspaceId/_dashboard/')({
   staticData: { title: 'Funnels' },
@@ -147,8 +167,10 @@ function RouteComponent() {
   const isAdmin = sessionQuery.data.isAdmin
 
   const createFunnelMutation = useMutation(createFunnelMutationOptions(params.workspaceId))
+  const removeFunnelMutation = useMutation(removeFunnelMutationOptions(params.workspaceId))
 
   const [isCreating, setIsCreating] = React.useState(false)
+  const [isRemoving, setIsRemoving] = React.useState(false)
   const [duplicateDialogOpen, setDuplicateDialogOpen] = React.useState(false)
   const [selectedFunnel, setSelectedFunnel] = React.useState<{ id: string; title: string } | null>(null)
 
@@ -270,6 +292,18 @@ function RouteComponent() {
                         Duplicate
                       </Menu.Item>
                     )}
+                    {isAdmin && (
+                      <Menu.Item
+                        variant="destructive"
+                        onClick={(e) => {
+                          e.preventDefault()
+                          deleteDialogHandle.openWithPayload({ id: funnel.id, title: funnel.title })
+                        }}
+                      >
+                        <TrashIcon />
+                        Delete
+                      </Menu.Item>
+                    )}
                   </Menu.Content>
                 </Menu.Root>
               </DataGrid.Cell>
@@ -284,6 +318,37 @@ function RouteComponent() {
         funnel={selectedFunnel}
         onSuccess={() => queryClient.invalidateQueries(listFunnelsQueryOptions(params.workspaceId))}
       />
+
+      <AlertDialog.Root handle={deleteDialogHandle}>
+        {({ payload }) => (
+          <AlertDialog.Content>
+            <AlertDialog.Header>
+              <AlertDialog.Title>Delete funnel</AlertDialog.Title>
+              <AlertDialog.Description>
+                Are you sure you want to delete &ldquo;{payload?.title}&rdquo;?
+              </AlertDialog.Description>
+            </AlertDialog.Header>
+            <AlertDialog.Footer>
+              <AlertDialog.Cancel disabled={isRemoving}>Cancel</AlertDialog.Cancel>
+              <Button
+                variant="destructive"
+                disabled={isRemoving}
+                onClick={async () => {
+                  if (!payload) return
+                  setIsRemoving(true)
+                  await removeFunnelMutation.mutateAsync(payload.id)
+                  await queryClient.invalidateQueries(listFunnelsQueryOptions(params.workspaceId))
+                  setIsRemoving(false)
+                  deleteDialogHandle.close()
+                }}
+              >
+                {isRemoving && <LoaderIcon className="animate-spin" />}
+                Delete
+              </Button>
+            </AlertDialog.Footer>
+          </AlertDialog.Content>
+        )}
+      </AlertDialog.Root>
     </div>
   )
 }
