@@ -15,6 +15,9 @@ import { useEffect, useRef, useState } from 'react'
 import { ulid } from 'ulid'
 import { z } from 'zod'
 
+declare const fbq: ((command: 'trackCustom', eventName: string) => void) | undefined
+declare const _upstack: ((command: 'track', eventName: string) => void) | undefined
+
 // prettier-ignore
 const SCRIPTS = {
   metaPixel: (metaPixelId: string) => `!function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window,document,'script','https://connect.facebook.net/en_US/fbevents.js');fbq('init','${metaPixelId}');fbq('track','PageView');`
@@ -209,6 +212,14 @@ function RouteComponent() {
     if (!success) fetch('/api/event', { method: 'POST', body: blob, keepalive: true })
   }
 
+  const trackMetaPixelEvent = (eventName: string) => {
+    if (typeof _upstack !== 'undefined') {
+      _upstack('track', eventName)
+    } else if (typeof fbq !== 'undefined') {
+      fbq('trackCustom', eventName)
+    }
+  }
+
   const handlePageChange: FunnelProps['onPageChange'] = (page) => {
     currentPageViewedAtRef.current = Date.now()
     prevPageRef.current = currentPage
@@ -219,6 +230,7 @@ function RouteComponent() {
     if (!funnelStartedRef.current) {
       funnelStartedRef.current = true
       trackEvent('funnel_started')
+      trackMetaPixelEvent('FunnelStarted')
     }
 
     const questionsByBlockId = new Map(questions.map((q) => [q.blockId, q]))
@@ -264,6 +276,7 @@ function RouteComponent() {
     await completeSubmission({ data: { sessionId } })
 
     trackEvent('funnel_completed')
+    trackMetaPixelEvent('FunnelCompleted')
 
     funnelEnteredRef.current = false
     funnelStartedRef.current = false
