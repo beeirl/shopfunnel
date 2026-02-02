@@ -518,7 +518,7 @@ function RouteComponent() {
     <div className="flex h-full w-full max-w-4xl flex-col gap-4">
       <Heading.Root>
         <Heading.Content>
-          <Heading.Title>Insights</Heading.Title>
+          <Heading.Title>Dashboard</Heading.Title>
         </Heading.Content>
         <Heading.Actions>
           <Select.Root items={DATE_FILTER_OPTIONS} value={range} onValueChange={handleRangeChange}>
