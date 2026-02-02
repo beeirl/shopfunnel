@@ -273,7 +273,7 @@ function RouteComponent() {
                 </Tooltip.Root>
               </DataGrid.Cell>
 
-              <DataGrid.Cell className="relative z-10 shrink-0 justify-end gap-1">
+              <DataGrid.Cell className="relative shrink-0 justify-end gap-1">
                 <Menu.Root>
                   <Menu.Trigger render={<Button size="icon-sm" variant="ghost" />} onClick={(e) => e.preventDefault()}>
                     <DotsIcon className="text-muted-foreground" />

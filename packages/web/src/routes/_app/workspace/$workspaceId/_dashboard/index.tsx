@@ -224,7 +224,7 @@ const DATE_FILTER_OPTIONS: DateFilterOption[] = [
 ]
 
 export const Route = createFileRoute('/_app/workspace/$workspaceId/_dashboard/')({
-  staticData: { title: 'Home' },
+  staticData: { title: 'Dashboard' },
   validateSearch: (search) =>
     z
       .object({

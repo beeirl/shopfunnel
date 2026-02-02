@@ -9,8 +9,8 @@ import { Identifier } from '@shopfunnel/core/identifier'
 import { User } from '@shopfunnel/core/user/index'
 import {
   IconBlocks as BlocksIcon,
+  IconDashboard as DashboardIcon,
   IconFilter2 as FilterIcon,
-  IconSmartHome as HomeIcon,
   IconLogout as LogoutIcon,
   IconSelector as SelectorIcon,
   IconWorld as WorldIcon,
@@ -59,9 +59,9 @@ export const Route = createFileRoute('/_app/workspace/$workspaceId/_dashboard')(
 
 const navItems = [
   {
-    title: 'Home',
+    title: 'Dashboard',
     to: '/workspace/$workspaceId' as const,
-    icon: HomeIcon,
+    icon: DashboardIcon,
     exact: true,
   },
   {
