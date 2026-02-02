@@ -501,7 +501,7 @@ function RouteComponent() {
         }
       })
       .filter((funnel) => funnel.current !== null)
-      .sort((a, b) => a.title.localeCompare(b.title))
+      .sort((a, b) => (b.current?.views ?? 0) - (a.current?.views ?? 0) || a.title.localeCompare(b.title))
   }, [funnels, current, previousByFunnel])
 
   const hasData = current.length > 0
