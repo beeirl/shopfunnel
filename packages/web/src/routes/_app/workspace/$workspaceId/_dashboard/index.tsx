@@ -699,9 +699,10 @@ function RouteComponent() {
                       <Table.Row key={funnel.id} className="hover:bg-transparent">
                         <Table.Cell className="truncate font-medium">
                           <Link
-                            to="/workspace/$workspaceId/funnels/$id/insights"
-                            params={{ workspaceId: params.workspaceId, id: funnel.id }}
                             className="hover:underline"
+                            from={Route.fullPath}
+                            to="funnels/$id/insights"
+                            params={{ id: funnel.id }}
                           >
                             {funnel.title}
                           </Link>
