@@ -7,6 +7,14 @@ import { storage, STORAGE_URL } from './storage'
 
 const SESSION_SECRET = new sst.Secret('SESSION_SECRET')
 
+let logProcessor: sst.cloudflare.Worker | undefined
+if ($app.stage === 'production') {
+  logProcessor = new sst.cloudflare.Worker('LogProcessor', {
+    handler: 'packages/web/src/log-processor.ts',
+    link: [secret.HONEYCOMB_API_KEY],
+  })
+}
+
 export const web = new sst.cloudflare.x.SolidStart('Web', {
   path: 'packages/web',
   domain,
@@ -39,6 +47,7 @@ export const web = new sst.cloudflare.x.SolidStart('Web', {
       transform: {
         worker: {
           placement: { mode: 'smart' },
+          tailConsumers: logProcessor ? [{ service: logProcessor.nodes.worker.scriptName }] : [],
         },
       },
     },
