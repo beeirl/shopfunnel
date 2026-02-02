@@ -446,7 +446,7 @@ function RouteComponent() {
       completions: totalCompletions,
       orders: 0, // No orders data yet
       start_rate: totalViews > 0 ? Math.min((totalStarts / totalViews) * 100, 100) : 0,
-      completion_rate: totalStarts > 0 ? Math.min((totalCompletions / totalStarts) * 100, 100) : 0,
+      completion_rate: totalViews > 0 ? Math.min((totalCompletions / totalViews) * 100, 100) : 0,
     }
   }, [current])
 
@@ -461,7 +461,7 @@ function RouteComponent() {
       completions: totalCompletions,
       orders: 0,
       start_rate: totalViews > 0 ? Math.min((totalStarts / totalViews) * 100, 100) : 0,
-      completion_rate: totalStarts > 0 ? Math.min((totalCompletions / totalStarts) * 100, 100) : 0,
+      completion_rate: totalViews > 0 ? Math.min((totalCompletions / totalViews) * 100, 100) : 0,
     }
   }, [previous])
 
@@ -476,10 +476,10 @@ function RouteComponent() {
 
   const completionRateTimeseries = React.useMemo(() => {
     return timeseries
-      .filter((point) => point.starts > 0)
+      .filter((point) => point.views > 0)
       .map((point) => ({
         date: point.date,
-        value: Math.min((point.completions / point.starts) * 100, 100),
+        value: Math.min((point.completions / point.views) * 100, 100),
       }))
   }, [timeseries])
 

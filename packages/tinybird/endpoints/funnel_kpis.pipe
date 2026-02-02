@@ -31,7 +31,7 @@ SQL >
         total_completions,
         total_orders,
         if(total_views > 0, round(total_starts / total_views * 100, 1), 0) AS start_rate,
-        if(total_starts > 0, round(total_completions / total_starts * 100, 1), 0) AS completion_rate,
+        if(total_views > 0, round(total_completions / total_views * 100, 1), 0) AS completion_rate,
         if(total_views > 0, round(total_orders / total_views * 100, 1), 0) AS conversion_rate
     FROM kpis_node
 

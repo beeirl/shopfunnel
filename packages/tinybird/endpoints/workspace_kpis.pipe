@@ -30,7 +30,7 @@ SQL >
         starts,
         completions,
         if(views > 0, round(starts / views * 100, 1), 0) AS start_rate,
-        if(starts > 0, round(completions / starts * 100, 1), 0) AS completion_rate
+        if(views > 0, round(completions / views * 100, 1), 0) AS completion_rate
     FROM workspace_kpis_node
 
 TYPE endpoint
