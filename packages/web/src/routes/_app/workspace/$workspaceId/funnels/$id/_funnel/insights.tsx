@@ -53,10 +53,10 @@ const getInsights = createServerFn()
     if (data.filter.dateTo) params.set('date_to', data.filter.dateTo)
 
     const [kpisResponse, pagesResponse] = await Promise.all([
-      fetch(`https://api.us-east.aws.tinybird.co/v0/pipes/kpis.json?${params}`, {
+      fetch(`https://api.us-east.aws.tinybird.co/v0/pipes/funnel_kpis.json?${params}`, {
         headers: { Authorization: `Bearer ${token}` },
       }),
-      fetch(`https://api.us-east.aws.tinybird.co/v0/pipes/pages.json?${params}`, {
+      fetch(`https://api.us-east.aws.tinybird.co/v0/pipes/funnel_pages.json?${params}`, {
         headers: { Authorization: `Bearer ${token}` },
       }),
     ])

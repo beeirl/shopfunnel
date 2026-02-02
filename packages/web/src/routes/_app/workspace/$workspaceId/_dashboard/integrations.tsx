@@ -96,7 +96,7 @@ function IntegrationsRoute() {
 
   if (!integration) {
     return (
-      <div className="flex h-full w-full flex-col gap-4">
+      <div className="flex h-full w-full max-w-6xl flex-col gap-4">
         <Heading.Root>
           <Heading.Content>
             <Heading.Title>Integrations</Heading.Title>
@@ -130,7 +130,7 @@ function IntegrationsRoute() {
   }
 
   return (
-    <div className="flex h-full w-full flex-col gap-4">
+    <div className="flex h-full w-full max-w-6xl flex-col gap-4">
       <Heading.Root>
         <Heading.Content>
           <Heading.Title>Integrations</Heading.Title>

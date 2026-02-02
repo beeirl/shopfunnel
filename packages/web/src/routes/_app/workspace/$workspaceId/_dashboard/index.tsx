@@ -1,30 +1,36 @@
-import { DataGrid } from '@/components/data-grid'
-import { AlertDialog } from '@/components/ui/alert-dialog'
-import { Button } from '@/components/ui/button'
-import { Dialog } from '@/components/ui/dialog'
-import { Empty } from '@/components/ui/empty'
-import { Input } from '@/components/ui/input'
-import { Menu } from '@/components/ui/menu'
-import { Tooltip } from '@/components/ui/tooltip'
+import { Card } from '@/components/ui/card'
+import { Chart, ChartConfig } from '@/components/ui/chart'
+import { Select } from '@/components/ui/select'
+import { Table } from '@/components/ui/table'
 import { withActor } from '@/context/auth.withActor'
+import { cn } from '@/lib/utils'
 import { Funnel } from '@shopfunnel/core/funnel/index'
 import { Identifier } from '@shopfunnel/core/identifier'
-import {
-  IconCopy as CopyIcon,
-  IconDots as DotsIcon,
-  IconFileText as FileTextIcon,
-  IconLoader2 as LoaderIcon,
-  IconShare3 as ShareIcon,
-  IconTrash as TrashIcon,
-} from '@tabler/icons-react'
-import { mutationOptions, queryOptions, useMutation, useQueryClient, useSuspenseQuery } from '@tanstack/react-query'
+import { Resource } from '@shopfunnel/resource'
+import { queryOptions, useSuspenseQuery } from '@tanstack/react-query'
 import { createFileRoute, Link } from '@tanstack/react-router'
 import { createServerFn } from '@tanstack/react-start'
-import { DateTime } from 'luxon'
 import * as React from 'react'
+import { CartesianGrid, Line, LineChart, XAxis, YAxis } from 'recharts'
 import { z } from 'zod'
-import { getSessionQueryOptions } from '../-common'
 import { Heading } from './-components/heading'
+
+type FunnelKpi = {
+  funnel_id: string
+  views: number
+  starts: number
+  completions: number
+  start_rate: number
+  completion_rate: number
+}
+
+type TimeseriesPoint = {
+  date: string
+  views: number
+  starts: number
+  completions: number
+  orders: number
+}
 
 const listFunnels = createServerFn()
   .inputValidator(Identifier.schema('workspace'))
@@ -38,317 +44,634 @@ const listFunnelsQueryOptions = (workspaceId: string) =>
     queryFn: () => listFunnels({ data: workspaceId }),
   })
 
-const createFunnel = createServerFn({ method: 'POST' })
-  .inputValidator(Identifier.schema('workspace'))
-  .handler(({ data: workspaceId }) => {
-    return withActor(() => Funnel.create(), workspaceId)
-  })
-
-const createFunnelMutationOptions = (workspaceId: string) =>
-  mutationOptions({
-    mutationFn: () => createFunnel({ data: workspaceId }),
-  })
-
-const duplicateFunnel = createServerFn({ method: 'POST' })
+const getWorkspaceAnalytics = createServerFn()
   .inputValidator(
     z.object({
-      workspaceId: Identifier.schema('workspace'),
-      id: Identifier.schema('funnel'),
-      title: z.string().optional(),
+      workspaceId: z.string(),
+      filter: z.object({
+        dateFrom: z.string(),
+        dateTo: z.string(),
+      }),
+      previousFilter: z.object({
+        dateFrom: z.string(),
+        dateTo: z.string(),
+      }),
     }),
   )
-  .handler(({ data }) => {
-    return withActor(() => Funnel.duplicate({ id: data.id, title: data.title }), data.workspaceId)
+  .handler(async ({ data }) => {
+    const token = Resource.TINYBIRD_TOKEN.value
+
+    const currentParams = new URLSearchParams({
+      workspace_id: data.workspaceId,
+      date_from: data.filter.dateFrom,
+      date_to: data.filter.dateTo,
+    })
+
+    const previousParams = new URLSearchParams({
+      workspace_id: data.workspaceId,
+      date_from: data.previousFilter.dateFrom,
+      date_to: data.previousFilter.dateTo,
+    })
+
+    const [currentKpisResponse, previousKpisResponse, timeseriesResponse] = await Promise.all([
+      fetch(`https://api.us-east.aws.tinybird.co/v0/pipes/workspace_kpis.json?${currentParams}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      }),
+      fetch(`https://api.us-east.aws.tinybird.co/v0/pipes/workspace_kpis.json?${previousParams}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      }),
+      fetch(`https://api.us-east.aws.tinybird.co/v0/pipes/workspace_kpis_timeseries.json?${currentParams}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      }),
+    ])
+
+    const currentKpisJson = (await currentKpisResponse.json()) as { data: FunnelKpi[] }
+    const previousKpisJson = (await previousKpisResponse.json()) as { data: FunnelKpi[] }
+    const timeseriesJson = (await timeseriesResponse.json()) as { data: TimeseriesPoint[] }
+
+    return {
+      current: currentKpisJson.data ?? [],
+      previous: previousKpisJson.data ?? [],
+      timeseries: timeseriesJson.data ?? [],
+    }
   })
 
-const removeFunnel = createServerFn({ method: 'POST' })
-  .inputValidator(
-    z.object({
-      workspaceId: Identifier.schema('workspace'),
-      id: Identifier.schema('funnel'),
-    }),
-  )
-  .handler(({ data }) => {
-    return withActor(() => Funnel.remove(data.id), data.workspaceId)
+const getWorkspaceAnalyticsQueryOptions = (
+  workspaceId: string,
+  filter: { dateFrom: string; dateTo: string },
+  previousFilter: { dateFrom: string; dateTo: string },
+) =>
+  queryOptions({
+    queryKey: ['workspace-analytics', workspaceId, filter.dateFrom, filter.dateTo],
+    queryFn: () => getWorkspaceAnalytics({ data: { workspaceId, filter, previousFilter } }),
   })
 
-const removeFunnelMutationOptions = (workspaceId: string) =>
-  mutationOptions({
-    mutationFn: (id: string) => removeFunnel({ data: { workspaceId, id } }),
-  })
+function formatLocalDate(date: Date): string {
+  const year = date.getFullYear()
+  const month = String(date.getMonth() + 1).padStart(2, '0')
+  const day = String(date.getDate()).padStart(2, '0')
+  return `${year}-${month}-${day}`
+}
 
-const deleteDialogHandle = AlertDialog.createHandle<{ id: string; title: string }>()
+function formatNumber(value: number, compact = false): string {
+  if (compact && value >= 1000) {
+    return new Intl.NumberFormat('en-US', { notation: 'compact', maximumFractionDigits: 1 }).format(value)
+  }
+  return value.toLocaleString('en-US')
+}
+
+function formatPercentage(value: number): string {
+  const formatted = value.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 1 })
+  return `${formatted}%`
+}
+
+function formatDelta(current: number, previous: number): { value: string; isPositive: boolean; isZero: boolean } {
+  if (previous === 0) {
+    return { value: '0%', isPositive: true, isZero: true }
+  }
+  const delta = ((current - previous) / previous) * 100
+  const isZero = Math.abs(delta) < 0.1
+  return {
+    value: `${delta >= 0 ? '+' : ''}${delta.toFixed(1)}%`,
+    isPositive: delta >= 0,
+    isZero,
+  }
+}
+
+function formatChartDate(dateStr: string): string {
+  const date = new Date(dateStr)
+  return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+}
+
+type DateFilterOption = {
+  label: string
+  value: 'today' | 'yesterday' | '7d' | '30d'
+  range: () => { dateFrom: string; dateTo: string }
+  previousRange: () => { dateFrom: string; dateTo: string }
+}
+
+const DATE_FILTER_OPTIONS: DateFilterOption[] = [
+  {
+    label: 'Today',
+    value: 'today',
+    range: () => {
+      const today = formatLocalDate(new Date())
+      return { dateFrom: today, dateTo: today }
+    },
+    previousRange: () => {
+      const yesterday = new Date()
+      yesterday.setDate(yesterday.getDate() - 1)
+      const str = formatLocalDate(yesterday)
+      return { dateFrom: str, dateTo: str }
+    },
+  },
+  {
+    label: 'Yesterday',
+    value: 'yesterday',
+    range: () => {
+      const yesterday = new Date()
+      yesterday.setDate(yesterday.getDate() - 1)
+      const str = formatLocalDate(yesterday)
+      return { dateFrom: str, dateTo: str }
+    },
+    previousRange: () => {
+      const twoDaysAgo = new Date()
+      twoDaysAgo.setDate(twoDaysAgo.getDate() - 2)
+      const str = formatLocalDate(twoDaysAgo)
+      return { dateFrom: str, dateTo: str }
+    },
+  },
+  {
+    label: 'Last 7 days',
+    value: '7d',
+    range: () => {
+      const today = new Date()
+      const weekAgo = new Date()
+      weekAgo.setDate(weekAgo.getDate() - 6)
+      return { dateFrom: formatLocalDate(weekAgo), dateTo: formatLocalDate(today) }
+    },
+    previousRange: () => {
+      const weekAgo = new Date()
+      weekAgo.setDate(weekAgo.getDate() - 7)
+      const twoWeeksAgo = new Date()
+      twoWeeksAgo.setDate(twoWeeksAgo.getDate() - 13)
+      return { dateFrom: formatLocalDate(twoWeeksAgo), dateTo: formatLocalDate(weekAgo) }
+    },
+  },
+  {
+    label: 'Last 30 days',
+    value: '30d',
+    range: () => {
+      const today = new Date()
+      const monthAgo = new Date()
+      monthAgo.setDate(monthAgo.getDate() - 29)
+      return { dateFrom: formatLocalDate(monthAgo), dateTo: formatLocalDate(today) }
+    },
+    previousRange: () => {
+      const monthAgo = new Date()
+      monthAgo.setDate(monthAgo.getDate() - 30)
+      const twoMonthsAgo = new Date()
+      twoMonthsAgo.setDate(twoMonthsAgo.getDate() - 59)
+      return { dateFrom: formatLocalDate(twoMonthsAgo), dateTo: formatLocalDate(monthAgo) }
+    },
+  },
+]
 
 export const Route = createFileRoute('/_app/workspace/$workspaceId/_dashboard/')({
-  staticData: { title: 'Funnels' },
+  staticData: { title: 'Home' },
+  validateSearch: (search) =>
+    z
+      .object({
+        range: z.enum(['today', 'yesterday', '7d', '30d']).optional(),
+      })
+      .parse(search),
+  loaderDeps: ({ search }) => ({ range: search.range }),
   component: RouteComponent,
-  loader: async ({ context, params }) => {
+  loader: async ({ context, params, deps }) => {
+    const filterOption = DATE_FILTER_OPTIONS.find((o) => o.value === (deps.range ?? 'today'))!
+    const filter = filterOption.range()
+    const previousFilter = filterOption.previousRange()
+
     await Promise.all([
       context.queryClient.ensureQueryData(listFunnelsQueryOptions(params.workspaceId)),
-      context.queryClient.ensureQueryData(getSessionQueryOptions(params.workspaceId)),
+      context.queryClient.ensureQueryData(
+        getWorkspaceAnalyticsQueryOptions(params.workspaceId, filter, previousFilter),
+      ),
     ])
   },
 })
 
-function DuplicateFunnelDialog({
-  open,
-  onOpenChange,
-  funnel,
-  onSuccess,
+type CountMetric = 'views' | 'starts' | 'completions' | 'orders'
+
+const COUNT_METRICS: { key: CountMetric; label: string; clickable: boolean }[] = [
+  { key: 'views', label: 'Views', clickable: true },
+  { key: 'starts', label: 'Starts', clickable: true },
+  { key: 'completions', label: 'Completions', clickable: true },
+  { key: 'orders', label: 'Orders', clickable: false },
+]
+
+const chartConfig = {
+  views: {
+    label: 'Views',
+    color: 'var(--color-primary)',
+  },
+  starts: {
+    label: 'Starts',
+    color: 'var(--color-chart-2)',
+  },
+  completions: {
+    label: 'Completions',
+    color: 'var(--color-chart-3)',
+  },
+  start_rate: {
+    label: 'Start Rate',
+    color: 'var(--color-chart-4)',
+  },
+  completion_rate: {
+    label: 'Completion Rate',
+    color: 'var(--color-chart-5)',
+  },
+} satisfies ChartConfig
+
+function MetricValue({
+  value,
+  delta,
+  isPercentage = false,
+  align = 'left',
 }: {
-  open: boolean
-  onOpenChange: (open: boolean) => void
-  funnel: { id: string; title: string } | null
-  onSuccess: () => void
+  value: number | null
+  delta: { value: string; isPositive: boolean; isZero: boolean } | null
+  isPercentage?: boolean
+  align?: 'left' | 'right'
 }) {
-  const params = Route.useParams()
-  const [title, setTitle] = React.useState('')
-
-  const duplicateFunnelMutation = useMutation({
-    mutationFn: (data: { id: string; title?: string }) =>
-      duplicateFunnel({ data: { workspaceId: params.workspaceId, ...data } }),
-    onSuccess: () => {
-      onSuccess()
-      onOpenChange(false)
-    },
-  })
-
-  const handleDuplicate = () => {
-    if (!funnel) return
-    duplicateFunnelMutation.mutate({
-      id: funnel.id,
-      title: title.trim() || undefined,
-    })
+  if (value === null) {
+    return <span className="text-muted-foreground">---</span>
   }
 
-  React.useEffect(() => {
-    if (open && funnel) {
-      setTitle(`${funnel.title} copy`)
-    }
-  }, [open, funnel])
+  return (
+    <span className={cn('inline-flex items-center gap-1.5', align === 'right' && 'justify-end')}>
+      <span>{isPercentage ? formatPercentage(value) : formatNumber(value, true)}</span>
+      {delta && (
+        <span
+          className={cn(
+            'text-xs',
+            delta.isZero ? 'text-muted-foreground' : delta.isPositive ? 'text-green-600' : 'text-red-600',
+          )}
+        >
+          ({delta.value})
+        </span>
+      )}
+    </span>
+  )
+}
 
-  React.useEffect(() => {
-    if (!open) {
-      setTitle('')
-    }
-  }, [open])
-
-  if (!funnel) return null
+function RateCard({
+  title,
+  value,
+  delta,
+  timeseries,
+  dataKey,
+  hasData,
+}: {
+  title: string
+  value: number | null
+  delta: { value: string; isPositive: boolean; isZero: boolean } | null
+  timeseries: { date: string; value: number }[]
+  dataKey: string
+  hasData: boolean
+}) {
+  const config = {
+    [dataKey]: chartConfig[dataKey as keyof typeof chartConfig],
+  } satisfies ChartConfig
 
   return (
-    <Dialog.Root open={open} onOpenChange={onOpenChange}>
-      <Dialog.Content>
-        <Dialog.Header>
-          <Dialog.Title>Duplicate Funnel</Dialog.Title>
-          <Dialog.Description>Enter a name for the duplicated funnel.</Dialog.Description>
-        </Dialog.Header>
-
-        <Input placeholder={`${funnel.title} copy`} value={title} onValueChange={setTitle} />
-
-        <Dialog.Footer>
-          <Button onClick={handleDuplicate} disabled={duplicateFunnelMutation.isPending}>
-            Duplicate
-          </Button>
-        </Dialog.Footer>
-      </Dialog.Content>
-    </Dialog.Root>
+    <Card.Root className="pb-0!" size="sm">
+      <Card.Header>
+        <Card.Title className="text-muted-foreground">{title}</Card.Title>
+        <Card.Description className="text-lg font-semibold text-foreground">
+          <MetricValue value={value} delta={delta} isPercentage />
+        </Card.Description>
+      </Card.Header>
+      <Card.Content className="px-0!">
+        {hasData && timeseries.length >= 2 ? (
+          <Chart.Container config={config} height={256}>
+            <LineChart data={timeseries} margin={{ top: 0, right: 0, bottom: 0, left: 0 }}>
+              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--color-border)" />
+              <XAxis dataKey="date" tickFormatter={formatChartDate} tickLine={false} axisLine={false} />
+              <YAxis tickLine={false} axisLine={false} width={50} tickFormatter={(v) => `${v}%`} />
+              <Chart.Tooltip
+                content={(props) => (
+                  <Chart.TooltipContent
+                    {...props}
+                    labelFormatter={(label) => formatChartDate(String(label))}
+                    formatter={(v) => {
+                      const num = Number(v)
+                      return [`${Number.isNaN(num) ? '0.0' : num.toFixed(1)}%`, title]
+                    }}
+                  />
+                )}
+              />
+              <Line
+                type="monotone"
+                dataKey="value"
+                stroke={`var(--color-${dataKey})`}
+                strokeWidth={2}
+                dot={false}
+                activeDot={{ r: 3 }}
+              />
+            </LineChart>
+          </Chart.Container>
+        ) : (
+          <div className="flex h-64 items-center justify-center">
+            <span className="text-sm text-muted-foreground">No data has been collected</span>
+          </div>
+        )}
+      </Card.Content>
+    </Card.Root>
   )
 }
 
 function RouteComponent() {
   const params = Route.useParams()
+  const search = Route.useSearch()
   const navigate = Route.useNavigate()
-  const queryClient = useQueryClient()
 
-  const listFunnelsQuery = useSuspenseQuery(listFunnelsQueryOptions(params.workspaceId))
-  const funnels = listFunnelsQuery.data ?? []
+  const range = search.range ?? 'today'
 
-  const sessionQuery = useSuspenseQuery(getSessionQueryOptions(params.workspaceId))
-  const isAdmin = sessionQuery.data.isAdmin
+  const handleRangeChange = (value: typeof range) => {
+    navigate({ search: { range: value } })
+  }
 
-  const createFunnelMutation = useMutation(createFunnelMutationOptions(params.workspaceId))
-  const removeFunnelMutation = useMutation(removeFunnelMutationOptions(params.workspaceId))
+  const funnelsQuery = useSuspenseQuery(listFunnelsQueryOptions(params.workspaceId))
+  const funnels = funnelsQuery.data ?? []
 
-  const [isCreating, setIsCreating] = React.useState(false)
-  const [isRemoving, setIsRemoving] = React.useState(false)
-  const [duplicateDialogOpen, setDuplicateDialogOpen] = React.useState(false)
-  const [selectedFunnel, setSelectedFunnel] = React.useState<{ id: string; title: string } | null>(null)
+  const rangeOption = DATE_FILTER_OPTIONS.find((o) => o.value === range)!
+  const filter = rangeOption.range()
+  const previousFilter = rangeOption.previousRange()
 
-  async function handleFunnelCreate() {
-    setIsCreating(true)
-    try {
-      const id = await createFunnelMutation.mutateAsync()
-      await navigate({ to: 'funnels/$id/edit', params: { id } })
-      queryClient.invalidateQueries(listFunnelsQueryOptions(params.workspaceId))
-    } catch {
-      setIsCreating(false)
+  const analyticsQuery = useSuspenseQuery(getWorkspaceAnalyticsQueryOptions(params.workspaceId, filter, previousFilter))
+  const { current, previous, timeseries } = analyticsQuery.data
+
+  const [selectedMetric, setSelectedMetric] = React.useState<CountMetric>('views')
+
+  const currentTotals = React.useMemo(() => {
+    if (current.length === 0) return null
+    const totalViews = current.reduce((sum, f) => sum + f.views, 0)
+    const totalStarts = current.reduce((sum, f) => sum + f.starts, 0)
+    const totalCompletions = current.reduce((sum, f) => sum + f.completions, 0)
+    return {
+      views: totalViews,
+      starts: totalStarts,
+      completions: totalCompletions,
+      orders: 0, // No orders data yet
+      start_rate: totalViews > 0 ? (totalStarts / totalViews) * 100 : 0,
+      completion_rate: totalStarts > 0 ? (totalCompletions / totalStarts) * 100 : 0,
     }
-  }
+  }, [current])
 
-  if (funnels.length === 0) {
-    return (
-      <div className="flex h-full w-full flex-1 items-center justify-center">
-        <Empty.Root>
-          <Empty.Header>
-            <Empty.Media variant="icon">
-              <FileTextIcon />
-            </Empty.Media>
-            <Empty.Title>No funnels yet</Empty.Title>
-            {isAdmin && <Empty.Description>Create your first funnel to get started.</Empty.Description>}
-          </Empty.Header>
-          {isAdmin && (
-            <Button onClick={handleFunnelCreate} disabled={isCreating}>
-              {isCreating && <LoaderIcon className="animate-spin" />}
-              Create funnel
-            </Button>
-          )}
-        </Empty.Root>
-      </div>
-    )
-  }
+  const previousTotals = React.useMemo(() => {
+    if (previous.length === 0) return null
+    const totalViews = previous.reduce((sum, f) => sum + f.views, 0)
+    const totalStarts = previous.reduce((sum, f) => sum + f.starts, 0)
+    const totalCompletions = previous.reduce((sum, f) => sum + f.completions, 0)
+    return {
+      views: totalViews,
+      starts: totalStarts,
+      completions: totalCompletions,
+      orders: 0,
+      start_rate: totalViews > 0 ? (totalStarts / totalViews) * 100 : 0,
+      completion_rate: totalStarts > 0 ? (totalCompletions / totalStarts) * 100 : 0,
+    }
+  }, [previous])
+
+  const startRateTimeseries = React.useMemo(() => {
+    return timeseries
+      .filter((point) => point.views > 0)
+      .map((point) => ({
+        date: point.date,
+        value: (point.starts / point.views) * 100,
+      }))
+  }, [timeseries])
+
+  const completionRateTimeseries = React.useMemo(() => {
+    return timeseries
+      .filter((point) => point.starts > 0)
+      .map((point) => ({
+        date: point.date,
+        value: (point.completions / point.starts) * 100,
+      }))
+  }, [timeseries])
+
+  const previousByFunnel = React.useMemo(() => {
+    const map = new Map<string, FunnelKpi>()
+    for (const item of previous) {
+      map.set(item.funnel_id, item)
+    }
+    return map
+  }, [previous])
+
+  const funnelMetrics = React.useMemo(() => {
+    const currentByFunnel = new Map<string, FunnelKpi>()
+    for (const item of current) {
+      currentByFunnel.set(item.funnel_id, item)
+    }
+
+    return funnels
+      .map((funnel) => {
+        const currentData = currentByFunnel.get(funnel.id)
+        const previousData = previousByFunnel.get(funnel.id)
+        return {
+          id: funnel.id,
+          title: funnel.title,
+          current: currentData ?? null,
+          previous: previousData ?? null,
+        }
+      })
+      .filter((funnel) => funnel.current !== null)
+      .sort((a, b) => a.title.localeCompare(b.title))
+  }, [funnels, current, previousByFunnel])
+
+  const hasData = current.length > 0
 
   return (
-    <div className="flex h-full w-full flex-col gap-4">
+    <div className="flex h-full w-full max-w-4xl flex-col gap-4">
       <Heading.Root>
         <Heading.Content>
-          <Heading.Title>Funnels</Heading.Title>
+          <Heading.Title>Insights</Heading.Title>
         </Heading.Content>
-        {isAdmin && (
-          <Heading.Actions>
-            <Button size="lg" onClick={handleFunnelCreate} disabled={isCreating}>
-              {isCreating && <LoaderIcon className="animate-spin" />}
-              Create a Funnel
-            </Button>
-          </Heading.Actions>
-        )}
+        <Heading.Actions>
+          <Select.Root items={DATE_FILTER_OPTIONS} value={range} onValueChange={handleRangeChange}>
+            <Select.Trigger>
+              <Select.Value />
+            </Select.Trigger>
+            <Select.Content align="end" alignItemWithTrigger={false}>
+              <Select.Group>
+                {DATE_FILTER_OPTIONS.map((option) => (
+                  <Select.Item key={option.value} value={option.value}>
+                    {option.label}
+                  </Select.Item>
+                ))}
+              </Select.Group>
+            </Select.Content>
+          </Select.Root>
+        </Heading.Actions>
       </Heading.Root>
-      <DataGrid.Root className="grid-cols-[1fr_min-content] md:grid-cols-[auto_120px_120px_100px]">
-        <DataGrid.Header>
-          <DataGrid.Head>Name</DataGrid.Head>
-          <DataGrid.Head hideOnMobile>Edited</DataGrid.Head>
-          <DataGrid.Head hideOnMobile>Created</DataGrid.Head>
-          <DataGrid.Head srOnly>Actions</DataGrid.Head>
-        </DataGrid.Header>
 
-        <DataGrid.Body>
-          {funnels.map((funnel) => (
-            <DataGrid.Row
-              key={funnel.id}
-              render={<Link from={Route.fullPath} to="funnels/$id/edit" params={{ id: funnel.id }} />}
-            >
-              <DataGrid.Cell className="flex-col items-start justify-center overflow-hidden pr-2 md:pr-8">
-                <span className="truncate text-sm font-medium text-foreground">{funnel.title}</span>
-                <span className="truncate text-xs text-muted-foreground md:hidden">
-                  {DateTime.fromJSDate(funnel.createdAt).toRelative()}
-                </span>
-              </DataGrid.Cell>
+      <div className="flex flex-col gap-2 rounded-3xl bg-muted p-2">
+        <Card.Root size="sm">
+          <Card.Content className="flex flex-col gap-4">
+            <div className="-mx-4 border-b border-border px-4">
+              <div className="flex">
+                {COUNT_METRICS.map((metric) => {
+                  const isSelected = selectedMetric === metric.key
+                  const value = metric.key === 'orders' ? null : (currentTotals?.[metric.key] ?? null)
+                  const delta =
+                    metric.key === 'orders'
+                      ? null
+                      : currentTotals && previousTotals
+                        ? formatDelta(currentTotals[metric.key], previousTotals[metric.key])
+                        : null
 
-              <DataGrid.Cell hideOnMobile>
-                <Tooltip.Root>
-                  <Tooltip.Trigger render={<span className="text-sm text-muted-foreground" />}>
-                    {DateTime.fromJSDate(funnel.updatedAt).toRelative()}
-                  </Tooltip.Trigger>
-                  <Tooltip.Content>
-                    {DateTime.fromJSDate(funnel.updatedAt).toLocaleString(DateTime.DATETIME_MED)}
-                  </Tooltip.Content>
-                </Tooltip.Root>
-              </DataGrid.Cell>
-
-              <DataGrid.Cell hideOnMobile>
-                <Tooltip.Root>
-                  <Tooltip.Trigger render={<span className="text-sm text-muted-foreground" />}>
-                    {DateTime.fromJSDate(funnel.createdAt).toRelative()}
-                  </Tooltip.Trigger>
-                  <Tooltip.Content>
-                    {DateTime.fromJSDate(funnel.createdAt).toLocaleString(DateTime.DATETIME_MED)}
-                  </Tooltip.Content>
-                </Tooltip.Root>
-              </DataGrid.Cell>
-
-              <DataGrid.Cell className="relative z-10 shrink-0 justify-end gap-1">
-                <Menu.Root>
-                  <Menu.Trigger render={<Button size="icon-sm" variant="ghost" />} onClick={(e) => e.preventDefault()}>
-                    <DotsIcon className="text-muted-foreground" />
-                  </Menu.Trigger>
-                  <Menu.Content align="end">
-                    <Menu.Item
-                      onClick={(e) => e.stopPropagation()}
-                      render={
-                        <a href={funnel.url} target="_blank" rel="noopener noreferrer">
-                          <ShareIcon />
-                          Share
-                        </a>
-                      }
-                    />
-                    {isAdmin && (
-                      <Menu.Item
-                        onClick={(e) => {
-                          e.preventDefault()
-                          setSelectedFunnel({ id: funnel.id, title: funnel.title })
-                          setDuplicateDialogOpen(true)
-                        }}
+                  if (!metric.clickable) {
+                    return (
+                      <div
+                        key={metric.key}
+                        className="relative flex flex-1 flex-col gap-0.5 pb-3 text-left text-muted-foreground"
                       >
-                        <CopyIcon />
-                        Duplicate
-                      </Menu.Item>
-                    )}
-                    {isAdmin && (
-                      <Menu.Item
-                        variant="destructive"
-                        onClick={(e) => {
-                          e.preventDefault()
-                          deleteDialogHandle.openWithPayload({ id: funnel.id, title: funnel.title })
-                        }}
-                      >
-                        <TrashIcon />
-                        Delete
-                      </Menu.Item>
-                    )}
-                  </Menu.Content>
-                </Menu.Root>
-              </DataGrid.Cell>
-            </DataGrid.Row>
-          ))}
-        </DataGrid.Body>
-      </DataGrid.Root>
+                        <span className="text-sm font-medium">{metric.label}</span>
+                        <span className="text-lg font-semibold">
+                          <MetricValue value={value} delta={delta} />
+                        </span>
+                      </div>
+                    )
+                  }
 
-      <DuplicateFunnelDialog
-        open={duplicateDialogOpen}
-        onOpenChange={setDuplicateDialogOpen}
-        funnel={selectedFunnel}
-        onSuccess={() => queryClient.invalidateQueries(listFunnelsQueryOptions(params.workspaceId))}
-      />
+                  return (
+                    <button
+                      key={metric.key}
+                      onClick={() => setSelectedMetric(metric.key)}
+                      className={cn(
+                        'relative flex flex-1 flex-col gap-0.5 pb-3 text-left transition-colors',
+                        isSelected ? 'text-foreground' : 'text-muted-foreground hover:text-foreground',
+                      )}
+                    >
+                      <span className="text-sm font-medium">{metric.label}</span>
+                      <span className="text-lg font-semibold">
+                        <MetricValue value={value} delta={delta} />
+                      </span>
+                      {isSelected && <div className="absolute right-0 bottom-0 left-0 h-0.5 bg-primary" />}
+                    </button>
+                  )
+                })}
+              </div>
+            </div>
 
-      <AlertDialog.Root handle={deleteDialogHandle}>
-        {({ payload }) => (
-          <AlertDialog.Content>
-            <AlertDialog.Header>
-              <AlertDialog.Title>Delete funnel</AlertDialog.Title>
-              <AlertDialog.Description>
-                Are you sure you want to delete &ldquo;{payload?.title}&rdquo;?
-              </AlertDialog.Description>
-            </AlertDialog.Header>
-            <AlertDialog.Footer>
-              <AlertDialog.Cancel disabled={isRemoving}>Cancel</AlertDialog.Cancel>
-              <Button
-                variant="destructive"
-                disabled={isRemoving}
-                onClick={async () => {
-                  if (!payload) return
-                  setIsRemoving(true)
-                  await removeFunnelMutation.mutateAsync(payload.id)
-                  await queryClient.invalidateQueries(listFunnelsQueryOptions(params.workspaceId))
-                  setIsRemoving(false)
-                  deleteDialogHandle.close()
-                }}
-              >
-                {isRemoving && <LoaderIcon className="animate-spin" />}
-                Delete
-              </Button>
-            </AlertDialog.Footer>
-          </AlertDialog.Content>
-        )}
-      </AlertDialog.Root>
+            {hasData && timeseries.length >= 2 ? (
+              <Chart.Container className="-mx-3 -mb-3" config={chartConfig} height={256}>
+                <LineChart data={timeseries} margin={{ top: 0, right: 0, bottom: 0, left: 0 }}>
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--color-border)" />
+                  <XAxis dataKey="date" tickFormatter={formatChartDate} tickLine={false} axisLine={false} />
+                  <YAxis tickLine={false} axisLine={false} width={30} allowDecimals={false} />
+                  <Chart.Tooltip
+                    content={(props) => (
+                      <Chart.TooltipContent {...props} labelFormatter={(label) => formatChartDate(String(label))} />
+                    )}
+                  />
+                  <Line
+                    type="monotone"
+                    dataKey={selectedMetric}
+                    stroke={`var(--color-${selectedMetric})`}
+                    strokeWidth={2}
+                    dot={false}
+                    activeDot={{ r: 4 }}
+                  />
+                </LineChart>
+              </Chart.Container>
+            ) : (
+              <div className="flex h-64 items-center justify-center">
+                <span className="text-sm text-muted-foreground">No data has been collected</span>
+              </div>
+            )}
+          </Card.Content>
+        </Card.Root>
+
+        <div className="grid grid-cols-2 gap-2">
+          <RateCard
+            title="Start Rate"
+            value={currentTotals?.start_rate ?? null}
+            delta={
+              currentTotals && previousTotals ? formatDelta(currentTotals.start_rate, previousTotals.start_rate) : null
+            }
+            timeseries={startRateTimeseries}
+            dataKey="start_rate"
+            hasData={hasData}
+          />
+          <RateCard
+            title="Completion Rate"
+            value={currentTotals?.completion_rate ?? null}
+            delta={
+              currentTotals && previousTotals
+                ? formatDelta(currentTotals.completion_rate, previousTotals.completion_rate)
+                : null
+            }
+            timeseries={completionRateTimeseries}
+            dataKey="completion_rate"
+            hasData={hasData}
+          />
+        </div>
+
+        <Card.Root size="sm">
+          <Card.Content className="-mx-0.5 -mt-2.5 -mb-2">
+            <Table.Root className="table-fixed">
+              <Table.Header>
+                <Table.Row className="hover:bg-transparent">
+                  <Table.Head className="w-[40%]">Funnel</Table.Head>
+                  <Table.Head className="w-[20%] text-right">Views</Table.Head>
+                  <Table.Head className="w-[20%] text-right">Start Rate</Table.Head>
+                  <Table.Head className="w-[20%] text-right">Completion Rate</Table.Head>
+                </Table.Row>
+              </Table.Header>
+              <Table.Body>
+                {funnelMetrics.length === 0 ? (
+                  <Table.Row className="hover:bg-transparent">
+                    <Table.Cell colSpan={4} className="h-24 text-center text-muted-foreground">
+                      No data has been collected
+                    </Table.Cell>
+                  </Table.Row>
+                ) : (
+                  funnelMetrics.map((funnel) => {
+                    const viewsDelta =
+                      funnel.current && funnel.previous
+                        ? formatDelta(funnel.current.views, funnel.previous.views)
+                        : null
+                    const startRateDelta =
+                      funnel.current && funnel.previous
+                        ? formatDelta(funnel.current.start_rate, funnel.previous.start_rate)
+                        : null
+                    const completionRateDelta =
+                      funnel.current && funnel.previous
+                        ? formatDelta(funnel.current.completion_rate, funnel.previous.completion_rate)
+                        : null
+
+                    return (
+                      <Table.Row key={funnel.id} className="hover:bg-transparent">
+                        <Table.Cell className="truncate font-medium">
+                          <Link
+                            to="/workspace/$workspaceId/funnels/$id/insights"
+                            params={{ workspaceId: params.workspaceId, id: funnel.id }}
+                            className="hover:underline"
+                          >
+                            {funnel.title}
+                          </Link>
+                        </Table.Cell>
+                        <Table.Cell className="text-right">
+                          <MetricValue value={funnel.current?.views ?? null} delta={viewsDelta} align="right" />
+                        </Table.Cell>
+                        <Table.Cell className="text-right">
+                          <MetricValue
+                            value={funnel.current?.start_rate ?? null}
+                            delta={startRateDelta}
+                            isPercentage
+                            align="right"
+                          />
+                        </Table.Cell>
+                        <Table.Cell className="text-right">
+                          <MetricValue
+                            value={funnel.current?.completion_rate ?? null}
+                            delta={completionRateDelta}
+                            isPercentage
+                            align="right"
+                          />
+                        </Table.Cell>
+                      </Table.Row>
+                    )
+                  })
+                )}
+              </Table.Body>
+            </Table.Root>
+          </Card.Content>
+        </Card.Root>
+      </div>
     </div>
   )
 }

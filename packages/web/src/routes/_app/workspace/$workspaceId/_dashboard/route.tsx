@@ -10,6 +10,7 @@ import { User } from '@shopfunnel/core/user/index'
 import {
   IconBlocks as BlocksIcon,
   IconFilter2 as FilterIcon,
+  IconSmartHome as HomeIcon,
   IconLogout as LogoutIcon,
   IconSelector as SelectorIcon,
   IconWorld as WorldIcon,
@@ -58,10 +59,16 @@ export const Route = createFileRoute('/_app/workspace/$workspaceId/_dashboard')(
 
 const navItems = [
   {
-    title: 'Funnels',
+    title: 'Home',
     to: '/workspace/$workspaceId' as const,
-    icon: FilterIcon,
+    icon: HomeIcon,
     exact: true,
+  },
+  {
+    title: 'Funnels',
+    to: '/workspace/$workspaceId/funnels' as const,
+    icon: FilterIcon,
+    exact: false,
   },
   {
     title: 'Domains',
@@ -186,9 +193,7 @@ function DashboardLayoutRoute() {
         </header>
 
         <main className="flex flex-1 flex-col items-center overflow-y-auto px-5 py-5 md:py-20">
-          <div className="w-full max-w-6xl">
-            <Outlet />
-          </div>
+          <Outlet />
         </main>
       </Sidebar.Inset>
     </Sidebar.Provider>
