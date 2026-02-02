@@ -9,7 +9,7 @@ import { formatDateForChart, getDateRange } from '@/routes/_app/workspace/$works
 import { Funnel } from '@shopfunnel/core/funnel/index'
 import { Identifier } from '@shopfunnel/core/identifier'
 import { Resource } from '@shopfunnel/resource'
-import { IconArrowDown as ArrowDownIcon, IconArrowUp as ArrowUpIcon, IconMinus as MinusIcon } from '@tabler/icons-react'
+import { IconArrowDown as ArrowDownIcon, IconArrowUp as ArrowUpIcon } from '@tabler/icons-react'
 import { queryOptions, useSuspenseQuery } from '@tanstack/react-query'
 import { createFileRoute, Link } from '@tanstack/react-router'
 import { createServerFn } from '@tanstack/react-start'
@@ -281,49 +281,47 @@ const chartConfig = {
 } satisfies ChartConfig
 
 function DeltaBadge({ delta }: { delta: { value: string; isPositive: boolean; isZero: boolean } }) {
-  const Icon = delta.isZero ? MinusIcon : delta.isPositive ? ArrowUpIcon : ArrowDownIcon
-
   return (
     <Badge
       variant="outline"
       className={cn(
         delta.isZero
-          ? 'text-muted-foreground'
+          ? 'border-muted-foreground/20 bg-muted text-muted-foreground'
           : delta.isPositive
-            ? 'border-green-500/20 bg-green-500/10 text-green-600'
-            : 'border-red-500/20 bg-red-500/10 text-red-600',
+            ? 'border-green-600/20 bg-green-50 text-green-600'
+            : 'border-red-600/20 bg-red-50 text-red-600',
       )}
     >
-      <Icon data-icon="inline-start" />
+      {!delta.isZero && (delta.isPositive ? <ArrowUpIcon /> : <ArrowDownIcon />)}
       {delta.value}
     </Badge>
   )
 }
 
 function MetricValue({
+  className,
   value,
-  delta,
+  delta = { value: '0%', isPositive: true, isZero: true },
   isPercentage = false,
   align = 'left',
   badgeSide = 'left',
 }: {
+  className?: string
   value: number | null
-  delta: { value: string; isPositive: boolean; isZero: boolean } | null
+  delta?: { value: string; isPositive: boolean; isZero: boolean }
   isPercentage?: boolean
   align?: 'left' | 'right'
   badgeSide?: 'left' | 'right'
 }) {
   if (value === null) {
-    return <span className="text-muted-foreground">---</span>
+    return <span className={cn('text-muted-foreground', className)}>---</span>
   }
-
-  const showBadge = delta && !delta.isZero
 
   return (
     <span className={cn('inline-flex items-center gap-1.5', align === 'right' && 'justify-end')}>
-      {badgeSide === 'left' && showBadge && <DeltaBadge delta={delta} />}
-      <span>{isPercentage ? formatPercentage(value) : formatNumber(value, true)}</span>
-      {badgeSide === 'right' && showBadge && <DeltaBadge delta={delta} />}
+      {badgeSide === 'left' && <DeltaBadge delta={delta} />}
+      <span className={className}>{isPercentage ? formatPercentage(value) : formatNumber(value, true)}</span>
+      {badgeSide === 'right' && <DeltaBadge delta={delta} />}
     </span>
   )
 }
@@ -339,7 +337,7 @@ function RateCard({
 }: {
   title: string
   value: number | null
-  delta: { value: string; isPositive: boolean; isZero: boolean } | null
+  delta?: { value: string; isPositive: boolean; isZero: boolean }
   timeseries: { date: string; value: number }[]
   dataKey: string
   hasData: boolean
@@ -352,9 +350,15 @@ function RateCard({
   return (
     <Card.Root className="pb-0!" size="sm">
       <Card.Header>
-        <Card.Title className="text-muted-foreground">{title}</Card.Title>
-        <Card.Description className="text-lg font-semibold text-foreground">
-          <MetricValue value={value} delta={delta} isPercentage badgeSide="right" />
+        <Card.Title>{title}</Card.Title>
+        <Card.Description>
+          <MetricValue
+            className="text-lg font-semibold text-foreground"
+            value={value}
+            delta={delta}
+            isPercentage
+            badgeSide="right"
+          />
         </Card.Description>
       </Card.Header>
       <Card.Content className="px-0!">
@@ -535,57 +539,43 @@ function RouteComponent() {
       </Heading.Root>
 
       <div className="flex flex-col gap-2 rounded-3xl bg-muted p-2">
-        <Card.Root size="sm">
-          <Card.Content className="flex flex-col gap-4">
-            <div className="-mx-4 border-b border-border px-4">
-              <div className="flex">
-                {COUNT_METRICS.map((metric) => {
-                  const isSelected = selectedMetric === metric.key
-                  const value = metric.key === 'orders' ? null : (currentTotals?.[metric.key] ?? null)
-                  const delta =
-                    metric.key === 'orders'
-                      ? null
-                      : currentTotals && previousTotals
-                        ? formatDelta(currentTotals[metric.key], previousTotals[metric.key])
-                        : null
+        <Card.Root className="p-0!" size="sm">
+          <Card.Content className="flex flex-col gap-4 px-0!">
+            <div className="flex">
+              {COUNT_METRICS.map((metric, index) => {
+                const isSelected = selectedMetric === metric.key
+                const value = metric.key === 'orders' ? null : (currentTotals?.[metric.key] ?? null)
+                const delta =
+                  metric.key === 'orders'
+                    ? undefined
+                    : currentTotals && previousTotals
+                      ? formatDelta(currentTotals[metric.key], previousTotals[metric.key])
+                      : undefined
 
-                  if (!metric.clickable) {
-                    return (
-                      <div
-                        key={metric.key}
-                        className="relative flex flex-1 flex-col gap-0.5 pb-3 text-left text-muted-foreground"
-                      >
-                        <span className="text-sm font-medium">{metric.label}</span>
-                        <span className="text-lg font-semibold">
-                          <MetricValue value={value} delta={delta} badgeSide="right" />
-                        </span>
-                      </div>
-                    )
-                  }
-
-                  return (
-                    <button
-                      key={metric.key}
-                      onClick={() => setSelectedMetric(metric.key)}
-                      className={cn(
-                        'relative flex flex-1 flex-col gap-0.5 pb-3 text-left transition-colors',
-                        isSelected ? 'text-foreground' : 'text-muted-foreground hover:text-foreground',
-                      )}
-                    >
-                      <span className="text-sm font-medium">{metric.label}</span>
-                      <span className="text-lg font-semibold">
-                        <MetricValue value={value} delta={delta} badgeSide="right" />
-                      </span>
-                      {isSelected && <div className="absolute right-0 bottom-0 left-0 h-0.5 bg-primary" />}
-                    </button>
-                  )
-                })}
-              </div>
+                return (
+                  <button
+                    key={metric.key}
+                    onClick={() => {
+                      if (!metric.clickable) return
+                      setSelectedMetric(metric.key)
+                    }}
+                    className={cn(
+                      'relative flex flex-1 cursor-pointer flex-col gap-0.5 border-b border-border bg-muted p-4 text-left text-muted-foreground',
+                      isSelected && 'bg-background text-foreground',
+                      !metric.clickable && 'cursor-not-allowed',
+                    )}
+                  >
+                    <span className="text-sm font-medium">{metric.label}</span>
+                    <MetricValue className="text-lg font-semibold" value={value} delta={delta} badgeSide="right" />
+                    {isSelected && <div className="absolute inset-x-0 bottom-0 h-0.5 bg-primary" />}
+                  </button>
+                )
+              })}
             </div>
 
             {hasData && timeseries.length >= 2 ? (
-              <Chart.Container className="-mx-3 -mb-3" config={chartConfig} height={256}>
-                <LineChart data={timeseries} margin={{ top: 0, right: 24, bottom: 12, left: 0 }}>
+              <Chart.Container config={chartConfig} height={256}>
+                <LineChart data={timeseries} margin={{ top: 8, right: 24, bottom: 12, left: 0 }}>
                   <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--color-border)" />
                   <XAxis
                     dataKey="date"
@@ -641,7 +631,9 @@ function RouteComponent() {
             title="Start Rate"
             value={currentTotals?.start_rate ?? null}
             delta={
-              currentTotals && previousTotals ? formatDelta(currentTotals.start_rate, previousTotals.start_rate) : null
+              currentTotals && previousTotals
+                ? formatDelta(currentTotals.start_rate, previousTotals.start_rate)
+                : undefined
             }
             timeseries={startRateTimeseries}
             dataKey="start_rate"
@@ -654,7 +646,7 @@ function RouteComponent() {
             delta={
               currentTotals && previousTotals
                 ? formatDelta(currentTotals.completion_rate, previousTotals.completion_rate)
-                : null
+                : undefined
             }
             timeseries={completionRateTimeseries}
             dataKey="completion_rate"
@@ -693,15 +685,15 @@ function RouteComponent() {
                     const viewsDelta =
                       funnel.current && funnel.previous
                         ? formatDelta(funnel.current.views, funnel.previous.views)
-                        : null
+                        : undefined
                     const startRateDelta =
                       currentStartRate !== null && previousStartRate !== null
                         ? formatDelta(currentStartRate, previousStartRate)
-                        : null
+                        : undefined
                     const completionRateDelta =
                       currentCompletionRate !== null && previousCompletionRate !== null
                         ? formatDelta(currentCompletionRate, previousCompletionRate)
-                        : null
+                        : undefined
 
                     return (
                       <Table.Row key={funnel.id} className="hover:bg-transparent">
