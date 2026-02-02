@@ -11,7 +11,7 @@ let logProcessor: sst.cloudflare.Worker | undefined
 if ($app.stage === 'production') {
   logProcessor = new sst.cloudflare.Worker('LogProcessor', {
     handler: 'packages/web/src/log-processor.ts',
-    link: [secret.HONEYCOMB_API_KEY],
+    link: [new sst.Secret('HONEYCOMB_API_KEY')],
   })
 }
 

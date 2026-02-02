@@ -1,5 +1,5 @@
 SCHEMA >
-    `date` Date,
+    `date` DateTime,
     `workspace_id` String,
     `funnel_id` String,
     `funnel_version` UInt32,

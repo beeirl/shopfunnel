@@ -1,10 +1,10 @@
 NODE kpis_node
 DESCRIPTION >
-    Aggregate funnel-level KPIs by date
+    Aggregate funnel-level KPIs by hour
 
 SQL >
     SELECT
-        toDate(timestamp) AS date,
+        toStartOfHour(timestamp) AS date,
         workspace_id,
         funnel_id,
         funnel_version,

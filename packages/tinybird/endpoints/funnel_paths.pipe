@@ -18,11 +18,11 @@ SQL >
     WHERE workspace_id = {{ String(workspace_id, required=True) }}
         AND funnel_id = {{ String(funnel_id, required=True) }}
         AND funnel_version = {{ UInt32(funnel_version, required=True) }}
-        {% if defined(date_from) %}
-        AND date >= toDate({{ String(date_from) }})
+        {% if defined(start_date) %}
+        AND date >= parseDateTimeBestEffort({{ String(start_date) }})
         {% end %}
-        {% if defined(date_to) %}
-        AND date <= toDate({{ String(date_to) }})
+        {% if defined(end_date) %}
+        AND date <= parseDateTimeBestEffort({{ String(end_date) }})
         {% end %}
     GROUP BY prev_page_id, page_id
     ORDER BY prev_page_index, page_index

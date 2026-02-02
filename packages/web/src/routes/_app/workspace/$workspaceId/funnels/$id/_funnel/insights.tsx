@@ -3,7 +3,7 @@ import { Empty } from '@/components/ui/empty'
 import { Select } from '@/components/ui/select'
 import { Table } from '@/components/ui/table'
 import { withActor } from '@/context/auth.withActor'
-import { getShopifyIntegrationQueryOptions } from '@/routes/_app/workspace/$workspaceId/-common'
+import { getDateRange, getShopifyIntegrationQueryOptions } from '@/routes/_app/workspace/$workspaceId/-common'
 import { Funnel } from '@shopfunnel/core/funnel/index'
 import { Identifier } from '@shopfunnel/core/identifier'
 import { Resource } from '@shopfunnel/resource'
@@ -37,8 +37,8 @@ const getInsights = createServerFn()
       funnelId: z.string(),
       funnelVersion: z.number(),
       filter: z.object({
-        dateFrom: z.string().optional(),
-        dateTo: z.string().optional(),
+        startDate: z.string().optional(),
+        endDate: z.string().optional(),
       }),
     }),
   )
@@ -49,8 +49,8 @@ const getInsights = createServerFn()
       funnel_id: data.funnelId,
       funnel_version: String(data.funnelVersion),
     })
-    if (data.filter.dateFrom) params.set('date_from', data.filter.dateFrom)
-    if (data.filter.dateTo) params.set('date_to', data.filter.dateTo)
+    if (data.filter.startDate) params.set('start_date', data.filter.startDate)
+    if (data.filter.endDate) params.set('end_date', data.filter.endDate)
 
     const [kpisResponse, pagesResponse] = await Promise.all([
       fetch(`https://api.us-east.aws.tinybird.co/v0/pipes/funnel_kpis.json?${params}`, {
@@ -71,10 +71,10 @@ const getInsightsQueryOptions = (
   workspaceId: string,
   funnelId: string,
   funnelVersion: number,
-  filter: { dateFrom: string | undefined; dateTo: string | undefined },
+  filter: { startDate: string | undefined; endDate: string | undefined },
 ) =>
   queryOptions({
-    queryKey: ['insights', workspaceId, funnelId, funnelVersion, filter.dateFrom, filter.dateTo],
+    queryKey: ['insights', workspaceId, funnelId, funnelVersion, filter.startDate, filter.endDate],
     queryFn: () => getInsights({ data: { workspaceId, funnelId, funnelVersion, filter } }),
   })
 
@@ -98,17 +98,10 @@ function formatPercentage(value: number): string {
   return `${formatted}%`
 }
 
-function formatLocalDate(date: Date): string {
-  const year = date.getFullYear()
-  const month = String(date.getMonth() + 1).padStart(2, '0')
-  const day = String(date.getDate()).padStart(2, '0')
-  return `${year}-${month}-${day}`
-}
-
 type DateFilterOption = {
   label: string
   value: 'today' | 'yesterday' | '7d' | '30d' | 'all'
-  range: () => { dateFrom: string | undefined; dateTo: string | undefined }
+  range: () => { startDate: string | undefined; endDate: string | undefined }
 }
 
 const DATE_FILTER_OPTIONS: DateFilterOption[] = [
@@ -116,8 +109,8 @@ const DATE_FILTER_OPTIONS: DateFilterOption[] = [
     label: 'Today',
     value: 'today',
     range: () => {
-      const today = formatLocalDate(new Date())
-      return { dateFrom: today, dateTo: today }
+      const today = new Date()
+      return getDateRange(today, today)
     },
   },
   {
@@ -126,8 +119,7 @@ const DATE_FILTER_OPTIONS: DateFilterOption[] = [
     range: () => {
       const yesterday = new Date()
       yesterday.setDate(yesterday.getDate() - 1)
-      const str = formatLocalDate(yesterday)
-      return { dateFrom: str, dateTo: str }
+      return getDateRange(yesterday, yesterday)
     },
   },
   {
@@ -137,7 +129,7 @@ const DATE_FILTER_OPTIONS: DateFilterOption[] = [
       const today = new Date()
       const weekAgo = new Date()
       weekAgo.setDate(weekAgo.getDate() - 6)
-      return { dateFrom: formatLocalDate(weekAgo), dateTo: formatLocalDate(today) }
+      return getDateRange(weekAgo, today)
     },
   },
   {
@@ -147,13 +139,13 @@ const DATE_FILTER_OPTIONS: DateFilterOption[] = [
       const today = new Date()
       const monthAgo = new Date()
       monthAgo.setDate(monthAgo.getDate() - 29)
-      return { dateFrom: formatLocalDate(monthAgo), dateTo: formatLocalDate(today) }
+      return getDateRange(monthAgo, today)
     },
   },
   {
     label: 'All time',
     value: 'all',
-    range: () => ({ dateFrom: undefined, dateTo: undefined }),
+    range: () => ({ startDate: undefined, endDate: undefined }),
   },
 ]
 
@@ -192,7 +184,7 @@ function Insights({
   workspaceId: string
   funnelId: string
   funnelVersion: number
-  filter: { dateFrom: string | undefined; dateTo: string | undefined }
+  filter: { startDate: string | undefined; endDate: string | undefined }
   hasShopifyIntegration: boolean
 }) {
   const insightsQuery = useSuspenseQuery(getInsightsQueryOptions(workspaceId, funnelId, funnelVersion, filter))

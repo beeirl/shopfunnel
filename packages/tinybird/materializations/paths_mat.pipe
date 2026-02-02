@@ -4,7 +4,7 @@ DESCRIPTION >
 
 SQL >
     SELECT
-        toDate(timestamp) AS date,
+        toStartOfHour(timestamp) AS date,
         workspace_id,
         funnel_id,
         funnel_version,

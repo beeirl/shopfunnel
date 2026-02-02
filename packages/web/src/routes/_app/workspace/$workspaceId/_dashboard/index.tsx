@@ -1,12 +1,19 @@
+import { Badge } from '@/components/ui/badge'
 import { Card } from '@/components/ui/card'
 import { Chart, ChartConfig } from '@/components/ui/chart'
 import { Select } from '@/components/ui/select'
 import { Table } from '@/components/ui/table'
 import { withActor } from '@/context/auth.withActor'
 import { cn } from '@/lib/utils'
+import { formatDateForChart, getDateRange } from '@/routes/_app/workspace/$workspaceId/-common'
 import { Funnel } from '@shopfunnel/core/funnel/index'
 import { Identifier } from '@shopfunnel/core/identifier'
 import { Resource } from '@shopfunnel/resource'
+import {
+  IconMinus as MinusIcon,
+  IconTrendingDown as TrendingDownIcon,
+  IconTrendingUp as TrendingUpIcon,
+} from '@tabler/icons-react'
 import { queryOptions, useSuspenseQuery } from '@tanstack/react-query'
 import { createFileRoute, Link } from '@tanstack/react-router'
 import { createServerFn } from '@tanstack/react-start'
@@ -49,13 +56,14 @@ const getWorkspaceAnalytics = createServerFn()
     z.object({
       workspaceId: z.string(),
       filter: z.object({
-        dateFrom: z.string(),
-        dateTo: z.string(),
+        startDate: z.string(),
+        endDate: z.string(),
       }),
       previousFilter: z.object({
-        dateFrom: z.string(),
-        dateTo: z.string(),
+        startDate: z.string(),
+        endDate: z.string(),
       }),
+      granularity: z.enum(['hour', 'day']),
     }),
   )
   .handler(async ({ data }) => {
@@ -63,14 +71,21 @@ const getWorkspaceAnalytics = createServerFn()
 
     const currentParams = new URLSearchParams({
       workspace_id: data.workspaceId,
-      date_from: data.filter.dateFrom,
-      date_to: data.filter.dateTo,
+      start_date: data.filter.startDate,
+      end_date: data.filter.endDate,
     })
 
     const previousParams = new URLSearchParams({
       workspace_id: data.workspaceId,
-      date_from: data.previousFilter.dateFrom,
-      date_to: data.previousFilter.dateTo,
+      start_date: data.previousFilter.startDate,
+      end_date: data.previousFilter.endDate,
+    })
+
+    const timeseriesParams = new URLSearchParams({
+      workspace_id: data.workspaceId,
+      start_date: data.filter.startDate,
+      end_date: data.filter.endDate,
+      granularity: data.granularity,
     })
 
     const [currentKpisResponse, previousKpisResponse, timeseriesResponse] = await Promise.all([
@@ -80,7 +95,7 @@ const getWorkspaceAnalytics = createServerFn()
       fetch(`https://api.us-east.aws.tinybird.co/v0/pipes/workspace_kpis.json?${previousParams}`, {
         headers: { Authorization: `Bearer ${token}` },
       }),
-      fetch(`https://api.us-east.aws.tinybird.co/v0/pipes/workspace_kpis_timeseries.json?${currentParams}`, {
+      fetch(`https://api.us-east.aws.tinybird.co/v0/pipes/workspace_kpis_timeseries.json?${timeseriesParams}`, {
         headers: { Authorization: `Bearer ${token}` },
       }),
     ])
@@ -98,20 +113,14 @@ const getWorkspaceAnalytics = createServerFn()
 
 const getWorkspaceAnalyticsQueryOptions = (
   workspaceId: string,
-  filter: { dateFrom: string; dateTo: string },
-  previousFilter: { dateFrom: string; dateTo: string },
+  filter: { startDate: string; endDate: string },
+  previousFilter: { startDate: string; endDate: string },
+  granularity: 'hour' | 'day',
 ) =>
   queryOptions({
-    queryKey: ['workspace-analytics', workspaceId, filter.dateFrom, filter.dateTo],
-    queryFn: () => getWorkspaceAnalytics({ data: { workspaceId, filter, previousFilter } }),
+    queryKey: ['workspace-analytics', workspaceId, filter.startDate, filter.endDate, granularity],
+    queryFn: () => getWorkspaceAnalytics({ data: { workspaceId, filter, previousFilter, granularity } }),
   })
-
-function formatLocalDate(date: Date): string {
-  const year = date.getFullYear()
-  const month = String(date.getMonth() + 1).padStart(2, '0')
-  const day = String(date.getDate()).padStart(2, '0')
-  return `${year}-${month}-${day}`
-}
 
 function formatNumber(value: number, compact = false): string {
   if (compact && value >= 1000) {
@@ -138,81 +147,78 @@ function formatDelta(current: number, previous: number): { value: string; isPosi
   }
 }
 
-function formatChartDate(dateStr: string): string {
-  const date = new Date(dateStr)
-  return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
-}
-
 type DateFilterOption = {
   label: string
   value: 'today' | 'yesterday' | '7d' | '30d'
-  range: () => { dateFrom: string; dateTo: string }
-  previousRange: () => { dateFrom: string; dateTo: string }
+  granularity: 'hour' | 'day'
+  range: () => { startDate: string; endDate: string }
+  previousRange: () => { startDate: string; endDate: string }
 }
 
 const DATE_FILTER_OPTIONS: DateFilterOption[] = [
   {
     label: 'Today',
     value: 'today',
+    granularity: 'hour',
     range: () => {
-      const today = formatLocalDate(new Date())
-      return { dateFrom: today, dateTo: today }
+      const today = new Date()
+      return getDateRange(today, today)
     },
     previousRange: () => {
       const yesterday = new Date()
       yesterday.setDate(yesterday.getDate() - 1)
-      const str = formatLocalDate(yesterday)
-      return { dateFrom: str, dateTo: str }
+      return getDateRange(yesterday, yesterday)
     },
   },
   {
     label: 'Yesterday',
     value: 'yesterday',
+    granularity: 'hour',
     range: () => {
       const yesterday = new Date()
       yesterday.setDate(yesterday.getDate() - 1)
-      const str = formatLocalDate(yesterday)
-      return { dateFrom: str, dateTo: str }
+      return getDateRange(yesterday, yesterday)
     },
     previousRange: () => {
       const twoDaysAgo = new Date()
       twoDaysAgo.setDate(twoDaysAgo.getDate() - 2)
-      const str = formatLocalDate(twoDaysAgo)
-      return { dateFrom: str, dateTo: str }
+      return getDateRange(twoDaysAgo, twoDaysAgo)
     },
   },
   {
     label: 'Last 7 days',
     value: '7d',
+    granularity: 'day',
     range: () => {
       const today = new Date()
       const weekAgo = new Date()
       weekAgo.setDate(weekAgo.getDate() - 6)
-      return { dateFrom: formatLocalDate(weekAgo), dateTo: formatLocalDate(today) }
+      return getDateRange(weekAgo, today)
     },
     previousRange: () => {
       const weekAgo = new Date()
       weekAgo.setDate(weekAgo.getDate() - 7)
       const twoWeeksAgo = new Date()
       twoWeeksAgo.setDate(twoWeeksAgo.getDate() - 13)
-      return { dateFrom: formatLocalDate(twoWeeksAgo), dateTo: formatLocalDate(weekAgo) }
+      return getDateRange(twoWeeksAgo, weekAgo)
     },
   },
   {
     label: 'Last 30 days',
     value: '30d',
+    granularity: 'day',
     range: () => {
       const today = new Date()
       const monthAgo = new Date()
       monthAgo.setDate(monthAgo.getDate() - 29)
-      return { dateFrom: formatLocalDate(monthAgo), dateTo: formatLocalDate(today) }
+      return getDateRange(monthAgo, today)
     },
     previousRange: () => {
       const monthAgo = new Date()
       monthAgo.setDate(monthAgo.getDate() - 30)
       const twoMonthsAgo = new Date()
       twoMonthsAgo.setDate(twoMonthsAgo.getDate() - 59)
-      return { dateFrom: formatLocalDate(twoMonthsAgo), dateTo: formatLocalDate(monthAgo) }
+      return getDateRange(twoMonthsAgo, monthAgo)
     },
   },
 ]
@@ -231,11 +237,12 @@ export const Route = createFileRoute('/_app/workspace/$workspaceId/_dashboard/')
     const filterOption = DATE_FILTER_OPTIONS.find((o) => o.value === (deps.range ?? 'today'))!
     const filter = filterOption.range()
     const previousFilter = filterOption.previousRange()
+    const granularity = filterOption.granularity
 
     await Promise.all([
       context.queryClient.ensureQueryData(listFunnelsQueryOptions(params.workspaceId)),
       context.queryClient.ensureQueryData(
-        getWorkspaceAnalyticsQueryOptions(params.workspaceId, filter, previousFilter),
+        getWorkspaceAnalyticsQueryOptions(params.workspaceId, filter, previousFilter, granularity),
       ),
     ])
   },
@@ -273,6 +280,26 @@ const chartConfig = {
   },
 } satisfies ChartConfig
 
+function DeltaBadge({ delta }: { delta: { value: string; isPositive: boolean; isZero: boolean } }) {
+  const Icon = delta.isZero ? MinusIcon : delta.isPositive ? TrendingUpIcon : TrendingDownIcon
+
+  return (
+    <Badge
+      variant="outline"
+      className={cn(
+        delta.isZero
+          ? 'text-muted-foreground'
+          : delta.isPositive
+            ? 'border-green-500/20 bg-green-500/10 text-green-600'
+            : 'border-red-500/20 bg-red-500/10 text-red-600',
+      )}
+    >
+      <Icon data-icon="inline-start" />
+      {delta.value}
+    </Badge>
+  )
+}
+
 function MetricValue({
   value,
   delta,
@@ -290,17 +317,8 @@ function MetricValue({
 
   return (
     <span className={cn('inline-flex items-center gap-1.5', align === 'right' && 'justify-end')}>
+      {delta && <DeltaBadge delta={delta} />}
       <span>{isPercentage ? formatPercentage(value) : formatNumber(value, true)}</span>
-      {delta && (
-        <span
-          className={cn(
-            'text-xs',
-            delta.isZero ? 'text-muted-foreground' : delta.isPositive ? 'text-green-600' : 'text-red-600',
-          )}
-        >
-          ({delta.value})
-        </span>
-      )}
     </span>
   )
 }
@@ -312,6 +330,7 @@ function RateCard({
   timeseries,
   dataKey,
   hasData,
+  granularity,
 }: {
   title: string
   value: number | null
@@ -319,6 +338,7 @@ function RateCard({
   timeseries: { date: string; value: number }[]
   dataKey: string
   hasData: boolean
+  granularity: 'hour' | 'day'
 }) {
   const config = {
     [dataKey]: chartConfig[dataKey as keyof typeof chartConfig],
@@ -335,15 +355,20 @@ function RateCard({
       <Card.Content className="px-0!">
         {hasData && timeseries.length >= 2 ? (
           <Chart.Container config={config} height={256}>
-            <LineChart data={timeseries} margin={{ top: 0, right: 0, bottom: 0, left: 0 }}>
+            <LineChart data={timeseries} margin={{ top: 0, right: 0, bottom: 8, left: 0 }}>
               <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--color-border)" />
-              <XAxis dataKey="date" tickFormatter={formatChartDate} tickLine={false} axisLine={false} />
+              <XAxis
+                dataKey="date"
+                tickFormatter={(v) => formatDateForChart(v, granularity)}
+                tickLine={false}
+                axisLine={false}
+              />
               <YAxis tickLine={false} axisLine={false} width={50} tickFormatter={(v) => `${v}%`} />
               <Chart.Tooltip
                 content={(props) => (
                   <Chart.TooltipContent
                     {...props}
-                    labelFormatter={(label) => formatChartDate(String(label))}
+                    labelFormatter={(label) => formatDateForChart(String(label), granularity)}
                     formatter={(v) => {
                       const num = Number(v)
                       return [`${Number.isNaN(num) ? '0.0' : num.toFixed(1)}%`, title]
@@ -388,8 +413,11 @@ function RouteComponent() {
   const rangeOption = DATE_FILTER_OPTIONS.find((o) => o.value === range)!
   const filter = rangeOption.range()
   const previousFilter = rangeOption.previousRange()
+  const granularity = rangeOption.granularity
 
-  const analyticsQuery = useSuspenseQuery(getWorkspaceAnalyticsQueryOptions(params.workspaceId, filter, previousFilter))
+  const analyticsQuery = useSuspenseQuery(
+    getWorkspaceAnalyticsQueryOptions(params.workspaceId, filter, previousFilter, granularity),
+  )
   const { current, previous, timeseries } = analyticsQuery.data
 
   const [selectedMetric, setSelectedMetric] = React.useState<CountMetric>('views')
@@ -548,13 +576,21 @@ function RouteComponent() {
 
             {hasData && timeseries.length >= 2 ? (
               <Chart.Container className="-mx-3 -mb-3" config={chartConfig} height={256}>
-                <LineChart data={timeseries} margin={{ top: 0, right: 0, bottom: 0, left: 0 }}>
+                <LineChart data={timeseries} margin={{ top: 0, right: 0, bottom: 8, left: 0 }}>
                   <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--color-border)" />
-                  <XAxis dataKey="date" tickFormatter={formatChartDate} tickLine={false} axisLine={false} />
-                  <YAxis tickLine={false} axisLine={false} width={30} allowDecimals={false} />
+                  <XAxis
+                    dataKey="date"
+                    tickFormatter={(v) => formatDateForChart(v, granularity)}
+                    tickLine={false}
+                    axisLine={false}
+                  />
+                  <YAxis tickLine={false} axisLine={false} width={50} allowDecimals={false} />
                   <Chart.Tooltip
                     content={(props) => (
-                      <Chart.TooltipContent {...props} labelFormatter={(label) => formatChartDate(String(label))} />
+                      <Chart.TooltipContent
+                        {...props}
+                        labelFormatter={(label) => formatDateForChart(String(label), granularity)}
+                      />
                     )}
                   />
                   <Line
@@ -585,6 +621,7 @@ function RouteComponent() {
             timeseries={startRateTimeseries}
             dataKey="start_rate"
             hasData={hasData}
+            granularity={granularity}
           />
           <RateCard
             title="Completion Rate"
@@ -597,6 +634,7 @@ function RouteComponent() {
             timeseries={completionRateTimeseries}
             dataKey="completion_rate"
             hasData={hasData}
+            granularity={granularity}
           />
         </div>
 

@@ -1,6 +1,6 @@
 DESCRIPTION >
-    Workspace-level daily metrics for time series charts.
-    Supports date filtering.
+    Workspace-level metrics for time series charts.
+    Supports date filtering and granularity (hour or day).
 
 TOKEN api READ
 
@@ -8,18 +8,22 @@ NODE workspace_kpis_timeseries_node
 SQL >
     %
     SELECT
+        {% if String(granularity, 'day') == 'hour' %}
         date,
+        {% else %}
+        toDate(date) AS date,
+        {% end %}
         uniqMerge(views) AS views,
         uniqMerge(starts) AS starts,
         uniqMerge(completions) AS completions,
         uniqMerge(orders) AS orders
     FROM kpis_mv
     WHERE workspace_id = {{ String(workspace_id, required=True) }}
-        {% if defined(date_from) %}
-        AND date >= toDate({{ String(date_from) }})
+        {% if defined(start_date) %}
+        AND date >= parseDateTimeBestEffort({{ String(start_date) }})
         {% end %}
-        {% if defined(date_to) %}
-        AND date <= toDate({{ String(date_to) }})
+        {% if defined(end_date) %}
+        AND date <= parseDateTimeBestEffort({{ String(end_date) }})
         {% end %}
     GROUP BY date
     ORDER BY date
