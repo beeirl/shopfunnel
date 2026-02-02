@@ -120,7 +120,11 @@ const getWorkspaceAnalyticsQueryOptions = (
 
 function formatNumber(value: number, compact = false): string {
   if (compact && value >= 1000) {
-    return new Intl.NumberFormat('en-US', { notation: 'compact', maximumFractionDigits: 1 }).format(value)
+    return new Intl.NumberFormat('en-US', {
+      notation: 'compact',
+      minimumFractionDigits: 1,
+      maximumFractionDigits: 1,
+    }).format(value)
   }
   return value.toLocaleString('en-US')
 }
@@ -137,7 +141,7 @@ function formatDelta(current: number, previous: number): { value: string; isPosi
   const delta = ((current - previous) / previous) * 100
   const isZero = Math.abs(delta) < 0.5
   return {
-    value: `${delta >= 0 ? '+' : ''}${Math.round(delta)}%`,
+    value: `${Math.abs(Math.round(delta))}%`,
     isPositive: delta >= 0,
     isZero,
   }
