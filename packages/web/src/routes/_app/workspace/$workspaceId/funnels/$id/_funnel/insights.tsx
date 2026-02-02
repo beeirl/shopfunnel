@@ -195,9 +195,9 @@ function Insights({
     ? [
         { label: 'Total Views', value: formatNumber(insights.kpis.total_views, true) },
         { label: 'Started', value: formatNumber(insights.kpis.total_starts, true) },
-        { label: 'Start Rate', value: formatPercentage(insights.kpis.start_rate) },
+        { label: 'Start Rate', value: formatPercentage(Math.min(insights.kpis.start_rate, 100)) },
         { label: 'Completions', value: formatNumber(insights.kpis.total_completions, true) },
-        { label: 'Completion Rate', value: formatPercentage(insights.kpis.completion_rate) },
+        { label: 'Completion Rate', value: formatPercentage(Math.min(insights.kpis.completion_rate, 100)) },
         {
           label: 'Orders',
           value:
@@ -210,7 +210,7 @@ function Insights({
           label: 'Conversion Rate',
           value:
             hasShopifyIntegration || insights.kpis.total_orders > 0
-              ? formatPercentage(insights.kpis.conversion_rate)
+              ? formatPercentage(Math.min(insights.kpis.conversion_rate, 100))
               : '-',
           external: !hasShopifyIntegration && insights.kpis.total_orders === 0,
         },

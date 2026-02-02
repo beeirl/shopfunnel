@@ -9,11 +9,7 @@ import { formatDateForChart, getDateRange } from '@/routes/_app/workspace/$works
 import { Funnel } from '@shopfunnel/core/funnel/index'
 import { Identifier } from '@shopfunnel/core/identifier'
 import { Resource } from '@shopfunnel/resource'
-import {
-  IconMinus as MinusIcon,
-  IconTrendingDown as TrendingDownIcon,
-  IconTrendingUp as TrendingUpIcon,
-} from '@tabler/icons-react'
+import { IconArrowDown as ArrowDownIcon, IconArrowUp as ArrowUpIcon, IconMinus as MinusIcon } from '@tabler/icons-react'
 import { queryOptions, useSuspenseQuery } from '@tanstack/react-query'
 import { createFileRoute, Link } from '@tanstack/react-router'
 import { createServerFn } from '@tanstack/react-start'
@@ -139,9 +135,9 @@ function formatDelta(current: number, previous: number): { value: string; isPosi
     return { value: '0%', isPositive: true, isZero: true }
   }
   const delta = ((current - previous) / previous) * 100
-  const isZero = Math.abs(delta) < 0.1
+  const isZero = Math.abs(delta) < 0.5
   return {
-    value: `${delta >= 0 ? '+' : ''}${delta.toFixed(1)}%`,
+    value: `${delta >= 0 ? '+' : ''}${Math.round(delta)}%`,
     isPositive: delta >= 0,
     isZero,
   }
@@ -272,16 +268,16 @@ const chartConfig = {
   },
   start_rate: {
     label: 'Start Rate',
-    color: 'var(--color-chart-4)',
+    color: 'var(--color-primary)',
   },
   completion_rate: {
     label: 'Completion Rate',
-    color: 'var(--color-chart-5)',
+    color: 'var(--color-primary)',
   },
 } satisfies ChartConfig
 
 function DeltaBadge({ delta }: { delta: { value: string; isPositive: boolean; isZero: boolean } }) {
-  const Icon = delta.isZero ? MinusIcon : delta.isPositive ? TrendingUpIcon : TrendingDownIcon
+  const Icon = delta.isZero ? MinusIcon : delta.isPositive ? ArrowUpIcon : ArrowDownIcon
 
   return (
     <Badge
@@ -305,20 +301,25 @@ function MetricValue({
   delta,
   isPercentage = false,
   align = 'left',
+  badgeSide = 'left',
 }: {
   value: number | null
   delta: { value: string; isPositive: boolean; isZero: boolean } | null
   isPercentage?: boolean
   align?: 'left' | 'right'
+  badgeSide?: 'left' | 'right'
 }) {
   if (value === null) {
     return <span className="text-muted-foreground">---</span>
   }
 
+  const showBadge = delta && !delta.isZero
+
   return (
     <span className={cn('inline-flex items-center gap-1.5', align === 'right' && 'justify-end')}>
-      {delta && <DeltaBadge delta={delta} />}
+      {badgeSide === 'left' && showBadge && <DeltaBadge delta={delta} />}
       <span>{isPercentage ? formatPercentage(value) : formatNumber(value, true)}</span>
+      {badgeSide === 'right' && showBadge && <DeltaBadge delta={delta} />}
     </span>
   )
 }
@@ -349,30 +350,34 @@ function RateCard({
       <Card.Header>
         <Card.Title className="text-muted-foreground">{title}</Card.Title>
         <Card.Description className="text-lg font-semibold text-foreground">
-          <MetricValue value={value} delta={delta} isPercentage />
+          <MetricValue value={value} delta={delta} isPercentage badgeSide="right" />
         </Card.Description>
       </Card.Header>
       <Card.Content className="px-0!">
         {hasData && timeseries.length >= 2 ? (
           <Chart.Container config={config} height={256}>
-            <LineChart data={timeseries} margin={{ top: 0, right: 0, bottom: 8, left: 0 }}>
+            <LineChart data={timeseries} margin={{ top: 8, right: 24, bottom: 12, left: 0 }}>
               <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--color-border)" />
               <XAxis
                 dataKey="date"
                 tickFormatter={(v) => formatDateForChart(v, granularity)}
                 tickLine={false}
                 axisLine={false}
+                tickMargin={8}
+                padding={{ left: 10, right: 10 }}
               />
-              <YAxis tickLine={false} axisLine={false} width={50} tickFormatter={(v) => `${v}%`} />
+              <YAxis tickLine={false} axisLine={false} width={50} tickFormatter={(v) => `${v}%`} domain={[0, 100]} />
               <Chart.Tooltip
                 content={(props) => (
                   <Chart.TooltipContent
                     {...props}
                     labelFormatter={(label) => formatDateForChart(String(label), granularity)}
-                    formatter={(v) => {
-                      const num = Number(v)
-                      return [`${Number.isNaN(num) ? '0.0' : num.toFixed(1)}%`, title]
-                    }}
+                    formatter={(value) => (
+                      <>
+                        <span className="text-muted-foreground">{title}</span>
+                        <span className="font-mono font-medium tabular-nums">{formatPercentage(Number(value))}</span>
+                      </>
+                    )}
                   />
                 )}
               />
@@ -432,8 +437,8 @@ function RouteComponent() {
       starts: totalStarts,
       completions: totalCompletions,
       orders: 0, // No orders data yet
-      start_rate: totalViews > 0 ? (totalStarts / totalViews) * 100 : 0,
-      completion_rate: totalStarts > 0 ? (totalCompletions / totalStarts) * 100 : 0,
+      start_rate: totalViews > 0 ? Math.min((totalStarts / totalViews) * 100, 100) : 0,
+      completion_rate: totalStarts > 0 ? Math.min((totalCompletions / totalStarts) * 100, 100) : 0,
     }
   }, [current])
 
@@ -447,8 +452,8 @@ function RouteComponent() {
       starts: totalStarts,
       completions: totalCompletions,
       orders: 0,
-      start_rate: totalViews > 0 ? (totalStarts / totalViews) * 100 : 0,
-      completion_rate: totalStarts > 0 ? (totalCompletions / totalStarts) * 100 : 0,
+      start_rate: totalViews > 0 ? Math.min((totalStarts / totalViews) * 100, 100) : 0,
+      completion_rate: totalStarts > 0 ? Math.min((totalCompletions / totalStarts) * 100, 100) : 0,
     }
   }, [previous])
 
@@ -457,7 +462,7 @@ function RouteComponent() {
       .filter((point) => point.views > 0)
       .map((point) => ({
         date: point.date,
-        value: (point.starts / point.views) * 100,
+        value: Math.min((point.starts / point.views) * 100, 100),
       }))
   }, [timeseries])
 
@@ -466,7 +471,7 @@ function RouteComponent() {
       .filter((point) => point.starts > 0)
       .map((point) => ({
         date: point.date,
-        value: (point.completions / point.starts) * 100,
+        value: Math.min((point.completions / point.starts) * 100, 100),
       }))
   }, [timeseries])
 
@@ -548,7 +553,7 @@ function RouteComponent() {
                       >
                         <span className="text-sm font-medium">{metric.label}</span>
                         <span className="text-lg font-semibold">
-                          <MetricValue value={value} delta={delta} />
+                          <MetricValue value={value} delta={delta} badgeSide="right" />
                         </span>
                       </div>
                     )
@@ -565,7 +570,7 @@ function RouteComponent() {
                     >
                       <span className="text-sm font-medium">{metric.label}</span>
                       <span className="text-lg font-semibold">
-                        <MetricValue value={value} delta={delta} />
+                        <MetricValue value={value} delta={delta} badgeSide="right" />
                       </span>
                       {isSelected && <div className="absolute right-0 bottom-0 left-0 h-0.5 bg-primary" />}
                     </button>
@@ -576,27 +581,43 @@ function RouteComponent() {
 
             {hasData && timeseries.length >= 2 ? (
               <Chart.Container className="-mx-3 -mb-3" config={chartConfig} height={256}>
-                <LineChart data={timeseries} margin={{ top: 0, right: 0, bottom: 8, left: 0 }}>
+                <LineChart data={timeseries} margin={{ top: 0, right: 24, bottom: 12, left: 0 }}>
                   <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--color-border)" />
                   <XAxis
                     dataKey="date"
                     tickFormatter={(v) => formatDateForChart(v, granularity)}
                     tickLine={false}
                     axisLine={false}
+                    tickMargin={8}
+                    padding={{ left: 10, right: 10 }}
                   />
-                  <YAxis tickLine={false} axisLine={false} width={50} allowDecimals={false} />
+                  <YAxis
+                    tickLine={false}
+                    axisLine={false}
+                    width={50}
+                    allowDecimals={false}
+                    tickFormatter={(v) => formatNumber(v, true)}
+                  />
                   <Chart.Tooltip
                     content={(props) => (
                       <Chart.TooltipContent
                         {...props}
                         labelFormatter={(label) => formatDateForChart(String(label), granularity)}
+                        formatter={(value, name) => (
+                          <>
+                            <span className="text-muted-foreground">
+                              {chartConfig[name as keyof typeof chartConfig]?.label ?? name}
+                            </span>
+                            <span className="font-mono font-medium tabular-nums">{formatNumber(Number(value))}</span>
+                          </>
+                        )}
                       />
                     )}
                   />
                   <Line
                     type="monotone"
                     dataKey={selectedMetric}
-                    stroke={`var(--color-${selectedMetric})`}
+                    stroke="var(--color-primary)"
                     strokeWidth={2}
                     dot={false}
                     activeDot={{ r: 4 }}
@@ -658,17 +679,24 @@ function RouteComponent() {
                   </Table.Row>
                 ) : (
                   funnelMetrics.map((funnel) => {
+                    const currentStartRate = funnel.current ? Math.min(funnel.current.start_rate, 100) : null
+                    const currentCompletionRate = funnel.current ? Math.min(funnel.current.completion_rate, 100) : null
+                    const previousStartRate = funnel.previous ? Math.min(funnel.previous.start_rate, 100) : null
+                    const previousCompletionRate = funnel.previous
+                      ? Math.min(funnel.previous.completion_rate, 100)
+                      : null
+
                     const viewsDelta =
                       funnel.current && funnel.previous
                         ? formatDelta(funnel.current.views, funnel.previous.views)
                         : null
                     const startRateDelta =
-                      funnel.current && funnel.previous
-                        ? formatDelta(funnel.current.start_rate, funnel.previous.start_rate)
+                      currentStartRate !== null && previousStartRate !== null
+                        ? formatDelta(currentStartRate, previousStartRate)
                         : null
                     const completionRateDelta =
-                      funnel.current && funnel.previous
-                        ? formatDelta(funnel.current.completion_rate, funnel.previous.completion_rate)
+                      currentCompletionRate !== null && previousCompletionRate !== null
+                        ? formatDelta(currentCompletionRate, previousCompletionRate)
                         : null
 
                     return (
@@ -686,16 +714,11 @@ function RouteComponent() {
                           <MetricValue value={funnel.current?.views ?? null} delta={viewsDelta} align="right" />
                         </Table.Cell>
                         <Table.Cell className="text-right">
-                          <MetricValue
-                            value={funnel.current?.start_rate ?? null}
-                            delta={startRateDelta}
-                            isPercentage
-                            align="right"
-                          />
+                          <MetricValue value={currentStartRate} delta={startRateDelta} isPercentage align="right" />
                         </Table.Cell>
                         <Table.Cell className="text-right">
                           <MetricValue
-                            value={funnel.current?.completion_rate ?? null}
+                            value={currentCompletionRate}
                             delta={completionRateDelta}
                             isPercentage
                             align="right"

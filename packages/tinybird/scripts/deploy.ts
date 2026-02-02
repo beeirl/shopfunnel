@@ -17,6 +17,7 @@ if (!stage) {
 }
 
 const force = process.argv.includes('--force')
+const destructive = process.argv.includes('--destructive')
 
 // Determine target workspace based on stage
 // production stage -> shopfunnel_production workspace
@@ -25,7 +26,11 @@ const workspace = stage === 'production' ? 'shopfunnel_production' : 'shopfunnel
 
 // Switch to the correct workspace and deploy
 await $`TB_VERSION_WARNING=0 tb --cloud workspace use ${workspace}`.cwd(dir)
-await $`TB_VERSION_WARNING=0 tb --cloud deploy --wait`.cwd(dir)
+if (destructive) {
+  await $`TB_VERSION_WARNING=0 tb --cloud deploy --wait --allow-destructive-operations`.cwd(dir)
+} else {
+  await $`TB_VERSION_WARNING=0 tb --cloud deploy --wait`.cwd(dir)
+}
 
 console.log(`Retrieving ${TOKEN_NAME} token...`)
 const token = await (async () => {
