@@ -41,6 +41,7 @@ export const web = new sst.cloudflare.x.SolidStart('Web', {
     VITE_DOMAIN: domain,
     VITE_STAGE: $app.stage,
     VITE_AUTH_URL: auth.url.apply((url) => url!),
+    VITE_POSTHOG_API_KEY: secret.POSTHOG_API_KEY.value,
   },
   transform: {
     server: {

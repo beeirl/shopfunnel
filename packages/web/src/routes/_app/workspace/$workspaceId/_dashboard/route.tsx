@@ -4,9 +4,7 @@ import { Menu } from '@/components/ui/menu'
 import { Sidebar } from '@/components/ui/sidebar'
 import { withActor } from '@/context/auth.withActor'
 import { Account } from '@shopfunnel/core/account/index'
-import { Actor } from '@shopfunnel/core/actor'
 import { Identifier } from '@shopfunnel/core/identifier'
-import { User } from '@shopfunnel/core/user/index'
 import {
   IconBlocks as BlocksIcon,
   IconDashboard as DashboardIcon,
@@ -18,22 +16,8 @@ import {
 import { queryOptions, useSuspenseQuery } from '@tanstack/react-query'
 import { createFileRoute, Link, Outlet, useLocation, useMatches } from '@tanstack/react-router'
 import { createServerFn } from '@tanstack/react-start'
-
-const getUserEmail = createServerFn()
-  .inputValidator(Identifier.schema('workspace'))
-  .handler(({ data: workspaceId }) => {
-    return withActor(async () => {
-      const actor = Actor.assert('user')
-      const user = await User.getAuthEmail(actor.properties.userId)
-      return user!
-    }, workspaceId)
-  })
-
-const getUserEmailQueryOptions = (workspaceId: string) =>
-  queryOptions({
-    queryKey: ['user-email', workspaceId],
-    queryFn: () => getUserEmail({ data: workspaceId }),
-  })
+import { usePostHog } from 'posthog-js/react'
+import { getUserEmailQueryOptions } from '../-common'
 
 const getWorkspaces = createServerFn({ method: 'GET' })
   .inputValidator(Identifier.schema('workspace'))
@@ -87,6 +71,7 @@ const navItems = [
 function DashboardLayoutRoute() {
   const params = Route.useParams()
   const location = useLocation()
+  const posthog = usePostHog()
 
   const getUserEmailQuery = useSuspenseQuery(getUserEmailQueryOptions(params.workspaceId))
   const userEmail = getUserEmailQuery.data
@@ -102,6 +87,11 @@ function DashboardLayoutRoute() {
     href += window.location.search
     href += window.location.hash
     window.location.href = href
+  }
+
+  const handleLogout = () => {
+    posthog.reset()
+    window.location.href = '/auth/logout'
   }
 
   const isRouteActive = (to: string, exact?: boolean) => {
@@ -188,7 +178,7 @@ function DashboardLayoutRoute() {
           <Menu.Root>
             <Menu.Trigger render={<Button variant="outline">{userEmail}</Button>} />
             <Menu.Content align="end">
-              <Menu.Item variant="destructive" render={<a href="/auth/logout" />}>
+              <Menu.Item variant="destructive" onClick={handleLogout}>
                 <LogoutIcon />
                 Logout
               </Menu.Item>

@@ -56,6 +56,10 @@ declare module "sst" {
     "LogProcessor": {
       "type": "sst.cloudflare.Worker"
     }
+    "POSTHOG_API_KEY": {
+      "type": "sst.sst.Secret"
+      "value": string
+    }
     "RESEND_API_KEY": {
       "type": "sst.sst.Secret"
       "value": string

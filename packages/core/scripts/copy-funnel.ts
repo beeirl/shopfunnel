@@ -21,7 +21,7 @@ if (!funnelId?.startsWith('fun_') || !targetWorkspaceId?.startsWith('wrk_')) {
 // Create S3 client for R2 copy operations
 const s3Client = new S3Client({
   region: 'auto',
-  endpoint: `https://${Resource.CLOUDFLARE_DEFAULT_ACCOUNT_ID.value}.r2.cloudflarestorage.com`,
+  endpoint: `https://${process.env.CLOUDFLARE_DEFAULT_ACCOUNT_ID}.r2.cloudflarestorage.com`,
   credentials: {
     accessKeyId: Resource.CLOUDFLARE_R2_ACCESS_KEY_ID.value,
     secretAccessKey: Resource.CLOUDFLARE_R2_SECRET_ACCESS_KEY.value,
