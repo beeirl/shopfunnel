@@ -29,8 +29,9 @@ function RouteComponent() {
       options={{
         api_host: 'https://us.i.posthog.com',
         autocapture: false,
+        capture_exceptions: true,
         loaded: (posthog) => {
-          posthog.identify(sessionQuery.data.accountId, {
+          posthog.identify(sessionQuery.data.accountId, undefined, {
             email: getUserEmailQuery.data,
           })
         },

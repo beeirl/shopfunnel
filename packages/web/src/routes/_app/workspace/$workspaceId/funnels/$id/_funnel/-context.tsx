@@ -68,8 +68,28 @@ export function FunnelProvider({ children, collection }: FunnelProviderProps) {
 
   const [isSaving, setIsSaving] = React.useState(false)
 
+  // Debug: Log when useLiveQuery data changes
+  React.useEffect(() => {
+    console.log('[FunnelProvider] useLiveQuery data changed', {
+      timestamp: Date.now(),
+      funnelId: funnel?.id,
+      // Log a hash of pages to detect changes without flooding console
+      pagesLength: funnel?.pages?.length,
+      firstPageBlocksLength: funnel?.pages?.[0]?.blocks?.length,
+      // Sample some text content to track changes
+      sampleContent: funnel?.pages?.flatMap((p) => p.blocks)?.find((b) => 'text' in (b.properties || {}))?.properties,
+    })
+  }, [funnel])
+
   const mutate = usePacedMutations<SaveFunnelInput, Info>({
     onMutate: (values) => {
+      console.log('[FunnelProvider] onMutate START', {
+        timestamp: Date.now(),
+        valuesKeys: Object.keys(values),
+        pagesChanged: !!values.pages,
+        // Sample content being saved
+        sampleContent: values.pages?.flatMap((p) => p.blocks)?.find((b) => 'text' in (b.properties || {}))?.properties,
+      })
       setIsSaving(true)
       collection.update(funnel.id, (funnel) => {
         if (values.pages) funnel.pages = values.pages
@@ -80,10 +100,18 @@ export function FunnelProvider({ children, collection }: FunnelProviderProps) {
         funnel.draft = true
         funnel.published = false
       })
+      console.log('[FunnelProvider] onMutate END', { timestamp: Date.now() })
     },
     mutationFn: async ({ transaction }) => {
+      console.log('[FunnelProvider] mutationFn START', {
+        timestamp: Date.now(),
+        transactionId: transaction.id,
+        transactionState: transaction.state,
+        mutationCount: transaction.mutations.length,
+      })
       const mutation = transaction.mutations.find((m) => m.type === 'update')
       if (mutation) {
+        console.log('[FunnelProvider] calling updateFunnel API', { timestamp: Date.now() })
         await updateFunnel({
           data: {
             funnelId: funnel.id,
@@ -95,9 +123,13 @@ export function FunnelProvider({ children, collection }: FunnelProviderProps) {
             ...(mutation.changes.settings && { settings: mutation.changes.settings }),
           },
         })
+        console.log('[FunnelProvider] updateFunnel API complete', { timestamp: Date.now() })
       }
+      console.log('[FunnelProvider] calling refetch', { timestamp: Date.now() })
       await collection.utils.refetch()
+      console.log('[FunnelProvider] refetch complete', { timestamp: Date.now() })
       setIsSaving(false)
+      console.log('[FunnelProvider] mutationFn END', { timestamp: Date.now() })
     },
     strategy: debounceStrategy({ wait: 3000 }),
   })
