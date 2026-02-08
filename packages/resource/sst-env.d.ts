@@ -34,10 +34,6 @@ declare module "sst" {
       "type": "sst.sst.Secret"
       "value": string
     }
-    "HONEYCOMB_API_KEY": {
-      "type": "sst.sst.Secret"
-      "value": string
-    }
     "POSTHOG_API_KEY": {
       "type": "sst.sst.Secret"
       "value": string
@@ -80,7 +76,6 @@ declare module "sst" {
     "AnalyticsWorker": cloudflare.Service
     "AuthApi": cloudflare.Service
     "AuthStorage": cloudflare.KVNamespace
-    "LogProcessor": cloudflare.Service
     "Storage": cloudflare.R2Bucket
   }
 }
