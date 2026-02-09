@@ -24,6 +24,24 @@ export const billingCron = new sst.cloudflare.Cron('BillingCron', {
   schedules: ['*/5 * * * *'],
 })
 
+if ($app.stage === 'production') {
+  new cloudflare.DnsRecord('StripeDnsRecord', {
+    zoneId: secret.CLOUDFLARE_ZONE_ID.value,
+    name: 'billing',
+    type: 'CNAME',
+    content: 'hosted-checkout.stripecdn.com',
+    ttl: 300,
+  })
+
+  new cloudflare.DnsRecord('StripeChallengeDnsRecord', {
+    zoneId: secret.CLOUDFLARE_ZONE_ID.value,
+    name: '_acme-challenge.billing',
+    type: 'TXT',
+    content: 'GwC3PTmTamgq2E6cmvDOw5P7rKXB_qPIx_Hko5aoCcs',
+    ttl: 300,
+  })
+}
+
 const standardProduct = new stripe.Product('StandardProduct', {
   name: 'Shopfunnel Standard',
 })

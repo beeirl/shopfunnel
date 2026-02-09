@@ -9,7 +9,7 @@ export const secret = {
   RESEND_API_KEY: new sst.Secret('RESEND_API_KEY'),
   SHOPIFY_CLIENT_ID: new sst.Secret('SHOPIFY_CLIENT_ID'),
   SHOPIFY_CLIENT_SECRET: new sst.Secret('SHOPIFY_CLIENT_SECRET'),
-  STRIPE_SECRET_KEY: new sst.Secret('STRIPE_SECRET_KEY'),
+  STRIPE_SECRET_KEY: new sst.Secret('STRIPE_SECRET_KEY', process.env.STRIPE_SECRET_KEY),
   TINYBIRD_TOKEN: new sst.Secret('TINYBIRD_TOKEN'),
 }
 export const allSecrets = Object.values(secret)
