@@ -358,7 +358,7 @@ export function BillingPage({ animate, title, subtitle }: { animate?: boolean; t
       <div className="w-full max-w-[870px]">
         <div className="flex flex-col items-start justify-between gap-4 rounded-2xl bg-muted/50 px-4 py-4 sm:flex-row sm:items-center sm:px-5">
           <div>
-            <h3 className="font-semibold text-foreground">Managed Service Addon</h3>
+            <h3 className="font-semibold text-foreground">Managed Service Add-On</h3>
             <p className="mt-0.5 text-sm font-medium text-balance text-muted-foreground">
               We create up to 4 new funnels per month including continuous A/B testing and optimization.
             </p>

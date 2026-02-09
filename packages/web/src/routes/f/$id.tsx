@@ -188,6 +188,7 @@ function RouteComponent() {
     if (funnelEnteredRef.current) return
     funnelEnteredRef.current = true
     trackEvent('funnel_viewed')
+    trackMetaPixelEvent('FunnelViewed')
   }, [])
 
   useEffect(() => {
