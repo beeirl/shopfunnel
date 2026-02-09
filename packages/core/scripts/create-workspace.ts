@@ -23,6 +23,7 @@ await Database.use(async (tx) => {
   await tx.insert(WorkspaceTable).values({
     id: workspaceId,
     name,
+    flags: { onboardingCompleted: true },
   })
 })
 

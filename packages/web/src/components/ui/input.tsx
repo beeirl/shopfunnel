@@ -2,9 +2,12 @@ import { cn } from '@/lib/utils'
 import { Input as InputPrimitive } from '@base-ui/react/input'
 import * as React from 'react'
 
-type InputProps = InputPrimitive.Props & React.RefAttributes<HTMLInputElement>
+type InputProps = InputPrimitive.Props &
+  React.RefAttributes<HTMLInputElement> & {
+    onValueChange?: (value: string) => void
+  }
 
-function Input({ className, ...props }: InputProps) {
+function Input({ className, onValueChange, ...props }: InputProps) {
   return (
     <InputPrimitive
       data-slot="input"
@@ -13,6 +16,10 @@ function Input({ className, ...props }: InputProps) {
         className,
       )}
       {...props}
+      onChange={(e) => {
+        props.onChange?.(e)
+        onValueChange?.((e.target as HTMLInputElement).value)
+      }}
     />
   )
 }

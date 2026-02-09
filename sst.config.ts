@@ -10,6 +10,7 @@ export default $config({
       providers: {
         cloudflare: true,
         planetscale: true,
+        stripe: { apiKey: process.env.STRIPE_SECRET_KEY! },
         random: true,
       },
     }
@@ -19,6 +20,7 @@ export default $config({
     await import('./infra/database')
     await import('./infra/storage')
     await import('./infra/analytics')
+    await import('./infra/billing')
     await import('./infra/domain')
     await import('./infra/web')
   },

@@ -14,9 +14,9 @@ import { IconDots as DotsIcon, IconWorld as WorldIcon } from '@tabler/icons-reac
 import { queryOptions, useMutation, useQueryClient, useSuspenseQuery } from '@tanstack/react-query'
 import { createFileRoute } from '@tanstack/react-router'
 import { createServerFn } from '@tanstack/react-start'
-import { DateTime } from 'luxon'
 import * as React from 'react'
 import { z } from 'zod'
+import { formatDate, formatDateRelative } from '../-common'
 import { Heading } from './-components/heading'
 
 const getDomain = createServerFn()
@@ -209,18 +209,16 @@ function DomainsRoute() {
             <DataGrid.Cell className="flex-col items-start justify-center overflow-hidden pr-2 md:pr-8">
               <span className="truncate text-sm font-medium text-foreground">{domain.hostname}</span>
               <span className="truncate text-xs text-muted-foreground md:hidden">
-                {DateTime.fromJSDate(domain.createdAt).toRelative()}
+                {formatDateRelative(domain.createdAt)}
               </span>
             </DataGrid.Cell>
 
             <DataGrid.Cell hideOnMobile>
               <Tooltip.Root>
                 <Tooltip.Trigger render={<span className="text-sm text-muted-foreground" />}>
-                  {DateTime.fromJSDate(domain.createdAt).toRelative()}
+                  {formatDateRelative(domain.createdAt)}
                 </Tooltip.Trigger>
-                <Tooltip.Content>
-                  {DateTime.fromJSDate(domain.createdAt).toLocaleString(DateTime.DATETIME_MED)}
-                </Tooltip.Content>
+                <Tooltip.Content>{formatDate(domain.createdAt)}</Tooltip.Content>
               </Tooltip.Root>
             </DataGrid.Cell>
 

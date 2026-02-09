@@ -12,9 +12,9 @@ import { IconBlocks as BlocksIcon, IconDots as DotsIcon } from '@tabler/icons-re
 import { queryOptions, useMutation, useQueryClient, useSuspenseQuery } from '@tanstack/react-query'
 import { createFileRoute } from '@tanstack/react-router'
 import { createServerFn } from '@tanstack/react-start'
-import { DateTime } from 'luxon'
 import * as React from 'react'
 import { z } from 'zod'
+import { formatDate, formatDateRelative } from '../-common'
 import { Heading } from './-components/heading'
 
 const getShopifyIntegration = createServerFn()
@@ -151,7 +151,7 @@ function IntegrationsRoute() {
               <span className="truncate text-sm text-muted-foreground">
                 <span className="md:hidden">
                   {(integration.metadata as { shopDomain?: string })?.shopDomain} &middot;{' '}
-                  {DateTime.fromJSDate(integration.createdAt).toRelative()}
+                  {formatDateRelative(integration.createdAt)}
                 </span>
                 <span className="hidden md:inline">
                   {(integration.metadata as { shopDomain?: string })?.shopDomain}
@@ -162,11 +162,9 @@ function IntegrationsRoute() {
             <DataGrid.Cell hideOnMobile>
               <Tooltip.Root>
                 <Tooltip.Trigger render={<span className="text-sm text-muted-foreground" />}>
-                  {DateTime.fromJSDate(integration.createdAt).toRelative()}
+                  {formatDateRelative(integration.createdAt)}
                 </Tooltip.Trigger>
-                <Tooltip.Content>
-                  {DateTime.fromJSDate(integration.createdAt).toLocaleString(DateTime.DATETIME_MED)}
-                </Tooltip.Content>
+                <Tooltip.Content>{formatDate(integration.createdAt)}</Tooltip.Content>
               </Tooltip.Root>
             </DataGrid.Cell>
 

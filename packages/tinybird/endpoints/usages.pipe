@@ -1,0 +1,22 @@
+DESCRIPTION >
+    Aggregates sessions by workspace for billing.
+
+TOKEN api READ
+
+NODE usage_node
+SQL >
+    %
+    SELECT
+        workspace_id,
+        count() AS sessions
+    FROM events
+    WHERE type = 'funnel_viewed'
+        {% if defined(start_date) %}
+        AND timestamp >= parseDateTimeBestEffort({{ String(start_date) }})
+        {% end %}
+        {% if defined(end_date) %}
+        AND timestamp < parseDateTimeBestEffort({{ String(end_date) }})
+        {% end %}
+    GROUP BY workspace_id
+
+TYPE endpoint

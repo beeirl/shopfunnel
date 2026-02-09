@@ -3,6 +3,7 @@ import { Card } from '@/components/ui/card'
 import { Empty } from '@/components/ui/empty'
 import { withActor } from '@/context/auth.withActor'
 import { cn } from '@/lib/utils'
+import { formatDate } from '@/routes/_app/workspace/$workspaceId/-common'
 import { Identifier } from '@shopfunnel/core/identifier'
 import { Submission } from '@shopfunnel/core/submission/index'
 import {
@@ -55,16 +56,6 @@ export const Route = createFileRoute('/_app/workspace/$workspaceId/funnels/$id/_
 type RowData = {
   submittedAt: string
   [questionId: string]: string
-}
-
-function formatDate(date: Date): string {
-  return new Intl.DateTimeFormat('en-US', {
-    month: 'short',
-    day: 'numeric',
-    year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-  }).format(date)
 }
 
 const columnHelper = createColumnHelper<RowData>()

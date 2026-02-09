@@ -20,11 +20,10 @@ import {
 import { mutationOptions, queryOptions, useMutation, useQueryClient, useSuspenseQuery } from '@tanstack/react-query'
 import { createFileRoute, Link } from '@tanstack/react-router'
 import { createServerFn } from '@tanstack/react-start'
-import { DateTime } from 'luxon'
 import * as React from 'react'
 import { z } from 'zod'
 import { Heading } from '../-components/heading'
-import { getSessionQueryOptions } from '../../-common'
+import { formatDate, formatDateRelative, getSessionQueryOptions } from '../../-common'
 
 const listFunnels = createServerFn()
   .inputValidator(Identifier.schema('workspace'))
@@ -247,29 +246,25 @@ function RouteComponent() {
               <DataGrid.Cell className="flex-col items-start justify-center overflow-hidden pr-2 md:pr-8">
                 <span className="truncate text-sm font-medium text-foreground">{funnel.title}</span>
                 <span className="truncate text-xs text-muted-foreground md:hidden">
-                  {DateTime.fromJSDate(funnel.createdAt).toRelative()}
+                  {formatDateRelative(funnel.createdAt)}
                 </span>
               </DataGrid.Cell>
 
               <DataGrid.Cell hideOnMobile>
                 <Tooltip.Root>
                   <Tooltip.Trigger render={<span className="text-sm text-muted-foreground" />}>
-                    {DateTime.fromJSDate(funnel.updatedAt).toRelative()}
+                    {formatDateRelative(funnel.updatedAt)}
                   </Tooltip.Trigger>
-                  <Tooltip.Content>
-                    {DateTime.fromJSDate(funnel.updatedAt).toLocaleString(DateTime.DATETIME_MED)}
-                  </Tooltip.Content>
+                  <Tooltip.Content>{formatDate(funnel.updatedAt)}</Tooltip.Content>
                 </Tooltip.Root>
               </DataGrid.Cell>
 
               <DataGrid.Cell hideOnMobile>
                 <Tooltip.Root>
                   <Tooltip.Trigger render={<span className="text-sm text-muted-foreground" />}>
-                    {DateTime.fromJSDate(funnel.createdAt).toRelative()}
+                    {formatDateRelative(funnel.createdAt)}
                   </Tooltip.Trigger>
-                  <Tooltip.Content>
-                    {DateTime.fromJSDate(funnel.createdAt).toLocaleString(DateTime.DATETIME_MED)}
-                  </Tooltip.Content>
+                  <Tooltip.Content>{formatDate(funnel.createdAt)}</Tooltip.Content>
                 </Tooltip.Root>
               </DataGrid.Cell>
 

@@ -2,6 +2,7 @@ import { Resource } from '@shopfunnel/resource'
 import { and, eq, isNull } from 'drizzle-orm'
 import { z } from 'zod'
 import { Actor } from '../actor'
+import { Billing } from '../billing/index'
 import { Database } from '../database'
 import { Identifier } from '../identifier'
 import { fn } from '../utils/fn'
@@ -43,6 +44,7 @@ export namespace Domain {
       hostname: z.string(),
     }),
     async (input) => {
+      await Billing.assert()
       const hostname = input.hostname.toLowerCase()
 
       // Check if workspace already has a domain

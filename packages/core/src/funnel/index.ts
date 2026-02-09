@@ -3,6 +3,7 @@ import { groupBy, map, pipe, values } from 'remeda'
 import { ulid } from 'ulid'
 import z from 'zod'
 import { Actor } from '../actor'
+import { Billing } from '../billing/index'
 import { Database } from '../database'
 import { DomainTable } from '../domain/index.sql'
 import { File } from '../file'
@@ -327,6 +328,7 @@ export namespace Funnel {
   )
 
   export const publish = fn(Identifier.schema('funnel'), async (id) => {
+    await Billing.assert()
     await Database.use(async (tx) => {
       const funnel = await tx
         .select()
@@ -368,6 +370,24 @@ export namespace Funnel {
           publishedAt: null,
         })
         .where(and(eq(FunnelTable.workspaceId, Actor.workspace()), eq(FunnelTable.id, id)))
+    })
+  })
+
+  export const unpublishAll = fn(z.void(), async () => {
+    await Database.use(async (tx) => {
+      await tx
+        .update(FunnelTable)
+        .set({
+          publishedVersion: null,
+          publishedAt: null,
+        })
+        .where(
+          and(
+            eq(FunnelTable.workspaceId, Actor.workspace()),
+            isNull(FunnelTable.archivedAt),
+            isNotNull(FunnelTable.publishedVersion),
+          ),
+        )
     })
   })
 

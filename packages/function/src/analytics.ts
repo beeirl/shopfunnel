@@ -4,8 +4,8 @@ import { Resource } from '@shopfunnel/resource'
 
 export default {
   async queue(batch: MessageBatch<Analytics.Event>) {
-    const events = batch.messages.map((m) => {
-      const event = m.body
+    const events = batch.messages.map((message) => {
+      const event = message.body
       return {
         timestamp: event.timestamp,
         session_id: event.session_id,
@@ -21,7 +21,6 @@ export default {
     if (events.length === 0) return
 
     const body = events.map((e) => JSON.stringify(e)).join('\n')
-
     await fetch('https://api.us-east.aws.tinybird.co/v0/events?name=events', {
       method: 'POST',
       headers: {

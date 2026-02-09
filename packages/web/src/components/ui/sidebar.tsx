@@ -321,7 +321,7 @@ function SidebarFooter({ className, ...props }: React.ComponentProps<'div'>) {
     <div
       data-slot="sidebar-footer"
       data-sidebar="footer"
-      className={cn('flex flex-col gap-2 px-3 py-1.5', className)}
+      className={cn('flex flex-col gap-2 p-3', className)}
       {...props}
     />
   )

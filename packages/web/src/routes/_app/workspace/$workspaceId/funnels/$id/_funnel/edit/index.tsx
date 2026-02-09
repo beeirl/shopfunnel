@@ -1,6 +1,6 @@
+import { getSessionQueryOptions } from '@/routes/_app/workspace/$workspaceId/-common'
 import { createFileRoute, redirect } from '@tanstack/react-router'
 import * as React from 'react'
-import { getSessionQueryOptions } from '../../../../-common'
 import { BlockPanel } from './-components/block-panel'
 import { Canvas } from './-components/canvas'
 import { LogicPanel } from './-components/logic-panel'

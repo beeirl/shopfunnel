@@ -1,5 +1,6 @@
 import { sql } from 'drizzle-orm'
-import { char, primaryKey, timestamp, varchar } from 'drizzle-orm/mysql-core'
+import { char, MySqlColumn, primaryKey, timestamp, varchar } from 'drizzle-orm/mysql-core'
+import { isPlainObject } from 'remeda'
 
 export const id = (name: string) => char(name, { length: 30 })
 
@@ -37,3 +38,18 @@ export const timestampColumns = {
 
 // Re-export for files using timestamp directly
 export { utc as timestamp }
+
+/**
+ * Helper for partial JSON updates using MySQL JSON_SET
+ */
+export function setJson(column: MySqlColumn, json: Record<string, unknown>) {
+  function mapToPathValuePairs(obj: Record<string, unknown>, path = '$'): unknown[] {
+    return Object.entries(obj).flatMap(([key, value]) => {
+      const newPath = `${path}.${key}`
+      if (isPlainObject(value)) return mapToPathValuePairs(value as Record<string, unknown>, newPath)
+      return [newPath, value]
+    })
+  }
+  const pathValuePairs = mapToPathValuePairs(json).map((value) => sql`${value}`)
+  return sql`JSON_SET(${column}, ${sql.join(pathValuePairs, sql`, `)})`
+}

@@ -6,6 +6,37 @@
 import "sst"
 declare module "sst" {
   export interface Resource {
+    "BILLING": {
+      "managedPriceId": string
+      "managedProductId": string
+      "meterId": string
+      "standard100KMonthlyPriceId": string
+      "standard100KOveragePriceId": string
+      "standard100KYearlyPriceId": string
+      "standard1MMonthlyPriceId": string
+      "standard1MOveragePriceId": string
+      "standard1MYearlyPriceId": string
+      "standard250KMonthlyPriceId": string
+      "standard250KOveragePriceId": string
+      "standard250KYearlyPriceId": string
+      "standard25KMonthlyPriceId": string
+      "standard25KOveragePriceId": string
+      "standard25KYearlyPriceId": string
+      "standard2MMonthlyPriceId": string
+      "standard2MOveragePriceId": string
+      "standard2MYearlyPriceId": string
+      "standard500KMonthlyPriceId": string
+      "standard500KOveragePriceId": string
+      "standard500KYearlyPriceId": string
+      "standard50KMonthlyPriceId": string
+      "standard50KOveragePriceId": string
+      "standard50KYearlyPriceId": string
+      "standard5KMonthlyPriceId": string
+      "standard5KOveragePriceId": string
+      "standard5KYearlyPriceId": string
+      "standardProductId": string
+      "type": "sst.sst.Linkable"
+    }
     "CLOUDFLARE_R2_ACCESS_KEY_ID": {
       "type": "sst.sst.Secret"
       "value": string
@@ -58,6 +89,14 @@ declare module "sst" {
       "type": "sst.sst.Linkable"
       "value": string
     }
+    "STRIPE_SECRET_KEY": {
+      "type": "sst.sst.Secret"
+      "value": string
+    }
+    "STRIPE_WEBHOOK_SECRET": {
+      "type": "sst.sst.Linkable"
+      "value": string
+    }
     "TINYBIRD_TOKEN": {
       "type": "sst.sst.Secret"
       "value": string
@@ -76,6 +115,7 @@ declare module "sst" {
     "AnalyticsWorker": cloudflare.Service
     "AuthApi": cloudflare.Service
     "AuthStorage": cloudflare.KVNamespace
+    "BillingCronHandler": cloudflare.Service
     "Storage": cloudflare.R2Bucket
   }
 }

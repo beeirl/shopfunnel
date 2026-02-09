@@ -1,0 +1,1 @@
+ALTER TABLE `billing` ADD `last_subscribed_at` timestamp(3);

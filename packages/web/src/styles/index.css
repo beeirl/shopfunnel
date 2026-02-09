@@ -141,3 +141,22 @@
     display: none;
   }
 }
+
+@keyframes shimmer {
+  0% {
+    -webkit-mask-position-x: 100%;
+    mask-position-x: 100%;
+  }
+  33% {
+    -webkit-mask-position-x: 0%;
+    mask-position-x: 0%;
+  }
+  100% {
+    -webkit-mask-position-x: 0%;
+    mask-position-x: 0%;
+  }
+}
+
+@utility animate-shimmer {
+  animation: shimmer 4.5s ease-out infinite;
+}

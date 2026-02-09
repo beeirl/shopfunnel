@@ -1,10 +1,117 @@
 import { withActor } from '@/context/auth.withActor'
 import { Actor } from '@shopfunnel/core/actor'
+import { Billing } from '@shopfunnel/core/billing/index'
 import { Identifier } from '@shopfunnel/core/identifier'
 import { Integration } from '@shopfunnel/core/integration/index'
 import { User } from '@shopfunnel/core/user/index'
+import { Workspace } from '@shopfunnel/core/workspace/index'
+import { Resource } from '@shopfunnel/resource'
 import { queryOptions } from '@tanstack/react-query'
+import { redirect } from '@tanstack/react-router'
 import { createServerFn } from '@tanstack/react-start'
+import { DateTime } from 'luxon'
+import { z } from 'zod'
+
+export const PLANS = [
+  {
+    id: 'standard5K',
+    name: 'Starter',
+    sessions: 5_000,
+    monthlyPrice: 74,
+    yearlyPrice: 740,
+    overageRate: 0.03,
+    popular: false,
+    features: [
+      '5k unique sessions/month',
+      'Unlimited funnels',
+      'Advanced analytics',
+      'Custom domains',
+      'Meta Pixel integration',
+      '$0.03 per extra session',
+    ],
+  },
+  {
+    id: 'standard25K',
+    name: 'Growth',
+    sessions: 25_000,
+    monthlyPrice: 249,
+    yearlyPrice: 2490,
+    overageRate: 0.02,
+    popular: true,
+    features: [
+      '25k unique sessions/month',
+      'Unlimited funnels',
+      'Advanced analytics',
+      'Custom domains',
+      'Meta Pixel integration',
+      '$0.02 per extra session',
+    ],
+  },
+  {
+    id: 'standard50K',
+    name: 'Business',
+    sessions: 50_000,
+    monthlyPrice: 399,
+    yearlyPrice: 3990,
+    overageRate: 0.02,
+    popular: false,
+    features: [
+      '50k unique sessions/month',
+      'Unlimited funnels',
+      'Advanced analytics',
+      'Custom domains',
+      'Meta Pixel integration',
+      'Custom Slack Connect',
+      '$0.02 per extra session',
+    ],
+  },
+  {
+    id: 'standard100K',
+    name: 'Pro',
+    sessions: 100_000,
+    monthlyPrice: 699,
+    yearlyPrice: 6990,
+    overageRate: 0.02,
+    popular: false,
+    features: [
+      '100k unique sessions/month',
+      'Unlimited funnels',
+      'Advanced analytics',
+      'Custom domains',
+      'Meta Pixel integration',
+      'Custom Slack Connect',
+      '$0.02 per extra session',
+    ],
+  },
+  {
+    id: 'standard250K',
+    name: 'Scale',
+    sessions: 250_000,
+    monthlyPrice: 1699,
+    yearlyPrice: 16990,
+    overageRate: 0.02,
+    popular: false,
+    features: [
+      '250k unique sessions/month',
+      'Unlimited funnels',
+      'Advanced analytics',
+      'Custom domains',
+      'Meta Pixel integration',
+      'Custom Slack Connect',
+      '$0.02 per extra session',
+    ],
+  },
+  {
+    id: 'enterprise',
+    name: 'Enterprise',
+    sessions: null,
+    monthlyPrice: null,
+    yearlyPrice: null,
+    overageRate: null,
+    popular: false,
+    features: ['Fully customizable', 'Volume discounts', 'Flexible terms'],
+  },
+] as const
 
 export function getDateRange(
   startDate: Date,
@@ -23,6 +130,20 @@ export function getDateRange(
     startDate: start.toISOString(),
     endDate: end.toISOString(),
   }
+}
+
+export function formatDate(date: Date) {
+  return new Intl.DateTimeFormat('en-US', {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  }).format(date)
+}
+
+export function formatDateRelative(date: Date) {
+  return DateTime.fromJSDate(date).setLocale('en-US').toRelative()
 }
 
 export function formatDateForChart(utcDateStr: string, granularity: 'hour' | 'day'): string {
@@ -66,6 +187,12 @@ export const getUserEmailQueryOptions = (workspaceId: string) =>
     queryFn: () => getUserEmail({ data: workspaceId }),
   })
 
+export const getWorkspaceFlags = createServerFn()
+  .inputValidator(Identifier.schema('workspace'))
+  .handler(({ data: workspaceId }) => {
+    return withActor(() => Workspace.listFlags(), workspaceId)
+  })
+
 export const getShopifyIntegration = createServerFn()
   .inputValidator(Identifier.schema('workspace'))
   .handler(async ({ data: workspaceId }) => {
@@ -77,4 +204,93 @@ export const getShopifyIntegrationQueryOptions = (workspaceId: string) =>
   queryOptions({
     queryKey: ['shopify-integration', workspaceId],
     queryFn: () => getShopifyIntegration({ data: workspaceId }),
+  })
+
+export const checkOnboarding = createServerFn()
+  .inputValidator(Identifier.schema('workspace'))
+  .handler(async ({ data: workspaceId }) => {
+    await withActor(async () => {
+      const flags = await Workspace.listFlags()
+      if (!flags.onboardingCompleted) {
+        throw redirect({
+          to: '/workspace/$workspaceId/onboarding',
+          params: { workspaceId },
+        })
+      }
+    }, workspaceId)
+  })
+
+export const checkBilling = createServerFn()
+  .inputValidator(Identifier.schema('workspace'))
+  .handler(async ({ data: workspaceId }) => {
+    await withActor(async () => {
+      const billing = await Billing.get()
+      if (!billing?.active) {
+        throw redirect({
+          to: '/workspace/$workspaceId/upgrade',
+          params: { workspaceId },
+        })
+      }
+    }, workspaceId)
+  })
+
+export const getBilling = createServerFn()
+  .inputValidator(Identifier.schema('workspace'))
+  .handler(({ data: workspaceId }) => {
+    return withActor(async () => {
+      const billing = await Billing.get()
+      if (!billing) throw new Error('Billing not found')
+      return billing
+    }, workspaceId)
+  })
+
+export const getBillingQueryOptions = (workspaceId: string) =>
+  queryOptions({
+    queryKey: ['billing', workspaceId],
+    queryFn: () => getBilling({ data: workspaceId }),
+  })
+
+export const getUsage = createServerFn()
+  .inputValidator(
+    z.object({
+      workspaceId: Identifier.schema('workspace'),
+      lastSubscribedAt: z.string().nullable(),
+    }),
+  )
+  .handler(async ({ data }) => {
+    const now = new Date()
+
+    const periodStart = (() => {
+      if (!data.lastSubscribedAt) {
+        return new Date(now.getFullYear(), now.getMonth(), 1)
+      }
+      const start = new Date(data.lastSubscribedAt)
+      while (true) {
+        const next = new Date(start)
+        next.setMonth(next.getMonth() + 1)
+        if (next > now) break
+        start.setMonth(start.getMonth() + 1)
+      }
+      return start
+    })()
+
+    const params = new URLSearchParams({
+      workspace_id: data.workspaceId,
+      start_date: periodStart.toISOString(),
+      end_date: now.toISOString(),
+    })
+
+    const response = await fetch(`https://api.us-east.aws.tinybird.co/v0/pipes/workspace_kpis.json?${params}`, {
+      headers: { Authorization: `Bearer ${Resource.TINYBIRD_TOKEN.value}` },
+    })
+    const json = (await response.json()) as { data: { views: number }[] }
+    const sessions = json.data.reduce((sum, row) => sum + row.views, 0)
+
+    return { sessions }
+  })
+
+export const getUsageQueryOptions = (workspaceId: string, lastSubscribedAt: string | null) =>
+  queryOptions({
+    queryKey: ['usage', workspaceId, lastSubscribedAt],
+    queryFn: () => getUsage({ data: { workspaceId, lastSubscribedAt } }),
   })

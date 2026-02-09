@@ -1,5 +1,6 @@
 import { analyticsQueue } from './analytics'
 import { auth } from './auth'
+import { BILLING, STRIPE_WEBHOOK_SECRET } from './billing'
 import { database } from './database'
 import { allSecrets, secret } from './secret'
 import { domain } from './stage'
@@ -22,8 +23,10 @@ export const web = new sst.cloudflare.x.SolidStart('Web', {
     analyticsQueue,
     database,
     storage,
+    BILLING,
     STORAGE_URL,
     SESSION_SECRET,
+    STRIPE_WEBHOOK_SECRET,
     ...($dev
       ? [
           new sst.Secret('CLOUDFLARE_API_TOKEN', process.env.CLOUDFLARE_API_TOKEN!),
