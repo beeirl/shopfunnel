@@ -1,4 +1,3 @@
-import type { Info } from '@shopfunnel/core/funnel/types'
 import { createCollection } from '@tanstack/db'
 import { queryCollectionOptions } from '@tanstack/query-db-collection'
 import type { QueryClient } from '@tanstack/react-query'
@@ -14,7 +13,7 @@ export function createFunnelCollection(workspaceId: string, funnelId: string, qu
         return [funnel]
       },
       queryClient,
-      getKey: (item: Info) => item.id,
+      getKey: () => 'funnel',
       onUpdate: async ({ transaction }) => {
         const { changes } = transaction.mutations[0]!
         await updateFunnel({

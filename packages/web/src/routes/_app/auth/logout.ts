@@ -17,7 +17,7 @@ export const Route = createFileRoute('/_app/auth/logout')({
             }
           })
         }
-        return redirect({ to: '/' })
+        return redirect({ to: '/auth' })
       },
     },
   },

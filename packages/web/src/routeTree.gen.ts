@@ -10,9 +10,9 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as AppRouteRouteImport } from './routes/_app/route'
+import { Route as IndexRouteImport } from './routes/index'
 import { Route as FIdRouteImport } from './routes/f/$id'
 import { Route as ApiSplatRouteImport } from './routes/api/$'
-import { Route as AppSplatRouteImport } from './routes/_app/$'
 import { Route as AppAuthIndexRouteImport } from './routes/_app/auth/index'
 import { Route as AppAuthLogoutRouteImport } from './routes/_app/auth/logout'
 import { Route as AppAuthCallbackRouteImport } from './routes/_app/auth/callback'
@@ -37,6 +37,11 @@ const AppRouteRoute = AppRouteRouteImport.update({
   id: '/_app',
   getParentRoute: () => rootRouteImport,
 } as any)
+const IndexRoute = IndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const FIdRoute = FIdRouteImport.update({
   id: '/f/$id',
   path: '/f/$id',
@@ -46,11 +51,6 @@ const ApiSplatRoute = ApiSplatRouteImport.update({
   id: '/api/$',
   path: '/api/$',
   getParentRoute: () => rootRouteImport,
-} as any)
-const AppSplatRoute = AppSplatRouteImport.update({
-  id: '/$',
-  path: '/$',
-  getParentRoute: () => AppRouteRoute,
 } as any)
 const AppAuthIndexRoute = AppAuthIndexRouteImport.update({
   id: '/auth/',
@@ -162,7 +162,7 @@ const AppWorkspaceWorkspaceIdFunnelsIdFunnelEditIndexRoute =
   } as any)
 
 export interface FileRoutesByFullPath {
-  '/$': typeof AppSplatRoute
+  '/': typeof IndexRoute
   '/api/$': typeof ApiSplatRoute
   '/f/$id': typeof FIdRoute
   '/workspace/$workspaceId': typeof AppWorkspaceWorkspaceIdDashboardRouteRouteWithChildren
@@ -184,7 +184,7 @@ export interface FileRoutesByFullPath {
   '/workspace/$workspaceId/funnels/$id/edit': typeof AppWorkspaceWorkspaceIdFunnelsIdFunnelEditIndexRoute
 }
 export interface FileRoutesByTo {
-  '/$': typeof AppSplatRoute
+  '/': typeof IndexRoute
   '/api/$': typeof ApiSplatRoute
   '/f/$id': typeof FIdRoute
   '/workspace/$workspaceId': typeof AppWorkspaceWorkspaceIdDashboardIndexRoute
@@ -206,8 +206,8 @@ export interface FileRoutesByTo {
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
+  '/': typeof IndexRoute
   '/_app': typeof AppRouteRouteWithChildren
-  '/_app/$': typeof AppSplatRoute
   '/api/$': typeof ApiSplatRoute
   '/f/$id': typeof FIdRoute
   '/_app/workspace/$workspaceId': typeof AppWorkspaceWorkspaceIdRouteRouteWithChildren
@@ -233,7 +233,7 @@ export interface FileRoutesById {
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
-    | '/$'
+    | '/'
     | '/api/$'
     | '/f/$id'
     | '/workspace/$workspaceId'
@@ -255,7 +255,7 @@ export interface FileRouteTypes {
     | '/workspace/$workspaceId/funnels/$id/edit'
   fileRoutesByTo: FileRoutesByTo
   to:
-    | '/$'
+    | '/'
     | '/api/$'
     | '/f/$id'
     | '/workspace/$workspaceId'
@@ -276,8 +276,8 @@ export interface FileRouteTypes {
     | '/workspace/$workspaceId/funnels/$id/edit'
   id:
     | '__root__'
+    | '/'
     | '/_app'
-    | '/_app/$'
     | '/api/$'
     | '/f/$id'
     | '/_app/workspace/$workspaceId'
@@ -302,6 +302,7 @@ export interface FileRouteTypes {
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
+  IndexRoute: typeof IndexRoute
   AppRouteRoute: typeof AppRouteRouteWithChildren
   ApiSplatRoute: typeof ApiSplatRoute
   FIdRoute: typeof FIdRoute
@@ -314,6 +315,13 @@ declare module '@tanstack/react-router' {
       path: ''
       fullPath: ''
       preLoaderRoute: typeof AppRouteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/': {
+      id: '/'
+      path: '/'
+      fullPath: '/'
+      preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/f/$id': {
@@ -329,13 +337,6 @@ declare module '@tanstack/react-router' {
       fullPath: '/api/$'
       preLoaderRoute: typeof ApiSplatRouteImport
       parentRoute: typeof rootRouteImport
-    }
-    '/_app/$': {
-      id: '/_app/$'
-      path: '/$'
-      fullPath: '/$'
-      preLoaderRoute: typeof AppSplatRouteImport
-      parentRoute: typeof AppRouteRoute
     }
     '/_app/auth/': {
       id: '/_app/auth/'
@@ -563,7 +564,6 @@ const AppWorkspaceWorkspaceIdRouteRouteWithChildren =
   )
 
 interface AppRouteRouteChildren {
-  AppSplatRoute: typeof AppSplatRoute
   AppWorkspaceWorkspaceIdRouteRoute: typeof AppWorkspaceWorkspaceIdRouteRouteWithChildren
   AppAuthAuthorizeRoute: typeof AppAuthAuthorizeRoute
   AppAuthCallbackRoute: typeof AppAuthCallbackRoute
@@ -572,7 +572,6 @@ interface AppRouteRouteChildren {
 }
 
 const AppRouteRouteChildren: AppRouteRouteChildren = {
-  AppSplatRoute: AppSplatRoute,
   AppWorkspaceWorkspaceIdRouteRoute:
     AppWorkspaceWorkspaceIdRouteRouteWithChildren,
   AppAuthAuthorizeRoute: AppAuthAuthorizeRoute,
@@ -586,6 +585,7 @@ const AppRouteRouteWithChildren = AppRouteRoute._addFileChildren(
 )
 
 const rootRouteChildren: RootRouteChildren = {
+  IndexRoute: IndexRoute,
   AppRouteRoute: AppRouteRouteWithChildren,
   ApiSplatRoute: ApiSplatRoute,
   FIdRoute: FIdRoute,
