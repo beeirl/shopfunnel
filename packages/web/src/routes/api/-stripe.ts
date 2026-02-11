@@ -125,8 +125,8 @@ export const StripeRoute = new Hono().post('/webhook', async (c) => {
       if (!workspaceId) throw new Error('Workspace Id not found')
 
       await Actor.provide('system', { workspaceId }, async () => {
-        await Funnel.unpublishAll()
         await Billing.unsubscribe({ stripeSubscriptionId })
+        await Funnel.unpublishAll()
       })
     }
   })()

@@ -297,6 +297,13 @@ function RouteComponent() {
 
     if (redirectUrl) {
       const url = new URL(redirectUrl, window.location.origin)
+
+      const searchPrams = new URLSearchParams(window.location.search)
+      for (const [key, value] of searchPrams) {
+        if (url.searchParams.has(key)) continue
+        url.searchParams.set(key, value)
+      }
+
       if (shopifyIntegration) {
         url.searchParams.set(
           '_sfs',
@@ -313,6 +320,7 @@ function RouteComponent() {
           ),
         )
       }
+
       window.location.href = url.toString()
     }
   }
