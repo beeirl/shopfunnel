@@ -283,8 +283,8 @@ export const getUsage = createServerFn()
     const response = await fetch(`https://api.us-east.aws.tinybird.co/v0/pipes/workspace_kpis.json?${params}`, {
       headers: { Authorization: `Bearer ${Resource.TINYBIRD_TOKEN.value}` },
     })
-    const json = (await response.json()) as { data: { views: number }[] }
-    const sessions = json.data.reduce((sum, row) => sum + row.views, 0)
+    const json = (await response.json()) as any
+    const sessions = json.data?.reduce((sum: number, row: any) => sum + row.views, 0) ?? 0
 
     return { sessions }
   })

@@ -15,7 +15,11 @@ export const Route = createFileRoute('/_app/workspace/$workspaceId/funnels/$id/p
     const title = loaderData?.funnel.title
 
     const favicon = loaderData?.funnel.theme?.favicon
-    if (favicon) links.push({ rel: 'icon', href: favicon })
+    if (favicon) {
+      const href = typeof favicon === 'string' ? favicon : favicon.url
+      const type = typeof favicon === 'string' ? undefined : favicon.contentType
+      links.push({ rel: 'icon', href, ...(type && { type }) })
+    }
 
     return { meta: [{ title }], links }
   },

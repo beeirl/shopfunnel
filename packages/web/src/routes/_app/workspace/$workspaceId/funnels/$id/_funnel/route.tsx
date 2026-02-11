@@ -19,7 +19,16 @@ import {
   IconLoader2 as LoaderIcon,
 } from '@tabler/icons-react'
 import { mutationOptions, useMutation, useQueryClient, useSuspenseQuery } from '@tanstack/react-query'
-import { createFileRoute, Link, linkOptions, MatchRoute, Outlet, useBlocker } from '@tanstack/react-router'
+import {
+  createFileRoute,
+  Link,
+  linkOptions,
+  MatchRoute,
+  Outlet,
+  useBlocker,
+  useCanGoBack,
+  useRouter,
+} from '@tanstack/react-router'
 import { createServerFn } from '@tanstack/react-start'
 import * as React from 'react'
 import { z } from 'zod'
@@ -283,6 +292,9 @@ const tabs = [
 
 function RouteComponent() {
   const params = Route.useParams()
+  const router = useRouter()
+  const canGoBack = useCanGoBack()
+  const navigate = Route.useNavigate()
   const { funnelCollection } = Route.useLoaderData()
 
   const sessionQuery = useSuspenseQuery(getSessionQueryOptions(params.workspaceId))
@@ -302,9 +314,10 @@ function RouteComponent() {
             <Button
               variant="ghost"
               size="icon"
-              aria-label="Back to dashboard"
-              nativeButton={false}
-              render={<Link from={Route.fullPath} to="../.." />}
+              onClick={() => {
+                if (canGoBack) router.history.back()
+                else navigate({ to: '/workspace/$workspaceId' })
+              }}
             >
               <ChevronLeftIcon />
             </Button>

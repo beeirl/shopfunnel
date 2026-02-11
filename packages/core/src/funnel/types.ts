@@ -239,7 +239,7 @@ export interface Rule {
 
 export interface Theme {
   logo?: string
-  favicon?: string
+  favicon?: { url: string; contentType: string }
   radius: string
   style: 'outline' | 'soft'
   colors: {

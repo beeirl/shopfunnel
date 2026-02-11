@@ -97,6 +97,8 @@
         "@dnd-kit/utilities": "3.2.2",
         "@fontsource-variable/inter": "5.2.8",
         "@hono/zod-validator": "0.7.6",
+        "@open-iframe-resizer/core": "2.3.1",
+        "@open-iframe-resizer/react": "2.3.1",
         "@openauthjs/openauth": "catalog:",
         "@shopfunnel/core": "workspace:*",
         "@shopfunnel/resource": "workspace:*",
@@ -587,6 +589,10 @@
     "@open-draft/logger": ["@open-draft/logger@0.3.0", "", { "dependencies": { "is-node-process": "^1.2.0", "outvariant": "^1.4.0" } }, "sha512-X2g45fzhxH238HKO4xbSr7+wBS8Fvw6ixhTDuvLd5mqh6bJJCFAPwU9mPDxbcrRtfxv4u5IHCEH77BmxvXmmxQ=="],
 
     "@open-draft/until": ["@open-draft/until@2.1.0", "", {}, "sha512-U69T3ItWHvLwGg5eJ0n3I62nWuE6ilHlmz7zM0npLBRvPRd7e6NYmg54vvRtP5mZG7kZqZCFVdsTWo7BPtBujg=="],
+
+    "@open-iframe-resizer/core": ["@open-iframe-resizer/core@2.3.1", "", {}, "sha512-wpprXkDKQiGiryQabyw0R27/XEYHPJt2bAbbG++vqDA6uOtwoSfRJGgjTYsA6OV+05ZwP9Em90jacg9vvU36Yg=="],
+
+    "@open-iframe-resizer/react": ["@open-iframe-resizer/react@2.3.1", "", { "dependencies": { "@open-iframe-resizer/core": "2.3.1" }, "peerDependencies": { "react": ">=17.0.0", "react-dom": ">=17.0.0" } }, "sha512-UjCmvv7ETHOh40tr2KbuI3bPTAATdBXsuZikdAqFnauXAXi6wE/M7O4+5VCNGH0s10bp1oLXMsoKv58Ydtmsag=="],
 
     "@openauthjs/openauth": ["@openauthjs/openauth@0.0.0-20250322224806", "", { "dependencies": { "@standard-schema/spec": "1.0.0-beta.3", "aws4fetch": "1.0.20", "jose": "5.9.6" }, "peerDependencies": { "arctic": "^2.2.2", "hono": "^4.0.0" } }, "sha512-p5IWSRXvABcwocH2dNI0w8c1QJelIOFulwhKk+aLLFfUbs8u1pr7kQbYe8yCSM2+bcLHiwbogpUQc2ovrGwCuw=="],
 

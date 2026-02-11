@@ -1,4 +1,3 @@
-import { Image } from '@/components/image'
 import { Button } from '@/components/ui/button'
 import { InputGroup } from '@/components/ui/input-group'
 import { Popover } from '@/components/ui/popover'
@@ -72,7 +71,7 @@ function MediaPickerInput(props: MediaPickerInputProps) {
           {!value && <PhotoIcon className="size-4" />}
           {value?.type === 'emoji' && <span className="text-base">{value.value}</span>}
           {value?.type === 'image' && (
-            <Image src={value.value} alt="" layout="fixed" width={24} height={24} className="rounded object-cover" />
+            <img src={value.value} alt="" width={24} height={24} className="rounded object-cover" />
           )}
         </InputGroup.Button>
       </InputGroup.Addon>

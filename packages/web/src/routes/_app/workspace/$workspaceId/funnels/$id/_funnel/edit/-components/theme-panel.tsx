@@ -73,11 +73,11 @@ export function ThemePanel() {
               <Pane.GroupLabel>Favicon</Pane.GroupLabel>
             </Pane.GroupHeader>
             <MediaPicker.Root
-              value={theme.favicon ? { type: 'image', value: theme.favicon } : undefined}
+              value={theme.favicon ? { type: 'image', value: theme.favicon.url } : undefined}
               onValueChange={async (type, value) => {
                 if (type === 'image' && value instanceof File) {
                   const url = await uploadFile(value)
-                  handleThemeUpdate({ favicon: url })
+                  handleThemeUpdate({ favicon: { url, contentType: value.type } })
                 } else {
                   handleThemeUpdate({ favicon: undefined })
                 }
