@@ -13,7 +13,7 @@ export function HtmlBlock(props: HtmlBlockProps) {
   const iframeRef = React.useRef<HTMLIFrameElement>(null)
   const resizerRef = React.useRef<InitializeResult[]>([])
 
-  const srcDoc = [
+  const content = [
     '<!DOCTYPE html>',
     '<html>',
     '  <head>',
@@ -85,11 +85,11 @@ export function HtmlBlock(props: HtmlBlockProps) {
       resizerRef.current.forEach((r) => r.unsubscribe())
       resizerRef.current = []
     }
-  }, [srcDoc])
+  }, [content])
 
   return (
     <div className={cn('overflow-hidden group-not-data-first/block:mt-6', props.static && 'pointer-events-none')}>
-      <iframe className="block w-full border-none" ref={iframeRef} sandbox="allow-same-origin" srcDoc={srcDoc} />
+      <iframe className="block w-full border-none" ref={iframeRef} sandbox="allow-same-origin" srcDoc={content} />
     </div>
   )
 }
