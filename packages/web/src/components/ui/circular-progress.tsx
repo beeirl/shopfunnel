@@ -40,7 +40,7 @@ function CircularProgressRoot({
         width={size}
         height={size}
         viewBox={`0 0 ${size} ${size}`}
-        className={cn('rotate-[-90deg]', className)}
+        className={cn('-rotate-90', className)}
         {...props}
       >
         {children}

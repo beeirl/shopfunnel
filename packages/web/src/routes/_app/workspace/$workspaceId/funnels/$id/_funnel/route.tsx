@@ -19,16 +19,7 @@ import {
   IconLoader2 as LoaderIcon,
 } from '@tabler/icons-react'
 import { mutationOptions, useMutation, useQueryClient, useSuspenseQuery } from '@tanstack/react-query'
-import {
-  createFileRoute,
-  Link,
-  linkOptions,
-  MatchRoute,
-  Outlet,
-  useBlocker,
-  useCanGoBack,
-  useRouter,
-} from '@tanstack/react-router'
+import { createFileRoute, Link, linkOptions, MatchRoute, Outlet, useBlocker } from '@tanstack/react-router'
 import { createServerFn } from '@tanstack/react-start'
 import * as React from 'react'
 import { z } from 'zod'
@@ -292,9 +283,6 @@ const tabs = [
 
 function RouteComponent() {
   const params = Route.useParams()
-  const router = useRouter()
-  const canGoBack = useCanGoBack()
-  const navigate = Route.useNavigate()
   const { funnelCollection } = Route.useLoaderData()
 
   const sessionQuery = useSuspenseQuery(getSessionQueryOptions(params.workspaceId))
@@ -311,14 +299,7 @@ function RouteComponent() {
       >
         <div className="sticky top-0 z-10 grid h-(--dashboard-header-height) w-full shrink-0 grid-cols-3 items-center border-b border-border bg-background px-2">
           <div className="flex items-center">
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => {
-                if (canGoBack) router.history.back()
-                else navigate({ to: '/workspace/$workspaceId' })
-              }}
-            >
+            <Button variant="ghost" size="icon" render={<Link from={Route.fullPath} to="../../funnels" />}>
               <ChevronLeftIcon />
             </Button>
             <Title />

@@ -220,6 +220,17 @@ export const checkOnboarding = createServerFn()
     }, workspaceId)
   })
 
+export const getOnboardingGateQueryOptions = (workspaceId: string) =>
+  queryOptions({
+    queryKey: ['workspace-onboarding-gate', workspaceId],
+    queryFn: async () => {
+      await checkOnboarding({ data: workspaceId })
+      return true
+    },
+    staleTime: 30_000,
+    gcTime: 5 * 60_000,
+  })
+
 export const checkBilling = createServerFn()
   .inputValidator(Identifier.schema('workspace'))
   .handler(async ({ data: workspaceId }) => {
@@ -232,6 +243,17 @@ export const checkBilling = createServerFn()
         })
       }
     }, workspaceId)
+  })
+
+export const getBillingGateQueryOptions = (workspaceId: string) =>
+  queryOptions({
+    queryKey: ['workspace-billing-gate', workspaceId],
+    queryFn: async () => {
+      await checkBilling({ data: workspaceId })
+      return true
+    },
+    staleTime: 30_000,
+    gcTime: 5 * 60_000,
   })
 
 export const getBilling = createServerFn()

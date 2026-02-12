@@ -1,10 +1,10 @@
 import { createFileRoute, Outlet } from '@tanstack/react-router'
-import { checkBilling, checkOnboarding } from '../../-common'
+import { getBillingGateQueryOptions, getOnboardingGateQueryOptions } from '../../-common'
 
 export const Route = createFileRoute('/_app/workspace/$workspaceId/funnels/$id')({
   component: () => <Outlet />,
-  beforeLoad: async ({ params }) => {
-    await checkOnboarding({ data: params.workspaceId })
-    await checkBilling({ data: params.workspaceId })
+  beforeLoad: async ({ context, params }) => {
+    await context.queryClient.fetchQuery(getOnboardingGateQueryOptions(params.workspaceId))
+    await context.queryClient.fetchQuery(getBillingGateQueryOptions(params.workspaceId))
   },
 })
