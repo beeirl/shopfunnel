@@ -5,14 +5,14 @@ import { createFileRoute, redirect } from '@tanstack/react-router'
 import { createServerFn } from '@tanstack/react-start'
 import { PostHogProvider, usePostHog } from 'posthog-js/react'
 import * as React from 'react'
-import { getLastSeenWorkspaceId } from './-common'
+import { getLastSeenWorkspaceId } from '../-common'
 
 const checkAuth = createServerFn().handler(async () => {
   const workspaceId = await getLastSeenWorkspaceId().catch(() => undefined)
   if (workspaceId) throw redirect({ to: '/workspace/$workspaceId', params: { workspaceId } })
 })
 
-export const Route = createFileRoute('/')({
+export const Route = createFileRoute('/_app/')({
   component: RouteComponent,
   head: () => ({
     meta: [
@@ -95,29 +95,25 @@ function Image({
 }
 
 function Button({
-  href,
-  target,
-  rel,
   size = 'default',
   className,
   children,
   ...props
-}: React.ComponentProps<'button'> & { href: string; target?: string; rel?: string; size?: 'default' | 'sm' }) {
+}: Omit<React.ComponentProps<'a'>, 'size'> & { size?: 'default' | 'sm' }) {
   return (
-    <button
+    <a
       data-slot="button"
       className={cn(
         'relative inline-flex shrink-0 cursor-pointer items-center justify-center gap-2 border bg-clip-padding font-medium whitespace-nowrap transition-shadow outline-none',
         'before:pointer-events-none before:absolute before:inset-0',
         'pointer-coarse:after:absolute pointer-coarse:after:size-full pointer-coarse:after:min-h-11 pointer-coarse:after:min-w-11',
         'focus-visible:ring-3 focus-visible:ring-primary/30',
-        'disabled:pointer-events-none disabled:opacity-64',
         '[&_svg]:pointer-events-none [&_svg]:shrink-0',
-        'not-disabled:inset-shadow-[0_1px_--theme(--color-white/16%)]',
+        'inset-shadow-[0_1px_--theme(--color-white/16%)]',
         'border-primary bg-primary text-primary-foreground shadow-xs shadow-primary/24',
         'hover:bg-primary/90',
         '[:active,[data-pressed]]:inset-shadow-[0_1px_--theme(--color-black/8%)]',
-        '[:disabled,:active,[data-pressed]]:shadow-none',
+        '[:active,[data-pressed]]:shadow-none',
         'rounded-2xl [corner-shape:superellipse(1.6)] before:rounded-[calc(var(--radius-2xl)-1px)] before:[corner-shape:superellipse(1.6)]',
         size === 'default' && [
           'min-h-10 px-[calc(--spacing(4)-1px)] py-[calc(--spacing(2)-1px)] text-base',
@@ -131,11 +127,11 @@ function Button({
       )}
       {...props}
     >
-      <a href={href} target={target} rel={rel} className="flex items-center gap-2">
+      <div className="flex items-center gap-2">
         {children}
         <ChevronRightCircleIcon className={cn('size-4.5', size === 'sm' && 'size-4')} />
-      </a>
-    </button>
+      </div>
+    </a>
   )
 }
 
