@@ -22,9 +22,9 @@ import { createServerFn } from '@tanstack/react-start'
 import { usePostHog } from 'posthog-js/react'
 import * as React from 'react'
 import {
-  getBillingGateQueryOptions,
+  checkBillingQueryOptions,
+  checkOnboardingQueryOptions,
   getBillingQueryOptions,
-  getOnboardingGateQueryOptions,
   getUsageQueryOptions,
   getUserEmailQueryOptions,
 } from '../-common'
@@ -45,8 +45,8 @@ const getWorkspacesQueryOptions = (workspaceId: string) =>
 export const Route = createFileRoute('/_app/workspace/$workspaceId/_dashboard')({
   component: DashboardLayoutRoute,
   beforeLoad: async ({ context, params }) => {
-    await context.queryClient.fetchQuery(getOnboardingGateQueryOptions(params.workspaceId))
-    await context.queryClient.fetchQuery(getBillingGateQueryOptions(params.workspaceId))
+    await context.queryClient.fetchQuery(checkOnboardingQueryOptions(params.workspaceId))
+    await context.queryClient.fetchQuery(checkBillingQueryOptions(params.workspaceId))
   },
   loader: async ({ context, params }) => {
     const [billing] = await Promise.all([

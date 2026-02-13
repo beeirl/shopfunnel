@@ -220,7 +220,7 @@ export const checkOnboarding = createServerFn()
     }, workspaceId)
   })
 
-export const getOnboardingGateQueryOptions = (workspaceId: string) =>
+export const checkOnboardingQueryOptions = (workspaceId: string) =>
   queryOptions({
     queryKey: ['workspace-onboarding-gate', workspaceId],
     queryFn: async () => {
@@ -245,7 +245,7 @@ export const checkBilling = createServerFn()
     }, workspaceId)
   })
 
-export const getBillingGateQueryOptions = (workspaceId: string) =>
+export const checkBillingQueryOptions = (workspaceId: string) =>
   queryOptions({
     queryKey: ['workspace-billing-gate', workspaceId],
     queryFn: async () => {
