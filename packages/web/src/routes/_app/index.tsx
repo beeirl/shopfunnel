@@ -1,6 +1,10 @@
 import ShopfunnelLogo from '@/assets/shopfunnel-logo.svg?react'
 import { cn } from '@/lib/utils'
-import { IconCircleChevronRightFilled as ChevronRightCircleIcon, IconMail as MailIcon } from '@tabler/icons-react'
+import {
+  IconArrowUpRight as ArrowUpRightIcon,
+  IconCircleChevronRightFilled as ChevronRightCircleIcon,
+  IconMail as MailIcon,
+} from '@tabler/icons-react'
 import { createFileRoute, redirect } from '@tanstack/react-router'
 import { createServerFn } from '@tanstack/react-start'
 import { PostHogProvider, usePostHog } from 'posthog-js/react'
@@ -47,7 +51,7 @@ function Text({ className, children, ...props }: React.ComponentProps<'p'>) {
 }
 
 function Section({ className, ...props }: React.ComponentProps<'div'>) {
-  return <div className={cn('space-y-4', className)} {...props} />
+  return <div className={cn('space-y-3', className)} {...props} />
 }
 
 function Image({
@@ -96,25 +100,32 @@ function Image({
 
 function Button({
   size = 'default',
+  variant = 'default',
   className,
   children,
   ...props
-}: Omit<React.ComponentProps<'a'>, 'size'> & { size?: 'default' | 'sm' }) {
+}: Omit<React.ComponentProps<'a'>, 'size'> & { size?: 'default' | 'sm'; variant?: 'default' | 'secondary' }) {
   return (
     <a
       data-slot="button"
       className={cn(
-        'relative inline-flex shrink-0 cursor-pointer items-center justify-center gap-2 border bg-clip-padding font-medium whitespace-nowrap transition-shadow outline-none',
+        'relative inline-flex shrink-0 cursor-pointer items-center justify-center gap-2 rounded-full border bg-clip-padding font-medium whitespace-nowrap transition-shadow outline-none',
         'before:pointer-events-none before:absolute before:inset-0',
         'pointer-coarse:after:absolute pointer-coarse:after:size-full pointer-coarse:after:min-h-11 pointer-coarse:after:min-w-11',
-        'focus-visible:ring-3 focus-visible:ring-primary/30',
         '[&_svg]:pointer-events-none [&_svg]:shrink-0',
-        'inset-shadow-[0_1px_--theme(--color-white/16%)]',
-        'border-primary bg-primary text-primary-foreground shadow-xs shadow-primary/24',
-        'hover:bg-primary/90',
         '[:active,[data-pressed]]:inset-shadow-[0_1px_--theme(--color-black/8%)]',
         '[:active,[data-pressed]]:shadow-none',
-        'rounded-2xl [corner-shape:superellipse(1.6)] before:rounded-[calc(var(--radius-2xl)-1px)] before:[corner-shape:superellipse(1.6)]',
+        variant === 'default' && [
+          'focus-visible:ring-3 focus-visible:ring-primary/30',
+          'inset-shadow-[0_1px_--theme(--color-white/16%)]',
+          'border-primary bg-primary text-primary-foreground shadow-xs shadow-primary/24',
+          'hover:bg-primary/90',
+        ],
+        variant === 'secondary' && [
+          'focus-visible:ring-3 focus-visible:ring-secondary/30',
+          'border-secondary bg-secondary text-secondary-foreground shadow-xs shadow-secondary/24',
+          'hover:bg-secondary/80',
+        ],
         size === 'default' && [
           'min-h-10 px-[calc(--spacing(4)-1px)] py-[calc(--spacing(2)-1px)] text-base',
           "[&_svg:not([class*='size-'])]:size-4.5",
@@ -127,10 +138,7 @@ function Button({
       )}
       {...props}
     >
-      <div className="flex items-center gap-2">
-        {children}
-        <ChevronRightCircleIcon className={cn('size-4.5', size === 'sm' && 'size-4')} />
-      </div>
+      {children}
     </a>
   )
 }
@@ -184,6 +192,7 @@ function RouteComponentInner() {
             onClick={() => posthog?.capture('Book Call Button Clicked')}
           >
             Book a Call
+            <ChevronRightCircleIcon />
           </Button>
         </div>
       </div>
@@ -191,7 +200,7 @@ function RouteComponentInner() {
       <div className="mx-auto max-w-3xl px-6">
         <header className="flex items-center justify-between bg-background pt-5 pb-2">
           <ShopfunnelLogo className="h-4.5 w-auto text-foreground" />
-          <Button href="/auth" size="sm" onClick={() => posthog?.capture('Sign In Button Clicked')}>
+          <Button href="/auth" size="sm" variant="secondary" onClick={() => posthog?.capture('Sign In Button Clicked')}>
             Sign In
           </Button>
         </header>
@@ -226,6 +235,7 @@ function RouteComponentInner() {
               onClick={() => posthog?.capture('Book Call Button Clicked')}
             >
               Book a Call
+              <ChevronRightCircleIcon />
             </Button>
           </Section>
 
@@ -253,9 +263,39 @@ function RouteComponentInner() {
             <Text>
               Think products that are tailored to specific people: skincare treatments, weight loss products, lipsticks.
             </Text>
-            <Text>These products are one size fits all.</Text>
+            <Text>These products are not one size fits all.</Text>
             <Text>If your product is made for everyone, it probably won't do well in a quiz.</Text>
             <Text>If it's ONLY for a specific type of person, it might do incredibly well.</Text>
+            <div className="mt-5 flex flex-wrap gap-2.5">
+              {[
+                {
+                  title: 'Forge Men',
+                  url: 'https://shopfunnel.com/f/QER40GBR',
+                },
+                {
+                  title: 'Jones Road',
+                  url: 'https://shopfunnel.com/f/K254XX4X',
+                },
+                {
+                  title: 'Hey Bud Skincare',
+                  url: 'https://shopfunnel.com/f/8CT56JB9',
+                },
+                {
+                  title: 'Biocol Labs',
+                  url: 'https://shopfunnel.com/f/GM17XCSH',
+                },
+              ].map((example) => (
+                <a
+                  key={example.url}
+                  className="flex items-center gap-2 rounded-full border border-border px-3.5 py-1.5 transition-colors duration-150 hover:bg-muted"
+                  href={example.url}
+                  target="_blank"
+                >
+                  <span className="flex-1 whitespace-nowrap">{example.title}</span>
+                  <ArrowUpRightIcon className="size-4 text-muted-foreground" />
+                </a>
+              ))}
+            </div>
           </Section>
 
           <Section>
@@ -271,6 +311,15 @@ function RouteComponentInner() {
             <Heading level={2}>Our track record</Heading>
             <Text>The quizzes we've built and actively manage are generating over $1 million dollars per month.</Text>
             <Text>We've seen lifts on old product pages as high as 40% (statistically significant data).</Text>
+          </Section>
+
+          <Section>
+            <Heading level={2}>What we cost</Heading>
+            <Text>The up front trial costs nothing.</Text>
+            <Text>
+              If the results are good after 14 days, and you'd like to continue using the quiz, we charge a monthly
+              subscription based on the visitor capacity you'd like for the quiz.
+            </Text>
             <div className="grid grid-cols-1 gap-4 pt-2 sm:grid-cols-2">
               <Image
                 src="/balmbare.png"
@@ -289,15 +338,6 @@ function RouteComponentInner() {
                 }}
               />
             </div>
-          </Section>
-
-          <Section>
-            <Heading level={2}>What we cost</Heading>
-            <Text>The up front trial costs nothing.</Text>
-            <Text>
-              If the results are good after 14 days, and you'd like to continue using the quiz, we charge a monthly
-              subscription based on the visitor capacity you'd like for the quiz.
-            </Text>
             <Button
               className="mt-4"
               href={CALENDLY_URL}
@@ -306,6 +346,7 @@ function RouteComponentInner() {
               onClick={() => posthog?.capture('Book Call Button Clicked')}
             >
               Book a Call
+              <ChevronRightCircleIcon />
             </Button>
           </Section>
         </main>
