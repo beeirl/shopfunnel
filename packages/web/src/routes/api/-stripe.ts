@@ -60,12 +60,10 @@ export const StripeRoute = new Hono().post('/webhook', async (c) => {
       if (!workspaceId) throw new Error('Workspace Id not found')
 
       const stripeSubscriptionItems = stripeSubscription.items?.data ?? []
-      const stripePlanSubscriptionItem = stripeSubscriptionItems.find((item) =>
-        Billing.stripePriceIdToPlan(item.price.id),
-      )
-      const plan = stripePlanSubscriptionItem ? Billing.stripePriceIdToPlan(stripePlanSubscriptionItem.price.id) : null
-      const interval = (stripePlanSubscriptionItem?.price.recurring?.interval ?? null) as 'month' | 'year' | null
-      const managed = stripeSubscriptionItems.some((item) => item.price.id === Resource.BILLING.managedPriceId)
+      const planSubscriptionItem = stripeSubscriptionItems.find((item) => Billing.stripePriceIdToPlan(item.price.id))
+      const plan = planSubscriptionItem ? Billing.stripePriceIdToPlan(planSubscriptionItem.price.id) : null
+      const interval = (planSubscriptionItem?.price.recurring?.interval ?? null) as 'month' | 'year' | null
+      const managed = stripeSubscriptionItems.some((item) => Billing.stripePriceIdToAddon(item.price.id) === 'managed')
 
       if (!plan) throw new Error('Plan not found')
       if (!interval) throw new Error('Interval not found')

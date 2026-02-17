@@ -14,6 +14,9 @@ export namespace Billing {
   export const Plan = z.enum(BillingPlan)
   export type Plan = z.infer<typeof Plan>
 
+  export const Addon = z.enum(['managed'])
+  export type Addon = z.infer<typeof Addon>
+
   export const Interval = z.enum(BillingInterval)
   export type Interval = z.infer<typeof Interval>
 
@@ -52,6 +55,7 @@ export namespace Billing {
     z.object({
       plan: Billing.Plan,
       interval: Billing.Interval,
+      managed: z.boolean().optional(),
       successUrl: z.string(),
       cancelUrl: z.string(),
     }),
@@ -69,6 +73,14 @@ export namespace Billing {
             price: Billing.planToStripePriceId({ plan: input.plan, interval: input.interval }),
             quantity: 1,
           },
+          ...(input.managed
+            ? [
+                {
+                  price: Billing.addonToStripePriceId({ addon: 'managed', interval: input.interval }),
+                  quantity: 1,
+                },
+              ]
+            : []),
         ],
         ...(billing?.stripeCustomerId
           ? {
@@ -216,6 +228,20 @@ export namespace Billing {
     },
   )
 
+  export const addonToStripePriceId = fn(
+    z.object({
+      addon: Billing.Addon,
+      interval: Billing.Interval,
+    }),
+    (input) => {
+      if (input.interval === 'month') {
+        if (input.addon === 'managed') return Resource.BILLING.managedMonthlyPriceId
+      } else if (input.interval === 'year') {
+        if (input.addon === 'managed') return Resource.BILLING.managedYearlyPriceId
+      }
+    },
+  )
+
   export const stripePriceIdToPlan = fn(z.string(), (stripePriceId): Plan | undefined => {
     if (stripePriceId === Resource.BILLING.standard5KMonthlyPriceId) return 'standard5K'
     if (stripePriceId === Resource.BILLING.standard25KMonthlyPriceId) return 'standard25K'
@@ -229,7 +255,12 @@ export namespace Billing {
     if (stripePriceId === Resource.BILLING.standard250KYearlyPriceId) return 'standard250K'
   })
 
-  export const planToStripeOveragePriceId = fn(z.enum(BillingPlan), (plan) => {
+  export const stripePriceIdToAddon = fn(z.string(), (stripePriceId): Addon | undefined => {
+    if (stripePriceId === Resource.BILLING.managedMonthlyPriceId) return 'managed'
+    if (stripePriceId === Resource.BILLING.managedYearlyPriceId) return 'managed'
+  })
+
+  export const planToStripeOveragePriceId = fn(Billing.Plan, (plan) => {
     if (plan === 'standard5K') return Resource.BILLING.standard5KOveragePriceId
     if (plan === 'standard25K') return Resource.BILLING.standard25KOveragePriceId
     if (plan === 'standard50K') return Resource.BILLING.standard50KOveragePriceId

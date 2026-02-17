@@ -1,6 +1,6 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { checkOnboarding, getBillingQueryOptions } from './-common'
-import { BillingPage } from './-components/billing-page'
+import { PricingTable } from './-components/pricing-table'
 
 export const Route = createFileRoute('/_app/workspace/$workspaceId/upgrade')({
   component: RouteComponent,
@@ -11,5 +11,5 @@ export const Route = createFileRoute('/_app/workspace/$workspaceId/upgrade')({
 })
 
 function RouteComponent() {
-  return <BillingPage title="Upgrade your plan" subtitle="Get more sessions as your shop grows" />
+  return <PricingTable title="Upgrade your plan" subtitle="Get more sessions as your shop grows" addons={['managed']} />
 }

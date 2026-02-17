@@ -24,7 +24,7 @@ import { AnimatePresence, motion } from 'motion/react'
 import * as React from 'react'
 import { z } from 'zod'
 import { getWorkspaceFlags } from './-common'
-import { BillingPage } from './-components/billing-page'
+import { PricingTable } from './-components/pricing-table'
 
 const completeOnboarding = createServerFn()
   .inputValidator(
@@ -689,7 +689,7 @@ function RouteComponent() {
               isTransitioning={isTransitioning}
             />
           ) : (
-            <BillingPage animate title="One last step" subtitle="Select a plan based on your needs" />
+            <PricingTable animate title="One last step" subtitle="Select a plan based on your needs" />
           )}
         </motion.div>
       </AnimatePresence>

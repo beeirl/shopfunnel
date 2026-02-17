@@ -33,6 +33,7 @@ const createCheckoutUrl = createServerFn()
         Billing.generateCheckoutUrl({
           plan: data.plan,
           interval: data.interval,
+          managed: data.managed,
           successUrl: data.successUrl,
           cancelUrl: data.cancelUrl,
         }),
@@ -49,7 +50,19 @@ function formatPrice(price: number) {
   }).format(price)
 }
 
-export function BillingPage({ animate, title, subtitle }: { animate?: boolean; title: string; subtitle: string }) {
+type Addon = 'managed'
+
+export function PricingTable({
+  animate,
+  title,
+  subtitle,
+  addons,
+}: {
+  animate?: boolean
+  title: string
+  subtitle: string
+  addons?: Addon[]
+}) {
   const params = useParams({ from: '/_app/workspace/$workspaceId' })
 
   const billingQuery = useSuspenseQuery(getBillingQueryOptions(params.workspaceId))
@@ -58,6 +71,7 @@ export function BillingPage({ animate, title, subtitle }: { animate?: boolean; t
   const [isYearly, setIsYearly] = React.useState(true)
   const [selectedPlanId, setSelectedPlanId] = React.useState<string | null>(null)
   const [isLoading, setIsLoading] = React.useState(false)
+  const [managed, setManaged] = React.useState(true)
 
   const currentPlanIndex = billing.plan ? PLANS.findIndex((p) => p.id === billing.plan) : -1
   const availablePlans: (typeof PLANS)[number][] = billing.plan
@@ -105,6 +119,7 @@ export function BillingPage({ animate, title, subtitle }: { animate?: boolean; t
           workspaceId: params.workspaceId,
           plan,
           interval: isYearly ? 'year' : 'month',
+          managed: true,
           successUrl: `${window.location.origin}/workspace/${params.workspaceId}`,
           cancelUrl: `${window.location.origin}/workspace/${params.workspaceId}/upgrade`,
         },
@@ -358,18 +373,25 @@ export function BillingPage({ animate, title, subtitle }: { animate?: boolean; t
       <div className="w-full max-w-[870px]">
         <div className="flex flex-col items-start justify-between gap-4 rounded-2xl bg-muted/50 px-4 py-4 sm:flex-row sm:items-center sm:px-5">
           <div>
-            <h3 className="font-semibold text-foreground">Managed Service Add-On</h3>
+            <div className="flex items-center gap-2">
+              <span className="font-semibold text-foreground">Managed Service Add-On</span>
+              {addons?.includes('managed') && <Badge className="bg-foreground/10 text-foreground">$1,500/month</Badge>}
+            </div>
             <p className="mt-0.5 text-sm font-medium text-balance text-muted-foreground">
               We create up to 4 new funnels per month including continuous A/B testing and optimization.
             </p>
           </div>
-          <Button
-            nativeButton={false}
-            size="lg"
-            render={<a href="https://calendly.com/kai-shopfunnel/30min" target="_blank" />}
-          >
-            Book demo
-          </Button>
+          {addons?.includes('managed') ? (
+            <Switch id="managed-addon" disabled checked={managed} onCheckedChange={setManaged} />
+          ) : (
+            <Button
+              nativeButton={false}
+              size="lg"
+              render={<a href="https://calendly.com/kai-shopfunnel/30min" target="_blank" />}
+            >
+              Book demo
+            </Button>
+          )}
         </div>
       </div>
     </div>

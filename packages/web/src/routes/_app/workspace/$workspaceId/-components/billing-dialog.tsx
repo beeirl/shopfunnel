@@ -100,6 +100,10 @@ export function BillingDialog({ open, onOpenChange }: { open: boolean; onOpenCha
                 label: 'Plan cost',
                 value: planCost,
               },
+              {
+                label: 'Managed',
+                value: billing.managed ? 'Yes' : 'No',
+              },
               ...(daysRemaining !== null
                 ? [
                     {

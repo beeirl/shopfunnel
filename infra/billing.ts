@@ -214,12 +214,22 @@ const managedProduct = new stripe.Product('ManagedProduct', {
   name: 'Shopfunnel Managed',
 })
 
-const managedPrice = new stripe.Price('ManagedPrice', {
+const managedMonthlyPrice = new stripe.Price('ManagedPrice', {
   product: managedProduct.id,
   currency: 'usd',
   unitAmount: 150000,
   recurring: {
     interval: 'month',
+    intervalCount: 1,
+  },
+})
+
+const managedYearlyPrice = new stripe.Price('ManagedYearlyPrice', {
+  product: managedProduct.id,
+  currency: 'usd',
+  unitAmount: 1800000,
+  recurring: {
+    interval: 'year',
     intervalCount: 1,
   },
 })
@@ -257,6 +267,7 @@ export const BILLING = new sst.Linkable('BILLING', {
     standard1MOveragePriceId: standard1MOveragePrice.id,
     standard2MOveragePriceId: standard2MOveragePrice.id,
 
-    managedPriceId: managedPrice.id,
+    managedMonthlyPriceId: managedMonthlyPrice.id,
+    managedYearlyPriceId: managedYearlyPrice.id,
   },
 })
