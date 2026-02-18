@@ -1,4 +1,4 @@
-import { and, eq, isNull, sql } from 'drizzle-orm'
+import { and, desc, eq, isNull, sql } from 'drizzle-orm'
 import { z } from 'zod'
 import { Actor } from '../actor'
 import { Database } from '../database'
@@ -46,7 +46,8 @@ export namespace Integration {
           updatedAt: IntegrationTable.updatedAt,
         })
         .from(IntegrationTable)
-        .where(and(eq(IntegrationTable.workspaceId, Actor.workspaceId()), isNull(IntegrationTable.archivedAt))),
+        .where(and(eq(IntegrationTable.workspaceId, Actor.workspaceId()), isNull(IntegrationTable.archivedAt)))
+        .orderBy(desc(IntegrationTable.createdAt)),
     ),
   )
 
@@ -54,7 +55,7 @@ export namespace Integration {
     z.object({
       provider: z.enum(IntegrationProvider),
       externalId: z.string(),
-      title: z.string().optional(),
+      title: z.string(),
       credentials: z.custom<IntegrationCredentials>(),
       metadata: z.custom<IntegrationMetadata>().optional(),
     }),

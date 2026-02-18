@@ -139,8 +139,8 @@ export const Route = createFileRoute('/f/$id')({
       meta.push({ property: 'og:image', content: settings.metaImageUrl })
     }
 
-    if (settings?.code) {
-      const html = parseHtml(settings.code)
+    if (settings?.customCode) {
+      const html = parseHtml(settings.customCode)
       const elements = html.querySelectorAll('script, link, meta, style')
 
       for (const el of elements) {

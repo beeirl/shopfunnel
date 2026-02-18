@@ -261,7 +261,7 @@ export interface Settings {
 export interface ResolvedSettings extends Settings {
   faviconUrl?: string | null
   faviconType?: string | null
-  code?: string | null
+  customCode?: string | null
   metaTitle?: string | null
   metaDescription?: string | null
   metaImageUrl?: string | null

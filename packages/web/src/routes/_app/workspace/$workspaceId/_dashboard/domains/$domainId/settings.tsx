@@ -63,7 +63,7 @@ const updateDomainSettings = createServerFn()
       domainId: Identifier.schema('domain'),
       faviconUrl: z.string().nullish(),
       faviconType: z.string().nullish(),
-      code: z.string().nullish(),
+      customCode: z.string().nullish(),
       metaTitle: z.string().nullish(),
       metaDescription: z.string().nullish(),
       metaImageUrl: z.string().nullish(),
@@ -75,7 +75,7 @@ const updateDomainSettings = createServerFn()
         domainId: data.domainId,
         ...(data.faviconUrl !== undefined && { faviconUrl: data.faviconUrl }),
         ...(data.faviconType !== undefined && { faviconType: data.faviconType }),
-        ...(data.code !== undefined && { code: data.code }),
+        ...(data.customCode !== undefined && { customCode: data.customCode }),
         ...(data.metaTitle !== undefined && { metaTitle: data.metaTitle }),
         ...(data.metaDescription !== undefined && { metaDescription: data.metaDescription }),
         ...(data.metaImageUrl !== undefined && { metaImageUrl: data.metaImageUrl }),
@@ -391,8 +391,8 @@ function CodeSettingRow() {
   const settings = useSuspenseQuery(getDomainSettingsQueryOptions(params.workspaceId, params.domainId)).data
 
   const updateSettingsMutation = useMutation({
-    mutationFn: (code: string | null) =>
-      updateDomainSettings({ data: { workspaceId: params.workspaceId, domainId: params.domainId, code } }),
+    mutationFn: (customCode: string | null) =>
+      updateDomainSettings({ data: { workspaceId: params.workspaceId, domainId: params.domainId, customCode } }),
   })
 
   const [dialogOpen, setDialogOpen] = React.useState(false)
@@ -411,9 +411,9 @@ function CodeSettingRow() {
         <DataGrid.Cell className="flex-col items-start justify-center">
           <span className="text-sm font-medium text-foreground">Code Injection</span>
           <span className="text-sm text-muted-foreground">Custom code injected into the funnel</span>
-          {settings?.code && (
+          {settings?.customCode && (
             <span className="truncate text-sm text-muted-foreground">
-              {settings.code.substring(0, 50) + (settings.code.length > 50 ? '...' : '')}
+              {settings.customCode.substring(0, 50) + (settings.customCode.length > 50 ? '...' : '')}
             </span>
           )}
         </DataGrid.Cell>
@@ -436,7 +436,7 @@ function CodeSettingRow() {
             autoCapitalize="off"
             autoComplete="off"
             spellCheck={false}
-            defaultValue={settings?.code ?? ''}
+            defaultValue={settings?.customCode ?? ''}
             placeholder="// Write your custom code here"
           />
           <Drawer.Footer>

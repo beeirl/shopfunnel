@@ -4,7 +4,7 @@ import { timestampColumns, workspaceColumns, workspaceIndexes } from '../databas
 export type DomainSettings = {
   faviconUrl?: string | null
   faviconType?: string | null
-  code?: string | null
+  customCode?: string | null
   metaTitle?: string | null
   metaDescription?: string | null
   metaImageUrl?: string | null

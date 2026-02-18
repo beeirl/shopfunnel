@@ -1,5 +1,5 @@
 import { DataGrid } from '@/components/data-grid'
-import { Icon } from '@/components/icon'
+import { Icon, type IconName } from '@/components/icon'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { Dialog } from '@/components/ui/dialog'
@@ -19,6 +19,11 @@ import * as React from 'react'
 import { z } from 'zod'
 import { formatDate, formatDateRelative } from '../-common'
 import { Heading } from './-components/heading'
+
+const providerIcons = {
+  shopify: 'shopify',
+  meta_pixel: 'meta',
+} satisfies Record<string, IconName>
 
 const listIntegrations = createServerFn()
   .inputValidator(Identifier.schema('workspace'))
@@ -256,14 +261,24 @@ function IntegrationsRoute() {
 
               return (
                 <DataGrid.Row key={integration.id}>
-                  <DataGrid.Cell className="flex-col items-start justify-center overflow-hidden pr-2 md:pr-8">
-                    <span className="truncate text-sm font-medium text-foreground">{integration.title}</span>
-                    <span className="truncate text-sm text-muted-foreground">
-                      <span className="md:hidden">
-                        {subtitle} &middot; {formatDateRelative(integration.createdAt)}
+                  <DataGrid.Cell className="gap-3 overflow-hidden pr-2 md:pr-8">
+                    {integration.provider in providerIcons && (
+                      <div className="flex size-7 shrink-0 items-center justify-center rounded-lg border border-border bg-background p-[0.3rem]">
+                        <Icon
+                          name={providerIcons[integration.provider as keyof typeof providerIcons]}
+                          className="size-5 text-foreground"
+                        />
+                      </div>
+                    )}
+                    <div className="flex min-w-0 flex-col">
+                      <span className="truncate text-sm font-medium text-foreground">{integration.title}</span>
+                      <span className="truncate text-sm text-muted-foreground">
+                        <span className="md:hidden">
+                          {subtitle} &middot; {formatDateRelative(integration.createdAt)}
+                        </span>
+                        <span className="hidden md:inline">{subtitle}</span>
                       </span>
-                      <span className="hidden md:inline">{subtitle}</span>
-                    </span>
+                    </div>
                   </DataGrid.Cell>
 
                   <DataGrid.Cell hideOnMobile>

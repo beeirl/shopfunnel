@@ -11,7 +11,7 @@ import type { ReactNode } from 'react'
 export const Route = createRootRouteWithContext<{
   queryClient: QueryClient
 }>()({
-  head: () => ({
+  head: ({ matches }) => ({
     meta: [
       {
         charSet: 'utf-8',
@@ -26,7 +26,9 @@ export const Route = createRootRouteWithContext<{
     ],
     links: [
       { rel: 'stylesheet', href: styles },
-      { rel: 'icon', type: 'image/svg+xml', href: '/favicon.svg' },
+      ...(!matches.some((m) => (m.routeId as string) === '/f/$id')
+        ? [{ rel: 'icon', type: 'image/svg+xml', href: '/favicon.svg' }]
+        : []),
     ],
   }),
   component: RootComponent,

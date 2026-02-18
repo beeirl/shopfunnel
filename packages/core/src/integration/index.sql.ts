@@ -20,7 +20,7 @@ export const IntegrationTable = mysqlTable(
     ...timestampColumns,
     provider: mysqlEnum('provider', IntegrationProvider).notNull(),
     externalId: varchar('external_id', { length: 255 }).notNull(),
-    title: varchar('title', { length: 255 }),
+    title: varchar('title', { length: 255 }).notNull(),
     credentials: json('credentials').$type<IntegrationCredentials>().notNull(),
     metadata: json('metadata').$type<IntegrationMetadata>(),
   },
