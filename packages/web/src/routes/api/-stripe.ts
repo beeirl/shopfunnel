@@ -82,6 +82,13 @@ export const StripeRoute = new Hono().post('/webhook', async (c) => {
         }
       }
 
+      const periodStartedAt = planSubscriptionItem
+        ? new Date(planSubscriptionItem.current_period_start * 1000)
+        : new Date(stripeSubscription.created * 1000)
+      const periodEndsAt = planSubscriptionItem
+        ? new Date(planSubscriptionItem.current_period_end * 1000)
+        : new Date(stripeSubscription.created * 1000)
+
       await Actor.provide('system', { workspaceId }, () =>
         Billing.subscribe({
           stripeCustomerId,
@@ -89,7 +96,8 @@ export const StripeRoute = new Hono().post('/webhook', async (c) => {
           plan,
           managed,
           interval,
-          lastSubscribedAt: new Date(stripeSubscription.created * 1000),
+          periodStartedAt,
+          periodEndsAt,
           ...(stripeSubscription.status === 'trialing' &&
             stripeSubscription.trial_start &&
             stripeSubscription.trial_end && {
@@ -100,18 +108,57 @@ export const StripeRoute = new Hono().post('/webhook', async (c) => {
       )
     }
 
-    if (body.type === 'customer.subscription.updated' && body.data.object.status === 'incomplete_expired') {
+    if (body.type === 'customer.subscription.updated') {
       const stripeSubscription = body.data.object
       const stripeSubscriptionId = body.data.object.id
+      const stripeCustomerId = stripeSubscription.customer as string
       const workspaceId = stripeSubscription.metadata?.workspaceId
 
       if (!stripeSubscriptionId) throw new Error('Stripe Subscription Id not found')
       if (!workspaceId) throw new Error('Workspace Id not found')
 
-      await Actor.provide('system', { workspaceId }, async () => {
-        await Billing.unsubscribe({ stripeSubscriptionId })
-        await Funnel.unpublishAll()
-      })
+      if (stripeSubscription.status === 'incomplete_expired') {
+        await Actor.provide('system', { workspaceId }, async () => {
+          await Billing.unsubscribe({ stripeSubscriptionId })
+          await Funnel.unpublishAll()
+        })
+      } else if (stripeSubscription.status === 'active' || stripeSubscription.status === 'trialing') {
+        const stripeSubscriptionItems = stripeSubscription.items?.data ?? []
+        const planSubscriptionItem = stripeSubscriptionItems.find((item) => Billing.stripePriceIdToPlan(item.price.id))
+        const plan = planSubscriptionItem ? Billing.stripePriceIdToPlan(planSubscriptionItem.price.id) : null
+        const interval = (planSubscriptionItem?.price.recurring?.interval ?? null) as 'month' | 'year' | null
+        const managed = stripeSubscriptionItems.some(
+          (item) => Billing.stripePriceIdToAddon(item.price.id) === 'managed',
+        )
+
+        if (!plan) throw new Error('Plan not found')
+        if (!interval) throw new Error('Interval not found')
+
+        const periodStartedAt = planSubscriptionItem
+          ? new Date(planSubscriptionItem.current_period_start * 1000)
+          : new Date(stripeSubscription.created * 1000)
+        const periodEndsAt = planSubscriptionItem
+          ? new Date(planSubscriptionItem.current_period_end * 1000)
+          : new Date(stripeSubscription.created * 1000)
+
+        await Actor.provide('system', { workspaceId }, async () => {
+          await Billing.subscribe({
+            stripeCustomerId,
+            stripeSubscriptionId,
+            plan,
+            managed,
+            interval,
+            periodStartedAt,
+            periodEndsAt,
+            ...(stripeSubscription.status === 'trialing' &&
+              stripeSubscription.trial_start &&
+              stripeSubscription.trial_end && {
+                trialStartedAt: new Date(stripeSubscription.trial_start * 1000),
+                trialEndsAt: new Date(stripeSubscription.trial_end * 1000),
+              }),
+          })
+        })
+      }
     }
 
     if (body.type === 'customer.subscription.deleted') {

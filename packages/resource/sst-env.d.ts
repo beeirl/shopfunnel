@@ -7,9 +7,9 @@ import "sst"
 declare module "sst" {
   export interface Resource {
     "BILLING": {
-      "managedMonthlyPriceId": string
-      "managedProductId": string
-      "managedYearlyPriceId": string
+      "managedServiceMonthlyPriceId": string
+      "managedServiceProductId": string
+      "managedServiceYearlyPriceId": string
       "meterId": string
       "standard100KMonthlyPriceId": string
       "standard100KOveragePriceId": string

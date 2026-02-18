@@ -22,9 +22,9 @@ declare module "sst" {
       "type": "sst.cloudflare.Kv"
     }
     "BILLING": {
-      "managedMonthlyPriceId": string
-      "managedProductId": string
-      "managedYearlyPriceId": string
+      "managedServiceMonthlyPriceId": string
+      "managedServiceProductId": string
+      "managedServiceYearlyPriceId": string
       "meterId": string
       "standard100KMonthlyPriceId": string
       "standard100KOveragePriceId": string

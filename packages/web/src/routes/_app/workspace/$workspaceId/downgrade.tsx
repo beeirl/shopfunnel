@@ -4,7 +4,7 @@ import { createFileRoute, redirect, useCanGoBack, useNavigate, useParams, useRou
 import { checkOnboarding, getBillingQueryOptions } from './-common'
 import { PricingTable } from './-components/pricing-table'
 
-export const Route = createFileRoute('/_app/workspace/$workspaceId/upgrade')({
+export const Route = createFileRoute('/_app/workspace/$workspaceId/downgrade')({
   component: RouteComponent,
   loader: async ({ context, params }) => {
     await checkOnboarding({ data: params.workspaceId })
@@ -37,7 +37,7 @@ function RouteComponent() {
           <XIcon />
         </Button>
       </div>
-      <PricingTable mode="upgrade" />
+      <PricingTable mode="downgrade" />
     </div>
   )
 }

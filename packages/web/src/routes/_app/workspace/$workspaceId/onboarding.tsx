@@ -689,7 +689,7 @@ function RouteComponent() {
               isTransitioning={isTransitioning}
             />
           ) : (
-            <PricingTable animate title="One last step" subtitle="Select a plan based on your needs" />
+            <PricingTable animate mode="create" />
           )}
         </motion.div>
       </AnimatePresence>

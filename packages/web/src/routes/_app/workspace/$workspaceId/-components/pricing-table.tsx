@@ -1,24 +1,27 @@
+import { AlertDialog } from '@/components/ui/alert-dialog'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Spinner } from '@/components/ui/spinner'
 import { Switch } from '@/components/ui/switch'
 import { withActor } from '@/context/auth.withActor'
+import { snackbar } from '@/lib/snackbar'
 import { cn } from '@/lib/utils'
 import { Billing, type Billing as BillingType } from '@shopfunnel/core/billing/index'
 import { Identifier } from '@shopfunnel/core/identifier'
 import {
+  IconCheck as CheckIcon,
   IconChevronLeft as ChevronLeftIcon,
   IconChevronRight as ChevronRightIcon,
   IconCircleCheckFilled as CircleCheckFilledIcon,
   IconStarFilled as StarFilledIcon,
 } from '@tabler/icons-react'
-import { useSuspenseQuery } from '@tanstack/react-query'
-import { useParams } from '@tanstack/react-router'
+import { useQueryClient, useSuspenseQuery } from '@tanstack/react-query'
+import { useNavigate, useParams } from '@tanstack/react-router'
 import { createServerFn } from '@tanstack/react-start'
 import { motion } from 'motion/react'
 import * as React from 'react'
 import { z } from 'zod'
-import { getBillingQueryOptions, PLANS } from '../-common'
+import { ADDONS, formatPrice, getBillingQueryOptions, PLANS } from '../-common'
 
 const createCheckoutUrl = createServerFn()
   .inputValidator(
@@ -41,46 +44,67 @@ const createCheckoutUrl = createServerFn()
     )
   })
 
-function formatPrice(price: number) {
-  return new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'USD',
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-  }).format(price)
-}
+const upgrade = createServerFn()
+  .inputValidator(
+    z.object({
+      workspaceId: Identifier.schema('workspace'),
+      plan: Billing.Plan,
+      interval: Billing.Interval,
+    }),
+  )
+  .handler(({ data }) => {
+    return withActor(() => Billing.upgrade({ plan: data.plan, interval: data.interval }), data.workspaceId)
+  })
 
-type Addon = 'managed'
+const downgrade = createServerFn()
+  .inputValidator(
+    z.object({
+      workspaceId: Identifier.schema('workspace'),
+      plan: Billing.Plan,
+      interval: Billing.Interval,
+    }),
+  )
+  .handler(({ data }) => {
+    return withActor(() => Billing.downgrade({ plan: data.plan, interval: data.interval }), data.workspaceId)
+  })
 
-export function PricingTable({
-  animate,
-  title,
-  subtitle,
-  addons,
-}: {
-  animate?: boolean
-  title: string
-  subtitle: string
-  addons?: Addon[]
-}) {
+export function PricingTable({ animate, mode }: { animate?: boolean; mode: 'create' | 'upgrade' | 'downgrade' }) {
   const params = useParams({ from: '/_app/workspace/$workspaceId' })
+  const navigate = useNavigate()
+  const queryClient = useQueryClient()
 
   const billingQuery = useSuspenseQuery(getBillingQueryOptions(params.workspaceId))
   const billing = billingQuery.data
 
   const [isYearly, setIsYearly] = React.useState(true)
-  const [selectedPlanId, setSelectedPlanId] = React.useState<string | null>(null)
   const [isLoading, setIsLoading] = React.useState(false)
   const [managed, setManaged] = React.useState(true)
-
-  const currentPlanIndex = billing.plan ? PLANS.findIndex((p) => p.id === billing.plan) : -1
-  const availablePlans: (typeof PLANS)[number][] = billing.plan
-    ? PLANS.filter((_, index) => index >= currentPlanIndex)
-    : [...PLANS]
+  const [selectedPlan, setSelectedPlan] = React.useState<BillingType.Plan | null>(null)
+  const [upgradeDialogOpen, setUpgradeDialogOpen] = React.useState(false)
+  const [downgradeDialogOpen, setDowngradeDialogOpen] = React.useState(false)
 
   const scrollRef = React.useRef<HTMLDivElement>(null)
   const [canScrollLeft, setCanScrollLeft] = React.useState(false)
   const [canScrollRight, setCanScrollRight] = React.useState(false)
+
+  const currentPlanIndex = billing.plan ? PLANS.findIndex((p) => p.id === billing.plan) : -1
+  const currentPlan = billing.plan ? PLANS.find((p) => p.id === billing.plan) : null
+  const popularPlanId = (() => {
+    if (mode === 'create') return PLANS.find((p) => 'defaultPopular' in p && p.defaultPopular)?.id ?? null
+    if (mode === 'upgrade') return PLANS[currentPlanIndex + 1]?.id ?? null
+    return null
+  })()
+  const targetPlan = selectedPlan ? PLANS.find((p) => p.id === selectedPlan) : null
+  const title = (() => {
+    if (mode === 'upgrade') return 'Upgrade your plan'
+    if (mode === 'downgrade') return 'Downgrade your plan'
+    return 'Choose your plan'
+  })()
+  const subtitle = (() => {
+    if (mode === 'downgrade') return 'Select a lower plan'
+    return 'Get more sessions as your shop grows'
+  })()
+  const intervalLabel = isYearly ? 'Yearly' : 'Monthly'
 
   React.useEffect(() => {
     const el = scrollRef.current
@@ -101,7 +125,7 @@ export function PricingTable({
       el.removeEventListener('scroll', updateScrollState)
       observer.disconnect()
     }
-  }, [availablePlans.length])
+  }, [])
 
   const scrollBy = (direction: 'left' | 'right') => {
     scrollRef.current?.scrollBy({
@@ -110,8 +134,8 @@ export function PricingTable({
     })
   }
 
-  const handlePlanSelect = async (plan: BillingType.Plan) => {
-    setSelectedPlanId(plan)
+  const handleCreate = async (plan: BillingType.Plan) => {
+    setSelectedPlan(plan)
     setIsLoading(true)
     try {
       const url = await createCheckoutUrl({
@@ -119,21 +143,83 @@ export function PricingTable({
           workspaceId: params.workspaceId,
           plan,
           interval: isYearly ? 'year' : 'month',
-          managed: true,
+          managed,
           successUrl: `${window.location.origin}/workspace/${params.workspaceId}`,
-          cancelUrl: `${window.location.origin}/workspace/${params.workspaceId}/upgrade`,
+          cancelUrl: window.location.href,
         },
       })
       window.location.href = url
     } catch (error) {
       console.error('Failed to create checkout URL:', error)
-      setSelectedPlanId(null)
+      setSelectedPlan(null)
       setIsLoading(false)
     }
   }
 
+  const handleUpgrade = async () => {
+    if (!selectedPlan) return
+
+    setIsLoading(true)
+    try {
+      await upgrade({
+        data: {
+          workspaceId: params.workspaceId,
+          plan: selectedPlan,
+          interval: isYearly ? 'year' : 'month',
+        },
+      })
+      await queryClient.invalidateQueries({ queryKey: ['billing', params.workspaceId] })
+      snackbar.add({ title: 'Plan upgraded successfully', type: 'success' })
+      setUpgradeDialogOpen(false)
+      navigate({ to: '/workspace/$workspaceId', params: { workspaceId: params.workspaceId } })
+    } catch (error) {
+      console.error('Failed to upgrade subscription:', error)
+      setSelectedPlan(null)
+      setIsLoading(false)
+    }
+  }
+
+  const handleDowngrade = async () => {
+    if (!selectedPlan) return
+
+    setIsLoading(true)
+    try {
+      await downgrade({
+        data: {
+          workspaceId: params.workspaceId,
+          plan: selectedPlan,
+          interval: isYearly ? 'year' : 'month',
+        },
+      })
+      await queryClient.invalidateQueries({ queryKey: ['billing', params.workspaceId] })
+      snackbar.add({ title: 'Downgrade scheduled', type: 'success' })
+      setDowngradeDialogOpen(false)
+      navigate({ to: '/workspace/$workspaceId', params: { workspaceId: params.workspaceId } })
+    } catch (error) {
+      console.error('Failed to schedule downgrade:', error)
+      setSelectedPlan(null)
+      setIsLoading(false)
+    }
+  }
+
+  const handleSelect = (plan: BillingType.Plan) => {
+    setSelectedPlan(plan)
+
+    switch (mode) {
+      case 'create':
+        handleCreate(plan)
+        break
+      case 'upgrade':
+        setUpgradeDialogOpen(true)
+        break
+      case 'downgrade':
+        setDowngradeDialogOpen(true)
+        break
+    }
+  }
+
   return (
-    <div className="flex min-h-screen w-full flex-col items-center justify-center gap-6 py-8">
+    <div className="flex min-h-screen w-full flex-col items-center justify-center gap-6 py-12">
       <div className="flex w-full max-w-[870px] flex-col px-4 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <p className="text-lg font-bold text-foreground md:text-2xl">{title}</p>
@@ -160,19 +246,23 @@ export function PricingTable({
             <div className="shrink-0" style={{ width: 'max(16px, calc(50% - 436px))' }} />
 
             <div className="flex shrink-0 items-stretch gap-4 py-2">
-              {availablePlans.map((plan, index) => {
-                const isCurrentPlan = plan.id === billing.plan
-                const showPopularBadge = plan.popular && !billing.plan
+              {PLANS.map((plan, index) => {
+                const isCurrent = plan.id === billing.plan
+                const planIndex = PLANS.findIndex((p) => p.id === plan.id)
+                const isSelectable =
+                  mode === 'create'
+                    ? true
+                    : mode === 'upgrade'
+                      ? planIndex > currentPlanIndex
+                      : planIndex < currentPlanIndex
+                const isPopular = plan.id === popularPlanId
 
-                const cardContent = (
+                const content = (
                   <div
                     key={plan.id}
-                    className={cn(
-                      'h-full w-[264px] shrink-0 rounded-[24px] p-1 sm:w-[280px]',
-                      showPopularBadge && 'bg-muted',
-                    )}
+                    className={cn('h-full w-[264px] shrink-0 rounded-[24px] p-1 sm:w-[280px]', isPopular && 'bg-muted')}
                   >
-                    {showPopularBadge ? (
+                    {isPopular ? (
                       <div className="flex h-8 items-center justify-center">
                         <span className="relative flex items-center gap-1.5 overflow-hidden text-xs font-medium whitespace-nowrap text-foreground">
                           <StarFilledIcon className="size-3.5 -translate-y-px" />
@@ -198,13 +288,13 @@ export function PricingTable({
                     <div
                       className={cn(
                         'flex h-[calc(100%-2rem)] flex-col justify-between rounded-[20px] border bg-background',
-                        showPopularBadge ? 'border-border/50 shadow-sm' : 'border-border',
+                        isPopular ? 'border-border/50 shadow-sm' : 'border-border',
                       )}
                     >
                       <div className="p-4 pt-5 sm:p-5">
                         <div className="flex items-center justify-between gap-2">
                           <p className="text-lg font-semibold text-foreground">{plan.name}</p>
-                          {isCurrentPlan ? (
+                          {isCurrent ? (
                             <Badge variant="secondary" className="text-xs">
                               Current
                             </Badge>
@@ -297,29 +387,42 @@ export function PricingTable({
                           >
                             Book demo
                           </Button>
-                        ) : (
+                        ) : isCurrent ? (
+                          <Button className="w-full" disabled size="lg" variant="outline">
+                            <CheckIcon />
+                            Current
+                          </Button>
+                        ) : isSelectable ? (
                           <Button
                             className="w-full"
-                            disabled={isCurrentPlan || isLoading}
+                            disabled={isLoading}
                             size="lg"
                             variant="outline"
-                            onClick={() => handlePlanSelect(plan.id)}
+                            onClick={() => handleSelect(plan.id)}
                           >
-                            {isLoading && selectedPlanId === plan.id ? (
-                              <Spinner />
-                            ) : isCurrentPlan ? (
-                              'Current plan'
-                            ) : billing.canTrial ? (
-                              'Start 7-day trial'
-                            ) : (
-                              'Select plan'
-                            )}
+                            {isLoading && selectedPlan === plan.id && <Spinner />}
+                            {mode === 'create' && billing.canTrial
+                              ? 'Start 7-day trial'
+                              : mode === 'create'
+                                ? 'Select plan'
+                                : mode === 'upgrade'
+                                  ? 'Upgrade'
+                                  : 'Downgrade'}
                           </Button>
-                        )}
+                        ) : mode === 'upgrade' ? (
+                          <Button className="w-full" disabled size="lg" variant="outline">
+                            <CheckIcon />
+                            Subscribed
+                          </Button>
+                        ) : null}
                       </div>
                     </div>
                   </div>
                 )
+
+                if (mode === 'downgrade' && plan.id === 'enterprise') {
+                  return null
+                }
 
                 if (animate) {
                   return (
@@ -330,12 +433,12 @@ export function PricingTable({
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ duration: 0.35, delay: index * 0.1 }}
                     >
-                      {cardContent}
+                      {content}
                     </motion.div>
                   )
                 }
 
-                return cardContent
+                return content
               })}
             </div>
 
@@ -370,30 +473,95 @@ export function PricingTable({
         </button>
       </div>
 
-      <div className="w-full max-w-[870px]">
-        <div className="flex flex-col items-start justify-between gap-4 rounded-2xl bg-muted/50 px-4 py-4 sm:flex-row sm:items-center sm:px-5">
-          <div>
-            <div className="flex items-center gap-2">
-              <span className="font-semibold text-foreground">Managed Service Add-On</span>
-              {addons?.includes('managed') && <Badge className="bg-foreground/10 text-foreground">$1,500/month</Badge>}
+      {mode === 'create' &&
+        ADDONS.map((addon) => (
+          <div key={addon.id} className="w-full max-w-[870px]">
+            <div className="flex flex-col items-start justify-between gap-4 rounded-2xl bg-muted/50 px-4 py-4 sm:flex-row sm:items-center sm:px-5">
+              <div>
+                <div className="flex items-center gap-2">
+                  <span className="font-semibold text-foreground">{addon.name} Add-On</span>
+                  <Badge className="bg-foreground/10 text-foreground">{formatPrice(addon.monthlyPrice)}/month</Badge>
+                </div>
+                <p className="mt-0.5 text-sm font-medium text-balance text-muted-foreground">{addon.description}</p>
+              </div>
+              <Switch id={`${addon.id}-addon`} checked={managed} defaultChecked onCheckedChange={setManaged} />
             </div>
-            <p className="mt-0.5 text-sm font-medium text-balance text-muted-foreground">
-              We create up to 4 new funnels per month including continuous A/B testing and optimization.
-            </p>
           </div>
-          {addons?.includes('managed') ? (
-            <Switch id="managed-addon" disabled checked={managed} onCheckedChange={setManaged} />
-          ) : (
-            <Button
-              nativeButton={false}
-              size="lg"
-              render={<a href="https://calendly.com/kai-shopfunnel/30min" target="_blank" />}
-            >
-              Book demo
-            </Button>
-          )}
-        </div>
-      </div>
+        ))}
+
+      <AlertDialog.Root
+        open={upgradeDialogOpen}
+        onOpenChange={setUpgradeDialogOpen}
+        onOpenChangeComplete={(open) => {
+          if (!open && !isLoading) setSelectedPlan(null)
+        }}
+      >
+        <AlertDialog.Content>
+          <AlertDialog.Header>
+            <AlertDialog.Title>Subscription upgrade</AlertDialog.Title>
+            <AlertDialog.Description>
+              Upgrade from <span className="font-medium text-foreground">{currentPlan?.name}</span> to{' '}
+              <span className="font-medium text-foreground">{targetPlan?.name}</span>
+              {targetPlan && (isYearly ? targetPlan.yearlyPrice : targetPlan.monthlyPrice) && (
+                <>
+                  {' '}
+                  at{' '}
+                  <span className="font-medium text-foreground">
+                    {isYearly
+                      ? `${formatPrice(Math.round(targetPlan.yearlyPrice! / 12))}/month`
+                      : `${formatPrice(targetPlan.monthlyPrice!)}/month`}
+                  </span>
+                  {isYearly && <> (billed yearly at {formatPrice(targetPlan.yearlyPrice!)})</>}
+                </>
+              )}
+              . Prorated charges will apply to your next invoice.
+            </AlertDialog.Description>
+          </AlertDialog.Header>
+          <AlertDialog.Footer>
+            <AlertDialog.Cancel disabled={isLoading}>Cancel</AlertDialog.Cancel>
+            <AlertDialog.Action disabled={isLoading} onClick={handleUpgrade}>
+              Confirm
+            </AlertDialog.Action>
+          </AlertDialog.Footer>
+        </AlertDialog.Content>
+      </AlertDialog.Root>
+
+      <AlertDialog.Root
+        open={downgradeDialogOpen}
+        onOpenChange={setDowngradeDialogOpen}
+        onOpenChangeComplete={(open) => {
+          if (!open && !isLoading) setSelectedPlan(null)
+        }}
+      >
+        <AlertDialog.Content>
+          <AlertDialog.Header>
+            <AlertDialog.Title>Schedule downgrade</AlertDialog.Title>
+            <AlertDialog.Description>
+              Downgrade from <span className="font-medium text-foreground">{currentPlan?.name}</span> to{' '}
+              <span className="font-medium text-foreground">{targetPlan?.name}</span>
+              {targetPlan && (isYearly ? targetPlan.yearlyPrice : targetPlan.monthlyPrice) && (
+                <>
+                  {' '}
+                  at{' '}
+                  <span className="font-medium text-foreground">
+                    {isYearly
+                      ? `${formatPrice(Math.round(targetPlan.yearlyPrice! / 12))}/month`
+                      : `${formatPrice(targetPlan.monthlyPrice!)}/month`}
+                  </span>
+                  {isYearly && <> (billed yearly at {formatPrice(targetPlan.yearlyPrice!)})</>}
+                </>
+              )}
+              . This takes effect at the end of your current billing period.
+            </AlertDialog.Description>
+          </AlertDialog.Header>
+          <AlertDialog.Footer>
+            <AlertDialog.Cancel disabled={isLoading}>Cancel</AlertDialog.Cancel>
+            <AlertDialog.Action disabled={isLoading} onClick={handleDowngrade}>
+              Confirm
+            </AlertDialog.Action>
+          </AlertDialog.Footer>
+        </AlertDialog.Content>
+      </AlertDialog.Root>
     </div>
   )
 }

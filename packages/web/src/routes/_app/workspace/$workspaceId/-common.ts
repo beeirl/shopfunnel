@@ -20,7 +20,6 @@ export const PLANS = [
     monthlyPrice: 74,
     yearlyPrice: 740,
     overageRate: 0.03,
-    popular: false,
     features: [
       '5k unique sessions/month',
       'Unlimited funnels',
@@ -37,7 +36,7 @@ export const PLANS = [
     monthlyPrice: 249,
     yearlyPrice: 2490,
     overageRate: 0.02,
-    popular: true,
+    defaultPopular: true,
     features: [
       '25k unique sessions/month',
       'Unlimited funnels',
@@ -54,7 +53,6 @@ export const PLANS = [
     monthlyPrice: 399,
     yearlyPrice: 3990,
     overageRate: 0.02,
-    popular: false,
     features: [
       '50k unique sessions/month',
       'Unlimited funnels',
@@ -72,7 +70,6 @@ export const PLANS = [
     monthlyPrice: 699,
     yearlyPrice: 6990,
     overageRate: 0.02,
-    popular: false,
     features: [
       '100k unique sessions/month',
       'Unlimited funnels',
@@ -90,7 +87,6 @@ export const PLANS = [
     monthlyPrice: 1699,
     yearlyPrice: 16990,
     overageRate: 0.02,
-    popular: false,
     features: [
       '250k unique sessions/month',
       'Unlimited funnels',
@@ -108,10 +104,28 @@ export const PLANS = [
     monthlyPrice: null,
     yearlyPrice: null,
     overageRate: null,
-    popular: false,
     features: ['Fully customizable', 'Volume discounts', 'Flexible terms'],
   },
 ] as const
+
+export const ADDONS = [
+  {
+    id: 'managed',
+    name: 'Managed Service',
+    description: 'We create up to 4 new funnels per month including continuous A/B testing and optimization.',
+    monthlyPrice: 1500,
+    yearlyPrice: 18000,
+  },
+] as const
+
+export function formatPrice(price: number) {
+  return new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency: 'USD',
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
+  }).format(price)
+}
 
 export function getDateRange(
   startDate: Date,
@@ -238,7 +252,7 @@ export const checkBilling = createServerFn()
       const billing = await Billing.get()
       if (!billing?.active) {
         throw redirect({
-          to: '/workspace/$workspaceId/upgrade',
+          to: '/workspace/$workspaceId/subscribe',
           params: { workspaceId },
         })
       }
@@ -276,25 +290,14 @@ export const getUsage = createServerFn()
   .inputValidator(
     z.object({
       workspaceId: Identifier.schema('workspace'),
-      lastSubscribedAt: z.string().nullable(),
+      periodStartedAt: z.string().nullable(),
     }),
   )
   .handler(async ({ data }) => {
     const now = new Date()
-
-    const periodStart = (() => {
-      if (!data.lastSubscribedAt) {
-        return new Date(now.getFullYear(), now.getMonth(), 1)
-      }
-      const start = new Date(data.lastSubscribedAt)
-      while (true) {
-        const next = new Date(start)
-        next.setMonth(next.getMonth() + 1)
-        if (next > now) break
-        start.setMonth(start.getMonth() + 1)
-      }
-      return start
-    })()
+    const periodStart = data.periodStartedAt
+      ? new Date(data.periodStartedAt)
+      : new Date(now.getFullYear(), now.getMonth(), 1)
 
     const params = new URLSearchParams({
       workspace_id: data.workspaceId,
@@ -311,8 +314,8 @@ export const getUsage = createServerFn()
     return { sessions }
   })
 
-export const getUsageQueryOptions = (workspaceId: string, lastSubscribedAt: string | null) =>
+export const getUsageQueryOptions = (workspaceId: string, periodStartedAt: string | null) =>
   queryOptions({
-    queryKey: ['usage', workspaceId, lastSubscribedAt],
-    queryFn: () => getUsage({ data: { workspaceId, lastSubscribedAt } }),
+    queryKey: ['usage', workspaceId, periodStartedAt],
+    queryFn: () => getUsage({ data: { workspaceId, periodStartedAt } }),
   })

@@ -38,7 +38,7 @@ export namespace Billing {
           const now = new Date()
           return {
             ...row,
-            canTrial: !row.exempted && !row.trialEndsAt && !row.lastSubscribedAt,
+            canTrial: !row.exempted && !row.trialEndsAt && !row.periodStartedAt,
             onTrial: !!(row.trialEndsAt && row.trialEndsAt > now),
             active: !!(row.exempted || row.stripeSubscriptionId || (row.trialEndsAt && row.trialEndsAt > now)),
           }
@@ -151,11 +151,14 @@ export namespace Billing {
       plan: Billing.Plan,
       managed: z.boolean(),
       interval: Billing.Interval,
-      lastSubscribedAt: z.date(),
+      periodStartedAt: z.date(),
+      periodEndsAt: z.date(),
       trialStartedAt: z.date().optional(),
       trialEndsAt: z.date().optional(),
     }),
     async (input) => {
+      const billing = await Billing.get()
+
       await Database.use((db) =>
         db
           .update(BillingTable)
@@ -166,7 +169,9 @@ export namespace Billing {
             managed: input.managed,
             exempted: false,
             interval: input.interval,
-            lastSubscribedAt: input.lastSubscribedAt,
+            periodStartedAt: input.periodStartedAt,
+            periodEndsAt: input.periodEndsAt,
+            ...(billing?.plan !== input.plan && billing?.pendingPlan === input.plan && { pendingPlan: null }),
             ...(input.trialStartedAt &&
               input.trialEndsAt && {
                 trialStartedAt: input.trialStartedAt,
@@ -200,8 +205,285 @@ export namespace Billing {
             plan: null,
             interval: null,
             managed: false,
+            pendingPlan: null,
+            periodStartedAt: null,
+            periodEndsAt: null,
           })
           .where(eq(BillingTable.workspaceId, workspaceId)),
+      )
+    },
+  )
+
+  export const upgrade = fn(
+    z.object({
+      plan: Billing.Plan,
+      interval: Billing.Interval,
+    }),
+    async (input) => {
+      const billing = await Billing.get()
+      if (!billing?.stripeSubscriptionId) throw new Error('No active subscription found')
+      if (billing.pendingPlan)
+        throw new Error('Cannot upgrade while a downgrade is pending. Cancel the downgrade first.')
+
+      const existingSubscription = await Billing.stripe().subscriptions.retrieve(billing.stripeSubscriptionId)
+      if (existingSubscription.schedule) {
+        const scheduleId =
+          typeof existingSubscription.schedule === 'string'
+            ? existingSubscription.schedule
+            : existingSubscription.schedule.id
+        await Billing.stripe().subscriptionSchedules.release(scheduleId)
+      }
+
+      const existingPlanItem = existingSubscription.items.data.find((item) =>
+        Billing.stripePriceIdToPlan(item.price.id),
+      )
+      const existingOverageItem = existingSubscription.items.data.find((item) =>
+        Billing.stripePriceIdToOveragePlan(item.price.id),
+      )
+      if (!existingPlanItem) throw new Error('Existing plan subscription item not found')
+      if (!existingOverageItem) throw new Error('Existing overage subscription item not found')
+
+      const planPriceId = Billing.planToStripePriceId({ plan: input.plan, interval: input.interval })
+      const overagePriceId = Billing.planToStripeOveragePriceId(input.plan)
+      if (!planPriceId) throw new Error('Invalid plan')
+      if (!overagePriceId) throw new Error('Invalid overage plan')
+
+      const subscription = await Billing.stripe().subscriptions.update(billing.stripeSubscriptionId, {
+        items: [
+          { id: existingPlanItem.id, price: planPriceId },
+          { id: existingOverageItem.id, price: overagePriceId },
+        ],
+        proration_behavior: 'always_invoice',
+        payment_behavior: 'pending_if_incomplete',
+      })
+      const planItem = subscription.items.data.find((item) => Billing.stripePriceIdToPlan(item.price.id))
+      if (!planItem) throw new Error('New plan subscription item not found')
+
+      await Database.use((db) =>
+        db
+          .update(BillingTable)
+          .set({
+            plan: input.plan,
+            interval: input.interval,
+            pendingPlan: null,
+            periodStartedAt: new Date(planItem.current_period_start * 1000),
+            periodEndsAt: new Date(planItem.current_period_end * 1000),
+          })
+          .where(eq(BillingTable.workspaceId, Actor.workspaceId())),
+      )
+    },
+  )
+
+  export const downgrade = fn(
+    z.object({
+      plan: Billing.Plan,
+      interval: Billing.Interval,
+    }),
+    async (input) => {
+      const billing = await Billing.get()
+      if (!billing?.stripeSubscriptionId) throw new Error('No active subscription found')
+      if (billing.pendingPlan) throw new Error('Cannot downgrade while a plan change is already pending.')
+
+      const schedule = await Billing.stripe().subscriptionSchedules.create({
+        from_subscription: billing.stripeSubscriptionId,
+      })
+
+      const planPriceId = Billing.planToStripePriceId({ plan: input.plan, interval: input.interval })
+      if (!planPriceId) throw new Error('Invalid plan')
+
+      const overagePriceId = Billing.planToStripeOveragePriceId(input.plan)
+      if (!overagePriceId) throw new Error('Invalid overage plan')
+
+      const addonItems = (schedule.phases[0]?.items ?? []).flatMap((item) => {
+        const itemPriceId = typeof item.price === 'string' ? item.price : item.price.id
+        const addon = Billing.stripePriceIdToAddon(itemPriceId)
+        const addonPriceId = addon && Billing.addonToStripePriceId({ addon, interval: input.interval })
+        return addonPriceId ? [{ price: addonPriceId, quantity: 1 }] : []
+      })
+
+      // Update the schedule with two phases:
+      // Phase 1 (current): keep current items until current_period_end
+      // Phase 2 (next): switch to the downgraded plan
+      await Billing.stripe().subscriptionSchedules.update(schedule.id, {
+        end_behavior: 'release',
+        phases: [
+          {
+            items: schedule.phases[0]?.items.map((item) => ({
+              price: typeof item.price === 'string' ? item.price : item.price.id,
+              quantity: item.quantity ?? undefined,
+            })),
+            start_date: schedule.phases[0].start_date,
+            end_date: schedule.phases[0].end_date,
+          },
+          {
+            items: [{ price: planPriceId, quantity: 1 }, { price: overagePriceId }, ...addonItems],
+            proration_behavior: 'none',
+            metadata: { workspaceId: Actor.workspaceId() },
+          },
+        ],
+      })
+
+      await Database.use((db) =>
+        db
+          .update(BillingTable)
+          .set({ pendingPlan: input.plan })
+          .where(eq(BillingTable.workspaceId, Actor.workspaceId())),
+      )
+    },
+  )
+
+  export const cancelDowngrade = fn(z.void(), async () => {
+    const billing = await Billing.get()
+    if (!billing?.stripeSubscriptionId) throw new Error('No active subscription found')
+    if (!billing.pendingPlan) throw new Error('No downgrade scheduled')
+
+    const subscription = await Billing.stripe().subscriptions.retrieve(billing.stripeSubscriptionId)
+    const schedule = subscription.schedule
+    if (!schedule) throw new Error('No subscription schedule found')
+
+    await Billing.stripe().subscriptionSchedules.release(typeof schedule === 'string' ? schedule : schedule.id)
+
+    await Database.use((db) =>
+      db.update(BillingTable).set({ pendingPlan: null }).where(eq(BillingTable.workspaceId, Actor.workspaceId())),
+    )
+  })
+
+  export const addAddon = fn(
+    z.object({
+      addon: Billing.Addon,
+    }),
+    async (input) => {
+      const billing = await Billing.get()
+      if (!billing?.stripeSubscriptionId) throw new Error('No active subscription found')
+      if (!billing.interval) throw new Error('No billing interval found')
+
+      const subscription = await Billing.stripe().subscriptions.retrieve(billing.stripeSubscriptionId)
+      const subscriptionItems = subscription.items.data
+
+      const addonItem = subscriptionItems.find((item) => Billing.stripePriceIdToAddon(item.price.id) === input.addon)
+      if (addonItem) throw new Error('Addon already added')
+
+      const addonPriceId = Billing.addonToStripePriceId({ addon: input.addon, interval: billing.interval })
+      if (!addonPriceId) throw new Error('Invalid addon or interval')
+
+      await Billing.stripe().subscriptions.update(billing.stripeSubscriptionId, {
+        items: [{ price: addonPriceId }],
+        proration_behavior: 'always_invoice',
+        payment_behavior: 'pending_if_incomplete',
+      })
+
+      if (subscription.schedule) {
+        const scheduleId = typeof subscription.schedule === 'string' ? subscription.schedule : subscription.schedule.id
+        const schedule = await Billing.stripe().subscriptionSchedules.retrieve(scheduleId)
+
+        await Billing.stripe().subscriptionSchedules.update(scheduleId, {
+          phases: schedule.phases.map((phase) => {
+            // Skip phases that already have the addon (e.g. phase 1 after the subscription update above)
+            const hasAddons = phase.items.some((i) => {
+              const priceId = typeof i.price === 'string' ? i.price : i.price.id
+              return Billing.stripePriceIdToAddon(priceId) === input.addon
+            })
+            if (hasAddons) {
+              return {
+                items: phase.items.map((item) => ({
+                  price: typeof item.price === 'string' ? item.price : item.price.id,
+                  quantity: item.quantity ?? undefined,
+                })),
+                start_date: phase.start_date,
+                end_date: phase.end_date,
+                proration_behavior: 'none' as const,
+                metadata: phase.metadata as Record<string, string>,
+              }
+            } else {
+              const addonPriceId = (() => {
+                const planItem = phase.items.find((i) => {
+                  const priceId = typeof i.price === 'string' ? i.price : i.price.id
+                  return !!Billing.stripePriceIdToPlan(priceId)
+                })
+                const planPrice =
+                  planItem && typeof planItem.price !== 'string' && 'recurring' in planItem.price && planItem.price
+                const interval =
+                  Billing.Interval.safeParse(planPrice && planPrice.recurring?.interval).data ?? billing.interval!
+                return Billing.addonToStripePriceId({ addon: input.addon, interval })
+              })()
+
+              return {
+                items: [
+                  ...phase.items.map((item) => ({
+                    price: typeof item.price === 'string' ? item.price : item.price.id,
+                    quantity: item.quantity ?? undefined,
+                  })),
+                  ...(addonPriceId ? [{ price: addonPriceId, quantity: 1 }] : []),
+                ],
+                start_date: phase.start_date,
+                end_date: phase.end_date,
+                proration_behavior: 'none' as const,
+                metadata: phase.metadata as Record<string, string>,
+              }
+            }
+          }),
+        })
+      }
+
+      await Database.use((db) =>
+        db
+          .update(BillingTable)
+          .set({ managed: input.addon === 'managed' && true })
+          .where(eq(BillingTable.workspaceId, Actor.workspaceId())),
+      )
+    },
+  )
+
+  export const removeAddon = fn(
+    z.object({
+      addon: Billing.Addon,
+    }),
+    async (input) => {
+      const billing = await Billing.get()
+      if (!billing?.stripeSubscriptionId) throw new Error('No active subscription found')
+
+      const subscription = await Billing.stripe().subscriptions.retrieve(billing.stripeSubscriptionId)
+      const subscriptionItems = subscription.items.data
+
+      const addonItem = subscriptionItems.find((item) => Billing.stripePriceIdToAddon(item.price.id) === input.addon)
+      if (!addonItem) throw new Error('Addon not found on subscription')
+
+      await Billing.stripe().subscriptions.update(billing.stripeSubscriptionId, {
+        items: [{ id: addonItem.id, deleted: true }],
+        proration_behavior: 'always_invoice',
+        payment_behavior: 'pending_if_incomplete',
+      })
+
+      // If a subscription schedule exists (pending downgrade), also update future phases
+      // so the addon doesn't get re-added when the downgrade takes effect
+      if (subscription.schedule) {
+        const scheduleId = typeof subscription.schedule === 'string' ? subscription.schedule : subscription.schedule.id
+        const schedule = await Billing.stripe().subscriptionSchedules.retrieve(scheduleId)
+
+        await Billing.stripe().subscriptionSchedules.update(scheduleId, {
+          phases: schedule.phases.map((phase) => ({
+            items: phase.items
+              .filter((item) => {
+                const priceId = typeof item.price === 'string' ? item.price : item.price.id
+                return Billing.stripePriceIdToAddon(priceId) !== input.addon
+              })
+              .map((item) => ({
+                price: typeof item.price === 'string' ? item.price : item.price.id,
+                quantity: item.quantity ?? undefined,
+              })),
+            start_date: phase.start_date,
+            end_date: phase.end_date,
+            proration_behavior: 'none' as const,
+            metadata: phase.metadata as Record<string, string>,
+          })),
+        })
+      }
+
+      await Database.use((db) =>
+        db
+          .update(BillingTable)
+          .set({ managed: input.addon === 'managed' && false })
+          .where(eq(BillingTable.workspaceId, Actor.workspaceId())),
       )
     },
   )
@@ -235,9 +517,9 @@ export namespace Billing {
     }),
     (input) => {
       if (input.interval === 'month') {
-        if (input.addon === 'managed') return Resource.BILLING.managedMonthlyPriceId
+        if (input.addon === 'managed') return Resource.BILLING.managedServiceMonthlyPriceId
       } else if (input.interval === 'year') {
-        if (input.addon === 'managed') return Resource.BILLING.managedYearlyPriceId
+        if (input.addon === 'managed') return Resource.BILLING.managedServiceYearlyPriceId
       }
     },
   )
@@ -256,8 +538,16 @@ export namespace Billing {
   })
 
   export const stripePriceIdToAddon = fn(z.string(), (stripePriceId): Addon | undefined => {
-    if (stripePriceId === Resource.BILLING.managedMonthlyPriceId) return 'managed'
-    if (stripePriceId === Resource.BILLING.managedYearlyPriceId) return 'managed'
+    if (stripePriceId === Resource.BILLING.managedServiceMonthlyPriceId) return 'managed'
+    if (stripePriceId === Resource.BILLING.managedServiceYearlyPriceId) return 'managed'
+  })
+
+  export const stripePriceIdToOveragePlan = fn(z.string(), (stripePriceId): Plan | undefined => {
+    if (stripePriceId === Resource.BILLING.standard5KOveragePriceId) return 'standard5K'
+    if (stripePriceId === Resource.BILLING.standard25KOveragePriceId) return 'standard25K'
+    if (stripePriceId === Resource.BILLING.standard50KOveragePriceId) return 'standard50K'
+    if (stripePriceId === Resource.BILLING.standard100KOveragePriceId) return 'standard100K'
+    if (stripePriceId === Resource.BILLING.standard250KOveragePriceId) return 'standard250K'
   })
 
   export const planToStripeOveragePriceId = fn(Billing.Plan, (plan) => {

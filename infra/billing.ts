@@ -210,12 +210,12 @@ const standard2MOveragePrice = new stripe.Price('Standard2MOveragePrice', {
   ],
 })
 
-const managedProduct = new stripe.Product('ManagedProduct', {
-  name: 'Shopfunnel Managed',
+const managedServiceProduct = new stripe.Product('ManagedServiceProduct', {
+  name: 'Shopfunnel Managed Service',
 })
 
-const managedMonthlyPrice = new stripe.Price('ManagedPrice', {
-  product: managedProduct.id,
+const managedServiceMonthlyPrice = new stripe.Price('ManagedServicePrice', {
+  product: managedServiceProduct.id,
   currency: 'usd',
   unitAmount: 150000,
   recurring: {
@@ -224,8 +224,8 @@ const managedMonthlyPrice = new stripe.Price('ManagedPrice', {
   },
 })
 
-const managedYearlyPrice = new stripe.Price('ManagedYearlyPrice', {
-  product: managedProduct.id,
+const managedServiceYearlyPrice = new stripe.Price('ManagedServiceYearlyPrice', {
+  product: managedServiceProduct.id,
   currency: 'usd',
   unitAmount: 1800000,
   recurring: {
@@ -237,7 +237,6 @@ const managedYearlyPrice = new stripe.Price('ManagedYearlyPrice', {
 export const BILLING = new sst.Linkable('BILLING', {
   properties: {
     standardProductId: standardProduct.id,
-    managedProductId: managedProduct.id,
     meterId: sessionMeter.id,
 
     standard5KMonthlyPriceId: standard5KMonthlyPrice.id,
@@ -267,7 +266,9 @@ export const BILLING = new sst.Linkable('BILLING', {
     standard1MOveragePriceId: standard1MOveragePrice.id,
     standard2MOveragePriceId: standard2MOveragePrice.id,
 
-    managedMonthlyPriceId: managedMonthlyPrice.id,
-    managedYearlyPriceId: managedYearlyPrice.id,
+    managedServiceProductId: managedServiceProduct.id,
+
+    managedServiceMonthlyPriceId: managedServiceMonthlyPrice.id,
+    managedServiceYearlyPriceId: managedServiceYearlyPrice.id,
   },
 })

@@ -27,7 +27,9 @@ export const BillingTable = mysqlTable(
     interval: mysqlEnum('interval', BillingInterval),
     trialStartedAt: timestamp('trial_started_at'),
     trialEndsAt: timestamp('trial_ends_at'),
-    lastSubscribedAt: timestamp('last_subscribed_at'),
+    periodStartedAt: timestamp('period_started_at'),
+    periodEndsAt: timestamp('period_ends_at'),
+    pendingPlan: mysqlEnum('pending_plan', BillingPlan),
   },
   (table) => [
     ...workspaceIndexes(table),

@@ -63,7 +63,7 @@ function AddIntegrationDialog({ open, onOpenChange }: { open: boolean; onOpenCha
         <Button
           size="lg"
           nativeButton={false}
-          render={<a href="https://apps.shopify.com" target="_blank" rel="noopener noreferrer" />}
+          render={<a href="https://apps.shopify.com/shopfunnel-1" target="_blank" rel="noopener noreferrer" />}
         >
           Connect shop
         </Button>

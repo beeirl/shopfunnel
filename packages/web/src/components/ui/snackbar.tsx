@@ -127,7 +127,7 @@ interface SnackbarViewportProps extends BaseToast.Viewport.Props {
 function SnackbarViewport({ className, ...props }: SnackbarViewportProps) {
   return (
     <BaseToast.Viewport
-      className={cn('fixed inset-x-4 top-4 bottom-auto z-10 mx-auto flex justify-center', className)}
+      className={cn('fixed inset-x-4 top-4 bottom-auto z-60 mx-auto flex justify-center', className)}
       {...props}
     />
   )

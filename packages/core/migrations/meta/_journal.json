@@ -57,6 +57,13 @@
       "when": 1770626366599,
       "tag": "0007_zippy_naoko",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "5",
+      "when": 1771359287235,
+      "tag": "0008_tiny_dexter_bennett",
+      "breakpoints": true
     }
   ]
 }

@@ -21,6 +21,7 @@ import { Route as AppWorkspaceWorkspaceIdRouteRouteImport } from './routes/_app/
 import { Route as AppWorkspaceWorkspaceIdUpgradeRouteImport } from './routes/_app/workspace/$workspaceId/upgrade'
 import { Route as AppWorkspaceWorkspaceIdSubscribeRouteImport } from './routes/_app/workspace/$workspaceId/subscribe'
 import { Route as AppWorkspaceWorkspaceIdOnboardingRouteImport } from './routes/_app/workspace/$workspaceId/onboarding'
+import { Route as AppWorkspaceWorkspaceIdDowngradeRouteImport } from './routes/_app/workspace/$workspaceId/downgrade'
 import { Route as AppWorkspaceWorkspaceIdDashboardRouteRouteImport } from './routes/_app/workspace/$workspaceId/_dashboard/route'
 import { Route as AppWorkspaceWorkspaceIdDashboardIndexRouteImport } from './routes/_app/workspace/$workspaceId/_dashboard/index'
 import { Route as AppWorkspaceWorkspaceIdDashboardIntegrationsRouteImport } from './routes/_app/workspace/$workspaceId/_dashboard/integrations'
@@ -94,6 +95,12 @@ const AppWorkspaceWorkspaceIdOnboardingRoute =
   AppWorkspaceWorkspaceIdOnboardingRouteImport.update({
     id: '/onboarding',
     path: '/onboarding',
+    getParentRoute: () => AppWorkspaceWorkspaceIdRouteRoute,
+  } as any)
+const AppWorkspaceWorkspaceIdDowngradeRoute =
+  AppWorkspaceWorkspaceIdDowngradeRouteImport.update({
+    id: '/downgrade',
+    path: '/downgrade',
     getParentRoute: () => AppWorkspaceWorkspaceIdRouteRoute,
   } as any)
 const AppWorkspaceWorkspaceIdDashboardRouteRoute =
@@ -170,6 +177,7 @@ export interface FileRoutesByFullPath {
   '/auth/callback': typeof AppAuthCallbackRoute
   '/auth/logout': typeof AppAuthLogoutRoute
   '/auth': typeof AppAuthIndexRoute
+  '/workspace/$workspaceId/downgrade': typeof AppWorkspaceWorkspaceIdDowngradeRoute
   '/workspace/$workspaceId/onboarding': typeof AppWorkspaceWorkspaceIdOnboardingRoute
   '/workspace/$workspaceId/subscribe': typeof AppWorkspaceWorkspaceIdSubscribeRoute
   '/workspace/$workspaceId/upgrade': typeof AppWorkspaceWorkspaceIdUpgradeRoute
@@ -192,6 +200,7 @@ export interface FileRoutesByTo {
   '/auth/callback': typeof AppAuthCallbackRoute
   '/auth/logout': typeof AppAuthLogoutRoute
   '/auth': typeof AppAuthIndexRoute
+  '/workspace/$workspaceId/downgrade': typeof AppWorkspaceWorkspaceIdDowngradeRoute
   '/workspace/$workspaceId/onboarding': typeof AppWorkspaceWorkspaceIdOnboardingRoute
   '/workspace/$workspaceId/subscribe': typeof AppWorkspaceWorkspaceIdSubscribeRoute
   '/workspace/$workspaceId/upgrade': typeof AppWorkspaceWorkspaceIdUpgradeRoute
@@ -216,6 +225,7 @@ export interface FileRoutesById {
   '/_app/auth/logout': typeof AppAuthLogoutRoute
   '/_app/auth/': typeof AppAuthIndexRoute
   '/_app/workspace/$workspaceId/_dashboard': typeof AppWorkspaceWorkspaceIdDashboardRouteRouteWithChildren
+  '/_app/workspace/$workspaceId/downgrade': typeof AppWorkspaceWorkspaceIdDowngradeRoute
   '/_app/workspace/$workspaceId/onboarding': typeof AppWorkspaceWorkspaceIdOnboardingRoute
   '/_app/workspace/$workspaceId/subscribe': typeof AppWorkspaceWorkspaceIdSubscribeRoute
   '/_app/workspace/$workspaceId/upgrade': typeof AppWorkspaceWorkspaceIdUpgradeRoute
@@ -241,6 +251,7 @@ export interface FileRouteTypes {
     | '/auth/callback'
     | '/auth/logout'
     | '/auth'
+    | '/workspace/$workspaceId/downgrade'
     | '/workspace/$workspaceId/onboarding'
     | '/workspace/$workspaceId/subscribe'
     | '/workspace/$workspaceId/upgrade'
@@ -263,6 +274,7 @@ export interface FileRouteTypes {
     | '/auth/callback'
     | '/auth/logout'
     | '/auth'
+    | '/workspace/$workspaceId/downgrade'
     | '/workspace/$workspaceId/onboarding'
     | '/workspace/$workspaceId/subscribe'
     | '/workspace/$workspaceId/upgrade'
@@ -286,6 +298,7 @@ export interface FileRouteTypes {
     | '/_app/auth/logout'
     | '/_app/auth/'
     | '/_app/workspace/$workspaceId/_dashboard'
+    | '/_app/workspace/$workspaceId/downgrade'
     | '/_app/workspace/$workspaceId/onboarding'
     | '/_app/workspace/$workspaceId/subscribe'
     | '/_app/workspace/$workspaceId/upgrade'
@@ -391,6 +404,13 @@ declare module '@tanstack/react-router' {
       path: '/onboarding'
       fullPath: '/workspace/$workspaceId/onboarding'
       preLoaderRoute: typeof AppWorkspaceWorkspaceIdOnboardingRouteImport
+      parentRoute: typeof AppWorkspaceWorkspaceIdRouteRoute
+    }
+    '/_app/workspace/$workspaceId/downgrade': {
+      id: '/_app/workspace/$workspaceId/downgrade'
+      path: '/downgrade'
+      fullPath: '/workspace/$workspaceId/downgrade'
+      preLoaderRoute: typeof AppWorkspaceWorkspaceIdDowngradeRouteImport
       parentRoute: typeof AppWorkspaceWorkspaceIdRouteRoute
     }
     '/_app/workspace/$workspaceId/_dashboard': {
@@ -538,6 +558,7 @@ const AppWorkspaceWorkspaceIdFunnelsIdRouteRouteWithChildren =
 
 interface AppWorkspaceWorkspaceIdRouteRouteChildren {
   AppWorkspaceWorkspaceIdDashboardRouteRoute: typeof AppWorkspaceWorkspaceIdDashboardRouteRouteWithChildren
+  AppWorkspaceWorkspaceIdDowngradeRoute: typeof AppWorkspaceWorkspaceIdDowngradeRoute
   AppWorkspaceWorkspaceIdOnboardingRoute: typeof AppWorkspaceWorkspaceIdOnboardingRoute
   AppWorkspaceWorkspaceIdSubscribeRoute: typeof AppWorkspaceWorkspaceIdSubscribeRoute
   AppWorkspaceWorkspaceIdUpgradeRoute: typeof AppWorkspaceWorkspaceIdUpgradeRoute
@@ -548,6 +569,8 @@ const AppWorkspaceWorkspaceIdRouteRouteChildren: AppWorkspaceWorkspaceIdRouteRou
   {
     AppWorkspaceWorkspaceIdDashboardRouteRoute:
       AppWorkspaceWorkspaceIdDashboardRouteRouteWithChildren,
+    AppWorkspaceWorkspaceIdDowngradeRoute:
+      AppWorkspaceWorkspaceIdDowngradeRoute,
     AppWorkspaceWorkspaceIdOnboardingRoute:
       AppWorkspaceWorkspaceIdOnboardingRoute,
     AppWorkspaceWorkspaceIdSubscribeRoute:
