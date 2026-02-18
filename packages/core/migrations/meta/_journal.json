@@ -64,6 +64,13 @@
       "when": 1771359287235,
       "tag": "0008_tiny_dexter_bennett",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "5",
+      "when": 1771441214960,
+      "tag": "0009_wooden_vulcan",
+      "breakpoints": true
     }
   ]
 }

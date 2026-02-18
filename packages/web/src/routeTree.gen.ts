@@ -25,13 +25,14 @@ import { Route as AppWorkspaceWorkspaceIdDowngradeRouteImport } from './routes/_
 import { Route as AppWorkspaceWorkspaceIdDashboardRouteRouteImport } from './routes/_app/workspace/$workspaceId/_dashboard/route'
 import { Route as AppWorkspaceWorkspaceIdDashboardIndexRouteImport } from './routes/_app/workspace/$workspaceId/_dashboard/index'
 import { Route as AppWorkspaceWorkspaceIdDashboardIntegrationsRouteImport } from './routes/_app/workspace/$workspaceId/_dashboard/integrations'
-import { Route as AppWorkspaceWorkspaceIdDashboardDomainsRouteImport } from './routes/_app/workspace/$workspaceId/_dashboard/domains'
 import { Route as AppWorkspaceWorkspaceIdFunnelsIdRouteRouteImport } from './routes/_app/workspace/$workspaceId/funnels/$id/route'
 import { Route as AppWorkspaceWorkspaceIdDashboardFunnelsIndexRouteImport } from './routes/_app/workspace/$workspaceId/_dashboard/funnels/index'
+import { Route as AppWorkspaceWorkspaceIdDashboardDomainsIndexRouteImport } from './routes/_app/workspace/$workspaceId/_dashboard/domains/index'
 import { Route as AppWorkspaceWorkspaceIdFunnelsIdPreviewRouteImport } from './routes/_app/workspace/$workspaceId/funnels/$id/preview'
 import { Route as AppWorkspaceWorkspaceIdFunnelsIdFunnelRouteRouteImport } from './routes/_app/workspace/$workspaceId/funnels/$id/_funnel/route'
 import { Route as AppWorkspaceWorkspaceIdFunnelsIdFunnelResponsesRouteImport } from './routes/_app/workspace/$workspaceId/funnels/$id/_funnel/responses'
 import { Route as AppWorkspaceWorkspaceIdFunnelsIdFunnelInsightsRouteImport } from './routes/_app/workspace/$workspaceId/funnels/$id/_funnel/insights'
+import { Route as AppWorkspaceWorkspaceIdDashboardDomainsDomainIdSettingsRouteImport } from './routes/_app/workspace/$workspaceId/_dashboard/domains/$domainId/settings'
 import { Route as AppWorkspaceWorkspaceIdFunnelsIdFunnelEditIndexRouteImport } from './routes/_app/workspace/$workspaceId/funnels/$id/_funnel/edit/index'
 
 const AppRouteRoute = AppRouteRouteImport.update({
@@ -120,12 +121,6 @@ const AppWorkspaceWorkspaceIdDashboardIntegrationsRoute =
     path: '/integrations',
     getParentRoute: () => AppWorkspaceWorkspaceIdDashboardRouteRoute,
   } as any)
-const AppWorkspaceWorkspaceIdDashboardDomainsRoute =
-  AppWorkspaceWorkspaceIdDashboardDomainsRouteImport.update({
-    id: '/domains',
-    path: '/domains',
-    getParentRoute: () => AppWorkspaceWorkspaceIdDashboardRouteRoute,
-  } as any)
 const AppWorkspaceWorkspaceIdFunnelsIdRouteRoute =
   AppWorkspaceWorkspaceIdFunnelsIdRouteRouteImport.update({
     id: '/funnels/$id',
@@ -136,6 +131,12 @@ const AppWorkspaceWorkspaceIdDashboardFunnelsIndexRoute =
   AppWorkspaceWorkspaceIdDashboardFunnelsIndexRouteImport.update({
     id: '/funnels/',
     path: '/funnels/',
+    getParentRoute: () => AppWorkspaceWorkspaceIdDashboardRouteRoute,
+  } as any)
+const AppWorkspaceWorkspaceIdDashboardDomainsIndexRoute =
+  AppWorkspaceWorkspaceIdDashboardDomainsIndexRouteImport.update({
+    id: '/domains/',
+    path: '/domains/',
     getParentRoute: () => AppWorkspaceWorkspaceIdDashboardRouteRoute,
   } as any)
 const AppWorkspaceWorkspaceIdFunnelsIdPreviewRoute =
@@ -161,6 +162,12 @@ const AppWorkspaceWorkspaceIdFunnelsIdFunnelInsightsRoute =
     path: '/insights',
     getParentRoute: () => AppWorkspaceWorkspaceIdFunnelsIdFunnelRouteRoute,
   } as any)
+const AppWorkspaceWorkspaceIdDashboardDomainsDomainIdSettingsRoute =
+  AppWorkspaceWorkspaceIdDashboardDomainsDomainIdSettingsRouteImport.update({
+    id: '/domains/$domainId/settings',
+    path: '/domains/$domainId/settings',
+    getParentRoute: () => AppWorkspaceWorkspaceIdDashboardRouteRoute,
+  } as any)
 const AppWorkspaceWorkspaceIdFunnelsIdFunnelEditIndexRoute =
   AppWorkspaceWorkspaceIdFunnelsIdFunnelEditIndexRouteImport.update({
     id: '/edit/',
@@ -182,11 +189,12 @@ export interface FileRoutesByFullPath {
   '/workspace/$workspaceId/subscribe': typeof AppWorkspaceWorkspaceIdSubscribeRoute
   '/workspace/$workspaceId/upgrade': typeof AppWorkspaceWorkspaceIdUpgradeRoute
   '/workspace/$workspaceId/funnels/$id': typeof AppWorkspaceWorkspaceIdFunnelsIdFunnelRouteRouteWithChildren
-  '/workspace/$workspaceId/domains': typeof AppWorkspaceWorkspaceIdDashboardDomainsRoute
   '/workspace/$workspaceId/integrations': typeof AppWorkspaceWorkspaceIdDashboardIntegrationsRoute
   '/workspace/$workspaceId/': typeof AppWorkspaceWorkspaceIdDashboardIndexRoute
   '/workspace/$workspaceId/funnels/$id/preview': typeof AppWorkspaceWorkspaceIdFunnelsIdPreviewRoute
+  '/workspace/$workspaceId/domains': typeof AppWorkspaceWorkspaceIdDashboardDomainsIndexRoute
   '/workspace/$workspaceId/funnels': typeof AppWorkspaceWorkspaceIdDashboardFunnelsIndexRoute
+  '/workspace/$workspaceId/domains/$domainId/settings': typeof AppWorkspaceWorkspaceIdDashboardDomainsDomainIdSettingsRoute
   '/workspace/$workspaceId/funnels/$id/insights': typeof AppWorkspaceWorkspaceIdFunnelsIdFunnelInsightsRoute
   '/workspace/$workspaceId/funnels/$id/responses': typeof AppWorkspaceWorkspaceIdFunnelsIdFunnelResponsesRoute
   '/workspace/$workspaceId/funnels/$id/edit': typeof AppWorkspaceWorkspaceIdFunnelsIdFunnelEditIndexRoute
@@ -205,10 +213,11 @@ export interface FileRoutesByTo {
   '/workspace/$workspaceId/subscribe': typeof AppWorkspaceWorkspaceIdSubscribeRoute
   '/workspace/$workspaceId/upgrade': typeof AppWorkspaceWorkspaceIdUpgradeRoute
   '/workspace/$workspaceId/funnels/$id': typeof AppWorkspaceWorkspaceIdFunnelsIdFunnelRouteRouteWithChildren
-  '/workspace/$workspaceId/domains': typeof AppWorkspaceWorkspaceIdDashboardDomainsRoute
   '/workspace/$workspaceId/integrations': typeof AppWorkspaceWorkspaceIdDashboardIntegrationsRoute
   '/workspace/$workspaceId/funnels/$id/preview': typeof AppWorkspaceWorkspaceIdFunnelsIdPreviewRoute
+  '/workspace/$workspaceId/domains': typeof AppWorkspaceWorkspaceIdDashboardDomainsIndexRoute
   '/workspace/$workspaceId/funnels': typeof AppWorkspaceWorkspaceIdDashboardFunnelsIndexRoute
+  '/workspace/$workspaceId/domains/$domainId/settings': typeof AppWorkspaceWorkspaceIdDashboardDomainsDomainIdSettingsRoute
   '/workspace/$workspaceId/funnels/$id/insights': typeof AppWorkspaceWorkspaceIdFunnelsIdFunnelInsightsRoute
   '/workspace/$workspaceId/funnels/$id/responses': typeof AppWorkspaceWorkspaceIdFunnelsIdFunnelResponsesRoute
   '/workspace/$workspaceId/funnels/$id/edit': typeof AppWorkspaceWorkspaceIdFunnelsIdFunnelEditIndexRoute
@@ -230,12 +239,13 @@ export interface FileRoutesById {
   '/_app/workspace/$workspaceId/subscribe': typeof AppWorkspaceWorkspaceIdSubscribeRoute
   '/_app/workspace/$workspaceId/upgrade': typeof AppWorkspaceWorkspaceIdUpgradeRoute
   '/_app/workspace/$workspaceId/funnels/$id': typeof AppWorkspaceWorkspaceIdFunnelsIdRouteRouteWithChildren
-  '/_app/workspace/$workspaceId/_dashboard/domains': typeof AppWorkspaceWorkspaceIdDashboardDomainsRoute
   '/_app/workspace/$workspaceId/_dashboard/integrations': typeof AppWorkspaceWorkspaceIdDashboardIntegrationsRoute
   '/_app/workspace/$workspaceId/_dashboard/': typeof AppWorkspaceWorkspaceIdDashboardIndexRoute
   '/_app/workspace/$workspaceId/funnels/$id/_funnel': typeof AppWorkspaceWorkspaceIdFunnelsIdFunnelRouteRouteWithChildren
   '/_app/workspace/$workspaceId/funnels/$id/preview': typeof AppWorkspaceWorkspaceIdFunnelsIdPreviewRoute
+  '/_app/workspace/$workspaceId/_dashboard/domains/': typeof AppWorkspaceWorkspaceIdDashboardDomainsIndexRoute
   '/_app/workspace/$workspaceId/_dashboard/funnels/': typeof AppWorkspaceWorkspaceIdDashboardFunnelsIndexRoute
+  '/_app/workspace/$workspaceId/_dashboard/domains/$domainId/settings': typeof AppWorkspaceWorkspaceIdDashboardDomainsDomainIdSettingsRoute
   '/_app/workspace/$workspaceId/funnels/$id/_funnel/insights': typeof AppWorkspaceWorkspaceIdFunnelsIdFunnelInsightsRoute
   '/_app/workspace/$workspaceId/funnels/$id/_funnel/responses': typeof AppWorkspaceWorkspaceIdFunnelsIdFunnelResponsesRoute
   '/_app/workspace/$workspaceId/funnels/$id/_funnel/edit/': typeof AppWorkspaceWorkspaceIdFunnelsIdFunnelEditIndexRoute
@@ -256,11 +266,12 @@ export interface FileRouteTypes {
     | '/workspace/$workspaceId/subscribe'
     | '/workspace/$workspaceId/upgrade'
     | '/workspace/$workspaceId/funnels/$id'
-    | '/workspace/$workspaceId/domains'
     | '/workspace/$workspaceId/integrations'
     | '/workspace/$workspaceId/'
     | '/workspace/$workspaceId/funnels/$id/preview'
+    | '/workspace/$workspaceId/domains'
     | '/workspace/$workspaceId/funnels'
+    | '/workspace/$workspaceId/domains/$domainId/settings'
     | '/workspace/$workspaceId/funnels/$id/insights'
     | '/workspace/$workspaceId/funnels/$id/responses'
     | '/workspace/$workspaceId/funnels/$id/edit'
@@ -279,10 +290,11 @@ export interface FileRouteTypes {
     | '/workspace/$workspaceId/subscribe'
     | '/workspace/$workspaceId/upgrade'
     | '/workspace/$workspaceId/funnels/$id'
-    | '/workspace/$workspaceId/domains'
     | '/workspace/$workspaceId/integrations'
     | '/workspace/$workspaceId/funnels/$id/preview'
+    | '/workspace/$workspaceId/domains'
     | '/workspace/$workspaceId/funnels'
+    | '/workspace/$workspaceId/domains/$domainId/settings'
     | '/workspace/$workspaceId/funnels/$id/insights'
     | '/workspace/$workspaceId/funnels/$id/responses'
     | '/workspace/$workspaceId/funnels/$id/edit'
@@ -303,12 +315,13 @@ export interface FileRouteTypes {
     | '/_app/workspace/$workspaceId/subscribe'
     | '/_app/workspace/$workspaceId/upgrade'
     | '/_app/workspace/$workspaceId/funnels/$id'
-    | '/_app/workspace/$workspaceId/_dashboard/domains'
     | '/_app/workspace/$workspaceId/_dashboard/integrations'
     | '/_app/workspace/$workspaceId/_dashboard/'
     | '/_app/workspace/$workspaceId/funnels/$id/_funnel'
     | '/_app/workspace/$workspaceId/funnels/$id/preview'
+    | '/_app/workspace/$workspaceId/_dashboard/domains/'
     | '/_app/workspace/$workspaceId/_dashboard/funnels/'
+    | '/_app/workspace/$workspaceId/_dashboard/domains/$domainId/settings'
     | '/_app/workspace/$workspaceId/funnels/$id/_funnel/insights'
     | '/_app/workspace/$workspaceId/funnels/$id/_funnel/responses'
     | '/_app/workspace/$workspaceId/funnels/$id/_funnel/edit/'
@@ -434,13 +447,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppWorkspaceWorkspaceIdDashboardIntegrationsRouteImport
       parentRoute: typeof AppWorkspaceWorkspaceIdDashboardRouteRoute
     }
-    '/_app/workspace/$workspaceId/_dashboard/domains': {
-      id: '/_app/workspace/$workspaceId/_dashboard/domains'
-      path: '/domains'
-      fullPath: '/workspace/$workspaceId/domains'
-      preLoaderRoute: typeof AppWorkspaceWorkspaceIdDashboardDomainsRouteImport
-      parentRoute: typeof AppWorkspaceWorkspaceIdDashboardRouteRoute
-    }
     '/_app/workspace/$workspaceId/funnels/$id': {
       id: '/_app/workspace/$workspaceId/funnels/$id'
       path: '/funnels/$id'
@@ -453,6 +459,13 @@ declare module '@tanstack/react-router' {
       path: '/funnels'
       fullPath: '/workspace/$workspaceId/funnels'
       preLoaderRoute: typeof AppWorkspaceWorkspaceIdDashboardFunnelsIndexRouteImport
+      parentRoute: typeof AppWorkspaceWorkspaceIdDashboardRouteRoute
+    }
+    '/_app/workspace/$workspaceId/_dashboard/domains/': {
+      id: '/_app/workspace/$workspaceId/_dashboard/domains/'
+      path: '/domains'
+      fullPath: '/workspace/$workspaceId/domains'
+      preLoaderRoute: typeof AppWorkspaceWorkspaceIdDashboardDomainsIndexRouteImport
       parentRoute: typeof AppWorkspaceWorkspaceIdDashboardRouteRoute
     }
     '/_app/workspace/$workspaceId/funnels/$id/preview': {
@@ -483,6 +496,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppWorkspaceWorkspaceIdFunnelsIdFunnelInsightsRouteImport
       parentRoute: typeof AppWorkspaceWorkspaceIdFunnelsIdFunnelRouteRoute
     }
+    '/_app/workspace/$workspaceId/_dashboard/domains/$domainId/settings': {
+      id: '/_app/workspace/$workspaceId/_dashboard/domains/$domainId/settings'
+      path: '/domains/$domainId/settings'
+      fullPath: '/workspace/$workspaceId/domains/$domainId/settings'
+      preLoaderRoute: typeof AppWorkspaceWorkspaceIdDashboardDomainsDomainIdSettingsRouteImport
+      parentRoute: typeof AppWorkspaceWorkspaceIdDashboardRouteRoute
+    }
     '/_app/workspace/$workspaceId/funnels/$id/_funnel/edit/': {
       id: '/_app/workspace/$workspaceId/funnels/$id/_funnel/edit/'
       path: '/edit'
@@ -494,22 +514,25 @@ declare module '@tanstack/react-router' {
 }
 
 interface AppWorkspaceWorkspaceIdDashboardRouteRouteChildren {
-  AppWorkspaceWorkspaceIdDashboardDomainsRoute: typeof AppWorkspaceWorkspaceIdDashboardDomainsRoute
   AppWorkspaceWorkspaceIdDashboardIntegrationsRoute: typeof AppWorkspaceWorkspaceIdDashboardIntegrationsRoute
   AppWorkspaceWorkspaceIdDashboardIndexRoute: typeof AppWorkspaceWorkspaceIdDashboardIndexRoute
+  AppWorkspaceWorkspaceIdDashboardDomainsIndexRoute: typeof AppWorkspaceWorkspaceIdDashboardDomainsIndexRoute
   AppWorkspaceWorkspaceIdDashboardFunnelsIndexRoute: typeof AppWorkspaceWorkspaceIdDashboardFunnelsIndexRoute
+  AppWorkspaceWorkspaceIdDashboardDomainsDomainIdSettingsRoute: typeof AppWorkspaceWorkspaceIdDashboardDomainsDomainIdSettingsRoute
 }
 
 const AppWorkspaceWorkspaceIdDashboardRouteRouteChildren: AppWorkspaceWorkspaceIdDashboardRouteRouteChildren =
   {
-    AppWorkspaceWorkspaceIdDashboardDomainsRoute:
-      AppWorkspaceWorkspaceIdDashboardDomainsRoute,
     AppWorkspaceWorkspaceIdDashboardIntegrationsRoute:
       AppWorkspaceWorkspaceIdDashboardIntegrationsRoute,
     AppWorkspaceWorkspaceIdDashboardIndexRoute:
       AppWorkspaceWorkspaceIdDashboardIndexRoute,
+    AppWorkspaceWorkspaceIdDashboardDomainsIndexRoute:
+      AppWorkspaceWorkspaceIdDashboardDomainsIndexRoute,
     AppWorkspaceWorkspaceIdDashboardFunnelsIndexRoute:
       AppWorkspaceWorkspaceIdDashboardFunnelsIndexRoute,
+    AppWorkspaceWorkspaceIdDashboardDomainsDomainIdSettingsRoute:
+      AppWorkspaceWorkspaceIdDashboardDomainsDomainIdSettingsRoute,
   }
 
 const AppWorkspaceWorkspaceIdDashboardRouteRouteWithChildren =

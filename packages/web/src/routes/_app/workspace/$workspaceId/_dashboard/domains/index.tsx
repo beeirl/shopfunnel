@@ -10,14 +10,14 @@ import { Tooltip } from '@/components/ui/tooltip'
 import { withActor } from '@/context/auth.withActor'
 import { Domain } from '@shopfunnel/core/domain/index'
 import { Identifier } from '@shopfunnel/core/identifier'
-import { IconDots as DotsIcon, IconWorld as WorldIcon } from '@tabler/icons-react'
+import { IconDots as DotsIcon, IconSettings as SettingsIcon, IconWorld as WorldIcon } from '@tabler/icons-react'
 import { queryOptions, useMutation, useQueryClient, useSuspenseQuery } from '@tanstack/react-query'
-import { createFileRoute } from '@tanstack/react-router'
+import { createFileRoute, Link } from '@tanstack/react-router'
 import { createServerFn } from '@tanstack/react-start'
 import * as React from 'react'
 import { z } from 'zod'
-import { formatDate, formatDateRelative } from '../-common'
-import { Heading } from './-components/heading'
+import { Heading } from '../-components/heading'
+import { formatDate, formatDateRelative } from '../../-common'
 
 const getDomain = createServerFn()
   .inputValidator(Identifier.schema('workspace'))
@@ -56,7 +56,7 @@ const removeDomain = createServerFn()
     }, workspaceId)
   })
 
-export const Route = createFileRoute('/_app/workspace/$workspaceId/_dashboard/domains')({
+export const Route = createFileRoute('/_app/workspace/$workspaceId/_dashboard/domains/')({
   staticData: { title: 'Domains' },
   component: DomainsRoute,
   loader: async ({ context, params }) => {
@@ -205,7 +205,14 @@ function DomainsRoute() {
         </DataGrid.Header>
 
         <DataGrid.Body>
-          <DataGrid.Row>
+          <DataGrid.Row
+            render={
+              <Link
+                to="/workspace/$workspaceId/domains/$domainId/settings"
+                params={{ workspaceId: params.workspaceId, domainId: domain.id }}
+              />
+            }
+          >
             <DataGrid.Cell className="flex-col items-start justify-center overflow-hidden pr-2 md:pr-8">
               <span className="truncate text-sm font-medium text-foreground">{domain.hostname}</span>
               <span className="truncate text-xs text-muted-foreground md:hidden">
@@ -224,11 +231,30 @@ function DomainsRoute() {
 
             <DataGrid.Cell className="relative shrink-0 justify-end gap-1">
               <Menu.Root>
-                <Menu.Trigger render={<Button size="icon-sm" variant="ghost" />}>
-                  <DotsIcon className="text-muted-foreground" />
-                </Menu.Trigger>
+                <Menu.Trigger
+                  render={
+                    <Button size="icon-sm" variant="ghost">
+                      <DotsIcon className="text-muted-foreground" />
+                    </Button>
+                  }
+                  onClick={(e) => e.preventDefault()}
+                />
                 <Menu.Content align="end">
-                  <Menu.Item variant="destructive" onClick={handleRemove} disabled={removeDomainMutation.isPending}>
+                  <Menu.Item
+                    render={<Link from={Route.fullPath} to="$domainId/settings" params={{ domainId: domain.id }} />}
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <SettingsIcon />
+                    Settings
+                  </Menu.Item>
+                  <Menu.Item
+                    disabled={removeDomainMutation.isPending}
+                    variant="destructive"
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      handleRemove()
+                    }}
+                  >
                     Remove
                   </Menu.Item>
                 </Menu.Content>

@@ -1,3 +1,4 @@
+import { BillingTable } from '../src/billing/index.sql'
 import { Database } from '../src/database'
 import { Identifier } from '../src/identifier'
 import { WorkspaceTable } from '../src/workspace/index.sql'
@@ -18,13 +19,22 @@ const name = nameOrId || 'Default'
 // Generate workspace ID
 const workspaceId = Identifier.create('workspace')
 
-// Create workspace
+// Create workspace and billing record
+const billingId = Identifier.create('billing')
+
 await Database.use(async (tx) => {
   await tx.insert(WorkspaceTable).values({
     id: workspaceId,
     name,
     flags: { onboardingCompleted: true },
   })
+
+  await tx.insert(BillingTable).values({
+    id: billingId,
+    workspaceId,
+    exempted: true,
+  })
 })
 
 console.log(`Workspace Id: ${workspaceId}`)
+console.log(`Billing Id: ${billingId}`)

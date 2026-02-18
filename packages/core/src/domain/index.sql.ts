@@ -1,5 +1,14 @@
-import { mysqlTable, uniqueIndex, varchar } from 'drizzle-orm/mysql-core'
+import { json, mysqlTable, uniqueIndex, varchar } from 'drizzle-orm/mysql-core'
 import { timestampColumns, workspaceColumns, workspaceIndexes } from '../database/types'
+
+export type DomainSettings = {
+  faviconUrl?: string | null
+  faviconType?: string | null
+  code?: string | null
+  metaTitle?: string | null
+  metaDescription?: string | null
+  metaImageUrl?: string | null
+}
 
 export const DomainTable = mysqlTable(
   'domain',
@@ -8,6 +17,7 @@ export const DomainTable = mysqlTable(
     ...timestampColumns,
     hostname: varchar('hostname', { length: 255 }).notNull(),
     cloudflareHostnameId: varchar('cloudflare_hostname_id', { length: 64 }),
+    settings: json('settings').$type<DomainSettings>(),
   },
   (table) => [...workspaceIndexes(table), uniqueIndex('hostname').on(table.hostname)],
 )

@@ -2,7 +2,6 @@ import { Funnel, FunnelProps } from '@/components/funnel'
 import { Actor } from '@shopfunnel/core/actor'
 import { Analytics } from '@shopfunnel/core/analytics/index'
 import { Answer } from '@shopfunnel/core/answer/index'
-import { Domain } from '@shopfunnel/core/domain/index'
 import { Funnel as FunnelCore } from '@shopfunnel/core/funnel/index'
 import { Identifier } from '@shopfunnel/core/identifier'
 import { Integration } from '@shopfunnel/core/integration/index'
@@ -11,6 +10,7 @@ import { Submission } from '@shopfunnel/core/submission/index'
 import { AnyRouteMatch, createFileRoute, notFound } from '@tanstack/react-router'
 import { createServerFn } from '@tanstack/react-start'
 import { getRequestHeader } from '@tanstack/react-start/server'
+import { parse as parseHtml } from 'node-html-parser'
 import { useEffect, useRef, useState } from 'react'
 import { ulid } from 'ulid'
 import { z } from 'zod'
@@ -18,34 +18,25 @@ import { z } from 'zod'
 declare const fbq: ((command: 'trackCustom', eventName: string) => void) | undefined
 declare const _upstack: ((command: 'track', eventName: string) => void) | undefined
 
-// prettier-ignore
-const SCRIPTS = {
-  metaPixel: (metaPixelId: string) => `!function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window,document,'script','https://connect.facebook.net/en_US/fbevents.js');fbq('init','${metaPixelId}');fbq('track','PageView');`
-}
-
 const getFunnel = createServerFn()
   .inputValidator(z.object({ shortId: z.string().length(8) }))
   .handler(async ({ data }) => {
     const funnel = await FunnelCore.getPublishedVersion(data.shortId)
     if (!funnel) throw notFound()
 
-    const appStage = process.env.VITE_STAGE
-    const appDomain = process.env.VITE_DOMAIN
     const host = getRequestHeader('host')
-    if (appStage === 'production' && appDomain && host && !host.endsWith(appDomain)) {
-      const domain = await Domain.fromHostname(host)
-      if (!domain || domain.workspaceId !== funnel.workspaceId) {
-        throw notFound()
-      }
+    if (host) {
+      const funnelHost = new URL(funnel.url).host
+      if (host !== funnelHost) throw notFound()
     }
 
     return funnel
   })
 
-const getQuestions = createServerFn()
-  .inputValidator(z.object({ funnelId: Identifier.schema('funnel') }))
+const listQuestions = createServerFn()
+  .inputValidator(z.object({ funnelId: Identifier.schema('funnel'), workspaceId: Identifier.schema('workspace') }))
   .handler(async ({ data }) => {
-    return Question.list(data.funnelId)
+    return Actor.provide('system', { workspaceId: data.workspaceId }, () => Question.list(data.funnelId))
   })
 
 const submitAnswers = createServerFn()
@@ -74,13 +65,10 @@ const completeSubmission = createServerFn()
     }
   })
 
-const getShopifyIntegration = createServerFn()
+const listIntegrations = createServerFn()
   .inputValidator(z.object({ workspaceId: Identifier.schema('workspace') }))
   .handler(async ({ data }) => {
-    const integration = await Actor.provide('system', { workspaceId: data.workspaceId }, () =>
-      Integration.fromProvider('shopify'),
-    )
-    return integration ?? null
+    return Actor.provide('system', { workspaceId: data.workspaceId }, () => Integration.list())
   })
 
 export const Route = createFileRoute('/f/$id')({
@@ -89,25 +77,21 @@ export const Route = createFileRoute('/f/$id')({
     const funnel = await getFunnel({ data: { shortId: params.id } })
     if (!funnel) throw notFound()
 
-    const [questions, shopifyIntegration] = await Promise.all([
-      getQuestions({ data: { funnelId: funnel.id } }),
-      getShopifyIntegration({ data: { workspaceId: funnel.workspaceId } }),
+    const [questions, integrations] = await Promise.all([
+      listQuestions({ data: { funnelId: funnel.id, workspaceId: funnel.workspaceId } }),
+      listIntegrations({ data: { workspaceId: funnel.workspaceId } }),
     ])
 
-    return { funnel, questions, shopifyIntegration }
+    return { funnel, questions, integrations }
   },
   head: ({ loaderData }) => {
+    const meta: AnyRouteMatch['meta'] = []
     const scripts: AnyRouteMatch['headScripts'] = []
     const links: AnyRouteMatch['links'] = []
+    const styles: AnyRouteMatch['styles'] = []
 
     const title = loaderData?.funnel.title
-
-    const favicon = loaderData?.funnel.theme?.favicon
-    if (favicon) {
-      const href = typeof favicon === 'string' ? favicon : favicon.url
-      const type = typeof favicon === 'string' ? undefined : favicon.contentType
-      links.push({ rel: 'icon', href, ...(type && { type }) })
-    }
+    const settings = loaderData?.funnel.settings
 
     // Primal Queen
     if (loaderData?.funnel.workspaceId === 'wrk_01KG5ZH6HG1R3V0DCXNBV77Z5C') {
@@ -128,17 +112,64 @@ export const Route = createFileRoute('/f/$id')({
       // prettier-ignore
       scripts.push({ children: `window._adqLoaded=0;window._upsqueue=window._upsqueue||[];window._upstack=window._upstack||function(){window._upsqueue.push(arguments);};window._upstack('init','919f42b8-b4de-40f8-b2e3-bc7af67609a6');window._upstack('page');` })
       scripts.push({ src: 'https://prod2-cdn.upstackified.com/scripts/px/ups.min.js', defer: true })
-    } else {
-      const metaPixelId = loaderData?.funnel.settings.metaPixelId
-      if (metaPixelId) scripts.push({ children: SCRIPTS.metaPixel(metaPixelId) })
     }
 
-    return { meta: [{ title }], scripts, links }
+    // Meta Pixel integration
+    const metaPixelIntegration = loaderData?.integrations?.find((i) => i.provider === 'meta_pixel')
+    if (metaPixelIntegration) {
+      const pixelId = (metaPixelIntegration.metadata as { pixelId: string }).pixelId
+      scripts.push({
+        children: `!function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window,document,'script','https://connect.facebook.net/en_US/fbevents.js');fbq('init','${pixelId}');fbq('track','PageView');`,
+      })
+    }
+
+    if (settings?.faviconUrl) {
+      links.push({
+        rel: 'icon',
+        href: settings.faviconUrl,
+        ...(settings.faviconType && { type: settings.faviconType }),
+      })
+    }
+
+    meta.push({ title: settings?.metaTitle ?? title })
+    if (settings?.metaDescription) {
+      meta.push({ name: 'description', content: settings.metaDescription })
+    }
+    if (settings?.metaImageUrl) {
+      meta.push({ property: 'og:image', content: settings.metaImageUrl })
+    }
+
+    if (settings?.code) {
+      const html = parseHtml(settings.code)
+      const elements = html.querySelectorAll('script, link, meta, style')
+
+      for (const el of elements) {
+        const attrs = el.attributes
+        switch (el.tagName?.toLowerCase()) {
+          case 'script':
+            scripts.push({ ...attrs, ...(el.textContent && { children: el.textContent }) })
+            break
+          case 'link':
+            links.push(attrs)
+            break
+          case 'meta':
+            meta.push(attrs)
+            break
+          case 'style':
+            styles.push({ ...attrs, ...(el.textContent && { children: el.textContent }) })
+            break
+        }
+      }
+    }
+
+    return { meta, scripts, links, styles }
   },
 })
 
 function RouteComponent() {
-  const { funnel, questions, shopifyIntegration } = Route.useLoaderData()
+  const { funnel, questions, integrations } = Route.useLoaderData()
+
+  const shopifyIntegration = integrations.find((i) => i.provider === 'shopify')
 
   const funnelEnteredRef = useRef(false)
   const funnelStartedRef = useRef(false)

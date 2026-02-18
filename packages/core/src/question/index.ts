@@ -15,7 +15,7 @@ export namespace Question {
       tx
         .select()
         .from(QuestionTable)
-        .where(eq(QuestionTable.funnelId, funnelId))
+        .where(and(eq(QuestionTable.workspaceId, Actor.workspaceId()), eq(QuestionTable.funnelId, funnelId)))
         .orderBy(isNotNull(QuestionTable.archivedAt), QuestionTable.index),
     )
   })

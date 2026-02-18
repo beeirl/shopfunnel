@@ -49,46 +49,19 @@ export function ThemePanel() {
               <Pane.GroupLabel>Logo</Pane.GroupLabel>
             </Pane.GroupHeader>
             <MediaPicker.Root
-              value={theme.logo ? { type: 'image', value: theme.logo } : undefined}
+              value={theme.logoUrl ? { type: 'image', value: theme.logoUrl } : undefined}
               onValueChange={async (type, value) => {
                 if (type === 'image' && value instanceof File) {
                   const url = await uploadFile(value)
-                  handleThemeUpdate({ logo: url })
-                } else {
-                  handleThemeUpdate({ logo: undefined })
+                  handleThemeUpdate({ logoUrl: url })
+                } else if (type === undefined) {
+                  handleThemeUpdate({ logoUrl: undefined })
                 }
               }}
             >
               <MediaPicker.Trigger nativeButton={false} render={<MediaPicker.Input />} />
               <MediaPicker.Content side="left" align="start">
-                <MediaPicker.ImagePicker
-                  accept={['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'image/svg+xml']}
-                />
-              </MediaPicker.Content>
-            </MediaPicker.Root>
-          </Pane.Group>
-          <Pane.Separator />
-          <Pane.Group>
-            <Pane.GroupHeader>
-              <Pane.GroupLabel>Favicon</Pane.GroupLabel>
-            </Pane.GroupHeader>
-            <MediaPicker.Root
-              value={theme.favicon ? { type: 'image', value: theme.favicon.url } : undefined}
-              onValueChange={async (type, value) => {
-                if (type === 'image' && value instanceof File) {
-                  const url = await uploadFile(value)
-                  handleThemeUpdate({ favicon: { url, contentType: value.type } })
-                } else {
-                  handleThemeUpdate({ favicon: undefined })
-                }
-              }}
-            >
-              <MediaPicker.Trigger nativeButton={false} render={<MediaPicker.Input />} />
-              <MediaPicker.Content side="left" align="start">
-                <MediaPicker.ImagePicker
-                  accept={['image/png', 'image/webp', 'image/svg+xml', 'image/x-icon', 'image/vnd.microsoft.icon']}
-                  maxDimensions={{ width: 512, height: 512 }}
-                />
+                <MediaPicker.ImagePicker />
               </MediaPicker.Content>
             </MediaPicker.Root>
           </Pane.Group>

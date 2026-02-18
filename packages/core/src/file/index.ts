@@ -36,23 +36,55 @@ export namespace File {
       return {
         id,
         url: url(id),
+        contentType: input.contentType,
       }
     },
   )
 
-  export const remove = fn(z.string(), async (id) => {
+  export const createFromUrl = fn(
+    z.object({
+      url: z.url(),
+      name: z.string().optional(),
+      cacheControl: z.string().optional(),
+    }),
+    async (input) => {
+      const response = await fetch(input.url)
+      if (!response.ok) throw new Error(`Failed to fetch file from URL: ${response.statusText}`)
+
+      const buffer = Buffer.from(await response.arrayBuffer())
+      const contentType = response.headers.get('content-type') || 'application/octet-stream'
+      const name = input.name || input.url.split('/').pop() || 'unnamed'
+
+      return create({
+        name,
+        data: buffer,
+        size: buffer.length,
+        contentType,
+        cacheControl: input.cacheControl,
+      })
+    },
+  )
+
+  export const remove = fn(z.string(), async (idOrUrl) => {
+    let fileId = idOrUrl
+    if (idOrUrl.startsWith('http')) {
+      if (!idOrUrl.startsWith(Resource.STORAGE_URL.value)) return
+      const segments = idOrUrl.split('/')
+      const lastSegment = segments[segments.length - 1]
+      if (!lastSegment?.startsWith('fil_')) return
+      fileId = lastSegment
+    }
+
     const file = await Database.use((tx) =>
       tx
         .select()
         .from(FileTable)
-        .where(and(eq(FileTable.workspaceId, Actor.workspaceId()), eq(FileTable.id, id)))
+        .where(and(eq(FileTable.workspaceId, Actor.workspaceId()), eq(FileTable.id, fileId)))
         .then((rows) => rows[0]),
     )
-    if (!file) {
-      throw new Error('File not found')
-    }
+    if (!file) return
 
-    await Resource.Storage.delete(key(id))
+    await Resource.Storage.delete(key(fileId))
     await Database.use(async (tx) =>
       tx.delete(FileTable).where(and(eq(FileTable.workspaceId, Actor.workspaceId()), eq(FileTable.id, file.id))),
     )

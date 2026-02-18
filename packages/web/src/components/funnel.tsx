@@ -275,7 +275,7 @@ export function Funnel({ funnel, mode = 'live', onPageChange, onPageComplete, on
     [visibleBlocks, values, variables],
   )
 
-  const showLegalDisclaimer = currentPageIndex === 0 && funnel.settings.privacyUrl && funnel.settings.termsUrl
+  const showLegalDisclaimer = currentPageIndex === 0 && funnel.settings?.privacyUrl && funnel.settings?.termsUrl
   const showNextButton = !shouldAutoAdvance(visibleBlocks)
 
   useEffect(() => {
@@ -399,9 +399,9 @@ export function Funnel({ funnel, mode = 'live', onPageChange, onPageComplete, on
       <div className="relative flex min-h-dvh flex-col bg-(--sf-background) px-6">
         <div className="mx-auto flex w-full max-w-sm flex-1 flex-col">
           <div className="flex h-16 w-full items-center justify-center">
-            {funnel.theme.logo ? (
+            {funnel.theme.logoUrl ? (
               <Image
-                src={funnel.theme.logo}
+                src={funnel.theme.logoUrl}
                 alt={`${funnel.title} logo`}
                 className="h-9 w-auto"
                 layout="fixed"
@@ -466,7 +466,7 @@ export function Funnel({ funnel, mode = 'live', onPageChange, onPageComplete, on
                       By clicking any of the options above, you agree with the{' '}
                       <a
                         className="underline"
-                        href={funnel.settings.termsUrl}
+                        href={funnel.settings!.termsUrl!}
                         target="_blank"
                         rel="noopener noreferrer"
                       >
@@ -475,7 +475,7 @@ export function Funnel({ funnel, mode = 'live', onPageChange, onPageComplete, on
                       and{' '}
                       <a
                         className="underline"
-                        href={funnel.settings.privacyUrl}
+                        href={funnel.settings!.privacyUrl!}
                         target="_blank"
                         rel="noopener noreferrer"
                       >

@@ -33,6 +33,23 @@ export namespace Integration {
     ),
   )
 
+  export const list = fn(z.void(), () =>
+    Database.use((tx) =>
+      tx
+        .select({
+          id: IntegrationTable.id,
+          provider: IntegrationTable.provider,
+          externalId: IntegrationTable.externalId,
+          title: IntegrationTable.title,
+          metadata: IntegrationTable.metadata,
+          createdAt: IntegrationTable.createdAt,
+          updatedAt: IntegrationTable.updatedAt,
+        })
+        .from(IntegrationTable)
+        .where(and(eq(IntegrationTable.workspaceId, Actor.workspaceId()), isNull(IntegrationTable.archivedAt))),
+    ),
+  )
+
   export const connect = fn(
     z.object({
       provider: z.enum(IntegrationProvider),

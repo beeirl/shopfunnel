@@ -3,7 +3,7 @@ import { Empty } from '@/components/ui/empty'
 import { Select } from '@/components/ui/select'
 import { Table } from '@/components/ui/table'
 import { withActor } from '@/context/auth.withActor'
-import { getDateRange, getShopifyIntegrationQueryOptions } from '@/routes/_app/workspace/$workspaceId/-common'
+import { getDateRange, listIntegrationsQueryOptions } from '@/routes/_app/workspace/$workspaceId/-common'
 import { Funnel } from '@shopfunnel/core/funnel/index'
 import { Identifier } from '@shopfunnel/core/identifier'
 import { Resource } from '@shopfunnel/resource'
@@ -161,7 +161,7 @@ export const Route = createFileRoute('/_app/workspace/$workspaceId/funnels/$id/_
   loader: async ({ context, params, deps }) => {
     const [publishedVersions] = await Promise.all([
       context.queryClient.ensureQueryData(getPublishedVersionsQueryOptions(params.workspaceId, params.id)),
-      context.queryClient.ensureQueryData(getShopifyIntegrationQueryOptions(params.workspaceId)),
+      context.queryClient.ensureQueryData(listIntegrationsQueryOptions(params.workspaceId)),
     ])
     const latestPublishedVersion = publishedVersions.at(-1)
     if (latestPublishedVersion) {
@@ -304,8 +304,8 @@ function RouteComponent() {
   const publishedVersionsQuery = useSuspenseQuery(getPublishedVersionsQueryOptions(params.workspaceId, params.id))
   const latestPublishedVersion = publishedVersionsQuery.data.at(-1)
 
-  const shopifyIntegrationQuery = useSuspenseQuery(getShopifyIntegrationQueryOptions(params.workspaceId))
-  const hasShopifyIntegration = shopifyIntegrationQuery.data !== null
+  const integrationsQuery = useSuspenseQuery(listIntegrationsQueryOptions(params.workspaceId))
+  const hasShopifyIntegration = integrationsQuery.data.some((i) => i.provider === 'shopify')
 
   const rangeOption = DATE_FILTER_OPTIONS.find((o) => o.value === range)!
   const dateRange = rangeOption.range()

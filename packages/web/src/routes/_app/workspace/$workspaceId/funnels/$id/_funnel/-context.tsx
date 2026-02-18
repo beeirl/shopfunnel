@@ -1,6 +1,6 @@
 import { withActor } from '@/context/auth.withActor'
 import { Funnel } from '@shopfunnel/core/funnel/index'
-import type { Info } from '@shopfunnel/core/funnel/types'
+import type { Info, Settings } from '@shopfunnel/core/funnel/types'
 import { debounceStrategy } from '@tanstack/db'
 import { usePacedMutations } from '@tanstack/react-db'
 import { createServerFn } from '@tanstack/react-start'
@@ -39,7 +39,7 @@ export const uploadFunnelFile = createServerFn({ method: 'POST' })
     }, data.workspaceId)
   })
 
-export type SaveFunnelInput = Partial<Pick<Info, 'pages' | 'rules' | 'theme' | 'title' | 'settings'>>
+export type SaveFunnelInput = Partial<Pick<Info, 'pages' | 'rules' | 'theme' | 'title'> & { settings: Settings }>
 
 interface FunnelContextValue {
   data: Info
@@ -68,10 +68,14 @@ export function FunnelProvider({ children, collection }: FunnelProviderProps) {
   const [isSaving, setIsSaving] = React.useState(false)
 
   React.useEffect(() => {
-    collection.stateWhenReady().then(() => {
-      console.log('[FunnelProvider] collection ready, initializing state')
-      setFunnel(collection.get('funnel') ?? null)
-    })
+    const subscription = collection.subscribeChanges(
+      () => {
+        setFunnel(collection.get('funnel') ?? null)
+      },
+      { includeInitialState: true },
+    )
+
+    return () => subscription.unsubscribe()
   }, [collection])
 
   const mutate = usePacedMutations<SaveFunnelInput, Info>({
@@ -102,7 +106,7 @@ export function FunnelProvider({ children, collection }: FunnelProviderProps) {
             ...(mutation.changes.rules && { rules: mutation.changes.rules }),
             ...(mutation.changes.theme && { theme: mutation.changes.theme }),
             ...(mutation.changes.title && { title: mutation.changes.title }),
-            ...(mutation.changes.settings && { settings: mutation.changes.settings }),
+            ...(mutation.changes.settings && { settings: mutation.changes.settings as Settings }),
           },
         })
         console.log('[FunnelProvider] updateFunnel API complete', { timestamp: Date.now() })

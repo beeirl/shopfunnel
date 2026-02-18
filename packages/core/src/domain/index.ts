@@ -1,12 +1,14 @@
 import { Resource } from '@shopfunnel/resource'
 import { and, eq, isNull } from 'drizzle-orm'
+import { parse } from 'node-html-parser'
 import { z } from 'zod'
 import { Actor } from '../actor'
 import { Billing } from '../billing/index'
 import { Database } from '../database'
+import { File } from '../file'
 import { Identifier } from '../identifier'
 import { fn } from '../utils/fn'
-import { DomainTable } from './index.sql'
+import { type DomainSettings, DomainTable } from './index.sql'
 
 export namespace Domain {
   export const fromId = fn(Identifier.schema('domain'), async (id) =>
@@ -14,17 +16,7 @@ export namespace Domain {
       tx
         .select()
         .from(DomainTable)
-        .where(and(eq(DomainTable.id, id), isNull(DomainTable.archivedAt)))
-        .then((rows) => rows[0]),
-    ),
-  )
-
-  export const fromHostname = fn(z.string(), async (hostname) =>
-    Database.use((tx) =>
-      tx
-        .select()
-        .from(DomainTable)
-        .where(and(eq(DomainTable.hostname, hostname.toLowerCase()), isNull(DomainTable.archivedAt)))
+        .where(and(eq(DomainTable.workspaceId, Actor.workspaceId()), eq(DomainTable.id, id)))
         .then((rows) => rows[0]),
     ),
   )
@@ -101,12 +93,80 @@ export namespace Domain {
 
       const id = Identifier.create('domain')
 
+      const settings = await (async (): Promise<DomainSettings | undefined> => {
+        try {
+          const parts = hostname.split('.')
+          if (parts.length > 2) {
+            const domain = parts.slice(-2).join('.')
+            const response = await fetch(`https://${domain}`, {
+              headers: { 'User-Agent': 'ShopFunnel/1.0' },
+              signal: AbortSignal.timeout(5000),
+            })
+            const text = await response.text()
+            const html = parse(text)
+
+            const metaTitle =
+              html.querySelector('title')?.textContent?.trim() ||
+              html.querySelector('meta[property="og:title"]')?.getAttribute('content')?.trim() ||
+              null
+
+            const metaDescription =
+              html.querySelector('meta[name="description"]')?.getAttribute('content')?.trim() ||
+              html.querySelector('meta[property="og:description"]')?.getAttribute('content')?.trim() ||
+              null
+
+            const { faviconUrl, faviconType } = await (async () => {
+              const href =
+                html.querySelector('link[rel="icon"]')?.getAttribute('href') ||
+                html.querySelector('link[rel="shortcut icon"]')?.getAttribute('href') ||
+                null
+              if (!href) return { faviconUrl: undefined, faviconType: undefined }
+              const url = href.startsWith('http') ? href : `https://${domain}${href.startsWith('/') ? '' : '/'}${href}`
+              try {
+                const file = await File.createFromUrl({
+                  url,
+                  name: 'favicon',
+                  cacheControl: 'public, max-age=31536000, immutable',
+                })
+                return { faviconUrl: file.url, faviconType: file.contentType }
+              } catch {
+                return { faviconUrl: undefined, faviconType: undefined }
+              }
+            })()
+
+            const metaImageUrl = await (async () => {
+              const url = html.querySelector('meta[property="og:image"]')?.getAttribute('content')?.trim() || null
+              if (!url) return null
+              try {
+                const file = await File.createFromUrl({
+                  url,
+                  name: 'og-image',
+                  cacheControl: 'public, max-age=31536000, immutable',
+                })
+                return file.url
+              } catch {
+                return null
+              }
+            })()
+
+            return {
+              metaTitle,
+              metaDescription,
+              faviconUrl,
+              faviconType,
+              metaImageUrl,
+            }
+          }
+        } catch {}
+      })()
+
       await Database.use((tx) =>
         tx.insert(DomainTable).values({
           id,
           workspaceId: Actor.workspaceId(),
           hostname,
           cloudflareHostnameId,
+          settings: settings ?? {},
         }),
       )
 
@@ -149,4 +209,68 @@ export namespace Domain {
         .where(and(eq(DomainTable.workspaceId, Actor.workspaceId()), eq(DomainTable.id, domain.id))),
     )
   })
+
+  export const getSettings = fn(Identifier.schema('domain'), async (domainId) =>
+    Database.use((tx) =>
+      tx
+        .select({ settings: DomainTable.settings })
+        .from(DomainTable)
+        .where(and(eq(DomainTable.workspaceId, Actor.workspaceId()), eq(DomainTable.id, domainId)))
+        .then((rows) => rows[0]?.settings ?? null),
+    ),
+  )
+
+  export const updateSettings = fn(
+    z.object({
+      domainId: Identifier.schema('domain'),
+      faviconUrl: z.string().nullish(),
+      faviconType: z.string().nullish(),
+      code: z.string().nullish(),
+      metaTitle: z.string().nullish(),
+      metaDescription: z.string().nullish(),
+      metaImageUrl: z.string().nullish(),
+    }),
+    async (input) => {
+      const domain = await Database.use((tx) =>
+        tx
+          .select()
+          .from(DomainTable)
+          .where(and(eq(DomainTable.workspaceId, Actor.workspaceId()), eq(DomainTable.id, input.domainId)))
+          .then((rows) => rows[0]),
+      )
+      if (!domain) {
+        throw new Error('Domain not found.')
+      }
+
+      const existing = domain.settings ?? {}
+
+      if (input.faviconUrl !== undefined && existing.faviconUrl) {
+        try {
+          await File.remove(existing.faviconUrl)
+        } catch {}
+      }
+      if (input.metaImageUrl !== undefined && existing.metaImageUrl) {
+        try {
+          await File.remove(existing.metaImageUrl)
+        } catch {}
+      }
+
+      const updated: DomainSettings = {
+        ...existing,
+        ...(input.faviconUrl !== undefined && { faviconUrl: input.faviconUrl }),
+        ...(input.faviconType !== undefined && { faviconType: input.faviconType }),
+        ...(input.code !== undefined && { code: input.code }),
+        ...(input.metaTitle !== undefined && { metaTitle: input.metaTitle }),
+        ...(input.metaDescription !== undefined && { metaDescription: input.metaDescription }),
+        ...(input.metaImageUrl !== undefined && { metaImageUrl: input.metaImageUrl }),
+      }
+
+      await Database.use((tx) =>
+        tx
+          .update(DomainTable)
+          .set({ settings: updated })
+          .where(and(eq(DomainTable.workspaceId, Actor.workspaceId()), eq(DomainTable.id, input.domainId))),
+      )
+    },
+  )
 }

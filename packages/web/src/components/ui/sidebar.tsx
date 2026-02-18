@@ -6,7 +6,6 @@ import * as React from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Separator } from '@/components/ui/separator'
-import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from '@/components/ui/sheet'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Tooltip } from '@/components/ui/tooltip'
 import { useMobile } from '@/hooks/use-mobile'
@@ -163,8 +162,8 @@ function SidebarRoot({
 
   if (mobile) {
     return (
-      <Sheet open={openMobile} onOpenChange={setOpenMobile} {...props}>
-        <SheetContent
+      <Drawer.Root open={openMobile} onOpenChange={setOpenMobile} side={side} {...props}>
+        <Drawer.Content
           data-sidebar="sidebar"
           data-slot="sidebar"
           data-mobile="true"
@@ -174,15 +173,14 @@ function SidebarRoot({
               '--sidebar-width': SIDEBAR_WIDTH_MOBILE,
             } as React.CSSProperties
           }
-          side={side}
         >
-          <SheetHeader className="sr-only">
-            <SheetTitle>Sidebar</SheetTitle>
-            <SheetDescription>Displays the mobile sidebar.</SheetDescription>
-          </SheetHeader>
+          <Drawer.Header className="sr-only">
+            <Drawer.Title>Sidebar</Drawer.Title>
+            <Drawer.Description>Displays the mobile sidebar.</Drawer.Description>
+          </Drawer.Header>
           <div className="flex h-full w-full flex-col">{children}</div>
-        </SheetContent>
-      </Sheet>
+        </Drawer.Content>
+      </Drawer.Root>
     )
   }
 

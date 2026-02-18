@@ -238,8 +238,7 @@ export interface Rule {
 // ============================================
 
 export interface Theme {
-  logo?: string
-  favicon?: { url: string; contentType: string }
+  logoUrl?: string
   radius: string
   style: 'outline' | 'soft'
   colors: {
@@ -255,9 +254,17 @@ export interface Theme {
 // ============================================
 
 export interface Settings {
-  metaPixelId?: string
   privacyUrl?: string
   termsUrl?: string
+}
+
+export interface ResolvedSettings extends Settings {
+  faviconUrl?: string | null
+  faviconType?: string | null
+  code?: string | null
+  metaTitle?: string | null
+  metaDescription?: string | null
+  metaImageUrl?: string | null
 }
 
 // ============================================
@@ -267,6 +274,7 @@ export interface Settings {
 export interface Info {
   id: string
   workspaceId: string
+  domainId: string | null
   shortId: string
   title: string
   version: number
@@ -274,7 +282,7 @@ export interface Info {
   rules: Rule[]
   variables: Variables
   theme: Theme
-  settings: Settings
+  settings?: ResolvedSettings
   published: boolean
   draft: boolean
   url: string

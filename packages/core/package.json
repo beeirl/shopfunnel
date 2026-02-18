@@ -22,6 +22,7 @@
     "@shopfunnel/resource": "workspace:*",
     "drizzle-orm": "catalog:",
     "luxon": "catalog:",
+    "node-html-parser": "7.0.2",
     "remeda": "catalog:",
     "resend": "6.8.0",
     "stripe": "20.1.0",

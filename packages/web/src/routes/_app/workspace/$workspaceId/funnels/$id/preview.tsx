@@ -1,6 +1,6 @@
 import { Funnel } from '@/components/funnel'
 import { useSuspenseQuery } from '@tanstack/react-query'
-import { AnyRouteMatch, createFileRoute } from '@tanstack/react-router'
+import { createFileRoute } from '@tanstack/react-router'
 import { getFunnelQueryOptions } from './-common'
 
 export const Route = createFileRoute('/_app/workspace/$workspaceId/funnels/$id/preview')({
@@ -10,18 +10,7 @@ export const Route = createFileRoute('/_app/workspace/$workspaceId/funnels/$id/p
     return { funnel }
   },
   head: ({ loaderData }) => {
-    const links: AnyRouteMatch['links'] = []
-
-    const title = loaderData?.funnel.title
-
-    const favicon = loaderData?.funnel.theme?.favicon
-    if (favicon) {
-      const href = typeof favicon === 'string' ? favicon : favicon.url
-      const type = typeof favicon === 'string' ? undefined : favicon.contentType
-      links.push({ rel: 'icon', href, ...(type && { type }) })
-    }
-
-    return { meta: [{ title }], links }
+    return { meta: [{ title: loaderData?.funnel.title }] }
   },
 })
 

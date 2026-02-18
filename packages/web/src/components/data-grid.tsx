@@ -45,23 +45,33 @@ function DataGridBody({ className, ...props }: React.ComponentProps<'div'>) {
 }
 
 function DataGridRow({ className, render, ...props }: useRender.ComponentProps<'div'>) {
+  const isClickable =
+    props.onClick != null ||
+    ('href' in props && props.href != null) ||
+    (React.isValidElement<Record<string, unknown>>(render) &&
+      ('to' in render.props || 'href' in render.props || 'onClick' in render.props))
+
+  const element = useRender({
+    defaultTagName: 'div',
+    props: mergeProps<'div'>(
+      {
+        className: cn(
+          'col-span-full grid min-h-11 grid-cols-subgrid items-center rounded-lg py-1.5',
+          isClickable && 'hover:bg-muted/50 md:pr-1 md:pl-3',
+        ),
+      },
+      props,
+    ),
+    render,
+    state: { slot: 'data-grid-row-content' },
+  })
+
   return (
     <div
       data-slot="data-grid-row"
       className={cn('col-span-full grid grid-cols-subgrid border-b border-border py-1', className)}
     >
-      {useRender({
-        defaultTagName: 'div',
-        props: mergeProps<'div'>(
-          {
-            className:
-              'col-span-full grid grid-cols-subgrid items-center rounded-lg px-0 py-1.5 hover:bg-muted/50 min-h-11 md:pl-3 md:pr-1',
-          },
-          props,
-        ),
-        render,
-        state: { slot: 'data-grid-row-content' },
-      })}
+      {element}
     </div>
   )
 }

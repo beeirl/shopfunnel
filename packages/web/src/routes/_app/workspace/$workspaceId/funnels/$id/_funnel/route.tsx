@@ -11,7 +11,6 @@ import { snackbar } from '@/lib/snackbar'
 import { cn } from '@/lib/utils'
 import { getSessionQueryOptions } from '@/routes/_app/workspace/$workspaceId/-common'
 import { Funnel } from '@shopfunnel/core/funnel/index'
-import type { Settings as SettingsType } from '@shopfunnel/core/funnel/types'
 import { Identifier } from '@shopfunnel/core/identifier'
 import {
   IconChevronDown as ChevronDownIcon,
@@ -130,11 +129,14 @@ function Settings() {
   const { data: funnel, save } = useFunnel()
 
   const [dialogOpen, setDialogOpen] = React.useState(false)
-  const [value, setValue] = React.useState<SettingsType>(funnel.settings)
+  const [value, setValue] = React.useState({
+    privacyUrl: funnel.settings?.privacyUrl,
+    termsUrl: funnel.settings?.termsUrl,
+  })
 
   const handleDialogOpenChange = (open: boolean) => {
     setDialogOpen(open)
-    if (open) setValue(funnel.settings)
+    if (open) setValue({ privacyUrl: funnel.settings?.privacyUrl, termsUrl: funnel.settings?.termsUrl })
   }
 
   const handleSettingsSave = () => {
@@ -156,14 +158,6 @@ function Settings() {
           <Dialog.Title>Settings</Dialog.Title>
         </Dialog.Header>
         <div className="flex flex-col gap-4">
-          <Field.Root>
-            <Field.Label>Meta Pixel ID</Field.Label>
-            <Input
-              placeholder="Enter Meta Pixel ID"
-              value={value.metaPixelId ?? ''}
-              onValueChange={(value) => setValue((prev) => ({ ...prev, metaPixelId: value || undefined }))}
-            />
-          </Field.Root>
           <Field.Root>
             <Field.Label>Privacy Policy URL</Field.Label>
             <Input
@@ -318,7 +312,6 @@ function RouteComponent() {
                 )}
               </MatchRoute>
             ))}
-            <Settings />
           </div>
           <div className="flex items-center justify-end gap-2">
             <DraftBadge />

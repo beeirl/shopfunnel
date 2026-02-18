@@ -5,6 +5,7 @@ import z from 'zod'
 import { Actor } from '../actor'
 import { Billing } from '../billing/index'
 import { Database } from '../database'
+import { Domain } from '../domain/index'
 import { DomainTable } from '../domain/index.sql'
 import { File } from '../file'
 import { Identifier } from '../identifier'
@@ -40,7 +41,7 @@ export namespace Funnel {
             eq(FunnelVersionTable.version, FunnelTable.currentVersion),
           ),
         )
-        .leftJoin(DomainTable, eq(DomainTable.workspaceId, FunnelTable.workspaceId))
+        .leftJoin(DomainTable, eq(DomainTable.id, FunnelTable.domainId))
         .where(
           and(eq(FunnelTable.workspaceId, Actor.workspace()), eq(FunnelTable.id, id), isNull(FunnelTable.archivedAt)),
         )
@@ -62,7 +63,7 @@ export namespace Funnel {
             eq(FunnelVersionTable.version, FunnelTable.publishedVersion),
           ),
         )
-        .leftJoin(DomainTable, eq(DomainTable.workspaceId, FunnelTable.workspaceId))
+        .leftJoin(DomainTable, eq(DomainTable.id, FunnelTable.domainId))
         .where(
           and(isShortId ? eq(FunnelTable.shortId, input) : eq(FunnelTable.id, input), isNull(FunnelTable.archivedAt)),
         )
@@ -92,7 +93,7 @@ export namespace Funnel {
       tx
         .select()
         .from(FunnelTable)
-        .leftJoin(DomainTable, eq(DomainTable.workspaceId, FunnelTable.workspaceId))
+        .leftJoin(DomainTable, eq(DomainTable.id, FunnelTable.domainId))
         .where(and(eq(FunnelTable.workspaceId, Actor.workspace()), isNull(FunnelTable.archivedAt)))
         .orderBy(desc(FunnelTable.updatedAt))
         .then((rows) => rows.map(serialize)),
@@ -103,6 +104,7 @@ export namespace Funnel {
     const id = Identifier.create('funnel')
     const shortId = id.slice(-8)
     const currentVersion = 1
+    const domain = await Domain.get()
 
     await Database.use(async (tx) => {
       await tx.insert(FunnelTable).values({
@@ -110,7 +112,7 @@ export namespace Funnel {
         workspaceId: Actor.workspace(),
         shortId,
         title: 'New funnel',
-        settings: {},
+        domainId: domain?.id,
         currentVersion,
       })
 
@@ -151,12 +153,13 @@ export namespace Funnel {
         const shortId = id.slice(-8)
         const title = input.title || `${funnelToDuplicate.title} copy`
 
+        const domain = await Domain.get()
         await tx.insert(FunnelTable).values({
           id,
           workspaceId: Actor.workspace(),
           shortId,
           title,
-          settings: funnelToDuplicate.settings,
+          domainId: domain?.id,
           currentVersion: 1,
         })
 
@@ -234,10 +237,6 @@ export namespace Funnel {
     z.object({
       id: Identifier.schema('funnel'),
       settings: z.object({
-        metaPixelId: z
-          .string()
-          .regex(/^\d{10,20}$/, 'Meta Pixel ID must be a 10-20 digit number')
-          .optional(),
         privacyUrl: z.url().optional().or(z.literal('')),
         termsUrl: z.url().optional().or(z.literal('')),
       }),
@@ -432,6 +431,7 @@ export namespace Funnel {
         (group): Info => ({
           id: group[0].funnel.id,
           workspaceId: group[0].funnel.workspaceId,
+          domainId: group[0].funnel.domainId,
           shortId: group[0].funnel.shortId,
           title: group[0].funnel.title,
           version: group[0].funnel_version.version,
@@ -439,7 +439,7 @@ export namespace Funnel {
           rules: group[0].funnel_version.rules,
           variables: group[0].funnel_version.variables,
           theme: group[0].funnel_version.theme,
-          settings: group[0].funnel.settings,
+          settings: { ...group[0].funnel.settings, ...group[0].domain?.settings },
           published: group[0].funnel.publishedVersion !== null,
           draft: group[0].funnel.currentVersion !== group[0].funnel.publishedVersion,
           url: url(group[0].funnel.shortId, group[0].domain?.hostname),

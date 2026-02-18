@@ -207,17 +207,16 @@ export const getWorkspaceFlags = createServerFn()
     return withActor(() => Workspace.listFlags(), workspaceId)
   })
 
-export const getShopifyIntegration = createServerFn()
+export const listIntegrations = createServerFn()
   .inputValidator(Identifier.schema('workspace'))
   .handler(async ({ data: workspaceId }) => {
-    const integration = await withActor(() => Integration.fromProvider('shopify'), workspaceId)
-    return integration ?? null
+    return withActor(() => Integration.list(), workspaceId)
   })
 
-export const getShopifyIntegrationQueryOptions = (workspaceId: string) =>
+export const listIntegrationsQueryOptions = (workspaceId: string) =>
   queryOptions({
-    queryKey: ['shopify-integration', workspaceId],
-    queryFn: () => getShopifyIntegration({ data: workspaceId }),
+    queryKey: ['integrations', workspaceId],
+    queryFn: () => listIntegrations({ data: workspaceId }),
   })
 
 export const checkOnboarding = createServerFn()
