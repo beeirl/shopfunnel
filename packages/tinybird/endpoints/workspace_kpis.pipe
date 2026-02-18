@@ -11,7 +11,8 @@ SQL >
         funnel_id,
         uniqMerge(views) AS views,
         uniqMerge(starts) AS starts,
-        uniqMerge(completions) AS completions
+        uniqMerge(completions) AS completions,
+        uniqMerge(orders) AS orders
     FROM kpis_mv
     WHERE workspace_id = {{ String(workspace_id, required=True) }}
         {% if defined(start_date) %}
@@ -29,6 +30,7 @@ SQL >
         views,
         starts,
         completions,
+        orders,
         if(views > 0, round(starts / views * 100, 1), 0) AS start_rate,
         if(views > 0, round(completions / views * 100, 1), 0) AS completion_rate
     FROM workspace_kpis_node

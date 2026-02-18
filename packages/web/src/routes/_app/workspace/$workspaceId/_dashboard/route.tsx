@@ -138,11 +138,7 @@ function DashboardLayoutRoute() {
 
   const handleWorkspaceSwitch = (workspaceId: string) => {
     if (workspaceId === params.workspaceId) return
-    let href = `/workspace/${workspaceId}`
-    href += location.pathname.slice(`/workspace/${params.workspaceId}`.length)
-    href += window.location.search
-    href += window.location.hash
-    window.location.href = href
+    window.location.href = `/workspace/${workspaceId}`
   }
 
   const handleLogout = () => {

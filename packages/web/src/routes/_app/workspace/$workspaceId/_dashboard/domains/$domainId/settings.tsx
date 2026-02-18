@@ -16,6 +16,27 @@ import * as React from 'react'
 import { z } from 'zod'
 import { Heading } from '../../-components/heading'
 
+const getDomain = createServerFn()
+  .inputValidator(
+    z.object({
+      workspaceId: Identifier.schema('workspace'),
+      domainId: Identifier.schema('domain'),
+    }),
+  )
+  .handler(({ data }) => {
+    return withActor(async () => {
+      const domain = await Domain.fromId(data.domainId)
+      if (!domain) throw notFound()
+      return domain
+    }, data.workspaceId)
+  })
+
+const getDomainQueryOptions = (workspaceId: string, domainId: string) =>
+  queryOptions({
+    queryKey: ['domain', workspaceId, domainId],
+    queryFn: () => getDomain({ data: { workspaceId, domainId } }),
+  })
+
 const getDomainSettings = createServerFn()
   .inputValidator(
     z.object({
@@ -33,27 +54,6 @@ const getDomainSettingsQueryOptions = (workspaceId: string, domainId: string) =>
   queryOptions({
     queryKey: ['domain-settings', workspaceId, domainId],
     queryFn: () => getDomainSettings({ data: { workspaceId, domainId } }),
-  })
-
-const getDomainById = createServerFn()
-  .inputValidator(
-    z.object({
-      workspaceId: Identifier.schema('workspace'),
-      domainId: Identifier.schema('domain'),
-    }),
-  )
-  .handler(({ data }) => {
-    return withActor(async () => {
-      const domain = await Domain.fromId(data.domainId)
-      if (!domain) throw notFound()
-      return domain
-    }, data.workspaceId)
-  })
-
-const getDomainByIdQueryOptions = (workspaceId: string, domainId: string) =>
-  queryOptions({
-    queryKey: ['domain', workspaceId, domainId],
-    queryFn: () => getDomainById({ data: { workspaceId, domainId } }),
   })
 
 const updateDomainSettings = createServerFn()
@@ -155,7 +155,7 @@ export const Route = createFileRoute('/_app/workspace/$workspaceId/_dashboard/do
   component: DomainSettingsRoute,
   loader: async ({ context, params }) => {
     await Promise.all([
-      context.queryClient.ensureQueryData(getDomainByIdQueryOptions(params.workspaceId, params.domainId)),
+      context.queryClient.ensureQueryData(getDomainQueryOptions(params.workspaceId, params.domainId)),
       context.queryClient.ensureQueryData(getDomainSettingsQueryOptions(params.workspaceId, params.domainId)),
     ])
   },
@@ -411,11 +411,6 @@ function CodeSettingRow() {
         <DataGrid.Cell className="flex-col items-start justify-center">
           <span className="text-sm font-medium text-foreground">Code Injection</span>
           <span className="text-sm text-muted-foreground">Custom code injected into the funnel</span>
-          {settings?.customCode && (
-            <span className="truncate text-sm text-muted-foreground">
-              {settings.customCode.substring(0, 50) + (settings.customCode.length > 50 ? '...' : '')}
-            </span>
-          )}
         </DataGrid.Cell>
         <DataGrid.Cell className="shrink-0 justify-end">
           <Button variant="outline" onClick={() => setDialogOpen(true)}>
@@ -453,7 +448,9 @@ function CodeSettingRow() {
 
 function DomainSettingsRoute() {
   const params = Route.useParams()
-  const domain = useSuspenseQuery(getDomainByIdQueryOptions(params.workspaceId, params.domainId)).data
+
+  const domainQuery = useSuspenseQuery(getDomainQueryOptions(params.workspaceId, params.domainId))
+  const domain = domainQuery.data
 
   return (
     <div className="flex h-full w-full max-w-6xl flex-col gap-4">

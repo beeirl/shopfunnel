@@ -23,6 +23,7 @@ type FunnelKpi = {
   views: number
   starts: number
   completions: number
+  orders: number
   start_rate: number
   completion_rate: number
 }
@@ -250,11 +251,11 @@ export const Route = createFileRoute('/_app/workspace/$workspaceId/_dashboard/')
 
 type CountMetric = 'views' | 'starts' | 'completions' | 'orders'
 
-const COUNT_METRICS: { key: CountMetric; label: string; clickable: boolean }[] = [
-  { key: 'views', label: 'Views', clickable: true },
-  { key: 'starts', label: 'Starts', clickable: true },
-  { key: 'completions', label: 'Completions', clickable: true },
-  { key: 'orders', label: 'Orders', clickable: false },
+const COUNT_METRICS: { key: CountMetric; label: string }[] = [
+  { key: 'views', label: 'Views' },
+  { key: 'starts', label: 'Starts' },
+  { key: 'completions', label: 'Completions' },
+  { key: 'orders', label: 'Orders' },
 ]
 
 const chartConfig = {
@@ -269,6 +270,10 @@ const chartConfig = {
   completions: {
     label: 'Completions',
     color: 'var(--color-chart-3)',
+  },
+  orders: {
+    label: 'Orders',
+    color: 'var(--color-chart-4)',
   },
   start_rate: {
     label: 'Start Rate',
@@ -440,11 +445,12 @@ function RouteComponent() {
     const totalViews = current.reduce((sum, f) => sum + f.views, 0)
     const totalStarts = current.reduce((sum, f) => sum + f.starts, 0)
     const totalCompletions = current.reduce((sum, f) => sum + f.completions, 0)
+    const totalOrders = current.reduce((sum, f) => sum + f.orders, 0)
     return {
       views: totalViews,
       starts: totalStarts,
       completions: totalCompletions,
-      orders: 0, // No orders data yet
+      orders: totalOrders,
       start_rate: totalViews > 0 ? Math.min((totalStarts / totalViews) * 100, 100) : 0,
       completion_rate: totalViews > 0 ? Math.min((totalCompletions / totalViews) * 100, 100) : 0,
     }
@@ -455,11 +461,12 @@ function RouteComponent() {
     const totalViews = previous.reduce((sum, f) => sum + f.views, 0)
     const totalStarts = previous.reduce((sum, f) => sum + f.starts, 0)
     const totalCompletions = previous.reduce((sum, f) => sum + f.completions, 0)
+    const totalOrders = previous.reduce((sum, f) => sum + f.orders, 0)
     return {
       views: totalViews,
       starts: totalStarts,
       completions: totalCompletions,
-      orders: 0,
+      orders: totalOrders,
       start_rate: totalViews > 0 ? Math.min((totalStarts / totalViews) * 100, 100) : 0,
       completion_rate: totalViews > 0 ? Math.min((totalCompletions / totalViews) * 100, 100) : 0,
     }
@@ -544,25 +551,19 @@ function RouteComponent() {
             <div className="flex">
               {COUNT_METRICS.map((metric, index) => {
                 const isSelected = selectedMetric === metric.key
-                const value = metric.key === 'orders' ? null : (currentTotals?.[metric.key] ?? null)
+                const value = currentTotals?.[metric.key] ?? null
                 const delta =
-                  metric.key === 'orders'
-                    ? undefined
-                    : currentTotals && previousTotals
-                      ? formatDelta(currentTotals[metric.key], previousTotals[metric.key])
-                      : undefined
+                  currentTotals && previousTotals
+                    ? formatDelta(currentTotals[metric.key], previousTotals[metric.key])
+                    : undefined
 
                 return (
                   <button
                     key={metric.key}
-                    onClick={() => {
-                      if (!metric.clickable) return
-                      setSelectedMetric(metric.key)
-                    }}
+                    onClick={() => setSelectedMetric(metric.key)}
                     className={cn(
                       'relative flex flex-1 cursor-pointer flex-col gap-0.5 border-b border-border bg-muted p-4 text-left text-muted-foreground',
                       isSelected && 'bg-background text-foreground',
-                      !metric.clickable && 'cursor-not-allowed',
                     )}
                   >
                     <span className="text-sm font-medium">{metric.label}</span>
