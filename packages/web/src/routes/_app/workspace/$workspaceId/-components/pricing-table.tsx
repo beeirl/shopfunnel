@@ -76,7 +76,7 @@ export function PricingTable({ animate, mode }: { animate?: boolean; mode: 'crea
   const billingQuery = useSuspenseQuery(getBillingQueryOptions(params.workspaceId))
   const billing = billingQuery.data
 
-  const [isYearly, setIsYearly] = React.useState(true)
+  const [isYearly, setIsYearly] = React.useState(false)
   const [isLoading, setIsLoading] = React.useState(false)
   const [managed, setManaged] = React.useState(true)
   const [selectedPlan, setSelectedPlan] = React.useState<BillingType.Plan | null>(null)
