@@ -453,6 +453,7 @@ function RouteComponent() {
       orders: totalOrders,
       start_rate: totalViews > 0 ? Math.min((totalStarts / totalViews) * 100, 100) : 0,
       completion_rate: totalViews > 0 ? Math.min((totalCompletions / totalViews) * 100, 100) : 0,
+      conversion_rate: totalViews > 0 ? Math.min((totalOrders / totalViews) * 100, 100) : 0,
     }
   }, [current])
 
@@ -469,6 +470,7 @@ function RouteComponent() {
       orders: totalOrders,
       start_rate: totalViews > 0 ? Math.min((totalStarts / totalViews) * 100, 100) : 0,
       completion_rate: totalViews > 0 ? Math.min((totalCompletions / totalViews) * 100, 100) : 0,
+      conversion_rate: totalViews > 0 ? Math.min((totalOrders / totalViews) * 100, 100) : 0,
     }
   }, [previous])
 
@@ -661,16 +663,17 @@ function RouteComponent() {
             <Table.Root className="table-fixed">
               <Table.Header>
                 <Table.Row className="hover:bg-transparent">
-                  <Table.Head className="w-[40%]">Funnel</Table.Head>
-                  <Table.Head className="w-[20%] text-right">Views</Table.Head>
-                  <Table.Head className="w-[20%] text-right">Start Rate</Table.Head>
-                  <Table.Head className="w-[20%] text-right">Completion Rate</Table.Head>
+                  <Table.Head className="w-[32%]">Funnel</Table.Head>
+                  <Table.Head className="w-[17%] text-right">Views</Table.Head>
+                  <Table.Head className="w-[17%] text-right">Start Rate</Table.Head>
+                  <Table.Head className="w-[17%] text-right">Completion Rate</Table.Head>
+                  <Table.Head className="w-[17%] text-right">Conversion Rate</Table.Head>
                 </Table.Row>
               </Table.Header>
               <Table.Body>
                 {funnelMetrics.length === 0 ? (
                   <Table.Row className="hover:bg-transparent">
-                    <Table.Cell colSpan={4} className="h-24 text-center text-muted-foreground">
+                    <Table.Cell colSpan={5} className="h-24 text-center text-muted-foreground">
                       No data has been collected
                     </Table.Cell>
                   </Table.Row>
@@ -678,10 +681,18 @@ function RouteComponent() {
                   funnelMetrics.map((funnel) => {
                     const currentStartRate = funnel.current ? Math.min(funnel.current.start_rate, 100) : null
                     const currentCompletionRate = funnel.current ? Math.min(funnel.current.completion_rate, 100) : null
+                    const currentConversionRate =
+                      funnel.current && funnel.current.views > 0
+                        ? Math.min((funnel.current.orders / funnel.current.views) * 100, 100)
+                        : null
                     const previousStartRate = funnel.previous ? Math.min(funnel.previous.start_rate, 100) : null
                     const previousCompletionRate = funnel.previous
                       ? Math.min(funnel.previous.completion_rate, 100)
                       : null
+                    const previousConversionRate =
+                      funnel.previous && funnel.previous.views > 0
+                        ? Math.min((funnel.previous.orders / funnel.previous.views) * 100, 100)
+                        : null
 
                     const viewsDelta =
                       funnel.current && funnel.previous
@@ -694,6 +705,10 @@ function RouteComponent() {
                     const completionRateDelta =
                       currentCompletionRate !== null && previousCompletionRate !== null
                         ? formatDelta(currentCompletionRate, previousCompletionRate)
+                        : undefined
+                    const conversionRateDelta =
+                      currentConversionRate !== null && previousConversionRate !== null
+                        ? formatDelta(currentConversionRate, previousConversionRate)
                         : undefined
 
                     return (
@@ -718,6 +733,14 @@ function RouteComponent() {
                           <MetricValue
                             value={currentCompletionRate}
                             delta={completionRateDelta}
+                            isPercentage
+                            align="right"
+                          />
+                        </Table.Cell>
+                        <Table.Cell className="text-right">
+                          <MetricValue
+                            value={currentConversionRate}
+                            delta={conversionRateDelta}
                             isPercentage
                             align="right"
                           />
