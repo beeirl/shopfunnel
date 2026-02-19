@@ -426,7 +426,7 @@ function CodeSettingRow() {
           </Drawer.Header>
           <textarea
             ref={textareaRef}
-            className="flex-1 resize-none bg-transparent px-4 font-mono text-sm text-foreground outline-none placeholder:text-muted-foreground"
+            className="flex-1 resize-none bg-transparent px-4 font-mono text-xs text-foreground outline-none placeholder:text-muted-foreground"
             autoCorrect="off"
             autoCapitalize="off"
             autoComplete="off"
