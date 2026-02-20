@@ -11,7 +11,8 @@ SQL >
         uniqMerge(views) AS total_views,
         uniqMerge(starts) AS total_starts,
         uniqMerge(completions) AS total_completions,
-        uniqMerge(orders) AS total_orders
+        uniqMerge(orders) AS total_orders,
+        sumMerge(total_revenue) AS total_revenue
     FROM kpis_mv
     WHERE workspace_id = {{ String(workspace_id, required=True) }}
         AND funnel_id = {{ String(funnel_id, required=True) }}
@@ -30,9 +31,14 @@ SQL >
         total_starts,
         total_completions,
         total_orders,
+        total_revenue,
         if(total_views > 0, round(total_starts / total_views * 100, 1), 0) AS start_rate,
         if(total_views > 0, round(total_completions / total_views * 100, 1), 0) AS completion_rate,
-        if(total_views > 0, round(total_orders / total_views * 100, 1), 0) AS conversion_rate
+        if(total_starts > 0, round(total_completions / total_starts * 100, 1), 0) AS completion_rate_of_starters,
+        if(total_views > 0, round(total_orders / total_views * 100, 1), 0) AS conversion_rate,
+        if(total_starts > 0, round(total_orders / total_starts * 100, 1), 0) AS conversion_rate_of_starters,
+        if(total_views > 0, round(total_revenue / total_views, 2), 0) AS revenue_per_visitor,
+        if(total_orders > 0, round(total_revenue / total_orders, 2), 0) AS avg_order_value
     FROM kpis_node
 
 TYPE endpoint

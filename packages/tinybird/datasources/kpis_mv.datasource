@@ -7,7 +7,8 @@ SCHEMA >
     `starts` AggregateFunction(uniq, String),
     `completions` AggregateFunction(uniq, String),
     `orders` AggregateFunction(uniq, String),
-    `external_page_views` AggregateFunction(uniq, String)
+    `external_page_views` AggregateFunction(uniq, String),
+    `total_revenue` AggregateFunction(sum, Float64)
 
 ENGINE AggregatingMergeTree
 ENGINE_PARTITION_KEY toYYYYMM(date)

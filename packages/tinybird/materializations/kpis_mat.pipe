@@ -12,7 +12,8 @@ SQL >
         uniqStateIf(session_id, type IN ('funnel_start', 'funnel_started')) AS starts,
         uniqStateIf(session_id, type IN ('funnel_end', 'funnel_completed')) AS completions,
         uniqStateIf(session_id, type IN ('external_checkout_complete', 'external_checkout_completed')) AS orders,
-        uniqStateIf(session_id, type IN ('external_page_view', 'external_page_viewed')) AS external_page_views
+        uniqStateIf(session_id, type IN ('external_page_view', 'external_page_viewed')) AS external_page_views,
+        sumStateIf(JSONExtractFloat(payload, 'amount'), type IN ('external_checkout_complete', 'external_checkout_completed')) AS total_revenue
     FROM events
     GROUP BY date, workspace_id, funnel_id, funnel_version
 
