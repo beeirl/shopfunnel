@@ -21,7 +21,7 @@ export const billingCron = new sst.cloudflare.Cron('BillingCron', {
     handler: 'packages/function/src/billing.ts',
     link: [database, secret.STRIPE_SECRET_KEY, secret.TINYBIRD_TOKEN],
   },
-  schedules: ['*/5 * * * *'],
+  schedules: ['5 * * * *'],
 })
 
 if ($app.stage === 'production') {

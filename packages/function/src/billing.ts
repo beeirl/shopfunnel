@@ -7,8 +7,9 @@ import { inArray } from 'drizzle-orm'
 export default {
   async scheduled() {
     const now = Date.now()
-    const windowEndDate = new Date(Math.floor(now / (5 * 60 * 1000)) * (5 * 60 * 1000) - 5 * 60 * 1000)
-    const windowStartDate = new Date(windowEndDate.getTime() - 5 * 60 * 1000)
+    const hourMs = 60 * 60 * 1000
+    const windowEndDate = new Date(Math.floor(now / hourMs) * hourMs)
+    const windowStartDate = new Date(windowEndDate.getTime() - hourMs)
     const windowEndTimestamp = Math.floor(windowEndDate.getTime() / 1000)
 
     const usagesResponse = await fetch(
