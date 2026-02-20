@@ -317,6 +317,7 @@ function RouteComponent() {
                 )}
               </MatchRoute>
             ))}
+            {session.isAdmin && <Settings />}
           </div>
           <div className="flex items-center justify-end gap-2">
             <DraftBadge />
