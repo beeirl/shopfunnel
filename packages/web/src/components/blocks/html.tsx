@@ -12,6 +12,8 @@ export interface HtmlBlockProps {
 export function HtmlBlock(props: HtmlBlockProps) {
   const iframeRef = React.useRef<HTMLIFrameElement>(null)
   const resizerRef = React.useRef<InitializeResult[]>([])
+  const mountedRef = React.useRef(false)
+
   const [ready, setReady] = React.useState(false)
 
   const content = [
@@ -50,14 +52,22 @@ export function HtmlBlock(props: HtmlBlockProps) {
 
     let cancelled = false
 
+    const isMounted = mountedRef.current
+    mountedRef.current = true
+
+    setReady(false)
+
     const init = async () => {
       resizerRef.current.forEach((r) => r.unsubscribe())
       resizerRef.current = []
 
       await new Promise<void>((resolve) => {
-        if (iframe.contentDocument?.readyState === 'complete') {
+        // On initial mount (SSR hydration), the iframe may already be loaded
+        if (!isMounted && iframe.contentDocument?.readyState === 'complete') {
           resolve()
         } else {
+          // On subsequent content changes, always wait for the load event
+          // since readyState may still reflect the previous document
           iframe.addEventListener('load', () => resolve(), { once: true })
         }
       })
