@@ -201,7 +201,7 @@ function Insights({
   const trafficKpis: KpiItem[] = hasData
     ? [
         { label: 'Views', value: formatNumber(insights.kpis.total_views, true) },
-        { label: 'Started', value: formatNumber(insights.kpis.total_starts, true) },
+        { label: 'Starts', value: formatNumber(insights.kpis.total_starts, true) },
         { label: 'Completions', value: formatNumber(insights.kpis.total_completions, true) },
         { label: 'Start Rate', value: formatPercentage(Math.min(insights.kpis.start_rate, 100)) },
         {
