@@ -175,6 +175,10 @@ export const getSession = createServerFn()
       return {
         accountId: Actor.accountId(),
         isAdmin: Actor.userRole() === 'admin',
+        isSuperAdmin: [
+          'acc_01KET2AQA9PW8VFYFV6D2W1B29', // Chris
+          'acc_01KET6T3GY4MEEQ8WTRWSP6741', // Kai
+        ].includes(Actor.accountId()),
       }
     }, workspaceId)
   })

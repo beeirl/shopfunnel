@@ -6,6 +6,7 @@ import { Actor } from '../actor'
 import { Billing } from '../billing/index'
 import { Database } from '../database'
 import { File } from '../file'
+import { FunnelTable } from '../funnel/index.sql'
 import { Identifier } from '../identifier'
 import { fn } from '../utils/fn'
 import { type DomainSettings, DomainTable } from './index.sql'
@@ -160,15 +161,21 @@ export namespace Domain {
         } catch {}
       })()
 
-      await Database.use((tx) =>
-        tx.insert(DomainTable).values({
+      await Database.use(async (tx) => {
+        await tx.insert(DomainTable).values({
           id,
           workspaceId: Actor.workspaceId(),
           hostname,
           cloudflareHostnameId,
           settings: settings ?? {},
-        }),
-      )
+        })
+
+        // Link all existing funnels without a domain to the new domain
+        await tx
+          .update(FunnelTable)
+          .set({ domainId: id })
+          .where(and(eq(FunnelTable.workspaceId, Actor.workspaceId()), isNull(FunnelTable.domainId)))
+      })
 
       return id
     },
