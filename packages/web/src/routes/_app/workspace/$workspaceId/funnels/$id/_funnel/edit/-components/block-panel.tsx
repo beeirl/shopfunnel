@@ -22,18 +22,12 @@ export function BlockPanel() {
   const block = selectedBlock
 
   const handleBlockUpdate = (updates: Partial<BlockType>) => {
-    console.log('[BlockPanel] handleBlockUpdate', {
-      timestamp: Date.now(),
-      blockId: block.id,
-      blockType: block.type,
-      updates,
-      currentProperties: block.properties,
+    save({
+      pages: funnel.pages.map((page) => ({
+        ...page,
+        blocks: page.blocks.map((b) => (b.id === block.id ? ({ ...b, ...updates } as BlockType) : b)),
+      })),
     })
-    const updatedPages = funnel.pages.map((page) => ({
-      ...page,
-      blocks: page.blocks.map((b) => (b.id === block.id ? ({ ...b, ...updates } as BlockType) : b)),
-    }))
-    save({ pages: updatedPages })
   }
 
   const handleHtmlChange = (html: string) => {

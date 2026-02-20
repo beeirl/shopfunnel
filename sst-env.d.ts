@@ -53,9 +53,6 @@ declare module "sst" {
       "standardProductId": string
       "type": "sst.sst.Linkable"
     }
-    "BillingCronHandler": {
-      "type": "sst.cloudflare.Worker"
-    }
     "CLOUDFLARE_R2_ACCESS_KEY_ID": {
       "type": "sst.sst.Secret"
       "value": string

@@ -12,6 +12,7 @@ export interface HtmlBlockProps {
 export function HtmlBlock(props: HtmlBlockProps) {
   const iframeRef = React.useRef<HTMLIFrameElement>(null)
   const resizerRef = React.useRef<InitializeResult[]>([])
+  const [ready, setReady] = React.useState(false)
 
   const content = [
     '<!DOCTYPE html>',
@@ -54,7 +55,11 @@ export function HtmlBlock(props: HtmlBlockProps) {
       resizerRef.current = []
 
       await new Promise<void>((resolve) => {
-        iframe.addEventListener('load', () => resolve(), { once: true })
+        if (iframe.contentDocument?.readyState === 'complete') {
+          resolve()
+        } else {
+          iframe.addEventListener('load', () => resolve(), { once: true })
+        }
       })
 
       if (cancelled) return
@@ -69,6 +74,8 @@ export function HtmlBlock(props: HtmlBlockProps) {
         const height = doc.documentElement.getBoundingClientRect().height
         iframe.style.height = `${height}px`
       }
+
+      setReady(true)
 
       const resizer = await initialize({}, iframe)
       if (cancelled) {
@@ -89,7 +96,12 @@ export function HtmlBlock(props: HtmlBlockProps) {
 
   return (
     <div className={cn('overflow-hidden group-not-data-first/block:mt-6', props.static && 'pointer-events-none')}>
-      <iframe className="block w-full border-none" ref={iframeRef} sandbox="allow-same-origin" srcDoc={content} />
+      <iframe
+        className={cn('block w-full overflow-hidden border-none', !ready && 'invisible')}
+        ref={iframeRef}
+        sandbox="allow-same-origin"
+        srcDoc={content}
+      />
     </div>
   )
 }

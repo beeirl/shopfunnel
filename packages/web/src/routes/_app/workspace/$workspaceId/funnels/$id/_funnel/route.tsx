@@ -293,7 +293,12 @@ function RouteComponent() {
       >
         <div className="sticky top-0 z-10 grid h-(--dashboard-header-height) w-full shrink-0 grid-cols-3 items-center border-b border-border bg-background px-2">
           <div className="flex items-center">
-            <Button variant="ghost" size="icon" render={<Link from={Route.fullPath} to="../../funnels" />}>
+            <Button
+              nativeButton={false}
+              variant="ghost"
+              size="icon"
+              render={<Link from={Route.fullPath} to="../../funnels" />}
+            >
               <ChevronLeftIcon />
             </Button>
             <Title />

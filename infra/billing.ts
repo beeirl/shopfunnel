@@ -1,4 +1,3 @@
-import { database } from './database'
 import { secret } from './secret'
 import { domain } from './stage'
 
@@ -16,13 +15,13 @@ export const STRIPE_WEBHOOK_SECRET = new sst.Linkable('STRIPE_WEBHOOK_SECRET', {
   properties: { value: stripeWebhook.secret },
 })
 
-export const billingCron = new sst.cloudflare.Cron('BillingCron', {
-  job: {
-    handler: 'packages/function/src/billing.ts',
-    link: [database, secret.STRIPE_SECRET_KEY, secret.TINYBIRD_TOKEN],
-  },
-  schedules: ['5 * * * *'],
-})
+// export const billingCron = new sst.cloudflare.Cron('BillingCron', {
+//   job: {
+//     handler: 'packages/function/src/billing.ts',
+//     link: [database, secret.STRIPE_SECRET_KEY, secret.TINYBIRD_TOKEN],
+//   },
+//   schedules: ['5 * * * *'],
+// })
 
 if ($app.stage === 'production') {
   new cloudflare.DnsRecord('StripeDnsRecord', {
@@ -44,19 +43,6 @@ if ($app.stage === 'production') {
 
 const standardProduct = new stripe.Product('StandardProduct', {
   name: 'Shopfunnel Standard',
-})
-
-const sessionMeter = new stripe.Meter('SessionMeter', {
-  displayName: 'Sessions',
-  eventName: 'sessions',
-  defaultAggregation: { formula: 'sum' },
-  customerMapping: {
-    eventPayloadKey: 'stripe_customer_id',
-    type: 'by_id',
-  },
-  valueSettings: {
-    eventPayloadKey: 'value',
-  },
 })
 
 const standardMonthlyPriceBase = {
@@ -139,6 +125,19 @@ const standard1MYearlyPrice = new stripe.Price('Standard1MYearlyPrice', {
 const standard2MYearlyPrice = new stripe.Price('Standard2MYearlyPrice', {
   ...standardYearlyPriceBase,
   unitAmount: 12000000,
+})
+
+const sessionMeter = new stripe.Meter('SessionMeter', {
+  displayName: 'Sessions',
+  eventName: 'sessions',
+  defaultAggregation: { formula: 'sum' },
+  customerMapping: {
+    eventPayloadKey: 'stripe_customer_id',
+    type: 'by_id',
+  },
+  valueSettings: {
+    eventPayloadKey: 'value',
+  },
 })
 
 const standardOveragePriceBase = {

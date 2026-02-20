@@ -80,7 +80,6 @@ export function FunnelProvider({ children, collection }: FunnelProviderProps) {
 
   const mutate = usePacedMutations<SaveFunnelInput, Info>({
     onMutate: (values) => {
-      console.log('[FunnelProvider] onMutate START', { timestamp: Date.now() })
       setIsSaving(true)
       collection.update('funnel', (funnel) => {
         if (values.pages) funnel.pages = values.pages
@@ -91,13 +90,10 @@ export function FunnelProvider({ children, collection }: FunnelProviderProps) {
         funnel.draft = true
         funnel.published = false
       })
-      console.log('[FunnelProvider] onMutate END', { timestamp: Date.now() })
     },
     mutationFn: async ({ transaction }) => {
-      console.log('[FunnelProvider] mutationFn START', { timestamp: Date.now() })
       const mutation = transaction.mutations.find((m) => m.type === 'update')
       if (mutation) {
-        console.log('[FunnelProvider] calling updateFunnel API', { timestamp: Date.now() })
         await updateFunnel({
           data: {
             funnelId: funnel!.id,
@@ -109,14 +105,10 @@ export function FunnelProvider({ children, collection }: FunnelProviderProps) {
             ...(mutation.changes.settings && { settings: mutation.changes.settings as Settings }),
           },
         })
-        console.log('[FunnelProvider] updateFunnel API complete', { timestamp: Date.now() })
       }
-      console.log('[FunnelProvider] calling refetch', { timestamp: Date.now() })
       await collection.utils.refetch()
-      console.log('[FunnelProvider] refetch complete', { timestamp: Date.now() })
       setFunnel(collection.get('funnel') ?? null)
       setIsSaving(false)
-      console.log('[FunnelProvider] mutationFn END', { timestamp: Date.now() })
     },
     strategy: debounceStrategy({ wait: 3000 }),
   })
@@ -142,9 +134,7 @@ export function FunnelProvider({ children, collection }: FunnelProviderProps) {
   const maybeSave = React.useCallback(
     (input: SaveFunnelInput) => {
       mutate(input)
-      const updated = collection.get('funnel') ?? null
-      console.log('[FunnelProvider] maybeSave synced state', { timestamp: Date.now() })
-      setFunnel(updated)
+      setFunnel(collection.get('funnel') ?? null)
     },
     [mutate, collection],
   )

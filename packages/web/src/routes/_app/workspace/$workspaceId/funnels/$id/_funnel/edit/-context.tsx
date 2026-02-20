@@ -272,18 +272,6 @@ export function FunnelEditorProvider({ children }: { children: React.ReactNode }
   const selectedPage = funnel.data.pages.find((p) => p.id === selectedPageId) ?? null
   const selectedBlock = funnel.data.pages.flatMap((p) => p.blocks).find((b) => b.id === selectedBlockId) ?? null
 
-  // Debug: Log when selectedBlock changes
-  React.useEffect(() => {
-    if (selectedBlock) {
-      console.log('[FunnelEditorProvider] selectedBlock updated', {
-        timestamp: Date.now(),
-        blockId: selectedBlock.id,
-        blockType: selectedBlock.type,
-        properties: selectedBlock.properties,
-      })
-    }
-  }, [selectedBlock])
-
   const value = React.useMemo<FunnelEditorContextValue>(
     () => ({
       activePageId,

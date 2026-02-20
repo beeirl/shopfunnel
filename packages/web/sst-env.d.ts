@@ -116,7 +116,6 @@ declare module "sst" {
     "AnalyticsWorker": cloudflare.Service
     "AuthApi": cloudflare.Service
     "AuthStorage": cloudflare.KVNamespace
-    "BillingCronHandler": cloudflare.Service
     "Storage": cloudflare.R2Bucket
   }
 }
