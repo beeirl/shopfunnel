@@ -9,7 +9,7 @@ SQL >
     %
     SELECT
         funnel_id,
-        uniqMerge(views) AS views,
+        uniqMerge(visitors) AS visitors,
         uniqMerge(starts) AS starts,
         uniqMerge(completions) AS completions,
         uniqMerge(orders) AS orders
@@ -27,12 +27,12 @@ NODE endpoint_node
 SQL >
     SELECT
         funnel_id,
-        views,
+        visitors,
         starts,
         completions,
         orders,
-        if(views > 0, round(starts / views * 100, 1), 0) AS start_rate,
-        if(views > 0, round(completions / views * 100, 1), 0) AS completion_rate
+        if(visitors > 0, round(starts / visitors * 100, 1), 0) AS start_rate,
+        if(visitors > 0, round(completions / visitors * 100, 1), 0) AS completion_rate
     FROM workspace_kpis_node
 
 TYPE endpoint

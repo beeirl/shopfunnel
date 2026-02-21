@@ -1,8 +1,0 @@
-SCHEMA >
-    `date` DateTime,
-    `workspace_id` String,
-    `sessions` AggregateFunction(uniq, String)
-
-ENGINE AggregatingMergeTree
-ENGINE_PARTITION_KEY toYYYYMM(date)
-ENGINE_SORTING_KEY workspace_id, date

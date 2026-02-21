@@ -10,33 +10,33 @@ declare module "sst" {
       "managedServiceMonthlyPriceId": string
       "managedServiceProductId": string
       "managedServiceYearlyPriceId": string
-      "meterId": string
       "standard100KMonthlyPriceId": string
-      "standard100KOveragePriceId": string
+      "standard100KVisitorsPriceId": string
       "standard100KYearlyPriceId": string
       "standard1MMonthlyPriceId": string
-      "standard1MOveragePriceId": string
+      "standard1MVisitorsPriceId": string
       "standard1MYearlyPriceId": string
       "standard250KMonthlyPriceId": string
-      "standard250KOveragePriceId": string
+      "standard250KVisitorsPriceId": string
       "standard250KYearlyPriceId": string
       "standard25KMonthlyPriceId": string
-      "standard25KOveragePriceId": string
+      "standard25KVisitorsPriceId": string
       "standard25KYearlyPriceId": string
       "standard2MMonthlyPriceId": string
-      "standard2MOveragePriceId": string
+      "standard2MVisitorsPriceId": string
       "standard2MYearlyPriceId": string
       "standard500KMonthlyPriceId": string
-      "standard500KOveragePriceId": string
+      "standard500KVisitorsPriceId": string
       "standard500KYearlyPriceId": string
       "standard50KMonthlyPriceId": string
-      "standard50KOveragePriceId": string
+      "standard50KVisitorsPriceId": string
       "standard50KYearlyPriceId": string
       "standard5KMonthlyPriceId": string
-      "standard5KOveragePriceId": string
+      "standard5KVisitorsPriceId": string
       "standard5KYearlyPriceId": string
       "standardProductId": string
       "type": "sst.sst.Linkable"
+      "visitorMeterId": string
     }
     "CLOUDFLARE_R2_ACCESS_KEY_ID": {
       "type": "sst.sst.Secret"

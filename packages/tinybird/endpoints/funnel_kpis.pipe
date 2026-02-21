@@ -1,5 +1,5 @@
 DESCRIPTION >
-    KPIs: views, starts, completions, rates.
+    KPIs: visitors, starts, completions, rates.
     Supports date filtering.
 
 TOKEN api READ
@@ -8,7 +8,7 @@ NODE kpis_node
 SQL >
     %
     SELECT
-        uniqMerge(views) AS total_views,
+        uniqMerge(visitors) AS total_visitors,
         uniqMerge(starts) AS total_starts,
         uniqMerge(completions) AS total_completions,
         uniqMerge(orders) AS total_orders,
@@ -27,17 +27,17 @@ SQL >
 NODE endpoint_node
 SQL >
     SELECT
-        total_views,
+        total_visitors,
         total_starts,
         total_completions,
         total_orders,
         total_revenue,
-        if(total_views > 0, round(total_starts / total_views * 100, 1), 0) AS start_rate,
-        if(total_views > 0, round(total_completions / total_views * 100, 1), 0) AS completion_rate,
+        if(total_visitors > 0, round(total_starts / total_visitors * 100, 1), 0) AS start_rate,
+        if(total_visitors > 0, round(total_completions / total_visitors * 100, 1), 0) AS completion_rate,
         if(total_starts > 0, round(total_completions / total_starts * 100, 1), 0) AS completion_rate_of_starters,
-        if(total_views > 0, round(total_orders / total_views * 100, 1), 0) AS conversion_rate,
+        if(total_visitors > 0, round(total_orders / total_visitors * 100, 1), 0) AS conversion_rate,
         if(total_starts > 0, round(total_orders / total_starts * 100, 1), 0) AS conversion_rate_of_starters,
-        if(total_views > 0, round(total_revenue / total_views, 2), 0) AS revenue_per_visitor,
+        if(total_visitors > 0, round(total_revenue / total_visitors, 2), 0) AS revenue_per_visitor,
         if(total_orders > 0, round(total_revenue / total_orders, 2), 0) AS avg_order_value
     FROM kpis_node
 

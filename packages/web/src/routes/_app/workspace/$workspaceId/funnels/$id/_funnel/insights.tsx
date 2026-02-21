@@ -196,11 +196,11 @@ function Insights({
 }) {
   const insightsQuery = useSuspenseQuery(getInsightsQueryOptions(workspaceId, funnelId, funnelVersion, filter))
   const insights = insightsQuery.data
-  const hasData = insights?.kpis?.total_views > 0
+  const hasData = insights?.kpis?.total_visitors > 0
 
   const trafficKpis: KpiItem[] = hasData
     ? [
-        { label: 'Views', value: formatNumber(insights.kpis.total_views, true) },
+        { label: 'Visitors', value: formatNumber(insights.kpis.total_visitors, true) },
         { label: 'Starts', value: formatNumber(insights.kpis.total_starts, true) },
         { label: 'Completions', value: formatNumber(insights.kpis.total_completions, true) },
         { label: 'Start Rate', value: formatPercentage(Math.min(insights.kpis.start_rate, 100)) },
@@ -378,7 +378,7 @@ function RouteComponent() {
                     </Empty.Media>
                     <Empty.Title>No insights available yet</Empty.Title>
                     <Empty.Description>
-                      Publish your funnel to start collecting data. You'll see views, completion rates, and drop-off
+                      Publish your funnel to start collecting data. You'll see visitors, completion rates, and drop-off
                       analysis here.
                     </Empty.Description>
                   </Empty.Header>

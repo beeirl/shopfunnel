@@ -102,7 +102,7 @@ export function PricingTable({ animate, mode }: { animate?: boolean; mode: 'crea
   })()
   const subtitle = (() => {
     if (mode === 'downgrade') return 'Select a lower plan'
-    return 'Get more sessions as your shop grows'
+    return 'Get more visitors as your shop grows'
   })()
   const intervalLabel = isYearly ? 'Yearly' : 'Monthly'
 

@@ -13,7 +13,7 @@ SQL >
         {% else %}
         toDate(date) AS date,
         {% end %}
-        uniqMerge(views) AS views,
+        uniqMerge(visitors) AS visitors,
         uniqMerge(starts) AS starts,
         uniqMerge(completions) AS completions,
         uniqMerge(orders) AS orders

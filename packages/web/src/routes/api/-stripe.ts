@@ -68,16 +68,16 @@ export const StripeRoute = new Hono().post('/webhook', async (c) => {
       if (!plan) throw new Error('Plan not found')
       if (!interval) throw new Error('Interval not found')
 
-      // Add overage price to subscription (metered prices must be monthly, so we add them separately)
-      const stripeOveragePriceId = Billing.planToStripeOveragePriceId(plan)
-      if (stripeOveragePriceId) {
-        const stripeOverageSubscriptionItem = stripeSubscriptionItems.find(
-          (item) => item.price.id === stripeOveragePriceId,
+      // Add visitors price to subscription (metered prices must be monthly, so we add them separately)
+      const stripeVisitorsPriceId = Billing.planToStripeVisitorsPriceId(plan)
+      if (stripeVisitorsPriceId) {
+        const stripeVisitorsSubscriptionItem = stripeSubscriptionItems.find(
+          (item) => item.price.id === stripeVisitorsPriceId,
         )
-        if (!stripeOverageSubscriptionItem) {
+        if (!stripeVisitorsSubscriptionItem) {
           await Billing.stripe().subscriptionItems.create({
             subscription: stripeSubscriptionId,
-            price: stripeOveragePriceId,
+            price: stripeVisitorsPriceId,
           })
         }
       }

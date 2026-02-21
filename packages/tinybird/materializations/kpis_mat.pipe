@@ -8,7 +8,7 @@ SQL >
         workspace_id,
         funnel_id,
         funnel_version,
-        uniqStateIf(session_id, type IN ('funnel_enter', 'funnel_viewed')) AS views,
+        uniqStateIf(session_id, type IN ('funnel_enter', 'funnel_viewed')) AS visitors,
         uniqStateIf(session_id, type IN ('funnel_start', 'funnel_started')) AS starts,
         uniqStateIf(session_id, type IN ('funnel_end', 'funnel_completed')) AS completions,
         uniqStateIf(session_id, type IN ('external_checkout_complete', 'external_checkout_completed')) AS orders,

@@ -127,10 +127,14 @@ const standard2MYearlyPrice = new stripe.Price('Standard2MYearlyPrice', {
   unitAmount: 12000000,
 })
 
-const sessionMeter = new stripe.Meter('SessionMeter', {
-  displayName: 'Sessions',
-  eventName: 'sessions',
-  defaultAggregation: { formula: 'sum' },
+const standardVisitorsProduct = new stripe.Product('StandardVisitorsProduct', {
+  name: 'Shopfunnel Standard - Visitors',
+})
+
+const visitorMeter = new stripe.Meter('VisitorMeter', {
+  displayName: 'Visitors',
+  eventName: 'visitors',
+  defaultAggregation: { formula: 'last' },
   customerMapping: {
     eventPayloadKey: 'stripe_customer_id',
     type: 'by_id',
@@ -140,8 +144,8 @@ const sessionMeter = new stripe.Meter('SessionMeter', {
   },
 })
 
-const standardOveragePriceBase = {
-  product: standardProduct.id,
+const standardVisitorsPriceBase = {
+  product: standardVisitorsProduct.id,
   currency: 'usd',
   billingScheme: 'tiered',
   tiersMode: 'graduated',
@@ -149,60 +153,60 @@ const standardOveragePriceBase = {
     interval: 'month',
     intervalCount: 1,
     usageType: 'metered',
-    meter: sessionMeter.id,
+    meter: visitorMeter.id,
   },
 }
-const standard5KOveragePrice = new stripe.Price('Standard5KOveragePrice', {
-  ...standardOveragePriceBase,
+const standard5KVisitorsPrice = new stripe.Price('Standard5KVisitorsPrice', {
+  ...standardVisitorsPriceBase,
   tiers: [
     { upTo: 5000, unitAmount: 0 },
     { upTo: -1, unitAmount: 3 },
   ],
 })
-const standard25KOveragePrice = new stripe.Price('Standard25KOveragePrice', {
-  ...standardOveragePriceBase,
+const standard25KVisitorsPrice = new stripe.Price('Standard25KVisitorsPrice', {
+  ...standardVisitorsPriceBase,
   tiers: [
     { upTo: 25000, unitAmount: 0 },
     { upTo: -1, unitAmount: 2 },
   ],
 })
-const standard50KOveragePrice = new stripe.Price('Standard50KOveragePrice', {
-  ...standardOveragePriceBase,
+const standard50KVisitorsPrice = new stripe.Price('Standard50KVisitorsPrice', {
+  ...standardVisitorsPriceBase,
   tiers: [
     { upTo: 50000, unitAmount: 0 },
     { upTo: -1, unitAmount: 2 },
   ],
 })
-const standard100KOveragePrice = new stripe.Price('Standard100KOveragePrice', {
-  ...standardOveragePriceBase,
+const standard100KVisitorsPrice = new stripe.Price('Standard100KVisitorsPrice', {
+  ...standardVisitorsPriceBase,
   tiers: [
     { upTo: 100000, unitAmount: 0 },
     { upTo: -1, unitAmount: 2 },
   ],
 })
-const standard250KOveragePrice = new stripe.Price('Standard250KOveragePrice', {
-  ...standardOveragePriceBase,
+const standard250KVisitorsPrice = new stripe.Price('Standard250KVisitorsPrice', {
+  ...standardVisitorsPriceBase,
   tiers: [
     { upTo: 250000, unitAmount: 0 },
     { upTo: -1, unitAmount: 2 },
   ],
 })
-const standard500KOveragePrice = new stripe.Price('Standard500KOveragePrice', {
-  ...standardOveragePriceBase,
+const standard500KVisitorsPrice = new stripe.Price('Standard500KVisitorsPrice', {
+  ...standardVisitorsPriceBase,
   tiers: [
     { upTo: 500000, unitAmount: 0 },
     { upTo: -1, unitAmount: 2 },
   ],
 })
-const standard1MOveragePrice = new stripe.Price('Standard1MOveragePrice', {
-  ...standardOveragePriceBase,
+const standard1MVisitorsPrice = new stripe.Price('Standard1MVisitorsPrice', {
+  ...standardVisitorsPriceBase,
   tiers: [
     { upTo: 1000000, unitAmount: 0 },
     { upTo: -1, unitAmount: 2 },
   ],
 })
-const standard2MOveragePrice = new stripe.Price('Standard2MOveragePrice', {
-  ...standardOveragePriceBase,
+const standard2MVisitorsPrice = new stripe.Price('Standard2MVisitorsPrice', {
+  ...standardVisitorsPriceBase,
   tiers: [
     { upTo: 2000000, unitAmount: 0 },
     { upTo: -1, unitAmount: 2 },
@@ -236,7 +240,7 @@ const managedServiceYearlyPrice = new stripe.Price('ManagedServiceYearlyPrice', 
 export const BILLING = new sst.Linkable('BILLING', {
   properties: {
     standardProductId: standardProduct.id,
-    meterId: sessionMeter.id,
+    visitorMeterId: visitorMeter.id,
 
     standard5KMonthlyPriceId: standard5KMonthlyPrice.id,
     standard25KMonthlyPriceId: standard25KMonthlyPrice.id,
@@ -256,14 +260,14 @@ export const BILLING = new sst.Linkable('BILLING', {
     standard1MYearlyPriceId: standard1MYearlyPrice.id,
     standard2MYearlyPriceId: standard2MYearlyPrice.id,
 
-    standard5KOveragePriceId: standard5KOveragePrice.id,
-    standard25KOveragePriceId: standard25KOveragePrice.id,
-    standard50KOveragePriceId: standard50KOveragePrice.id,
-    standard100KOveragePriceId: standard100KOveragePrice.id,
-    standard250KOveragePriceId: standard250KOveragePrice.id,
-    standard500KOveragePriceId: standard500KOveragePrice.id,
-    standard1MOveragePriceId: standard1MOveragePrice.id,
-    standard2MOveragePriceId: standard2MOveragePrice.id,
+    standard5KVisitorsPriceId: standard5KVisitorsPrice.id,
+    standard25KVisitorsPriceId: standard25KVisitorsPrice.id,
+    standard50KVisitorsPriceId: standard50KVisitorsPrice.id,
+    standard100KVisitorsPriceId: standard100KVisitorsPrice.id,
+    standard250KVisitorsPriceId: standard250KVisitorsPrice.id,
+    standard500KVisitorsPriceId: standard500KVisitorsPrice.id,
+    standard1MVisitorsPriceId: standard1MVisitorsPrice.id,
+    standard2MVisitorsPriceId: standard2MVisitorsPrice.id,
 
     managedServiceProductId: managedServiceProduct.id,
 

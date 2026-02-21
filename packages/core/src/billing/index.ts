@@ -237,21 +237,21 @@ export namespace Billing {
       const existingPlanItem = existingSubscription.items.data.find((item) =>
         Billing.stripePriceIdToPlan(item.price.id),
       )
-      const existingOverageItem = existingSubscription.items.data.find((item) =>
-        Billing.stripePriceIdToOveragePlan(item.price.id),
+      const existingVisitorsItem = existingSubscription.items.data.find((item) =>
+        Billing.stripeVisitorsPriceIdToPlan(item.price.id),
       )
       if (!existingPlanItem) throw new Error('Existing plan subscription item not found')
-      if (!existingOverageItem) throw new Error('Existing overage subscription item not found')
+      if (!existingVisitorsItem) throw new Error('Existing visitors subscription item not found')
 
       const planPriceId = Billing.planToStripePriceId({ plan: input.plan, interval: input.interval })
-      const overagePriceId = Billing.planToStripeOveragePriceId(input.plan)
+      const visitorsPriceId = Billing.planToStripeVisitorsPriceId(input.plan)
       if (!planPriceId) throw new Error('Invalid plan')
-      if (!overagePriceId) throw new Error('Invalid overage plan')
+      if (!visitorsPriceId) throw new Error('Invalid visitors plan')
 
       const subscription = await Billing.stripe().subscriptions.update(billing.stripeSubscriptionId, {
         items: [
           { id: existingPlanItem.id, price: planPriceId },
-          { id: existingOverageItem.id, price: overagePriceId },
+          { id: existingVisitorsItem.id, price: visitorsPriceId },
         ],
         proration_behavior: 'always_invoice',
         payment_behavior: 'pending_if_incomplete',
@@ -291,8 +291,8 @@ export namespace Billing {
       const planPriceId = Billing.planToStripePriceId({ plan: input.plan, interval: input.interval })
       if (!planPriceId) throw new Error('Invalid plan')
 
-      const overagePriceId = Billing.planToStripeOveragePriceId(input.plan)
-      if (!overagePriceId) throw new Error('Invalid overage plan')
+      const visitorsPriceId = Billing.planToStripeVisitorsPriceId(input.plan)
+      if (!visitorsPriceId) throw new Error('Invalid visitors plan')
 
       const addonItems = (schedule.phases[0]?.items ?? []).flatMap((item) => {
         const itemPriceId = typeof item.price === 'string' ? item.price : item.price.id
@@ -316,7 +316,7 @@ export namespace Billing {
             end_date: schedule.phases[0].end_date,
           },
           {
-            items: [{ price: planPriceId, quantity: 1 }, { price: overagePriceId }, ...addonItems],
+            items: [{ price: planPriceId, quantity: 1 }, { price: visitorsPriceId }, ...addonItems],
             proration_behavior: 'none',
             metadata: { workspaceId: Actor.workspaceId() },
           },
@@ -542,19 +542,19 @@ export namespace Billing {
     if (stripePriceId === Resource.BILLING.managedServiceYearlyPriceId) return 'managed'
   })
 
-  export const stripePriceIdToOveragePlan = fn(z.string(), (stripePriceId): Plan | undefined => {
-    if (stripePriceId === Resource.BILLING.standard5KOveragePriceId) return 'standard5K'
-    if (stripePriceId === Resource.BILLING.standard25KOveragePriceId) return 'standard25K'
-    if (stripePriceId === Resource.BILLING.standard50KOveragePriceId) return 'standard50K'
-    if (stripePriceId === Resource.BILLING.standard100KOveragePriceId) return 'standard100K'
-    if (stripePriceId === Resource.BILLING.standard250KOveragePriceId) return 'standard250K'
+  export const stripeVisitorsPriceIdToPlan = fn(z.string(), (stripePriceId): Plan | undefined => {
+    if (stripePriceId === Resource.BILLING.standard5KVisitorsPriceId) return 'standard5K'
+    if (stripePriceId === Resource.BILLING.standard25KVisitorsPriceId) return 'standard25K'
+    if (stripePriceId === Resource.BILLING.standard50KVisitorsPriceId) return 'standard50K'
+    if (stripePriceId === Resource.BILLING.standard100KVisitorsPriceId) return 'standard100K'
+    if (stripePriceId === Resource.BILLING.standard250KVisitorsPriceId) return 'standard250K'
   })
 
-  export const planToStripeOveragePriceId = fn(Billing.Plan, (plan) => {
-    if (plan === 'standard5K') return Resource.BILLING.standard5KOveragePriceId
-    if (plan === 'standard25K') return Resource.BILLING.standard25KOveragePriceId
-    if (plan === 'standard50K') return Resource.BILLING.standard50KOveragePriceId
-    if (plan === 'standard100K') return Resource.BILLING.standard100KOveragePriceId
-    if (plan === 'standard250K') return Resource.BILLING.standard250KOveragePriceId
+  export const planToStripeVisitorsPriceId = fn(Billing.Plan, (plan) => {
+    if (plan === 'standard5K') return Resource.BILLING.standard5KVisitorsPriceId
+    if (plan === 'standard25K') return Resource.BILLING.standard25KVisitorsPriceId
+    if (plan === 'standard50K') return Resource.BILLING.standard50KVisitorsPriceId
+    if (plan === 'standard100K') return Resource.BILLING.standard100KVisitorsPriceId
+    if (plan === 'standard250K') return Resource.BILLING.standard250KVisitorsPriceId
   })
 }

@@ -20,7 +20,7 @@ import { Heading } from './-components/heading'
 
 type FunnelKpi = {
   funnel_id: string
-  views: number
+  visitors: number
   starts: number
   completions: number
   orders: number
@@ -30,7 +30,7 @@ type FunnelKpi = {
 
 type TimeseriesPoint = {
   date: string
-  views: number
+  visitors: number
   starts: number
   completions: number
   orders: number
@@ -249,18 +249,18 @@ export const Route = createFileRoute('/_app/workspace/$workspaceId/_dashboard/')
   },
 })
 
-type CountMetric = 'views' | 'starts' | 'completions' | 'orders'
+type CountMetric = 'visitors' | 'starts' | 'completions' | 'orders'
 
 const COUNT_METRICS: { key: CountMetric; label: string }[] = [
-  { key: 'views', label: 'Views' },
+  { key: 'visitors', label: 'Visitors' },
   { key: 'starts', label: 'Starts' },
   { key: 'completions', label: 'Completions' },
   { key: 'orders', label: 'Orders' },
 ]
 
 const chartConfig = {
-  views: {
-    label: 'Views',
+  visitors: {
+    label: 'Visitors',
     color: 'var(--color-primary)',
   },
   starts: {
@@ -438,57 +438,57 @@ function RouteComponent() {
   )
   const { current, previous, timeseries } = analyticsQuery.data
 
-  const [selectedMetric, setSelectedMetric] = React.useState<CountMetric>('views')
+  const [selectedMetric, setSelectedMetric] = React.useState<CountMetric>('visitors')
 
   const currentTotals = React.useMemo(() => {
     if (current.length === 0) return null
-    const totalViews = current.reduce((sum, f) => sum + f.views, 0)
+    const totalVisitors = current.reduce((sum, f) => sum + f.visitors, 0)
     const totalStarts = current.reduce((sum, f) => sum + f.starts, 0)
     const totalCompletions = current.reduce((sum, f) => sum + f.completions, 0)
     const totalOrders = current.reduce((sum, f) => sum + f.orders, 0)
     return {
-      views: totalViews,
+      visitors: totalVisitors,
       starts: totalStarts,
       completions: totalCompletions,
       orders: totalOrders,
-      start_rate: totalViews > 0 ? Math.min((totalStarts / totalViews) * 100, 100) : 0,
-      completion_rate: totalViews > 0 ? Math.min((totalCompletions / totalViews) * 100, 100) : 0,
-      conversion_rate: totalViews > 0 ? Math.min((totalOrders / totalViews) * 100, 100) : 0,
+      start_rate: totalVisitors > 0 ? Math.min((totalStarts / totalVisitors) * 100, 100) : 0,
+      completion_rate: totalVisitors > 0 ? Math.min((totalCompletions / totalVisitors) * 100, 100) : 0,
+      conversion_rate: totalVisitors > 0 ? Math.min((totalOrders / totalVisitors) * 100, 100) : 0,
     }
   }, [current])
 
   const previousTotals = React.useMemo(() => {
     if (previous.length === 0) return null
-    const totalViews = previous.reduce((sum, f) => sum + f.views, 0)
+    const totalVisitors = previous.reduce((sum, f) => sum + f.visitors, 0)
     const totalStarts = previous.reduce((sum, f) => sum + f.starts, 0)
     const totalCompletions = previous.reduce((sum, f) => sum + f.completions, 0)
     const totalOrders = previous.reduce((sum, f) => sum + f.orders, 0)
     return {
-      views: totalViews,
+      visitors: totalVisitors,
       starts: totalStarts,
       completions: totalCompletions,
       orders: totalOrders,
-      start_rate: totalViews > 0 ? Math.min((totalStarts / totalViews) * 100, 100) : 0,
-      completion_rate: totalViews > 0 ? Math.min((totalCompletions / totalViews) * 100, 100) : 0,
-      conversion_rate: totalViews > 0 ? Math.min((totalOrders / totalViews) * 100, 100) : 0,
+      start_rate: totalVisitors > 0 ? Math.min((totalStarts / totalVisitors) * 100, 100) : 0,
+      completion_rate: totalVisitors > 0 ? Math.min((totalCompletions / totalVisitors) * 100, 100) : 0,
+      conversion_rate: totalVisitors > 0 ? Math.min((totalOrders / totalVisitors) * 100, 100) : 0,
     }
   }, [previous])
 
   const startRateTimeseries = React.useMemo(() => {
     return timeseries
-      .filter((point) => point.views > 0)
+      .filter((point) => point.visitors > 0)
       .map((point) => ({
         date: point.date,
-        value: Math.min((point.starts / point.views) * 100, 100),
+        value: Math.min((point.starts / point.visitors) * 100, 100),
       }))
   }, [timeseries])
 
   const completionRateTimeseries = React.useMemo(() => {
     return timeseries
-      .filter((point) => point.views > 0)
+      .filter((point) => point.visitors > 0)
       .map((point) => ({
         date: point.date,
-        value: Math.min((point.completions / point.views) * 100, 100),
+        value: Math.min((point.completions / point.visitors) * 100, 100),
       }))
   }, [timeseries])
 
@@ -518,7 +518,7 @@ function RouteComponent() {
         }
       })
       .filter((funnel) => funnel.current !== null)
-      .sort((a, b) => (b.current?.views ?? 0) - (a.current?.views ?? 0) || a.title.localeCompare(b.title))
+      .sort((a, b) => (b.current?.visitors ?? 0) - (a.current?.visitors ?? 0) || a.title.localeCompare(b.title))
   }, [funnels, current, previousByFunnel])
 
   const hasData = current.length > 0
@@ -664,7 +664,7 @@ function RouteComponent() {
               <Table.Header>
                 <Table.Row className="hover:bg-transparent">
                   <Table.Head className="w-[32%]">Funnel</Table.Head>
-                  <Table.Head className="w-[17%] text-right">Views</Table.Head>
+                  <Table.Head className="w-[17%] text-right">Visitors</Table.Head>
                   <Table.Head className="w-[17%] text-right">Start Rate</Table.Head>
                   <Table.Head className="w-[17%] text-right">Completion Rate</Table.Head>
                   <Table.Head className="w-[17%] text-right">Conversion Rate</Table.Head>
@@ -682,21 +682,21 @@ function RouteComponent() {
                     const currentStartRate = funnel.current ? Math.min(funnel.current.start_rate, 100) : null
                     const currentCompletionRate = funnel.current ? Math.min(funnel.current.completion_rate, 100) : null
                     const currentConversionRate =
-                      funnel.current && funnel.current.views > 0
-                        ? Math.min((funnel.current.orders / funnel.current.views) * 100, 100)
+                      funnel.current && funnel.current.visitors > 0
+                        ? Math.min((funnel.current.orders / funnel.current.visitors) * 100, 100)
                         : null
                     const previousStartRate = funnel.previous ? Math.min(funnel.previous.start_rate, 100) : null
                     const previousCompletionRate = funnel.previous
                       ? Math.min(funnel.previous.completion_rate, 100)
                       : null
                     const previousConversionRate =
-                      funnel.previous && funnel.previous.views > 0
-                        ? Math.min((funnel.previous.orders / funnel.previous.views) * 100, 100)
+                      funnel.previous && funnel.previous.visitors > 0
+                        ? Math.min((funnel.previous.orders / funnel.previous.visitors) * 100, 100)
                         : null
 
-                    const viewsDelta =
+                    const visitorsDelta =
                       funnel.current && funnel.previous
-                        ? formatDelta(funnel.current.views, funnel.previous.views)
+                        ? formatDelta(funnel.current.visitors, funnel.previous.visitors)
                         : undefined
                     const startRateDelta =
                       currentStartRate !== null && previousStartRate !== null
@@ -724,7 +724,7 @@ function RouteComponent() {
                           </Link>
                         </Table.Cell>
                         <Table.Cell className="text-right">
-                          <MetricValue value={funnel.current?.views ?? null} delta={viewsDelta} align="right" />
+                          <MetricValue value={funnel.current?.visitors ?? null} delta={visitorsDelta} align="right" />
                         </Table.Cell>
                         <Table.Cell className="text-right">
                           <MetricValue value={currentStartRate} delta={startRateDelta} isPercentage align="right" />

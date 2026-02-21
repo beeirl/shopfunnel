@@ -77,7 +77,7 @@ export function BillingDialog({ open, onOpenChange }: { open: boolean; onOpenCha
   const [removeManagedDialogOpen, setRemoveManagedDialogOpen] = React.useState(false)
 
   const currentPlan = PLANS.find((p) => p.id === billing.plan)
-  const currentSessionLimit = currentPlan?.sessions ?? 0
+  const currentVisitorLimit = currentPlan?.visitors ?? 0
 
   const currentPlanPrice = (() => {
     if (!currentPlan || !currentPlan.monthlyPrice) return '$0'
@@ -210,8 +210,8 @@ export function BillingDialog({ open, onOpenChange }: { open: boolean; onOpenCha
           <div className="flex flex-col border-t border-border">
             {[
               {
-                label: 'Sessions',
-                value: `${usage.sessions.toLocaleString()} / ${currentSessionLimit.toLocaleString()}`,
+                label: 'Visitors',
+                value: `${usage.visitors.toLocaleString()} / ${currentVisitorLimit.toLocaleString()}`,
               },
               {
                 label: 'Plan cost',

@@ -1,5 +1,5 @@
 DESCRIPTION >
-    Aggregates unique sessions per workspace from the usages materialized view.
+    Aggregates unique visitors per workspace from the kpis materialized view.
     Supports optional workspace_id and date range filtering.
 
 TOKEN api READ
@@ -9,8 +9,8 @@ SQL >
     %
     SELECT
         workspace_id,
-        uniqMerge(sessions) AS sessions
-    FROM usages_mv
+        uniqMerge(visitors) AS visitors
+    FROM kpis_mv
     WHERE 1 = 1
         {% if defined(workspace_id) %}
         AND workspace_id = {{ String(workspace_id) }}
