@@ -1,3 +1,4 @@
+import { database } from './database'
 import { secret } from './secret'
 import { domain } from './stage'
 
@@ -15,13 +16,13 @@ export const STRIPE_WEBHOOK_SECRET = new sst.Linkable('STRIPE_WEBHOOK_SECRET', {
   properties: { value: stripeWebhook.secret },
 })
 
-// export const billingCron = new sst.cloudflare.Cron('BillingCron', {
-//   job: {
-//     handler: 'packages/function/src/billing.ts',
-//     link: [database, secret.STRIPE_SECRET_KEY, secret.TINYBIRD_TOKEN],
-//   },
-//   schedules: ['5 * * * *'],
-// })
+export const billingCron = new sst.cloudflare.Cron('BillingCron', {
+  job: {
+    handler: 'packages/function/src/billing.ts',
+    link: [database, secret.STRIPE_SECRET_KEY, secret.TINYBIRD_TOKEN],
+  },
+  schedules: ['5 * * * *'],
+})
 
 if ($app.stage === 'production') {
   new cloudflare.DnsRecord('StripeDnsRecord', {
@@ -56,34 +57,42 @@ const standardMonthlyPriceBase = {
 const standard5KMonthlyPrice = new stripe.Price('Standard5KMonthlyPrice', {
   ...standardMonthlyPriceBase,
   unitAmount: 7400,
+  nickname: '5K Visitors',
 })
 const standard25KMonthlyPrice = new stripe.Price('Standard25KMonthlyPrice', {
   ...standardMonthlyPriceBase,
   unitAmount: 24900,
+  nickname: '25K Visitors',
 })
 const standard50KMonthlyPrice = new stripe.Price('Standard50KMonthlyPrice', {
   ...standardMonthlyPriceBase,
   unitAmount: 39900,
+  nickname: '50K Visitors',
 })
 const standard100KMonthlyPrice = new stripe.Price('Standard100KMonthlyPrice', {
   ...standardMonthlyPriceBase,
   unitAmount: 69900,
+  nickname: '100K Visitors',
 })
 const standard250KMonthlyPrice = new stripe.Price('Standard250KMonthlyPrice', {
   ...standardMonthlyPriceBase,
   unitAmount: 169900,
+  nickname: '250K Visitors',
 })
 const standard500KMonthlyPrice = new stripe.Price('Standard500KMonthlyPrice', {
   ...standardMonthlyPriceBase,
   unitAmount: 349900,
+  nickname: '500K Visitors',
 })
 const standard1MMonthlyPrice = new stripe.Price('Standard1MMonthlyPrice', {
   ...standardMonthlyPriceBase,
   unitAmount: 650000,
+  nickname: '1M Visitors',
 })
 const standard2MMonthlyPrice = new stripe.Price('Standard2MMonthlyPrice', {
   ...standardMonthlyPriceBase,
   unitAmount: 1200000,
+  nickname: '2M Visitors',
 })
 
 const standardYearlyPriceBase = {
@@ -97,34 +106,42 @@ const standardYearlyPriceBase = {
 const standard5KYearlyPrice = new stripe.Price('Standard5KYearlyPrice', {
   ...standardYearlyPriceBase,
   unitAmount: 74000,
+  nickname: '5K Visitors',
 })
 const standard25KYearlyPrice = new stripe.Price('Standard25KYearlyPrice', {
   ...standardYearlyPriceBase,
   unitAmount: 249000,
+  nickname: '25K Visitors',
 })
 const standard50KYearlyPrice = new stripe.Price('Standard50KYearlyPrice', {
   ...standardYearlyPriceBase,
   unitAmount: 399000,
+  nickname: '50K Visitors',
 })
 const standard100KYearlyPrice = new stripe.Price('Standard100KYearlyPrice', {
   ...standardYearlyPriceBase,
   unitAmount: 699000,
+  nickname: '100K Visitors',
 })
 const standard250KYearlyPrice = new stripe.Price('Standard250KYearlyPrice', {
   ...standardYearlyPriceBase,
   unitAmount: 1699000,
+  nickname: '250K Visitors',
 })
 const standard500KYearlyPrice = new stripe.Price('Standard500KYearlyPrice', {
   ...standardYearlyPriceBase,
   unitAmount: 3499000,
+  nickname: '500K Visitors',
 })
 const standard1MYearlyPrice = new stripe.Price('Standard1MYearlyPrice', {
   ...standardYearlyPriceBase,
   unitAmount: 6500000,
+  nickname: '1M Visitors',
 })
 const standard2MYearlyPrice = new stripe.Price('Standard2MYearlyPrice', {
   ...standardYearlyPriceBase,
   unitAmount: 12000000,
+  nickname: '2M Visitors',
 })
 
 const standardVisitorsProduct = new stripe.Product('StandardVisitorsProduct', {
@@ -162,6 +179,7 @@ const standard5KVisitorsPrice = new stripe.Price('Standard5KVisitorsPrice', {
     { upTo: 5000, unitAmount: 0 },
     { upTo: -1, unitAmount: 3 },
   ],
+  nickname: '5K Visitors',
 })
 const standard25KVisitorsPrice = new stripe.Price('Standard25KVisitorsPrice', {
   ...standardVisitorsPriceBase,
@@ -169,6 +187,7 @@ const standard25KVisitorsPrice = new stripe.Price('Standard25KVisitorsPrice', {
     { upTo: 25000, unitAmount: 0 },
     { upTo: -1, unitAmount: 2 },
   ],
+  nickname: '25K Visitors',
 })
 const standard50KVisitorsPrice = new stripe.Price('Standard50KVisitorsPrice', {
   ...standardVisitorsPriceBase,
@@ -176,6 +195,7 @@ const standard50KVisitorsPrice = new stripe.Price('Standard50KVisitorsPrice', {
     { upTo: 50000, unitAmount: 0 },
     { upTo: -1, unitAmount: 2 },
   ],
+  nickname: '50K Visitors',
 })
 const standard100KVisitorsPrice = new stripe.Price('Standard100KVisitorsPrice', {
   ...standardVisitorsPriceBase,
@@ -183,6 +203,7 @@ const standard100KVisitorsPrice = new stripe.Price('Standard100KVisitorsPrice', 
     { upTo: 100000, unitAmount: 0 },
     { upTo: -1, unitAmount: 2 },
   ],
+  nickname: '100K Visitors',
 })
 const standard250KVisitorsPrice = new stripe.Price('Standard250KVisitorsPrice', {
   ...standardVisitorsPriceBase,
@@ -190,6 +211,7 @@ const standard250KVisitorsPrice = new stripe.Price('Standard250KVisitorsPrice', 
     { upTo: 250000, unitAmount: 0 },
     { upTo: -1, unitAmount: 2 },
   ],
+  nickname: '250K Visitors',
 })
 const standard500KVisitorsPrice = new stripe.Price('Standard500KVisitorsPrice', {
   ...standardVisitorsPriceBase,
@@ -197,6 +219,7 @@ const standard500KVisitorsPrice = new stripe.Price('Standard500KVisitorsPrice', 
     { upTo: 500000, unitAmount: 0 },
     { upTo: -1, unitAmount: 2 },
   ],
+  nickname: '500K Visitors',
 })
 const standard1MVisitorsPrice = new stripe.Price('Standard1MVisitorsPrice', {
   ...standardVisitorsPriceBase,
@@ -204,6 +227,7 @@ const standard1MVisitorsPrice = new stripe.Price('Standard1MVisitorsPrice', {
     { upTo: 1000000, unitAmount: 0 },
     { upTo: -1, unitAmount: 2 },
   ],
+  nickname: '1M Visitors',
 })
 const standard2MVisitorsPrice = new stripe.Price('Standard2MVisitorsPrice', {
   ...standardVisitorsPriceBase,
@@ -211,6 +235,7 @@ const standard2MVisitorsPrice = new stripe.Price('Standard2MVisitorsPrice', {
     { upTo: 2000000, unitAmount: 0 },
     { upTo: -1, unitAmount: 2 },
   ],
+  nickname: '2M Visitors',
 })
 
 const managedServiceProduct = new stripe.Product('ManagedServiceProduct', {
