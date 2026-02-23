@@ -1,11 +1,15 @@
 import ShopfunnelLogo from '@/assets/shopfunnel-logo.svg?react'
 import { Button } from '@/components/ui/button'
 import { CircularProgress } from '@/components/ui/circular-progress'
+import { Dialog } from '@/components/ui/dialog'
+import { Input } from '@/components/ui/input'
 import { Menu } from '@/components/ui/menu'
 import { Sidebar } from '@/components/ui/sidebar'
+import { Spinner } from '@/components/ui/spinner'
 import { withActor } from '@/context/auth.withActor'
 import { Account } from '@shopfunnel/core/account/index'
 import { Identifier } from '@shopfunnel/core/identifier'
+import { Workspace } from '@shopfunnel/core/workspace/index'
 import {
   IconBlocks as BlocksIcon,
   IconBolt as BoltIcon,
@@ -14,17 +18,20 @@ import {
   IconFilter2 as FilterIcon,
   IconLogout as LogoutIcon,
   IconSelector as SelectorIcon,
+  IconUsers as UsersIcon,
   IconWorld as WorldIcon,
 } from '@tabler/icons-react'
-import { queryOptions, useSuspenseQuery } from '@tanstack/react-query'
+import { queryOptions, useMutation, useSuspenseQuery } from '@tanstack/react-query'
 import { createFileRoute, Link, Outlet, useLocation, useMatches } from '@tanstack/react-router'
 import { createServerFn } from '@tanstack/react-start'
 import { usePostHog } from 'posthog-js/react'
 import * as React from 'react'
+import { z } from 'zod'
 import {
   checkBillingQueryOptions,
   checkOnboardingQueryOptions,
   getBillingQueryOptions,
+  getSessionQueryOptions,
   getUsageQueryOptions,
   getUserEmailQueryOptions,
 } from '../-common'
@@ -42,6 +49,18 @@ const getWorkspacesQueryOptions = (workspaceId: string) =>
     queryFn: () => getWorkspaces({ data: workspaceId }),
   })
 
+export const createWorkspace = createServerFn({ method: 'POST' })
+  .inputValidator(z.object({ name: z.string().min(1) }))
+  .handler(({ data }) => {
+    return withActor(async () => {
+      return Workspace.create({
+        name: data.name,
+        exemptBilling: true,
+        skipOnboarding: true,
+      })
+    })
+  })
+
 export const Route = createFileRoute('/_app/workspace/$workspaceId/_dashboard')({
   component: DashboardLayoutRoute,
   beforeLoad: async ({ context, params }) => {
@@ -53,6 +72,7 @@ export const Route = createFileRoute('/_app/workspace/$workspaceId/_dashboard')(
       context.queryClient.ensureQueryData(getBillingQueryOptions(params.workspaceId)),
       context.queryClient.ensureQueryData(getUserEmailQueryOptions(params.workspaceId)),
       context.queryClient.ensureQueryData(getWorkspacesQueryOptions(params.workspaceId)),
+      context.queryClient.ensureQueryData(getSessionQueryOptions(params.workspaceId)),
     ])
     context.queryClient.ensureQueryData(
       getUsageQueryOptions(params.workspaceId, billing.periodStartedAt?.toISOString() ?? null),
@@ -120,11 +140,61 @@ function TrialProgressButton(props: React.ComponentProps<typeof Button>) {
   )
 }
 
+function CreateWorkspaceDialog({ open, onOpenChange }: { open: boolean; onOpenChange: (open: boolean) => void }) {
+  const [name, setName] = React.useState('')
+
+  const createWorkspaceMutation = useMutation({
+    mutationFn: (name: string) => createWorkspace({ data: { name } }),
+    onSuccess: (workspaceId) => {
+      onOpenChange(false)
+      setName('')
+      window.location.href = `/workspace/${workspaceId}`
+    },
+  })
+
+  const handleCreate = () => {
+    if (!name.trim()) return
+    createWorkspaceMutation.mutate(name.trim())
+  }
+
+  React.useEffect(() => {
+    if (!open) {
+      setName('')
+    }
+  }, [open])
+
+  return (
+    <Dialog.Root open={open} onOpenChange={onOpenChange}>
+      <Dialog.Content>
+        <Dialog.Header>
+          <Dialog.Title>Create new workspace</Dialog.Title>
+        </Dialog.Header>
+        <Input
+          placeholder="Enter workspace name"
+          value={name}
+          onValueChange={setName}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') handleCreate()
+          }}
+        />
+        <Dialog.Footer>
+          <Dialog.Close render={<Button variant="outline" />}>Cancel</Dialog.Close>
+          <Button onClick={handleCreate} disabled={createWorkspaceMutation.isPending || !name.trim()}>
+            {createWorkspaceMutation.isPending && <Spinner />}
+            Create
+          </Button>
+        </Dialog.Footer>
+      </Dialog.Content>
+    </Dialog.Root>
+  )
+}
+
 function DashboardLayoutRoute() {
   const params = Route.useParams()
   const location = useLocation()
   const posthog = usePostHog()
   const [billingDialogOpen, setBillingDialogOpen] = React.useState(false)
+  const [createWorkspaceDialogOpen, setCreateWorkspaceDialogOpen] = React.useState(false)
 
   const billingQuery = useSuspenseQuery(getBillingQueryOptions(params.workspaceId))
   const billing = billingQuery.data
@@ -135,6 +205,9 @@ function DashboardLayoutRoute() {
   const workspacesQuery = useSuspenseQuery(getWorkspacesQueryOptions(params.workspaceId))
   const workspaces = workspacesQuery.data
   const currentWorkspace = workspaces.find((workspace) => workspace.id === params.workspaceId)
+
+  const sessionQuery = useSuspenseQuery(getSessionQueryOptions(params.workspaceId))
+  const session = sessionQuery.data
 
   const handleWorkspaceSwitch = (workspaceId: string) => {
     if (workspaceId === params.workspaceId) return
@@ -167,36 +240,44 @@ function DashboardLayoutRoute() {
               <ShopfunnelLogo className="h-4 w-auto" />
             </Link>
           </div>
-          <Sidebar.Menu>
-            <Sidebar.MenuItem>
-              <Menu.Root>
-                <Menu.Trigger
-                  render={
-                    <Sidebar.MenuButton className="h-9 rounded-lg pl-3" variant="outline">
-                      {currentWorkspace?.name ?? 'Workspace'}
-                      <SelectorIcon className="ml-auto" />
-                    </Sidebar.MenuButton>
-                  }
-                />
-                <Menu.Content className="w-(--anchor-width)" side="bottom" align="start">
-                  <Menu.Group>
-                    <Menu.Label>Workspaces</Menu.Label>
-                    <Menu.RadioGroup value={params.workspaceId}>
-                      {workspaces.map((workspace) => (
-                        <Menu.RadioItem
-                          key={workspace.id}
-                          value={workspace.id}
-                          onClick={() => handleWorkspaceSwitch(workspace.id)}
-                        >
-                          {workspace.name}
-                        </Menu.RadioItem>
-                      ))}
-                    </Menu.RadioGroup>
-                  </Menu.Group>
-                </Menu.Content>
-              </Menu.Root>
-            </Sidebar.MenuItem>
-          </Sidebar.Menu>
+          {(workspaces.length > 1 || session.isSuperAdmin) && (
+            <Sidebar.Menu>
+              <Sidebar.MenuItem>
+                <Menu.Root>
+                  <Menu.Trigger
+                    render={
+                      <Sidebar.MenuButton className="h-9 rounded-lg pl-3" variant="outline">
+                        {currentWorkspace?.name ?? 'Workspace'}
+                        <SelectorIcon className="ml-auto" />
+                      </Sidebar.MenuButton>
+                    }
+                  />
+                  <Menu.Content className="w-(--anchor-width)" side="bottom" align="start">
+                    <Menu.Group>
+                      <Menu.Label>Workspaces</Menu.Label>
+                      <Menu.RadioGroup value={params.workspaceId}>
+                        {workspaces.map((workspace) => (
+                          <Menu.RadioItem
+                            key={workspace.id}
+                            value={workspace.id}
+                            onClick={() => handleWorkspaceSwitch(workspace.id)}
+                          >
+                            {workspace.name}
+                          </Menu.RadioItem>
+                        ))}
+                      </Menu.RadioGroup>
+                    </Menu.Group>
+                    {session.isSuperAdmin && (
+                      <>
+                        <Menu.Separator />
+                        <Menu.Item onClick={() => setCreateWorkspaceDialogOpen(true)}>Create workspace</Menu.Item>
+                      </>
+                    )}
+                  </Menu.Content>
+                </Menu.Root>
+              </Sidebar.MenuItem>
+            </Sidebar.Menu>
+          )}
         </Sidebar.Header>
 
         <Sidebar.Content>
@@ -214,6 +295,17 @@ function DashboardLayoutRoute() {
                     </Sidebar.MenuButton>
                   </Sidebar.MenuItem>
                 ))}
+                {session.isSuperAdmin && (
+                  <Sidebar.MenuItem>
+                    <Sidebar.MenuButton
+                      render={<Link to="/workspace/$workspaceId/members" params={params} />}
+                      isActive={isRouteActive('/workspace/$workspaceId/members')}
+                    >
+                      <UsersIcon />
+                      <span>Members</span>
+                    </Sidebar.MenuButton>
+                  </Sidebar.MenuItem>
+                )}
                 {billing?.plan && (
                   <Sidebar.MenuItem>
                     <Sidebar.MenuButton onClick={() => setBillingDialogOpen(true)}>
@@ -288,6 +380,7 @@ function DashboardLayoutRoute() {
       </Sidebar.Inset>
 
       <BillingDialog open={billingDialogOpen} onOpenChange={setBillingDialogOpen} />
+      <CreateWorkspaceDialog open={createWorkspaceDialogOpen} onOpenChange={setCreateWorkspaceDialogOpen} />
     </Sidebar.Provider>
   )
 }

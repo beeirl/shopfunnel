@@ -1,10 +1,13 @@
 import { and, eq, getTableColumns, isNull, sql } from 'drizzle-orm'
+import { render } from 'jsx-email'
 import { z } from 'zod'
 import { Actor } from '../actor'
 import { AuthTable } from '../auth/index.sql'
 import { Database } from '../database'
 import { Identifier } from '../identifier'
+import { Resend } from '../resend/index'
 import { fn } from '../utils/fn'
+import { WorkspaceTable } from '../workspace/index.sql'
 import { UserRole, UserTable } from './index.sql'
 
 export namespace User {
@@ -68,42 +71,56 @@ export namespace User {
           .then((rows) => rows[0]?.accountId),
       )
 
-      if (accountId) {
-        await Database.use(async (tx) =>
-          tx
-            .insert(UserTable)
-            .values({
-              id: Identifier.create('user'),
-              name: '',
-              accountId,
-              workspaceId,
+      await Database.use(async (tx) =>
+        tx
+          .insert(UserTable)
+          .values({
+            id: Identifier.create('user'),
+            workspaceId,
+            ...(accountId ? { accountId } : { email }),
+            name: '',
+            role,
+          })
+          .onDuplicateKeyUpdate({
+            set: {
               role,
-            })
-            .onDuplicateKeyUpdate({
-              set: {
-                role,
-                archivedAt: null,
-              },
-            }),
-        )
-      } else {
-        await Database.use(async (tx) =>
+              archivedAt: null,
+            },
+          }),
+      )
+
+      try {
+        const emailInfo = await Database.use((tx) =>
           tx
-            .insert(UserTable)
-            .values({
-              id: Identifier.create('user'),
-              name: '',
-              email,
-              workspaceId,
-              role,
+            .select({
+              inviterEmail: AuthTable.subject,
+              workspaceName: WorkspaceTable.name,
             })
-            .onDuplicateKeyUpdate({
-              set: {
-                role,
-                archivedAt: null,
-              },
-            }),
+            .from(UserTable)
+            .innerJoin(AuthTable, and(eq(UserTable.accountId, AuthTable.accountId), eq(AuthTable.provider, 'email')))
+            .innerJoin(WorkspaceTable, eq(WorkspaceTable.id, workspaceId))
+            .where(
+              and(eq(UserTable.workspaceId, workspaceId), eq(UserTable.id, Actor.assert('user').properties.userId)),
+            )
+            .then((rows) => rows[0]),
         )
+
+        const { Template: InviteEmail } = await import('@shopfunnel/email/InviteEmail.jsx')
+        await Resend.sendEmail({
+          to: email,
+          subject: `You've been invited to join the ${emailInfo.workspaceName} workspace on Shopfunnel`,
+          body: await render(
+            // @ts-ignore
+            InviteEmail({
+              inviter: emailInfo.inviterEmail,
+              assetsUrl: 'https://shopfunnel.com/email',
+              workspaceId,
+              workspaceName: emailInfo.workspaceName,
+            }),
+          ),
+        })
+      } catch (e) {
+        console.error(e)
       }
     },
   )

@@ -23,8 +23,10 @@ export namespace Workspace {
   export const create = fn(
     z.object({
       name: z.string().min(1),
+      exemptBilling: z.boolean().optional(),
+      skipOnboarding: z.boolean().optional(),
     }),
-    async ({ name }) => {
+    async ({ name, exemptBilling, skipOnboarding }) => {
       const account = Actor.assert('account')
       const workspaceId = Identifier.create('workspace')
       const userId = Identifier.create('user')
@@ -32,7 +34,7 @@ export namespace Workspace {
         await tx.insert(WorkspaceTable).values({
           id: workspaceId,
           name,
-          flags: { onboardingCompleted: false },
+          flags: { onboardingCompleted: skipOnboarding ?? false },
         })
         await tx.insert(UserTable).values({
           workspaceId,
@@ -44,6 +46,7 @@ export namespace Workspace {
         await tx.insert(BillingTable).values({
           workspaceId,
           id: Identifier.create('billing'),
+          ...(exemptBilling && { exempted: true }),
         })
       })
       return workspaceId

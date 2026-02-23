@@ -17,8 +17,10 @@
     "typecheck": "tsgo --noEmit"
   },
   "dependencies": {
+    "jsx-email": "2.8.4",
     "@openauthjs/openauth": "catalog:",
     "@planetscale/database": "1.19.0",
+    "@shopfunnel/email": "workspace:*",
     "@shopfunnel/resource": "workspace:*",
     "drizzle-orm": "catalog:",
     "luxon": "catalog:",

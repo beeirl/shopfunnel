@@ -14,7 +14,7 @@ export namespace Resend {
 
   export const sendEmail = fn(
     z.object({
-      from: z.string(),
+      from: z.string().optional(),
       to: z.string(),
       subject: z.string(),
       body: z.string(),
@@ -22,7 +22,7 @@ export namespace Resend {
     }),
     async (input) => {
       const result = await createClient().emails.send({
-        from: input.from,
+        from: input.from ?? 'Shopfunnel <mail@shopfunnel.com>',
         to: input.to,
         subject: input.subject,
         html: input.body,

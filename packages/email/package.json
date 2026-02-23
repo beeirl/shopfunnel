@@ -1,0 +1,20 @@
+{
+  "$schema": "https://json.schemastore.org/package.json",
+  "name": "@shopfunnel/email",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    "./*": "./src/templates/*"
+  },
+  "scripts": {
+    "dev": "email preview src/templates"
+  },
+  "dependencies": {
+    "jsx-email": "2.8.4"
+  },
+  "devDependencies": {
+    "@tsconfig/node22": "catalog:",
+    "typescript": "catalog:"
+  }
+}

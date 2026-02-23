@@ -22,8 +22,8 @@ import { createFileRoute, Link } from '@tanstack/react-router'
 import { createServerFn } from '@tanstack/react-start'
 import * as React from 'react'
 import { z } from 'zod'
-import { Heading } from '../-components/heading'
-import { formatDate, formatDateRelative, getSessionQueryOptions } from '../../-common'
+import { formatDate, formatDateRelative, getSessionQueryOptions } from '../-common'
+import { Heading } from './-components/heading'
 
 const listFunnels = createServerFn()
   .inputValidator(Identifier.schema('workspace'))
@@ -78,7 +78,7 @@ const removeFunnelMutationOptions = (workspaceId: string) =>
 
 const deleteDialogHandle = AlertDialog.createHandle<{ id: string; title: string }>()
 
-export const Route = createFileRoute('/_app/workspace/$workspaceId/_dashboard/funnels/')({
+export const Route = createFileRoute('/_app/workspace/$workspaceId/_dashboard/funnels')({
   staticData: { title: 'Funnels' },
   component: RouteComponent,
   loader: async ({ context, params }) => {
