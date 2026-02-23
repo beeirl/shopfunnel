@@ -10,7 +10,7 @@ import { PictureChoiceBlock } from '@/components/blocks/picture-choice'
 import { SpacerBlock } from '@/components/blocks/spacer'
 import { TextInputBlock } from '@/components/blocks/text-input'
 import type {
-  Block,
+  Block as BlockType,
   DropdownBlock as DropdownBlockType,
   GaugeBlock as GaugeBlockType,
   HeadingBlock as HeadingBlockType,
@@ -39,7 +39,7 @@ import {
 import * as React from 'react'
 
 export interface BlockProps {
-  block: Block
+  block: BlockType
   index?: number
   static?: boolean
   variant?: 'outline' | 'soft'
@@ -49,13 +49,13 @@ export interface BlockProps {
 }
 
 export interface BlockInfo {
-  type: Block['type']
+  type: BlockType['type']
   name: string
   description: string
   icon: React.ComponentType<{ className?: string }>
 }
 
-export function getBlockInfo(type: Block['type']): BlockInfo {
+export function getBlockInfo(type: BlockType['type']): BlockInfo {
   switch (type) {
     case 'text_input':
       return {
@@ -140,12 +140,12 @@ export function getBlockInfo(type: Block['type']): BlockInfo {
 }
 
 export function getBlockInfoList(): BlockInfo[] {
-  return (Object.keys(BLOCKS) as Block['type'][]).map(getBlockInfo)
+  return (Object.keys(BLOCKS) as BlockType['type'][]).map(getBlockInfo)
 }
 
 type BlockComponent = (props: BlockProps) => React.ReactNode
 
-const BLOCKS = {} as Record<Block['type'], BlockComponent>
+const BLOCKS = {} as Record<BlockType['type'], BlockComponent>
 
 BLOCKS['text_input'] = (props) => (
   <TextInputBlock

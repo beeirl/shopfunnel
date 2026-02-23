@@ -12,7 +12,7 @@ import { Identifier } from '../identifier'
 import { Question } from '../question'
 import { fn } from '../utils/fn'
 import { FunnelFileTable, FunnelTable, FunnelVersionTable } from './index.sql'
-import { Info, Page, Rule, Variables, type Theme } from './types'
+import { type Info, Page, Rule, Theme, type Variables } from './types'
 
 export namespace Funnel {
   const NEW_VERSION_THRESHOLD = 15 * 60 * 1000
@@ -254,10 +254,10 @@ export namespace Funnel {
   export const update = fn(
     z.object({
       id: Identifier.schema('funnel'),
-      pages: z.custom<Page[]>().optional(),
-      rules: z.custom<Rule[]>().optional(),
+      pages: z.array(Page).optional(),
+      rules: z.array(Rule).optional(),
       variables: z.custom<Variables>().optional(),
-      theme: z.custom<Theme>().optional(),
+      theme: Theme.optional(),
     }),
     async (input) => {
       await Database.use(async (tx) => {

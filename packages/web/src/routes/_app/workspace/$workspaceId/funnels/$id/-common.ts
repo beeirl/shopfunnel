@@ -1,6 +1,6 @@
 import { withActor } from '@/context/auth.withActor'
 import { Funnel } from '@shopfunnel/core/funnel/index'
-import type { Page, Rule, Settings, Theme } from '@shopfunnel/core/funnel/types'
+import { Page, Rule, Settings, Theme } from '@shopfunnel/core/funnel/types'
 import { Identifier } from '@shopfunnel/core/identifier'
 import { queryOptions } from '@tanstack/react-query'
 import { notFound } from '@tanstack/react-router'
@@ -33,11 +33,11 @@ export const updateFunnel = createServerFn({ method: 'POST' })
     z.object({
       workspaceId: Identifier.schema('workspace'),
       funnelId: Identifier.schema('funnel'),
-      pages: z.custom<Page[]>().optional(),
-      rules: z.custom<Rule[]>().optional(),
-      theme: z.custom<Theme>().optional(),
+      pages: z.array(Page).optional(),
+      rules: z.array(Rule).optional(),
+      theme: Theme.optional(),
       title: z.string().min(1).max(255).optional(),
-      settings: z.custom<Settings>().optional(),
+      settings: Settings.optional(),
     }),
   )
   .handler(({ data }) => {

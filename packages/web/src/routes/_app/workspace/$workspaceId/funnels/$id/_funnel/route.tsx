@@ -25,6 +25,7 @@ import { z } from 'zod'
 import { getFunnelQueryOptions } from '../-common'
 import { createFunnelCollection } from './-common'
 import { FunnelProvider, useFunnel } from './-context'
+import { SchemaButton } from './edit/-components/schema-button'
 
 const publishFunnel = createServerFn({ method: 'POST' })
   .inputValidator(
@@ -318,6 +319,7 @@ function RouteComponent() {
               </MatchRoute>
             ))}
             {session.isAdmin && <Settings />}
+            {session.isSuperAdmin && <SchemaButton />}
           </div>
           <div className="flex items-center justify-end gap-2">
             <DraftBadge />
