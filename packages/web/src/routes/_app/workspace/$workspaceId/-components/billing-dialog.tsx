@@ -13,7 +13,7 @@ import { Link, useParams } from '@tanstack/react-router'
 import { createServerFn } from '@tanstack/react-start'
 import * as React from 'react'
 import { z } from 'zod'
-import { ADDONS, formatPrice, getBillingQueryOptions, getUsageQueryOptions, PLANS } from '../-common'
+import { ADDONS, formatPrice, getBillingQueryOptions, PLANS } from '../-common'
 
 const createPortalUrl = createServerFn()
   .inputValidator(
@@ -64,15 +64,6 @@ export function BillingDialog({ open, onOpenChange }: { open: boolean; onOpenCha
 
   const billingQuery = useSuspenseQuery(getBillingQueryOptions(params.workspaceId))
   const billing = billingQuery.data
-
-  const usageQuery = useSuspenseQuery(
-    getUsageQueryOptions(
-      params.workspaceId,
-      billing.usagePeriodStartedAt!.toISOString(),
-      billing.usagePeriodEndsAt!.toISOString(),
-    ),
-  )
-  const usage = usageQuery.data
 
   const [isRedirecting, setIsRedirecting] = React.useState(false)
   const [isManagedAddonUpdating, setIsManagedAddonUpdating] = React.useState(false)
@@ -215,7 +206,7 @@ export function BillingDialog({ open, onOpenChange }: { open: boolean; onOpenCha
             {[
               {
                 label: 'Visitors',
-                value: `${usage.visitors.toLocaleString()} / ${currentVisitorLimit.toLocaleString()}`,
+                value: `${billing.usage.visitors.toLocaleString()} / ${currentVisitorLimit.toLocaleString()}`,
               },
               {
                 label: 'Plan cost',

@@ -55,9 +55,6 @@ declare module "sst" {
     "BillingCronHandler": {
       "type": "sst.cloudflare.Worker"
     }
-    "BillingCronHandler": {
-      "type": "sst.cloudflare.Worker"
-    }
     "CLOUDFLARE_R2_ACCESS_KEY_ID": {
       "type": "sst.sst.Secret"
       "value": string

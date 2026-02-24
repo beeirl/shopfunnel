@@ -9,7 +9,6 @@ import { queryOptions } from '@tanstack/react-query'
 import { redirect } from '@tanstack/react-router'
 import { createServerFn } from '@tanstack/react-start'
 import { DateTime } from 'luxon'
-import { z } from 'zod'
 
 export const PLANS = [
   {
@@ -281,7 +280,11 @@ export const getBilling = createServerFn()
     return withActor(async () => {
       const billing = await Billing.get()
       if (!billing) throw new Error('Billing not found')
-      return billing
+      const usage =
+        billing.usagePeriodStartedAt && billing.usagePeriodEndsAt
+          ? await Billing.getUsage({ start: billing.usagePeriodStartedAt, end: billing.usagePeriodEndsAt })
+          : { visitors: 0 }
+      return { ...billing, usage }
     }, workspaceId)
   })
 
@@ -289,22 +292,4 @@ export const getBillingQueryOptions = (workspaceId: string) =>
   queryOptions({
     queryKey: ['billing', workspaceId],
     queryFn: () => getBilling({ data: workspaceId }),
-  })
-
-export const getUsage = createServerFn()
-  .inputValidator(
-    z.object({
-      workspaceId: Identifier.schema('workspace'),
-      start: z.string(),
-      end: z.string(),
-    }),
-  )
-  .handler(async ({ data }) => {
-    return withActor(() => Billing.getUsage({ start: new Date(data.start), end: new Date(data.end) }), data.workspaceId)
-  })
-
-export const getUsageQueryOptions = (workspaceId: string, start: string, end: string) =>
-  queryOptions({
-    queryKey: ['usage', workspaceId, start, end],
-    queryFn: () => getUsage({ data: { workspaceId, start, end } }),
   })

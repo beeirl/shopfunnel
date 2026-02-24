@@ -32,7 +32,6 @@ import {
   checkOnboardingQueryOptions,
   getBillingQueryOptions,
   getSessionQueryOptions,
-  getUsageQueryOptions,
   getUserEmailQueryOptions,
 } from '../-common'
 import { BillingDialog } from '../-components/billing-dialog'
@@ -68,19 +67,12 @@ export const Route = createFileRoute('/_app/workspace/$workspaceId/_dashboard')(
     await context.queryClient.fetchQuery(checkBillingQueryOptions(params.workspaceId))
   },
   loader: async ({ context, params }) => {
-    const [billing] = await Promise.all([
+    await Promise.all([
       context.queryClient.ensureQueryData(getBillingQueryOptions(params.workspaceId)),
       context.queryClient.ensureQueryData(getUserEmailQueryOptions(params.workspaceId)),
       context.queryClient.ensureQueryData(getWorkspacesQueryOptions(params.workspaceId)),
       context.queryClient.ensureQueryData(getSessionQueryOptions(params.workspaceId)),
     ])
-    context.queryClient.ensureQueryData(
-      getUsageQueryOptions(
-        params.workspaceId,
-        billing.usagePeriodStartedAt!.toISOString(),
-        billing.usagePeriodEndsAt!.toISOString(),
-      ),
-    )
   },
 })
 
