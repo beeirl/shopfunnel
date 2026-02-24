@@ -121,8 +121,13 @@ export namespace Domain {
                 html.querySelector('link[rel="icon"]')?.getAttribute('href') ||
                 html.querySelector('link[rel="shortcut icon"]')?.getAttribute('href') ||
                 null
-              if (!href) return { faviconUrl: undefined, faviconType: undefined }
-              const url = href.startsWith('http') ? href : `https://${domain}${href.startsWith('/') ? '' : '/'}${href}`
+
+              const url = (() => {
+                if (!href) return `https://${domain}/favicon.ico`
+                if (href.startsWith('//')) return `https:${href}`
+                if (href.startsWith('http') || href.startsWith('data:')) return href
+                return `https://${domain}${href.startsWith('/') ? '' : '/'}${href}`
+              })()
               try {
                 const file = await File.createFromUrl({
                   url,
@@ -136,8 +141,13 @@ export namespace Domain {
             })()
 
             const metaImageUrl = await (async () => {
-              const url = html.querySelector('meta[property="og:image"]')?.getAttribute('content')?.trim() || null
-              if (!url) return null
+              const content = html.querySelector('meta[property="og:image"]')?.getAttribute('content')?.trim() || null
+              if (!content) return null
+              const url = (() => {
+                if (content.startsWith('//')) return `https:${content}`
+                if (content.startsWith('http') || content.startsWith('data:')) return content
+                return `https://${domain}${content.startsWith('/') ? '' : '/'}${content}`
+              })()
               try {
                 const file = await File.createFromUrl({
                   url,
