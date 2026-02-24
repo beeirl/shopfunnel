@@ -66,7 +66,11 @@ export function BillingDialog({ open, onOpenChange }: { open: boolean; onOpenCha
   const billing = billingQuery.data
 
   const usageQuery = useSuspenseQuery(
-    getUsageQueryOptions(params.workspaceId, billing.periodStartedAt?.toISOString() ?? null),
+    getUsageQueryOptions(
+      params.workspaceId,
+      billing.usagePeriodStartedAt!.toISOString(),
+      billing.usagePeriodEndsAt!.toISOString(),
+    ),
   )
   const usage = usageQuery.data
 

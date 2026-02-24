@@ -75,7 +75,11 @@ export const Route = createFileRoute('/_app/workspace/$workspaceId/_dashboard')(
       context.queryClient.ensureQueryData(getSessionQueryOptions(params.workspaceId)),
     ])
     context.queryClient.ensureQueryData(
-      getUsageQueryOptions(params.workspaceId, billing.periodStartedAt?.toISOString() ?? null),
+      getUsageQueryOptions(
+        params.workspaceId,
+        billing.usagePeriodStartedAt!.toISOString(),
+        billing.usagePeriodEndsAt!.toISOString(),
+      ),
     )
   },
 })

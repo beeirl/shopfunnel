@@ -5,7 +5,6 @@ import { Identifier } from '@shopfunnel/core/identifier'
 import { Integration } from '@shopfunnel/core/integration/index'
 import { User } from '@shopfunnel/core/user/index'
 import { Workspace } from '@shopfunnel/core/workspace/index'
-import { Resource } from '@shopfunnel/resource'
 import { queryOptions } from '@tanstack/react-query'
 import { redirect } from '@tanstack/react-router'
 import { createServerFn } from '@tanstack/react-start'
@@ -296,47 +295,16 @@ export const getUsage = createServerFn()
   .inputValidator(
     z.object({
       workspaceId: Identifier.schema('workspace'),
-      periodStartedAt: z.string().nullable(),
+      start: z.string(),
+      end: z.string(),
     }),
   )
   .handler(async ({ data }) => {
-    const now = new Date()
-    const periodStart = data.periodStartedAt
-      ? new Date(data.periodStartedAt)
-      : new Date(now.getFullYear(), now.getMonth(), 1)
-
-    // Find the current monthly window within the billing period.
-    // For yearly subscriptions, periodStartedAt is the start of the year,
-    // so we advance month-by-month to find the current monthly sub-period.
-    let windowStart = new Date(periodStart)
-    while (true) {
-      const nextMonth = new Date(windowStart)
-      nextMonth.setMonth(nextMonth.getMonth() + 1)
-      // Cap to last day of target month if day-of-month overflowed (e.g. Jan 31 -> Mar 3)
-      if (nextMonth.getDate() !== windowStart.getDate()) {
-        nextMonth.setDate(0)
-      }
-      if (nextMonth > now) break
-      windowStart = nextMonth
-    }
-
-    const params = new URLSearchParams({
-      workspace_id: data.workspaceId,
-      start_date: windowStart.toISOString(),
-      end_date: now.toISOString(),
-    })
-
-    const response = await fetch(`https://api.us-east.aws.tinybird.co/v0/pipes/usages.json?${params}`, {
-      headers: { Authorization: `Bearer ${Resource.TINYBIRD_TOKEN.value}` },
-    })
-    const json = (await response.json()) as any
-    const visitors = json.data?.[0]?.visitors ?? 0
-
-    return { visitors }
+    return withActor(() => Billing.getUsage({ start: new Date(data.start), end: new Date(data.end) }), data.workspaceId)
   })
 
-export const getUsageQueryOptions = (workspaceId: string, periodStartedAt: string | null) =>
+export const getUsageQueryOptions = (workspaceId: string, start: string, end: string) =>
   queryOptions({
-    queryKey: ['usage', workspaceId, periodStartedAt],
-    queryFn: () => getUsage({ data: { workspaceId, periodStartedAt } }),
+    queryKey: ['usage', workspaceId, start, end],
+    queryFn: () => getUsage({ data: { workspaceId, start, end } }),
   })

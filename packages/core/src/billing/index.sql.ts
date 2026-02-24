@@ -9,7 +9,7 @@ export const BillingPlan = [
   'standard250K',
   'standard500K',
   'standard1M',
-  'standard5M',
+  'standard2M',
 ] as const
 
 export const BillingInterval = ['month', 'year'] as const
@@ -29,6 +29,8 @@ export const BillingTable = mysqlTable(
     trialEndsAt: timestamp('trial_ends_at'),
     periodStartedAt: timestamp('period_started_at'),
     periodEndsAt: timestamp('period_ends_at'),
+    usagePeriodStartedAt: timestamp('usage_period_started_at'),
+    usagePeriodEndsAt: timestamp('usage_period_ends_at'),
     pendingPlan: mysqlEnum('pending_plan', BillingPlan),
   },
   (table) => [

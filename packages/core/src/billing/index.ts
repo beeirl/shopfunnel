@@ -46,6 +46,26 @@ export namespace Billing {
     )
   }
 
+  export const getUsage = fn(
+    z.object({
+      start: z.date(),
+      end: z.date(),
+    }),
+    async (input) => {
+      const url = new URL('https://api.us-east.aws.tinybird.co/v0/pipes/usages.json')
+      url.search = new URLSearchParams({
+        workspace_id: Actor.workspace(),
+        start_date: input.start.toISOString(),
+        end_date: input.end.toISOString(),
+      }).toString()
+      const response = await fetch(url.toString(), {
+        headers: { Authorization: `Bearer ${Resource.TINYBIRD_TOKEN.value}` },
+      })
+      const json = (await response.json()) as any
+      return { visitors: (json.data[0]?.visitors ?? 0) as number }
+    },
+  )
+
   export const assert = fn(z.void(), async () => {
     const billing = await Billing.get()
     if (!billing?.active) throw new Error('Billing is not valid')
@@ -153,6 +173,8 @@ export namespace Billing {
       interval: Billing.Interval,
       periodStartedAt: z.date(),
       periodEndsAt: z.date(),
+      usagePeriodStartedAt: z.date().optional(),
+      usagePeriodEndsAt: z.date().optional(),
       trialStartedAt: z.date().optional(),
       trialEndsAt: z.date().optional(),
     }),
@@ -171,6 +193,11 @@ export namespace Billing {
             interval: input.interval,
             periodStartedAt: input.periodStartedAt,
             periodEndsAt: input.periodEndsAt,
+            ...(input.usagePeriodStartedAt &&
+              input.usagePeriodEndsAt && {
+                usagePeriodStartedAt: input.usagePeriodStartedAt,
+                usagePeriodEndsAt: input.usagePeriodEndsAt,
+              }),
             ...(billing?.plan !== input.plan && billing?.pendingPlan === input.plan && { pendingPlan: null }),
             ...(input.trialStartedAt &&
               input.trialEndsAt && {
@@ -208,6 +235,8 @@ export namespace Billing {
             pendingPlan: null,
             periodStartedAt: null,
             periodEndsAt: null,
+            usagePeriodStartedAt: null,
+            usagePeriodEndsAt: null,
           })
           .where(eq(BillingTable.workspaceId, workspaceId)),
       )
@@ -225,39 +254,42 @@ export namespace Billing {
       if (billing.pendingPlan)
         throw new Error('Cannot upgrade while a downgrade is pending. Cancel the downgrade first.')
 
-      const existingSubscription = await Billing.stripe().subscriptions.retrieve(billing.stripeSubscriptionId)
-      if (existingSubscription.schedule) {
-        const scheduleId =
-          typeof existingSubscription.schedule === 'string'
-            ? existingSubscription.schedule
-            : existingSubscription.schedule.id
-        await Billing.stripe().subscriptionSchedules.release(scheduleId)
+      const stripeExistingSubscription = await Billing.stripe().subscriptions.retrieve(billing.stripeSubscriptionId)
+      if (stripeExistingSubscription.schedule) {
+        const stripeScheduleId =
+          typeof stripeExistingSubscription.schedule === 'string'
+            ? stripeExistingSubscription.schedule
+            : stripeExistingSubscription.schedule.id
+        await Billing.stripe().subscriptionSchedules.release(stripeScheduleId)
       }
 
-      const existingPlanItem = existingSubscription.items.data.find((item) =>
+      const stripeExistingPlanItem = stripeExistingSubscription.items.data.find((item) =>
         Billing.stripePriceIdToPlan(item.price.id),
       )
-      const existingVisitorsItem = existingSubscription.items.data.find((item) =>
-        Billing.stripeVisitorsPriceIdToPlan(item.price.id),
+      const stripeExistingUsageItem = stripeExistingSubscription.items.data.find((item) =>
+        Billing.stripeUsagePriceIdToPlan(item.price.id),
       )
-      if (!existingPlanItem) throw new Error('Existing plan subscription item not found')
-      if (!existingVisitorsItem) throw new Error('Existing visitors subscription item not found')
+      if (!stripeExistingPlanItem) throw new Error('Existing plan subscription item not found')
+      if (!stripeExistingUsageItem) throw new Error('Existing usage subscription item not found')
 
-      const planPriceId = Billing.planToStripePriceId({ plan: input.plan, interval: input.interval })
-      const visitorsPriceId = Billing.planToStripeVisitorsPriceId(input.plan)
-      if (!planPriceId) throw new Error('Invalid plan')
-      if (!visitorsPriceId) throw new Error('Invalid visitors plan')
+      const stripePlanPriceId = Billing.planToStripePriceId({ plan: input.plan, interval: input.interval })
+      const stripeUsagePriceId = Billing.planToStripeUsagePriceId(input.plan)
+      if (!stripePlanPriceId) throw new Error('Invalid plan')
+      if (!stripeUsagePriceId) throw new Error('Invalid usage plan')
 
-      const subscription = await Billing.stripe().subscriptions.update(billing.stripeSubscriptionId, {
+      const stripeSubscription = await Billing.stripe().subscriptions.update(billing.stripeSubscriptionId, {
         items: [
-          { id: existingPlanItem.id, price: planPriceId },
-          { id: existingVisitorsItem.id, price: visitorsPriceId },
+          { id: stripeExistingPlanItem.id, price: stripePlanPriceId },
+          { id: stripeExistingUsageItem.id, price: stripeUsagePriceId },
         ],
         proration_behavior: 'always_invoice',
         payment_behavior: 'pending_if_incomplete',
       })
-      const planItem = subscription.items.data.find((item) => Billing.stripePriceIdToPlan(item.price.id))
-      if (!planItem) throw new Error('New plan subscription item not found')
+      const stripePlanItem = stripeSubscription.items.data.find((item) => Billing.stripePriceIdToPlan(item.price.id))
+      const stripeUsageItem = stripeSubscription.items.data.find((item) =>
+        Billing.stripeUsagePriceIdToPlan(item.price.id),
+      )
+      if (!stripePlanItem) throw new Error('New plan subscription item not found')
 
       await Database.use((db) =>
         db
@@ -266,8 +298,12 @@ export namespace Billing {
             plan: input.plan,
             interval: input.interval,
             pendingPlan: null,
-            periodStartedAt: new Date(planItem.current_period_start * 1000),
-            periodEndsAt: new Date(planItem.current_period_end * 1000),
+            periodStartedAt: new Date(stripePlanItem.current_period_start * 1000),
+            periodEndsAt: new Date(stripePlanItem.current_period_end * 1000),
+            ...(stripeUsageItem && {
+              usagePeriodStartedAt: new Date(stripeUsageItem.current_period_start * 1000),
+              usagePeriodEndsAt: new Date(stripeUsageItem.current_period_end * 1000),
+            }),
           })
           .where(eq(BillingTable.workspaceId, Actor.workspaceId())),
       )
@@ -284,39 +320,39 @@ export namespace Billing {
       if (!billing?.stripeSubscriptionId) throw new Error('No active subscription found')
       if (billing.pendingPlan) throw new Error('Cannot downgrade while a plan change is already pending.')
 
-      const schedule = await Billing.stripe().subscriptionSchedules.create({
+      const stripeSchedule = await Billing.stripe().subscriptionSchedules.create({
         from_subscription: billing.stripeSubscriptionId,
       })
 
-      const planPriceId = Billing.planToStripePriceId({ plan: input.plan, interval: input.interval })
-      if (!planPriceId) throw new Error('Invalid plan')
+      const stripePlanPriceId = Billing.planToStripePriceId({ plan: input.plan, interval: input.interval })
+      if (!stripePlanPriceId) throw new Error('Invalid plan')
 
-      const visitorsPriceId = Billing.planToStripeVisitorsPriceId(input.plan)
-      if (!visitorsPriceId) throw new Error('Invalid visitors plan')
+      const stripeUsagePriceId = Billing.planToStripeUsagePriceId(input.plan)
+      if (!stripeUsagePriceId) throw new Error('Invalid usage plan')
 
-      const addonItems = (schedule.phases[0]?.items ?? []).flatMap((item) => {
-        const itemPriceId = typeof item.price === 'string' ? item.price : item.price.id
-        const addon = Billing.stripePriceIdToAddon(itemPriceId)
-        const addonPriceId = addon && Billing.addonToStripePriceId({ addon, interval: input.interval })
-        return addonPriceId ? [{ price: addonPriceId, quantity: 1 }] : []
+      const stripeAddonItems = (stripeSchedule.phases[0]?.items ?? []).flatMap((item) => {
+        const stripeItemPriceId = typeof item.price === 'string' ? item.price : item.price.id
+        const addon = Billing.stripePriceIdToAddon(stripeItemPriceId)
+        const stripeAddonPriceId = addon && Billing.addonToStripePriceId({ addon, interval: input.interval })
+        return stripeAddonPriceId ? [{ price: stripeAddonPriceId, quantity: 1 }] : []
       })
 
       // Update the schedule with two phases:
       // Phase 1 (current): keep current items until current_period_end
       // Phase 2 (next): switch to the downgraded plan
-      await Billing.stripe().subscriptionSchedules.update(schedule.id, {
+      await Billing.stripe().subscriptionSchedules.update(stripeSchedule.id, {
         end_behavior: 'release',
         phases: [
           {
-            items: schedule.phases[0]?.items.map((item) => ({
+            items: stripeSchedule.phases[0]?.items.map((item) => ({
               price: typeof item.price === 'string' ? item.price : item.price.id,
               quantity: item.quantity ?? undefined,
             })),
-            start_date: schedule.phases[0].start_date,
-            end_date: schedule.phases[0].end_date,
+            start_date: stripeSchedule.phases[0].start_date,
+            end_date: stripeSchedule.phases[0].end_date,
           },
           {
-            items: [{ price: planPriceId, quantity: 1 }, { price: visitorsPriceId }, ...addonItems],
+            items: [{ price: stripePlanPriceId, quantity: 1 }, { price: stripeUsagePriceId }, ...stripeAddonItems],
             proration_behavior: 'none',
             metadata: { workspaceId: Actor.workspaceId() },
           },
@@ -337,11 +373,13 @@ export namespace Billing {
     if (!billing?.stripeSubscriptionId) throw new Error('No active subscription found')
     if (!billing.pendingPlan) throw new Error('No downgrade scheduled')
 
-    const subscription = await Billing.stripe().subscriptions.retrieve(billing.stripeSubscriptionId)
-    const schedule = subscription.schedule
-    if (!schedule) throw new Error('No subscription schedule found')
+    const stripeSubscription = await Billing.stripe().subscriptions.retrieve(billing.stripeSubscriptionId)
+    const stripeSchedule = stripeSubscription.schedule
+    if (!stripeSchedule) throw new Error('No subscription schedule found')
 
-    await Billing.stripe().subscriptionSchedules.release(typeof schedule === 'string' ? schedule : schedule.id)
+    await Billing.stripe().subscriptionSchedules.release(
+      typeof stripeSchedule === 'string' ? stripeSchedule : stripeSchedule.id,
+    )
 
     await Database.use((db) =>
       db.update(BillingTable).set({ pendingPlan: null }).where(eq(BillingTable.workspaceId, Actor.workspaceId())),
@@ -357,31 +395,34 @@ export namespace Billing {
       if (!billing?.stripeSubscriptionId) throw new Error('No active subscription found')
       if (!billing.interval) throw new Error('No billing interval found')
 
-      const subscription = await Billing.stripe().subscriptions.retrieve(billing.stripeSubscriptionId)
-      const subscriptionItems = subscription.items.data
+      const stripeSubscription = await Billing.stripe().subscriptions.retrieve(billing.stripeSubscriptionId)
+      const stripeSubscriptionItems = stripeSubscription.items.data
 
-      const addonItem = subscriptionItems.find((item) => Billing.stripePriceIdToAddon(item.price.id) === input.addon)
-      if (addonItem) throw new Error('Addon already added')
+      const stripeAddonItem = stripeSubscriptionItems.find(
+        (item) => Billing.stripePriceIdToAddon(item.price.id) === input.addon,
+      )
+      if (stripeAddonItem) throw new Error('Addon already added')
 
-      const addonPriceId = Billing.addonToStripePriceId({ addon: input.addon, interval: billing.interval })
-      if (!addonPriceId) throw new Error('Invalid addon or interval')
+      const stripeAddonPriceId = Billing.addonToStripePriceId({ addon: input.addon, interval: billing.interval })
+      if (!stripeAddonPriceId) throw new Error('Invalid addon or interval')
 
       await Billing.stripe().subscriptions.update(billing.stripeSubscriptionId, {
-        items: [{ price: addonPriceId }],
+        items: [{ price: stripeAddonPriceId }],
         proration_behavior: 'always_invoice',
         payment_behavior: 'pending_if_incomplete',
       })
 
-      if (subscription.schedule) {
-        const scheduleId = typeof subscription.schedule === 'string' ? subscription.schedule : subscription.schedule.id
-        const schedule = await Billing.stripe().subscriptionSchedules.retrieve(scheduleId)
+      if (stripeSubscription.schedule) {
+        const stripeScheduleId =
+          typeof stripeSubscription.schedule === 'string' ? stripeSubscription.schedule : stripeSubscription.schedule.id
+        const stripeSchedule = await Billing.stripe().subscriptionSchedules.retrieve(stripeScheduleId)
 
-        await Billing.stripe().subscriptionSchedules.update(scheduleId, {
-          phases: schedule.phases.map((phase) => {
+        await Billing.stripe().subscriptionSchedules.update(stripeScheduleId, {
+          phases: stripeSchedule.phases.map((phase) => {
             // Skip phases that already have the addon (e.g. phase 1 after the subscription update above)
             const hasAddons = phase.items.some((i) => {
-              const priceId = typeof i.price === 'string' ? i.price : i.price.id
-              return Billing.stripePriceIdToAddon(priceId) === input.addon
+              const stripePriceId = typeof i.price === 'string' ? i.price : i.price.id
+              return Billing.stripePriceIdToAddon(stripePriceId) === input.addon
             })
             if (hasAddons) {
               return {
@@ -395,15 +436,19 @@ export namespace Billing {
                 metadata: phase.metadata as Record<string, string>,
               }
             } else {
-              const addonPriceId = (() => {
-                const planItem = phase.items.find((i) => {
-                  const priceId = typeof i.price === 'string' ? i.price : i.price.id
-                  return !!Billing.stripePriceIdToPlan(priceId)
+              const stripeAddonPriceId = (() => {
+                const stripePlanItem = phase.items.find((i) => {
+                  const stripePriceId = typeof i.price === 'string' ? i.price : i.price.id
+                  return !!Billing.stripePriceIdToPlan(stripePriceId)
                 })
-                const planPrice =
-                  planItem && typeof planItem.price !== 'string' && 'recurring' in planItem.price && planItem.price
+                const stripePlanPrice =
+                  stripePlanItem &&
+                  typeof stripePlanItem.price !== 'string' &&
+                  'recurring' in stripePlanItem.price &&
+                  stripePlanItem.price
                 const interval =
-                  Billing.Interval.safeParse(planPrice && planPrice.recurring?.interval).data ?? billing.interval!
+                  Billing.Interval.safeParse(stripePlanPrice && stripePlanPrice.recurring?.interval).data ??
+                  billing.interval!
                 return Billing.addonToStripePriceId({ addon: input.addon, interval })
               })()
 
@@ -413,7 +458,7 @@ export namespace Billing {
                     price: typeof item.price === 'string' ? item.price : item.price.id,
                     quantity: item.quantity ?? undefined,
                   })),
-                  ...(addonPriceId ? [{ price: addonPriceId, quantity: 1 }] : []),
+                  ...(stripeAddonPriceId ? [{ price: stripeAddonPriceId, quantity: 1 }] : []),
                 ],
                 start_date: phase.start_date,
                 end_date: phase.end_date,
@@ -442,30 +487,33 @@ export namespace Billing {
       const billing = await Billing.get()
       if (!billing?.stripeSubscriptionId) throw new Error('No active subscription found')
 
-      const subscription = await Billing.stripe().subscriptions.retrieve(billing.stripeSubscriptionId)
-      const subscriptionItems = subscription.items.data
+      const stripeSubscription = await Billing.stripe().subscriptions.retrieve(billing.stripeSubscriptionId)
+      const stripeSubscriptionItems = stripeSubscription.items.data
 
-      const addonItem = subscriptionItems.find((item) => Billing.stripePriceIdToAddon(item.price.id) === input.addon)
-      if (!addonItem) throw new Error('Addon not found on subscription')
+      const stripeAddonItem = stripeSubscriptionItems.find(
+        (item) => Billing.stripePriceIdToAddon(item.price.id) === input.addon,
+      )
+      if (!stripeAddonItem) throw new Error('Addon not found on subscription')
 
       await Billing.stripe().subscriptions.update(billing.stripeSubscriptionId, {
-        items: [{ id: addonItem.id, deleted: true }],
+        items: [{ id: stripeAddonItem.id, deleted: true }],
         proration_behavior: 'always_invoice',
         payment_behavior: 'pending_if_incomplete',
       })
 
       // If a subscription schedule exists (pending downgrade), also update future phases
       // so the addon doesn't get re-added when the downgrade takes effect
-      if (subscription.schedule) {
-        const scheduleId = typeof subscription.schedule === 'string' ? subscription.schedule : subscription.schedule.id
-        const schedule = await Billing.stripe().subscriptionSchedules.retrieve(scheduleId)
+      if (stripeSubscription.schedule) {
+        const stripeScheduleId =
+          typeof stripeSubscription.schedule === 'string' ? stripeSubscription.schedule : stripeSubscription.schedule.id
+        const stripeSchedule = await Billing.stripe().subscriptionSchedules.retrieve(stripeScheduleId)
 
-        await Billing.stripe().subscriptionSchedules.update(scheduleId, {
-          phases: schedule.phases.map((phase) => ({
+        await Billing.stripe().subscriptionSchedules.update(stripeScheduleId, {
+          phases: stripeSchedule.phases.map((phase) => ({
             items: phase.items
               .filter((item) => {
-                const priceId = typeof item.price === 'string' ? item.price : item.price.id
-                return Billing.stripePriceIdToAddon(priceId) !== input.addon
+                const stripePriceId = typeof item.price === 'string' ? item.price : item.price.id
+                return Billing.stripePriceIdToAddon(stripePriceId) !== input.addon
               })
               .map((item) => ({
                 price: typeof item.price === 'string' ? item.price : item.price.id,
@@ -488,6 +536,30 @@ export namespace Billing {
     },
   )
 
+  export const reportUsageToStripe = fn(
+    z.object({
+      stripeCustomerId: z.string(),
+      start: z.date(),
+      end: z.date(),
+    }),
+    async (input) => {
+      const usage = await Billing.getUsage({ start: input.start, end: input.end })
+      if (usage.visitors === 0) return
+
+      const timestamp = Math.floor(input.end.getTime() / 1000) - 1
+
+      await Billing.stripe().billing.meterEvents.create({
+        event_name: Resource.VISITOR_METER_EVENT_NAME.value,
+        identifier: `${Actor.workspaceId()}-${timestamp}`,
+        timestamp,
+        payload: {
+          stripe_customer_id: input.stripeCustomerId,
+          value: String(usage.visitors),
+        },
+      })
+    },
+  )
+
   export const planToStripePriceId = fn(
     z.object({
       plan: Billing.Plan,
@@ -500,12 +572,18 @@ export namespace Billing {
         if (input.plan === 'standard50K') return Resource.BILLING.standard50KMonthlyPriceId
         if (input.plan === 'standard100K') return Resource.BILLING.standard100KMonthlyPriceId
         if (input.plan === 'standard250K') return Resource.BILLING.standard250KMonthlyPriceId
+        if (input.plan === 'standard500K') return Resource.BILLING.standard500KMonthlyPriceId
+        if (input.plan === 'standard1M') return Resource.BILLING.standard1MMonthlyPriceId
+        if (input.plan === 'standard2M') return Resource.BILLING.standard2MMonthlyPriceId
       } else if (input.interval === 'year') {
         if (input.plan === 'standard5K') return Resource.BILLING.standard5KYearlyPriceId
         if (input.plan === 'standard25K') return Resource.BILLING.standard25KYearlyPriceId
         if (input.plan === 'standard50K') return Resource.BILLING.standard50KYearlyPriceId
         if (input.plan === 'standard100K') return Resource.BILLING.standard100KYearlyPriceId
         if (input.plan === 'standard250K') return Resource.BILLING.standard250KYearlyPriceId
+        if (input.plan === 'standard500K') return Resource.BILLING.standard500KYearlyPriceId
+        if (input.plan === 'standard1M') return Resource.BILLING.standard1MYearlyPriceId
+        if (input.plan === 'standard2M') return Resource.BILLING.standard2MYearlyPriceId
       }
     },
   )
@@ -530,11 +608,17 @@ export namespace Billing {
     if (stripePriceId === Resource.BILLING.standard50KMonthlyPriceId) return 'standard50K'
     if (stripePriceId === Resource.BILLING.standard100KMonthlyPriceId) return 'standard100K'
     if (stripePriceId === Resource.BILLING.standard250KMonthlyPriceId) return 'standard250K'
+    if (stripePriceId === Resource.BILLING.standard500KMonthlyPriceId) return 'standard500K'
+    if (stripePriceId === Resource.BILLING.standard1MMonthlyPriceId) return 'standard1M'
+    if (stripePriceId === Resource.BILLING.standard2MMonthlyPriceId) return 'standard2M'
     if (stripePriceId === Resource.BILLING.standard5KYearlyPriceId) return 'standard5K'
     if (stripePriceId === Resource.BILLING.standard25KYearlyPriceId) return 'standard25K'
     if (stripePriceId === Resource.BILLING.standard50KYearlyPriceId) return 'standard50K'
     if (stripePriceId === Resource.BILLING.standard100KYearlyPriceId) return 'standard100K'
     if (stripePriceId === Resource.BILLING.standard250KYearlyPriceId) return 'standard250K'
+    if (stripePriceId === Resource.BILLING.standard500KYearlyPriceId) return 'standard500K'
+    if (stripePriceId === Resource.BILLING.standard1MYearlyPriceId) return 'standard1M'
+    if (stripePriceId === Resource.BILLING.standard2MYearlyPriceId) return 'standard2M'
   })
 
   export const stripePriceIdToAddon = fn(z.string(), (stripePriceId): Addon | undefined => {
@@ -542,19 +626,25 @@ export namespace Billing {
     if (stripePriceId === Resource.BILLING.managedServiceYearlyPriceId) return 'managed'
   })
 
-  export const stripeVisitorsPriceIdToPlan = fn(z.string(), (stripePriceId): Plan | undefined => {
+  export const stripeUsagePriceIdToPlan = fn(z.string(), (stripePriceId): Plan | undefined => {
     if (stripePriceId === Resource.BILLING.standard5KVisitorsPriceId) return 'standard5K'
     if (stripePriceId === Resource.BILLING.standard25KVisitorsPriceId) return 'standard25K'
     if (stripePriceId === Resource.BILLING.standard50KVisitorsPriceId) return 'standard50K'
     if (stripePriceId === Resource.BILLING.standard100KVisitorsPriceId) return 'standard100K'
     if (stripePriceId === Resource.BILLING.standard250KVisitorsPriceId) return 'standard250K'
+    if (stripePriceId === Resource.BILLING.standard500KVisitorsPriceId) return 'standard500K'
+    if (stripePriceId === Resource.BILLING.standard1MVisitorsPriceId) return 'standard1M'
+    if (stripePriceId === Resource.BILLING.standard2MVisitorsPriceId) return 'standard2M'
   })
 
-  export const planToStripeVisitorsPriceId = fn(Billing.Plan, (plan) => {
+  export const planToStripeUsagePriceId = fn(Billing.Plan, (plan) => {
     if (plan === 'standard5K') return Resource.BILLING.standard5KVisitorsPriceId
     if (plan === 'standard25K') return Resource.BILLING.standard25KVisitorsPriceId
     if (plan === 'standard50K') return Resource.BILLING.standard50KVisitorsPriceId
     if (plan === 'standard100K') return Resource.BILLING.standard100KVisitorsPriceId
     if (plan === 'standard250K') return Resource.BILLING.standard250KVisitorsPriceId
+    if (plan === 'standard500K') return Resource.BILLING.standard500KVisitorsPriceId
+    if (plan === 'standard1M') return Resource.BILLING.standard1MVisitorsPriceId
+    if (plan === 'standard2M') return Resource.BILLING.standard2MVisitorsPriceId
   })
 }

@@ -51,7 +51,9 @@ declare module "sst" {
       "standard5KYearlyPriceId": string
       "standardProductId": string
       "type": "sst.sst.Linkable"
-      "visitorMeterId": string
+    }
+    "BillingCronHandler": {
+      "type": "sst.cloudflare.Worker"
     }
     "BillingCronHandler": {
       "type": "sst.cloudflare.Worker"
@@ -122,6 +124,10 @@ declare module "sst" {
     }
     "TINYBIRD_TOKEN": {
       "type": "sst.sst.Secret"
+      "value": string
+    }
+    "VISITOR_METER_EVENT_NAME": {
+      "type": "sst.sst.Linkable"
       "value": string
     }
     "Web": {

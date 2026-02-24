@@ -16,10 +16,27 @@ export const STRIPE_WEBHOOK_SECRET = new sst.Linkable('STRIPE_WEBHOOK_SECRET', {
   properties: { value: stripeWebhook.secret },
 })
 
+const visitorMeter = new stripe.Meter('VisitorMeter', {
+  displayName: 'Visitors',
+  eventName: 'visitors',
+  defaultAggregation: { formula: 'last' },
+  customerMapping: {
+    eventPayloadKey: 'stripe_customer_id',
+    type: 'by_id',
+  },
+  valueSettings: {
+    eventPayloadKey: 'value',
+  },
+})
+
+const VISITOR_METER_EVENT_NAME = new sst.Linkable('VISITOR_METER_EVENT_NAME', {
+  properties: { value: visitorMeter.eventName },
+})
+
 export const billingCron = new sst.cloudflare.Cron('BillingCron', {
   job: {
     handler: 'packages/function/src/billing.ts',
-    link: [database, secret.STRIPE_SECRET_KEY, secret.TINYBIRD_TOKEN],
+    link: [database, VISITOR_METER_EVENT_NAME, secret.STRIPE_SECRET_KEY, secret.TINYBIRD_TOKEN],
   },
   schedules: ['5 * * * *'],
 })
@@ -148,19 +165,6 @@ const standardVisitorsProduct = new stripe.Product('StandardVisitorsProduct', {
   name: 'Shopfunnel Standard - Visitors',
 })
 
-const visitorMeter = new stripe.Meter('VisitorMeter', {
-  displayName: 'Visitors',
-  eventName: 'visitors',
-  defaultAggregation: { formula: 'last' },
-  customerMapping: {
-    eventPayloadKey: 'stripe_customer_id',
-    type: 'by_id',
-  },
-  valueSettings: {
-    eventPayloadKey: 'value',
-  },
-})
-
 const standardVisitorsPriceBase = {
   product: standardVisitorsProduct.id,
   currency: 'usd',
@@ -265,7 +269,6 @@ const managedServiceYearlyPrice = new stripe.Price('ManagedServiceYearlyPrice', 
 export const BILLING = new sst.Linkable('BILLING', {
   properties: {
     standardProductId: standardProduct.id,
-    visitorMeterId: visitorMeter.id,
 
     standard5KMonthlyPriceId: standard5KMonthlyPrice.id,
     standard25KMonthlyPriceId: standard25KMonthlyPrice.id,

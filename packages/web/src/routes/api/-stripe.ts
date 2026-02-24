@@ -7,6 +7,8 @@ import { Resource } from '@shopfunnel/resource'
 import { eq } from 'drizzle-orm'
 import { Hono } from 'hono'
 
+const fromUnix = (timestamp: number) => new Date(timestamp * 1000)
+
 export const StripeRoute = new Hono().post('/webhook', async (c) => {
   const body = await Billing.stripe().webhooks.constructEventAsync(
     await c.req.text(),
@@ -60,34 +62,32 @@ export const StripeRoute = new Hono().post('/webhook', async (c) => {
       if (!workspaceId) throw new Error('Workspace Id not found')
 
       const stripeSubscriptionItems = stripeSubscription.items?.data ?? []
-      const planSubscriptionItem = stripeSubscriptionItems.find((item) => Billing.stripePriceIdToPlan(item.price.id))
-      const plan = planSubscriptionItem ? Billing.stripePriceIdToPlan(planSubscriptionItem.price.id) : null
-      const interval = (planSubscriptionItem?.price.recurring?.interval ?? null) as 'month' | 'year' | null
+      const stripePlanItem = stripeSubscriptionItems.find((item) => Billing.stripePriceIdToPlan(item.price.id))
+      const plan = stripePlanItem ? Billing.stripePriceIdToPlan(stripePlanItem.price.id) : null
+      const interval = (stripePlanItem?.price.recurring?.interval ?? null) as 'month' | 'year' | null
       const managed = stripeSubscriptionItems.some((item) => Billing.stripePriceIdToAddon(item.price.id) === 'managed')
 
       if (!plan) throw new Error('Plan not found')
       if (!interval) throw new Error('Interval not found')
 
-      // Add visitors price to subscription (metered prices must be monthly, so we add them separately)
-      const stripeVisitorsPriceId = Billing.planToStripeVisitorsPriceId(plan)
-      if (stripeVisitorsPriceId) {
-        const stripeVisitorsSubscriptionItem = stripeSubscriptionItems.find(
-          (item) => item.price.id === stripeVisitorsPriceId,
-        )
-        if (!stripeVisitorsSubscriptionItem) {
+      // Add usage price to subscription (metered prices must be monthly, so we add them separately)
+      const stripeUsagePriceId = Billing.planToStripeUsagePriceId(plan)
+      if (stripeUsagePriceId) {
+        const stripeUsageItem = stripeSubscriptionItems.find((item) => item.price.id === stripeUsagePriceId)
+        if (!stripeUsageItem) {
           await Billing.stripe().subscriptionItems.create({
             subscription: stripeSubscriptionId,
-            price: stripeVisitorsPriceId,
+            price: stripeUsagePriceId,
           })
         }
       }
 
-      const periodStartedAt = planSubscriptionItem
-        ? new Date(planSubscriptionItem.current_period_start * 1000)
-        : new Date(stripeSubscription.created * 1000)
-      const periodEndsAt = planSubscriptionItem
-        ? new Date(planSubscriptionItem.current_period_end * 1000)
-        : new Date(stripeSubscription.created * 1000)
+      const periodStartedAt = stripePlanItem
+        ? fromUnix(stripePlanItem.current_period_start)
+        : fromUnix(stripeSubscription.created)
+      const periodEndsAt = stripePlanItem
+        ? fromUnix(stripePlanItem.current_period_end)
+        : fromUnix(stripeSubscription.created)
 
       await Actor.provide('system', { workspaceId }, () =>
         Billing.subscribe({
@@ -101,8 +101,8 @@ export const StripeRoute = new Hono().post('/webhook', async (c) => {
           ...(stripeSubscription.status === 'trialing' &&
             stripeSubscription.trial_start &&
             stripeSubscription.trial_end && {
-              trialStartedAt: new Date(stripeSubscription.trial_start * 1000),
-              trialEndsAt: new Date(stripeSubscription.trial_end * 1000),
+              trialStartedAt: fromUnix(stripeSubscription.trial_start),
+              trialEndsAt: fromUnix(stripeSubscription.trial_end),
             }),
         }),
       )
@@ -124,9 +124,10 @@ export const StripeRoute = new Hono().post('/webhook', async (c) => {
         })
       } else if (stripeSubscription.status === 'active' || stripeSubscription.status === 'trialing') {
         const stripeSubscriptionItems = stripeSubscription.items?.data ?? []
-        const planSubscriptionItem = stripeSubscriptionItems.find((item) => Billing.stripePriceIdToPlan(item.price.id))
-        const plan = planSubscriptionItem ? Billing.stripePriceIdToPlan(planSubscriptionItem.price.id) : null
-        const interval = (planSubscriptionItem?.price.recurring?.interval ?? null) as 'month' | 'year' | null
+        const stripePlanItem = stripeSubscriptionItems.find((item) => Billing.stripePriceIdToPlan(item.price.id))
+        const stripeUsageItem = stripeSubscriptionItems.find((item) => Billing.stripeUsagePriceIdToPlan(item.price.id))
+        const plan = stripePlanItem ? Billing.stripePriceIdToPlan(stripePlanItem.price.id) : null
+        const interval = (stripePlanItem?.price.recurring?.interval ?? null) as 'month' | 'year' | null
         const managed = stripeSubscriptionItems.some(
           (item) => Billing.stripePriceIdToAddon(item.price.id) === 'managed',
         )
@@ -134,27 +135,42 @@ export const StripeRoute = new Hono().post('/webhook', async (c) => {
         if (!plan) throw new Error('Plan not found')
         if (!interval) throw new Error('Interval not found')
 
-        const periodStartedAt = planSubscriptionItem
-          ? new Date(planSubscriptionItem.current_period_start * 1000)
-          : new Date(stripeSubscription.created * 1000)
-        const periodEndsAt = planSubscriptionItem
-          ? new Date(planSubscriptionItem.current_period_end * 1000)
-          : new Date(stripeSubscription.created * 1000)
-
         await Actor.provide('system', { workspaceId }, async () => {
+          if (stripeUsageItem) {
+            const billing = await Billing.get()
+            if (billing?.stripeCustomerId && billing.usagePeriodStartedAt && billing.usagePeriodEndsAt) {
+              const usagePeriodStart = fromUnix(stripeUsageItem.current_period_start)
+              if (usagePeriodStart.getTime() !== billing.usagePeriodStartedAt.getTime()) {
+                await Billing.reportUsageToStripe({
+                  stripeCustomerId: billing.stripeCustomerId,
+                  start: billing.usagePeriodStartedAt,
+                  end: billing.usagePeriodEndsAt,
+                })
+              }
+            }
+          }
+
           await Billing.subscribe({
             stripeCustomerId,
             stripeSubscriptionId,
             plan,
             managed,
             interval,
-            periodStartedAt,
-            periodEndsAt,
+            periodStartedAt: stripePlanItem
+              ? fromUnix(stripePlanItem.current_period_start)
+              : fromUnix(stripeSubscription.created),
+            periodEndsAt: stripePlanItem
+              ? fromUnix(stripePlanItem.current_period_end)
+              : fromUnix(stripeSubscription.created),
+            ...(stripeUsageItem && {
+              usagePeriodStartedAt: fromUnix(stripeUsageItem.current_period_start),
+              usagePeriodEndsAt: fromUnix(stripeUsageItem.current_period_end),
+            }),
             ...(stripeSubscription.status === 'trialing' &&
               stripeSubscription.trial_start &&
               stripeSubscription.trial_end && {
-                trialStartedAt: new Date(stripeSubscription.trial_start * 1000),
-                trialEndsAt: new Date(stripeSubscription.trial_end * 1000),
+                trialStartedAt: fromUnix(stripeSubscription.trial_start),
+                trialEndsAt: fromUnix(stripeSubscription.trial_end),
               }),
           })
         })

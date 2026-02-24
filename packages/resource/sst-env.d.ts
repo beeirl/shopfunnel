@@ -36,7 +36,6 @@ declare module "sst" {
       "standard5KYearlyPriceId": string
       "standardProductId": string
       "type": "sst.sst.Linkable"
-      "visitorMeterId": string
     }
     "CLOUDFLARE_R2_ACCESS_KEY_ID": {
       "type": "sst.sst.Secret"
@@ -100,6 +99,10 @@ declare module "sst" {
     }
     "TINYBIRD_TOKEN": {
       "type": "sst.sst.Secret"
+      "value": string
+    }
+    "VISITOR_METER_EVENT_NAME": {
+      "type": "sst.sst.Linkable"
       "value": string
     }
     "Web": {
