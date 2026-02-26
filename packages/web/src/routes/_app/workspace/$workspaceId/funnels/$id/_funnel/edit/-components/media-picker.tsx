@@ -245,7 +245,7 @@ function getImageDimensions(file: File): Promise<{ width: number; height: number
 }
 
 function MediaPickerImagePicker({
-  accept = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'],
+  accept = ['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'image/svg+xml'],
   maxSize = 10 * 1024 * 1024, // 10MB
   maxDimensions,
   className,
