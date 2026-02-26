@@ -370,7 +370,7 @@ function DashboardLayoutRoute() {
           </div>
         </header>
 
-        <main className="flex flex-1 flex-col items-center overflow-y-auto px-5 py-5 md:py-20">
+        <main className="flex flex-1 flex-col items-center overflow-y-auto px-5 py-5 xl:py-20">
           <Outlet />
         </main>
       </Sidebar.Inset>
