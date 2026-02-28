@@ -22,6 +22,16 @@ export namespace Domain {
     ),
   )
 
+  export const fromHostname = fn(z.string(), async (hostname) =>
+    Database.use((tx) =>
+      tx
+        .select()
+        .from(DomainTable)
+        .where(and(eq(DomainTable.hostname, hostname), isNull(DomainTable.archivedAt)))
+        .then((rows) => rows[0]),
+    ),
+  )
+
   export const get = fn(z.void(), async () =>
     Database.use((tx) =>
       tx

@@ -11,6 +11,7 @@ import type { ReactNode } from 'react'
 export const Route = createRootRouteWithContext<{
   queryClient: QueryClient
 }>()({
+  ssr: true,
   head: ({ matches }) => ({
     meta: [
       {
@@ -26,7 +27,7 @@ export const Route = createRootRouteWithContext<{
     ],
     links: [
       { rel: 'stylesheet', href: styles },
-      ...(!matches.some((m) => (m.routeId as string) === '/f/$id')
+      ...(!matches.some((m) => ['/f/$funnelId', '/r/$'].includes(m.routeId as string))
         ? [{ rel: 'icon', type: 'image/svg+xml', href: '/favicon.svg' }]
         : []),
     ],
