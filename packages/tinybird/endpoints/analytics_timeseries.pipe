@@ -1,10 +1,11 @@
 DESCRIPTION >
-    Workspace-level metrics for time series charts.
+    Unified analytics time series: workspace-level or per-funnel metrics.
+    When funnel_id is provided, filters to that funnel (across all versions).
     Supports date filtering and granularity (hour or day).
 
 TOKEN api READ
 
-NODE workspace_kpis_timeseries_node
+NODE analytics_timeseries_node
 SQL >
     %
     SELECT
@@ -16,9 +17,13 @@ SQL >
         uniqMerge(visitors) AS visitors,
         uniqMerge(starts) AS starts,
         uniqMerge(completions) AS completions,
-        uniqMerge(orders) AS orders
+        uniqMerge(orders) AS orders,
+        sumMerge(total_revenue) AS total_revenue
     FROM kpis_mv
     WHERE workspace_id = {{ String(workspace_id, required=True) }}
+        {% if defined(funnel_id) %}
+        AND funnel_id = {{ String(funnel_id) }}
+        {% end %}
         {% if defined(start_date) %}
         AND date >= parseDateTimeBestEffort({{ String(start_date) }})
         {% end %}

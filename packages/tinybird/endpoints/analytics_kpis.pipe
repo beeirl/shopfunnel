@@ -1,10 +1,11 @@
 DESCRIPTION >
-    KPIs: visitors, starts, completions, rates.
+    Unified analytics KPIs: workspace-level or per-funnel metrics.
+    When funnel_id is provided, filters to that funnel (across all versions).
     Supports date filtering.
 
 TOKEN api READ
 
-NODE kpis_node
+NODE analytics_kpis_node
 SQL >
     %
     SELECT
@@ -15,8 +16,9 @@ SQL >
         sumMerge(total_revenue) AS total_revenue
     FROM kpis_mv
     WHERE workspace_id = {{ String(workspace_id, required=True) }}
-        AND funnel_id = {{ String(funnel_id, required=True) }}
-        AND funnel_version = {{ UInt32(funnel_version, required=True) }}
+        {% if defined(funnel_id) %}
+        AND funnel_id = {{ String(funnel_id) }}
+        {% end %}
         {% if defined(start_date) %}
         AND date >= parseDateTimeBestEffort({{ String(start_date) }})
         {% end %}
@@ -34,11 +36,9 @@ SQL >
         total_revenue,
         if(total_visitors > 0, round(total_starts / total_visitors * 100, 1), 0) AS start_rate,
         if(total_visitors > 0, round(total_completions / total_visitors * 100, 1), 0) AS completion_rate,
-        if(total_starts > 0, round(total_completions / total_starts * 100, 1), 0) AS completion_rate_of_starters,
         if(total_visitors > 0, round(total_orders / total_visitors * 100, 1), 0) AS conversion_rate,
-        if(total_starts > 0, round(total_orders / total_starts * 100, 1), 0) AS conversion_rate_of_starters,
         if(total_visitors > 0, round(total_revenue / total_visitors, 2), 0) AS revenue_per_visitor,
         if(total_orders > 0, round(total_revenue / total_orders, 2), 0) AS avg_order_value
-    FROM kpis_node
+    FROM analytics_kpis_node
 
 TYPE endpoint

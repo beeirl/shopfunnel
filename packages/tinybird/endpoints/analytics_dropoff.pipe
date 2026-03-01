@@ -1,9 +1,11 @@
 DESCRIPTION >
-    Page-level stats: views, completions, avg duration, dropoff rate.
+    Page-level drop-off stats for a funnel.
+    When funnel_version is not provided, aggregates across all versions
+    but only includes pages that exist in the latest version.
 
 TOKEN api READ
 
-NODE pages_node
+NODE analytics_dropoff_node
 SQL >
     %
     SELECT
@@ -22,7 +24,22 @@ SQL >
     FROM pages_mv
     WHERE workspace_id = {{ String(workspace_id, required=True) }}
         AND funnel_id = {{ String(funnel_id, required=True) }}
-        AND funnel_version = {{ UInt32(funnel_version, required=True) }}
+        {% if defined(funnel_version) %}
+        AND funnel_version = {{ UInt32(funnel_version) }}
+        {% else %}
+        AND page_id IN (
+            SELECT DISTINCT page_id
+            FROM pages_mv
+            WHERE workspace_id = {{ String(workspace_id) }}
+              AND funnel_id = {{ String(funnel_id) }}
+              AND funnel_version = (
+                  SELECT max(funnel_version)
+                  FROM pages_mv
+                  WHERE workspace_id = {{ String(workspace_id) }}
+                    AND funnel_id = {{ String(funnel_id) }}
+              )
+        )
+        {% end %}
         {% if defined(start_date) %}
         AND date >= parseDateTimeBestEffort({{ String(start_date) }})
         {% end %}
@@ -31,7 +48,7 @@ SQL >
         {% end %}
     GROUP BY page_id
 
-NODE external_page_node
+NODE analytics_dropoff_external_node
 SQL >
     %
     SELECT
@@ -46,7 +63,9 @@ SQL >
     FROM kpis_mv
     WHERE workspace_id = {{ String(workspace_id, required=True) }}
         AND funnel_id = {{ String(funnel_id, required=True) }}
-        AND funnel_version = {{ UInt32(funnel_version, required=True) }}
+        {% if defined(funnel_version) %}
+        AND funnel_version = {{ UInt32(funnel_version) }}
+        {% end %}
         {% if defined(start_date) %}
         AND date >= parseDateTimeBestEffort({{ String(start_date) }})
         {% end %}
@@ -57,9 +76,9 @@ SQL >
 NODE endpoint_node
 SQL >
     SELECT * FROM (
-        SELECT * FROM pages_node
+        SELECT * FROM analytics_dropoff_node
         UNION ALL
-        SELECT * FROM external_page_node WHERE page_views > 0
+        SELECT * FROM analytics_dropoff_external_node WHERE page_views > 0
     )
     ORDER BY page_index
 

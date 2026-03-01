@@ -14,7 +14,7 @@ export const Route = createFileRoute('/workspace/$workspaceId/funnels/$id/_funne
   beforeLoad: async ({ context, params }) => {
     const session = await context.queryClient.ensureQueryData(getSessionQueryOptions(params.workspaceId))
     if (!session.isAdmin) {
-      throw redirect({ to: '/workspace/$workspaceId/funnels/$id/insights', params })
+      throw redirect({ to: '/workspace/$workspaceId/funnels/$id/responses', params })
     }
   },
 })

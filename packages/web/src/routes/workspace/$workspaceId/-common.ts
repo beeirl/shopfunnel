@@ -125,25 +125,6 @@ export function formatPrice(price: number) {
   }).format(price)
 }
 
-export function getDateRange(
-  startDate: Date,
-  endDate: Date,
-): {
-  startDate: string
-  endDate: string
-} {
-  const start = new Date(startDate)
-  start.setHours(0, 0, 0, 0)
-
-  const end = new Date(endDate)
-  end.setHours(23, 59, 59, 999)
-
-  return {
-    startDate: start.toISOString(),
-    endDate: end.toISOString(),
-  }
-}
-
 export function formatDate(date: Date) {
   return new Intl.DateTimeFormat('en-US', {
     month: 'short',
@@ -156,14 +137,6 @@ export function formatDate(date: Date) {
 
 export function formatDateRelative(date: Date) {
   return DateTime.fromJSDate(date).setLocale('en-US').toRelative()
-}
-
-export function formatDateForChart(utcDateStr: string, granularity: 'hour' | 'day'): string {
-  const date = new Date(utcDateStr)
-  if (granularity === 'hour') {
-    return date.toLocaleTimeString('en-US', { hour: 'numeric', hour12: true })
-  }
-  return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
 }
 
 export const getSession = createServerFn()
