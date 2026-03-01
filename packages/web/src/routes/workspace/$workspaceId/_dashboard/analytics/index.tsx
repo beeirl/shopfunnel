@@ -63,6 +63,23 @@ export const Route = createFileRoute('/workspace/$workspaceId/_dashboard/analyti
   },
 })
 
+function TabSkeleton() {
+  return (
+    <div className="flex flex-col gap-2 rounded-3xl bg-muted p-2">
+      <div className="grid grid-cols-5 gap-2">
+        {Array.from({ length: 5 }).map((_, i) => (
+          <div key={i} className="h-16 animate-pulse rounded-xl bg-background" />
+        ))}
+      </div>
+      <div className="grid grid-cols-2 gap-2">
+        {Array.from({ length: 6 }).map((_, i) => (
+          <div key={i} className="h-80 animate-pulse rounded-xl bg-background" />
+        ))}
+      </div>
+    </div>
+  )
+}
+
 function RouteComponent() {
   const params = Route.useParams()
   const navigate = useNavigate({ from: Route.fullPath })
@@ -185,9 +202,18 @@ function RouteComponent() {
           </div>
 
           {activeTab === 'general' ? (
-            <GeneralTab workspaceId={params.workspaceId} funnelId={funnelId} filter={filter} />
+            <React.Suspense fallback={<TabSkeleton />}>
+              <GeneralTab workspaceId={params.workspaceId} funnelId={funnelId} filter={filter} />
+            </React.Suspense>
           ) : (
-            <DropoffTab workspaceId={params.workspaceId} funnelId={dropoffFunnelId} funnels={funnels} filter={filter} />
+            <React.Suspense fallback={<TabSkeleton />}>
+              <DropoffTab
+                workspaceId={params.workspaceId}
+                funnelId={dropoffFunnelId}
+                funnels={funnels}
+                filter={filter}
+              />
+            </React.Suspense>
           )}
         </div>
       </div>

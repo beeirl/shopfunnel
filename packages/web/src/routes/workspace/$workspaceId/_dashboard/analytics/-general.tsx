@@ -41,10 +41,10 @@ export function computeGranularity(from: Date, to: Date): 'hour' | 'day' {
 const chartConfig = {
   visitors: { label: 'Visitors', color: 'var(--color-chart-1)' },
   start_rate: { label: 'Start Rate', color: 'var(--color-chart-1)' },
-  completion_rate: { label: 'Completion Rate', color: 'var(--color-chart-2)' },
-  conversion_rate: { label: 'CVR', color: 'var(--color-chart-3)' },
-  rpv: { label: 'RPV', color: 'var(--color-chart-4)' },
-  aov: { label: 'AOV', color: 'var(--color-chart-5)' },
+  completion_rate: { label: 'Completion Rate', color: 'var(--color-chart-1)' },
+  conversion_rate: { label: 'CVR', color: 'var(--color-chart-1)' },
+  rpv: { label: 'RPV', color: 'var(--color-chart-1)' },
+  aov: { label: 'AOV', color: 'var(--color-chart-1)' },
 } satisfies ChartConfig
 
 type AnalyticsKpis = {
@@ -174,7 +174,6 @@ function RateCard({
   secondaryValue,
   timeseries,
   dataKey,
-  hasData,
   granularity,
   format,
 }: {
@@ -183,7 +182,6 @@ function RateCard({
   secondaryValue?: string
   timeseries: { date: string; value: number }[]
   dataKey: string
-  hasData: boolean
   granularity: 'hour' | 'day'
   format: 'currency' | 'number' | 'percentage'
 }) {
@@ -203,54 +201,48 @@ function RateCard({
         </Card.Description>
       </Card.Header>
       <Card.Content className="px-0!">
-        {hasData && timeseries.length >= 2 ? (
-          <Chart.Container config={config} height={256}>
-            <LineChart data={timeseries} margin={{ top: 8, right: 24, bottom: 12, left: 0 }}>
-              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--color-border)" />
-              <XAxis
-                dataKey="date"
-                tickFormatter={(v) => formatDateForChart(v, granularity)}
-                tickLine={false}
-                axisLine={false}
-                tickMargin={8}
-                padding={{ left: 10, right: 10 }}
-              />
-              <YAxis
-                tickLine={false}
-                axisLine={false}
-                width={format === 'currency' ? 65 : 50}
-                tickFormatter={(v) => formatAxisTick(Number(v), format)}
-                domain={format === 'percentage' ? [0, 100] : ['auto', 'auto']}
-              />
-              <Chart.Tooltip
-                content={(props) => (
-                  <Chart.TooltipContent
-                    {...props}
-                    labelFormatter={(label) => formatDateForChart(String(label), granularity)}
-                    formatter={(value) => (
-                      <>
-                        <span className="text-muted-foreground">{title}</span>
-                        <span className="font-mono font-medium tabular-nums">{formatValue(Number(value), format)}</span>
-                      </>
-                    )}
-                  />
-                )}
-              />
-              <Line
-                type="monotone"
-                dataKey="value"
-                stroke={`var(--color-${dataKey})`}
-                strokeWidth={2}
-                dot={false}
-                activeDot={{ r: 3 }}
-              />
-            </LineChart>
-          </Chart.Container>
-        ) : (
-          <div className="flex h-64 items-center justify-center">
-            <span className="text-sm text-muted-foreground">No data has been collected</span>
-          </div>
-        )}
+        <Chart.Container config={config} height={256}>
+          <LineChart data={timeseries} margin={{ top: 8, right: 24, bottom: 12, left: 0 }}>
+            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--color-border)" />
+            <XAxis
+              dataKey="date"
+              tickFormatter={(v) => formatDateForChart(v, granularity)}
+              tickLine={false}
+              axisLine={false}
+              tickMargin={8}
+              padding={{ left: 10, right: 10 }}
+            />
+            <YAxis
+              tickLine={false}
+              axisLine={false}
+              width={format === 'currency' ? 65 : 50}
+              tickFormatter={(v) => formatAxisTick(Number(v), format)}
+              domain={format === 'percentage' ? [0, 'auto'] : ['auto', 'auto']}
+            />
+            <Chart.Tooltip
+              content={(props) => (
+                <Chart.TooltipContent
+                  {...props}
+                  labelFormatter={(label) => formatDateForChart(String(label), granularity)}
+                  formatter={(value) => (
+                    <>
+                      <span className="text-muted-foreground">{title}</span>
+                      <span className="font-mono font-medium tabular-nums">{formatValue(Number(value), format)}</span>
+                    </>
+                  )}
+                />
+              )}
+            />
+            <Line
+              type="monotone"
+              dataKey="value"
+              stroke={`var(--color-${dataKey})`}
+              strokeWidth={2}
+              dot={false}
+              activeDot={{ r: 3 }}
+            />
+          </LineChart>
+        </Chart.Container>
       </Card.Content>
     </Card.Root>
   )
@@ -304,7 +296,7 @@ export function GeneralTab({ workspaceId, funnelId, filter }: GeneralTabProps) {
   }, [timeseries])
 
   const aovTimeseries = React.useMemo(() => {
-    return timeseries.filter((p) => p.orders > 0).map((p) => ({ date: p.date, value: p.total_revenue / p.orders }))
+    return timeseries.map((p) => ({ date: p.date, value: p.orders > 0 ? p.total_revenue / p.orders : 0 }))
   }, [timeseries])
 
   return (
@@ -351,7 +343,6 @@ export function GeneralTab({ workspaceId, funnelId, filter }: GeneralTabProps) {
               value={kpis.total_visitors}
               timeseries={visitorsTimeseries}
               dataKey="visitors"
-              hasData={hasData}
               granularity={granularity}
               format="number"
             />
@@ -360,7 +351,6 @@ export function GeneralTab({ workspaceId, funnelId, filter }: GeneralTabProps) {
               value={kpis.start_rate}
               timeseries={startRateTimeseries}
               dataKey="start_rate"
-              hasData={hasData}
               granularity={granularity}
               format="percentage"
             />
@@ -372,7 +362,6 @@ export function GeneralTab({ workspaceId, funnelId, filter }: GeneralTabProps) {
               )}
               timeseries={completionRateTimeseries}
               dataKey="completion_rate"
-              hasData={hasData}
               granularity={granularity}
               format="percentage"
             />
@@ -384,7 +373,6 @@ export function GeneralTab({ workspaceId, funnelId, filter }: GeneralTabProps) {
               )}
               timeseries={conversionRateTimeseries}
               dataKey="conversion_rate"
-              hasData={hasData}
               granularity={granularity}
               format="percentage"
             />
@@ -393,7 +381,6 @@ export function GeneralTab({ workspaceId, funnelId, filter }: GeneralTabProps) {
               value={kpis.revenue_per_visitor}
               timeseries={rpvTimeseries}
               dataKey="rpv"
-              hasData={hasData}
               granularity={granularity}
               format="currency"
             />
@@ -402,7 +389,6 @@ export function GeneralTab({ workspaceId, funnelId, filter }: GeneralTabProps) {
               value={kpis.avg_order_value}
               timeseries={aovTimeseries}
               dataKey="aov"
-              hasData={hasData}
               granularity={granularity}
               format="currency"
             />
