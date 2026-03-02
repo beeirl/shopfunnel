@@ -222,7 +222,11 @@ function PublishButton() {
         <Tooltip.Trigger
           render={
             <Button
-              className={cn('flex-1', isPublishing && 'pointer-events-none')}
+              className={cn(
+                'flex-1',
+                isPublishing && 'pointer-events-none',
+                !funnel.data.draft && !funnel.isSaving && 'opacity-50',
+              )}
               disabled={funnel.isSaving}
               onClick={funnel.data.draft ? handlePublish : undefined}
             >

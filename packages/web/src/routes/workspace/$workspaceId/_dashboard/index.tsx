@@ -372,6 +372,7 @@ function RouteComponent() {
                       tickLine={false}
                       axisLine={false}
                       tickMargin={8}
+                      interval={Math.max(0, Math.ceil(visitorsTimeseries.length / 8) - 1)}
                       padding={{ left: 10, right: 10 }}
                     />
                     <YAxis
@@ -388,7 +389,7 @@ function RouteComponent() {
                           labelFormatter={(label) => formatDateForChart(String(label), granularity)}
                           formatter={(value) => (
                             <>
-                              <span className="text-muted-foreground">Visitors</span>
+                              <span className="text-muted-foreground">Visits</span>
                               <span className="font-mono font-medium tabular-nums">{formatNumber(Number(value))}</span>
                             </>
                           )}

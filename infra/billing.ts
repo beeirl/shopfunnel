@@ -1,4 +1,3 @@
-import { database } from './database'
 import { secret } from './secret'
 import { domain } from './stage'
 
@@ -33,13 +32,13 @@ const VISITOR_METER_EVENT_NAME = new sst.Linkable('VISITOR_METER_EVENT_NAME', {
   properties: { value: visitorMeter.eventName },
 })
 
-export const billingCron = new sst.cloudflare.Cron('BillingCron', {
-  job: {
-    handler: 'packages/function/src/billing.ts',
-    link: [database, VISITOR_METER_EVENT_NAME, secret.STRIPE_SECRET_KEY, secret.TINYBIRD_TOKEN],
-  },
-  schedules: ['5 * * * *'],
-})
+// export const billingCron = new sst.cloudflare.Cron('BillingCron', {
+//   job: {
+//     handler: 'packages/function/src/billing.ts',
+//     link: [database, VISITOR_METER_EVENT_NAME, secret.STRIPE_SECRET_KEY, secret.TINYBIRD_TOKEN],
+//   },
+//   schedules: ['5 * * * *'],
+// })
 
 if ($app.stage === 'production') {
   new cloudflare.DnsRecord('StripeDnsRecord', {
