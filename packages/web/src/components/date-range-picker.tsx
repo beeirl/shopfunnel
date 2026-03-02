@@ -41,6 +41,7 @@ function getPresets(): DateRangePreset[] {
         return { from: startOfDay(yesterday), to: endOfDay(yesterday) }
       },
     },
+    { label: 'Last 24 hours', value: '24h', range: () => ({ from: new Date(now.getTime() - 86400000), to: now }) },
     { label: 'Last 7 days', value: '7d', range: () => ({ from: new Date(now.getTime() - 7 * 86400000), to: now }) },
     { label: 'Last 30 days', value: '30d', range: () => ({ from: new Date(now.getTime() - 30 * 86400000), to: now }) },
     { label: 'Month', value: 'month', range: () => ({ from: startOfMonth(now), to: now }) },

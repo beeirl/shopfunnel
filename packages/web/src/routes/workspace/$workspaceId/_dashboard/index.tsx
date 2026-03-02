@@ -22,7 +22,7 @@ import { CartesianGrid, Line, LineChart, XAxis, YAxis } from 'recharts'
 import { z } from 'zod'
 import { Heading } from './-components/heading'
 
-const DATE_RANGE_PERIODS = ['today', 'yesterday', '7d', '30d', 'month', 'year'] as const
+const DATE_RANGE_PERIODS = ['today', 'yesterday', '24h', '7d', '30d', 'month', 'year'] as const
 
 function formatDateForSearch(date: Date): string {
   const y = date.getFullYear()
@@ -61,6 +61,8 @@ function resolvePresetRange(period: (typeof DATE_RANGE_PERIODS)[number]): { from
         to: new Date(yesterday.getFullYear(), yesterday.getMonth(), yesterday.getDate(), 23, 59, 59, 999),
       }
     }
+    case '24h':
+      return { from: new Date(now.getTime() - 24 * 60 * 60 * 1000), to: now }
     case '7d':
       return { from: new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000), to: now }
     case '30d':
