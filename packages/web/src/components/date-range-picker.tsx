@@ -108,13 +108,33 @@ export function DateRangePicker({ value, onValueChange, align = 'end', size = 'd
     if (from) {
       setPendingRange((prev) => {
         const newFrom = new Date(from)
-        if (prev.from) {
+        const fromDayChanged =
+          !prev.from ||
+          prev.from.getFullYear() !== newFrom.getFullYear() ||
+          prev.from.getMonth() !== newFrom.getMonth() ||
+          prev.from.getDate() !== newFrom.getDate()
+
+        if (fromDayChanged) {
+          newFrom.setHours(0, 0, 0, 0)
+        } else if (prev.from) {
           newFrom.setHours(prev.from.getHours(), prev.from.getMinutes(), 0, 0)
         }
+
         const newTo = to ? new Date(to) : undefined
-        if (newTo && prev.to) {
-          newTo.setHours(prev.to.getHours(), prev.to.getMinutes(), 59, 999)
+        if (newTo) {
+          const toDayChanged =
+            !prev.to ||
+            prev.to.getFullYear() !== newTo.getFullYear() ||
+            prev.to.getMonth() !== newTo.getMonth() ||
+            prev.to.getDate() !== newTo.getDate()
+
+          if (toDayChanged) {
+            newTo.setHours(23, 59, 59, 999)
+          } else if (prev.to) {
+            newTo.setHours(prev.to.getHours(), prev.to.getMinutes(), 59, 999)
+          }
         }
+
         return { from: newFrom, to: newTo }
       })
       setPendingPreset(null)

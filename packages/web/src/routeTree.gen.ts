@@ -29,10 +29,10 @@ import { Route as WorkspaceWorkspaceIdDashboardIntegrationsRouteImport } from '.
 import { Route as WorkspaceWorkspaceIdDashboardFunnelsRouteImport } from './routes/workspace/$workspaceId/_dashboard/funnels'
 import { Route as WorkspaceWorkspaceIdFunnelsIdRouteRouteImport } from './routes/workspace/$workspaceId/funnels/$id/route'
 import { Route as WorkspaceWorkspaceIdDashboardDomainsIndexRouteImport } from './routes/workspace/$workspaceId/_dashboard/domains/index'
-import { Route as WorkspaceWorkspaceIdDashboardAnalyticsIndexRouteImport } from './routes/workspace/$workspaceId/_dashboard/analytics/index'
 import { Route as WorkspaceWorkspaceIdFunnelsIdPreviewRouteImport } from './routes/workspace/$workspaceId/funnels/$id/preview'
 import { Route as WorkspaceWorkspaceIdFunnelsIdFunnelRouteRouteImport } from './routes/workspace/$workspaceId/funnels/$id/_funnel/route'
 import { Route as WorkspaceWorkspaceIdFunnelsIdFunnelResponsesRouteImport } from './routes/workspace/$workspaceId/funnels/$id/_funnel/responses'
+import { Route as WorkspaceWorkspaceIdFunnelsIdFunnelInsightsRouteImport } from './routes/workspace/$workspaceId/funnels/$id/_funnel/insights'
 import { Route as WorkspaceWorkspaceIdDashboardDomainsDomainIdSettingsRouteImport } from './routes/workspace/$workspaceId/_dashboard/domains/$domainId/settings'
 import { Route as WorkspaceWorkspaceIdFunnelsIdFunnelEditIndexRouteImport } from './routes/workspace/$workspaceId/funnels/$id/_funnel/edit/index'
 
@@ -147,12 +147,6 @@ const WorkspaceWorkspaceIdDashboardDomainsIndexRoute =
     path: '/domains/',
     getParentRoute: () => WorkspaceWorkspaceIdDashboardRouteRoute,
   } as any)
-const WorkspaceWorkspaceIdDashboardAnalyticsIndexRoute =
-  WorkspaceWorkspaceIdDashboardAnalyticsIndexRouteImport.update({
-    id: '/analytics/',
-    path: '/analytics/',
-    getParentRoute: () => WorkspaceWorkspaceIdDashboardRouteRoute,
-  } as any)
 const WorkspaceWorkspaceIdFunnelsIdPreviewRoute =
   WorkspaceWorkspaceIdFunnelsIdPreviewRouteImport.update({
     id: '/preview',
@@ -168,6 +162,12 @@ const WorkspaceWorkspaceIdFunnelsIdFunnelResponsesRoute =
   WorkspaceWorkspaceIdFunnelsIdFunnelResponsesRouteImport.update({
     id: '/responses',
     path: '/responses',
+    getParentRoute: () => WorkspaceWorkspaceIdFunnelsIdFunnelRouteRoute,
+  } as any)
+const WorkspaceWorkspaceIdFunnelsIdFunnelInsightsRoute =
+  WorkspaceWorkspaceIdFunnelsIdFunnelInsightsRouteImport.update({
+    id: '/insights',
+    path: '/insights',
     getParentRoute: () => WorkspaceWorkspaceIdFunnelsIdFunnelRouteRoute,
   } as any)
 const WorkspaceWorkspaceIdDashboardDomainsDomainIdSettingsRoute =
@@ -203,9 +203,9 @@ export interface FileRoutesByFullPath {
   '/workspace/$workspaceId/members': typeof WorkspaceWorkspaceIdDashboardMembersRoute
   '/workspace/$workspaceId/': typeof WorkspaceWorkspaceIdDashboardIndexRoute
   '/workspace/$workspaceId/funnels/$id/preview': typeof WorkspaceWorkspaceIdFunnelsIdPreviewRoute
-  '/workspace/$workspaceId/analytics': typeof WorkspaceWorkspaceIdDashboardAnalyticsIndexRoute
   '/workspace/$workspaceId/domains': typeof WorkspaceWorkspaceIdDashboardDomainsIndexRoute
   '/workspace/$workspaceId/domains/$domainId/settings': typeof WorkspaceWorkspaceIdDashboardDomainsDomainIdSettingsRoute
+  '/workspace/$workspaceId/funnels/$id/insights': typeof WorkspaceWorkspaceIdFunnelsIdFunnelInsightsRoute
   '/workspace/$workspaceId/funnels/$id/responses': typeof WorkspaceWorkspaceIdFunnelsIdFunnelResponsesRoute
   '/workspace/$workspaceId/funnels/$id/edit': typeof WorkspaceWorkspaceIdFunnelsIdFunnelEditIndexRoute
 }
@@ -228,9 +228,9 @@ export interface FileRoutesByTo {
   '/workspace/$workspaceId/integrations': typeof WorkspaceWorkspaceIdDashboardIntegrationsRoute
   '/workspace/$workspaceId/members': typeof WorkspaceWorkspaceIdDashboardMembersRoute
   '/workspace/$workspaceId/funnels/$id/preview': typeof WorkspaceWorkspaceIdFunnelsIdPreviewRoute
-  '/workspace/$workspaceId/analytics': typeof WorkspaceWorkspaceIdDashboardAnalyticsIndexRoute
   '/workspace/$workspaceId/domains': typeof WorkspaceWorkspaceIdDashboardDomainsIndexRoute
   '/workspace/$workspaceId/domains/$domainId/settings': typeof WorkspaceWorkspaceIdDashboardDomainsDomainIdSettingsRoute
+  '/workspace/$workspaceId/funnels/$id/insights': typeof WorkspaceWorkspaceIdFunnelsIdFunnelInsightsRoute
   '/workspace/$workspaceId/funnels/$id/responses': typeof WorkspaceWorkspaceIdFunnelsIdFunnelResponsesRoute
   '/workspace/$workspaceId/funnels/$id/edit': typeof WorkspaceWorkspaceIdFunnelsIdFunnelEditIndexRoute
 }
@@ -257,9 +257,9 @@ export interface FileRoutesById {
   '/workspace/$workspaceId/_dashboard/': typeof WorkspaceWorkspaceIdDashboardIndexRoute
   '/workspace/$workspaceId/funnels/$id/_funnel': typeof WorkspaceWorkspaceIdFunnelsIdFunnelRouteRouteWithChildren
   '/workspace/$workspaceId/funnels/$id/preview': typeof WorkspaceWorkspaceIdFunnelsIdPreviewRoute
-  '/workspace/$workspaceId/_dashboard/analytics/': typeof WorkspaceWorkspaceIdDashboardAnalyticsIndexRoute
   '/workspace/$workspaceId/_dashboard/domains/': typeof WorkspaceWorkspaceIdDashboardDomainsIndexRoute
   '/workspace/$workspaceId/_dashboard/domains/$domainId/settings': typeof WorkspaceWorkspaceIdDashboardDomainsDomainIdSettingsRoute
+  '/workspace/$workspaceId/funnels/$id/_funnel/insights': typeof WorkspaceWorkspaceIdFunnelsIdFunnelInsightsRoute
   '/workspace/$workspaceId/funnels/$id/_funnel/responses': typeof WorkspaceWorkspaceIdFunnelsIdFunnelResponsesRoute
   '/workspace/$workspaceId/funnels/$id/_funnel/edit/': typeof WorkspaceWorkspaceIdFunnelsIdFunnelEditIndexRoute
 }
@@ -285,9 +285,9 @@ export interface FileRouteTypes {
     | '/workspace/$workspaceId/members'
     | '/workspace/$workspaceId/'
     | '/workspace/$workspaceId/funnels/$id/preview'
-    | '/workspace/$workspaceId/analytics'
     | '/workspace/$workspaceId/domains'
     | '/workspace/$workspaceId/domains/$domainId/settings'
+    | '/workspace/$workspaceId/funnels/$id/insights'
     | '/workspace/$workspaceId/funnels/$id/responses'
     | '/workspace/$workspaceId/funnels/$id/edit'
   fileRoutesByTo: FileRoutesByTo
@@ -310,9 +310,9 @@ export interface FileRouteTypes {
     | '/workspace/$workspaceId/integrations'
     | '/workspace/$workspaceId/members'
     | '/workspace/$workspaceId/funnels/$id/preview'
-    | '/workspace/$workspaceId/analytics'
     | '/workspace/$workspaceId/domains'
     | '/workspace/$workspaceId/domains/$domainId/settings'
+    | '/workspace/$workspaceId/funnels/$id/insights'
     | '/workspace/$workspaceId/funnels/$id/responses'
     | '/workspace/$workspaceId/funnels/$id/edit'
   id:
@@ -338,9 +338,9 @@ export interface FileRouteTypes {
     | '/workspace/$workspaceId/_dashboard/'
     | '/workspace/$workspaceId/funnels/$id/_funnel'
     | '/workspace/$workspaceId/funnels/$id/preview'
-    | '/workspace/$workspaceId/_dashboard/analytics/'
     | '/workspace/$workspaceId/_dashboard/domains/'
     | '/workspace/$workspaceId/_dashboard/domains/$domainId/settings'
+    | '/workspace/$workspaceId/funnels/$id/_funnel/insights'
     | '/workspace/$workspaceId/funnels/$id/_funnel/responses'
     | '/workspace/$workspaceId/funnels/$id/_funnel/edit/'
   fileRoutesById: FileRoutesById
@@ -499,13 +499,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof WorkspaceWorkspaceIdDashboardDomainsIndexRouteImport
       parentRoute: typeof WorkspaceWorkspaceIdDashboardRouteRoute
     }
-    '/workspace/$workspaceId/_dashboard/analytics/': {
-      id: '/workspace/$workspaceId/_dashboard/analytics/'
-      path: '/analytics'
-      fullPath: '/workspace/$workspaceId/analytics'
-      preLoaderRoute: typeof WorkspaceWorkspaceIdDashboardAnalyticsIndexRouteImport
-      parentRoute: typeof WorkspaceWorkspaceIdDashboardRouteRoute
-    }
     '/workspace/$workspaceId/funnels/$id/preview': {
       id: '/workspace/$workspaceId/funnels/$id/preview'
       path: '/preview'
@@ -525,6 +518,13 @@ declare module '@tanstack/react-router' {
       path: '/responses'
       fullPath: '/workspace/$workspaceId/funnels/$id/responses'
       preLoaderRoute: typeof WorkspaceWorkspaceIdFunnelsIdFunnelResponsesRouteImport
+      parentRoute: typeof WorkspaceWorkspaceIdFunnelsIdFunnelRouteRoute
+    }
+    '/workspace/$workspaceId/funnels/$id/_funnel/insights': {
+      id: '/workspace/$workspaceId/funnels/$id/_funnel/insights'
+      path: '/insights'
+      fullPath: '/workspace/$workspaceId/funnels/$id/insights'
+      preLoaderRoute: typeof WorkspaceWorkspaceIdFunnelsIdFunnelInsightsRouteImport
       parentRoute: typeof WorkspaceWorkspaceIdFunnelsIdFunnelRouteRoute
     }
     '/workspace/$workspaceId/_dashboard/domains/$domainId/settings': {
@@ -549,7 +549,6 @@ interface WorkspaceWorkspaceIdDashboardRouteRouteChildren {
   WorkspaceWorkspaceIdDashboardIntegrationsRoute: typeof WorkspaceWorkspaceIdDashboardIntegrationsRoute
   WorkspaceWorkspaceIdDashboardMembersRoute: typeof WorkspaceWorkspaceIdDashboardMembersRoute
   WorkspaceWorkspaceIdDashboardIndexRoute: typeof WorkspaceWorkspaceIdDashboardIndexRoute
-  WorkspaceWorkspaceIdDashboardAnalyticsIndexRoute: typeof WorkspaceWorkspaceIdDashboardAnalyticsIndexRoute
   WorkspaceWorkspaceIdDashboardDomainsIndexRoute: typeof WorkspaceWorkspaceIdDashboardDomainsIndexRoute
   WorkspaceWorkspaceIdDashboardDomainsDomainIdSettingsRoute: typeof WorkspaceWorkspaceIdDashboardDomainsDomainIdSettingsRoute
 }
@@ -564,8 +563,6 @@ const WorkspaceWorkspaceIdDashboardRouteRouteChildren: WorkspaceWorkspaceIdDashb
       WorkspaceWorkspaceIdDashboardMembersRoute,
     WorkspaceWorkspaceIdDashboardIndexRoute:
       WorkspaceWorkspaceIdDashboardIndexRoute,
-    WorkspaceWorkspaceIdDashboardAnalyticsIndexRoute:
-      WorkspaceWorkspaceIdDashboardAnalyticsIndexRoute,
     WorkspaceWorkspaceIdDashboardDomainsIndexRoute:
       WorkspaceWorkspaceIdDashboardDomainsIndexRoute,
     WorkspaceWorkspaceIdDashboardDomainsDomainIdSettingsRoute:
@@ -578,12 +575,15 @@ const WorkspaceWorkspaceIdDashboardRouteRouteWithChildren =
   )
 
 interface WorkspaceWorkspaceIdFunnelsIdFunnelRouteRouteChildren {
+  WorkspaceWorkspaceIdFunnelsIdFunnelInsightsRoute: typeof WorkspaceWorkspaceIdFunnelsIdFunnelInsightsRoute
   WorkspaceWorkspaceIdFunnelsIdFunnelResponsesRoute: typeof WorkspaceWorkspaceIdFunnelsIdFunnelResponsesRoute
   WorkspaceWorkspaceIdFunnelsIdFunnelEditIndexRoute: typeof WorkspaceWorkspaceIdFunnelsIdFunnelEditIndexRoute
 }
 
 const WorkspaceWorkspaceIdFunnelsIdFunnelRouteRouteChildren: WorkspaceWorkspaceIdFunnelsIdFunnelRouteRouteChildren =
   {
+    WorkspaceWorkspaceIdFunnelsIdFunnelInsightsRoute:
+      WorkspaceWorkspaceIdFunnelsIdFunnelInsightsRoute,
     WorkspaceWorkspaceIdFunnelsIdFunnelResponsesRoute:
       WorkspaceWorkspaceIdFunnelsIdFunnelResponsesRoute,
     WorkspaceWorkspaceIdFunnelsIdFunnelEditIndexRoute:

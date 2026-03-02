@@ -78,10 +78,10 @@ export const Route = createFileRoute('/workspace/$workspaceId/_dashboard')({
 
 const navItems = [
   {
-    title: 'Analytics',
-    to: '/workspace/$workspaceId/analytics' as const,
+    title: 'Dashboard',
+    to: '/workspace/$workspaceId' as const,
     icon: DashboardIcon,
-    exact: false,
+    exact: true,
   },
   {
     title: 'Funnels',

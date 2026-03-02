@@ -5,10 +5,12 @@ import { Identifier } from '@shopfunnel/core/identifier'
 import { Integration } from '@shopfunnel/core/integration/index'
 import { User } from '@shopfunnel/core/user/index'
 import { Workspace } from '@shopfunnel/core/workspace/index'
+import { Resource } from '@shopfunnel/resource'
 import { queryOptions } from '@tanstack/react-query'
 import { redirect } from '@tanstack/react-router'
 import { createServerFn } from '@tanstack/react-start'
 import { DateTime } from 'luxon'
+import { z } from 'zod'
 
 export const PLANS = [
   {
@@ -265,4 +267,116 @@ export const getBillingQueryOptions = (workspaceId: string) =>
   queryOptions({
     queryKey: ['billing', workspaceId],
     queryFn: () => getBilling({ data: workspaceId }),
+  })
+
+export function formatNumber(value: number, compact = false): string {
+  if (compact && value >= 1000) {
+    return new Intl.NumberFormat('en-US', { notation: 'compact', maximumFractionDigits: 1 }).format(value)
+  }
+  return value.toLocaleString('en-US')
+}
+
+export function formatPercentage(value: number): string {
+  const formatted = value.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 2 })
+  return `${formatted}%`
+}
+
+type FunnelKpis = {
+  funnel_id: string
+  total_visitors: number
+  total_starts: number
+  total_completions: number
+  total_orders: number
+  total_revenue: number
+  start_rate: number
+  completion_rate: number
+  conversion_rate: number
+  revenue_per_visitor: number
+  avg_order_value: number
+}
+
+const getAnalyticsFunnelKpis = createServerFn()
+  .inputValidator(
+    z.object({
+      workspaceId: z.string(),
+      funnelId: z.string().optional(),
+      filter: z.object({
+        startDate: z.string(),
+        endDate: z.string(),
+      }),
+    }),
+  )
+  .handler(async ({ data }) => {
+    const token = Resource.TINYBIRD_TOKEN.value
+    const params = new URLSearchParams({
+      workspace_id: data.workspaceId,
+      start_date: data.filter.startDate,
+      end_date: data.filter.endDate,
+    })
+    if (data.funnelId) params.set('funnel_id', data.funnelId)
+
+    const response = await fetch(`https://api.us-east.aws.tinybird.co/v0/pipes/analytics_funnel_kpis.json?${params}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+    const json = (await response.json()) as { data: FunnelKpis[] }
+    return json.data ?? []
+  })
+
+export const getAnalyticsFunnelKpisQueryOptions = (
+  workspaceId: string,
+  funnelId: string | undefined,
+  filter: { startDate: string; endDate: string },
+) =>
+  queryOptions({
+    queryKey: ['analytics-funnel-kpis', workspaceId, funnelId ?? 'all', filter.startDate, filter.endDate],
+    queryFn: () => getAnalyticsFunnelKpis({ data: { workspaceId, funnelId, filter } }),
+  })
+
+type TimeseriesPoint = {
+  date: string
+  visitors: number
+  starts: number
+  completions: number
+  orders: number
+  total_revenue: number
+}
+
+const getAnalyticsTimeseries = createServerFn()
+  .inputValidator(
+    z.object({
+      workspaceId: z.string(),
+      funnelId: z.string().optional(),
+      filter: z.object({
+        startDate: z.string(),
+        endDate: z.string(),
+      }),
+      granularity: z.enum(['hour', 'day']),
+    }),
+  )
+  .handler(async ({ data }) => {
+    const token = Resource.TINYBIRD_TOKEN.value
+    const params = new URLSearchParams({
+      workspace_id: data.workspaceId,
+      start_date: data.filter.startDate,
+      end_date: data.filter.endDate,
+      granularity: data.granularity,
+    })
+    if (data.funnelId) params.set('funnel_id', data.funnelId)
+
+    const response = await fetch(`https://api.us-east.aws.tinybird.co/v0/pipes/analytics_timeseries.json?${params}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+    const json = (await response.json()) as { data: TimeseriesPoint[] }
+    return json.data ?? []
+  })
+
+export const getAnalyticsTimeseriesQueryOptions = (
+  workspaceId: string,
+  funnelId: string | undefined,
+  filter: { startDate: string; endDate: string },
+  granularity: 'hour' | 'day',
+) =>
+  queryOptions({
+    queryKey: ['analytics-timeseries', workspaceId, funnelId ?? 'all', filter.startDate, filter.endDate, granularity],
+    queryFn: () => getAnalyticsTimeseries({ data: { workspaceId, funnelId, filter, granularity } }),
   })
