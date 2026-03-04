@@ -413,16 +413,16 @@ function RouteComponent() {
 
             <Card.Root size="sm">
               <Card.Content className="-mx-0.5 -mt-2.5 -mb-2">
-                <Table.Root className="table-fixed">
+                <Table.Root>
                   <Table.Header>
                     <Table.Row className="hover:bg-transparent">
-                      <Table.Head className="w-[28%]">Funnel</Table.Head>
-                      <Table.Head className="w-[12%] text-right">Visits</Table.Head>
-                      <Table.Head className="w-[12%] text-right">Orders</Table.Head>
-                      <Table.Head className="w-[12%] text-right">SR</Table.Head>
-                      <Table.Head className="w-[12%] text-right">CR</Table.Head>
-                      <Table.Head className="w-[12%] text-right">CVR</Table.Head>
-                      <Table.Head className="w-[12%] text-right">RPV</Table.Head>
+                      <Table.Head>Funnel</Table.Head>
+                      <Table.Head className="text-right">Visits</Table.Head>
+                      <Table.Head className="text-right">Orders</Table.Head>
+                      <Table.Head className="text-right">Start Rate</Table.Head>
+                      <Table.Head className="text-right">Completion Rate</Table.Head>
+                      <Table.Head className="text-right">CVR</Table.Head>
+                      <Table.Head className="text-right">RPV</Table.Head>
                     </Table.Row>
                   </Table.Header>
                   <Table.Body>
@@ -449,11 +449,13 @@ function RouteComponent() {
                           <Table.Cell className="text-right">
                             {formatPercentage(Math.min(funnel.start_rate, 100))}
                           </Table.Cell>
-                          <Table.Cell className="text-right">
+                          <Table.Cell className="text-right whitespace-nowrap">
                             {formatPercentage(Math.min(funnel.completion_rate, 100))}
+                            <span className="text-muted-foreground">{` (${formatPercentage(Math.min(funnel.total_starts > 0 ? (funnel.total_completions / funnel.total_starts) * 100 : 0, 100))})`}</span>
                           </Table.Cell>
-                          <Table.Cell className="text-right">
+                          <Table.Cell className="text-right whitespace-nowrap">
                             {formatPercentage(Math.min(funnel.conversion_rate, 100))}
+                            <span className="text-muted-foreground">{` (${formatPercentage(Math.min(funnel.total_starts > 0 ? (funnel.total_orders / funnel.total_starts) * 100 : 0, 100))})`}</span>
                           </Table.Cell>
                           <Table.Cell className="text-right">{formatCurrency(funnel.revenue_per_visitor)}</Table.Cell>
                         </Table.Row>
