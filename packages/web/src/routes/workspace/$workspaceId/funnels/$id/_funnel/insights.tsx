@@ -105,7 +105,7 @@ function formatDuration(ms: number): string {
 }
 
 function formatDateForChart(utcDateStr: string, granularity: 'hour' | 'day'): string {
-  const date = new Date(utcDateStr)
+  const date = new Date(utcDateStr.endsWith('Z') ? utcDateStr : utcDateStr + 'Z')
   if (granularity === 'hour') {
     return date.toLocaleTimeString('en-US', { hour: 'numeric', hour12: true })
   }
