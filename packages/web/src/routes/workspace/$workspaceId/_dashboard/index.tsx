@@ -421,8 +421,8 @@ function RouteComponent() {
                       <Table.Head className="text-right">Orders</Table.Head>
                       <Table.Head className="text-right">Start Rate</Table.Head>
                       <Table.Head className="text-right">Completion Rate</Table.Head>
-                      <Table.Head className="text-right">CVR</Table.Head>
-                      <Table.Head className="text-right">RPV</Table.Head>
+                      <Table.Head className="text-right">Conversion Rate</Table.Head>
+                      <Table.Head className="text-right">Revenue per Visitor</Table.Head>
                     </Table.Row>
                   </Table.Header>
                   <Table.Body>

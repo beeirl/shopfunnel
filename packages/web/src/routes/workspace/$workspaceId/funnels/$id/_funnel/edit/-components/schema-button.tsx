@@ -250,6 +250,8 @@ A condition can be one of:
   ]
 }
 
+When comparing against a multiple_choice, picture_choice, or dropdown block, the "constant" value must be the option's "id" (e.g. "opt_yes"), NOT the option's label text.
+
 2. Always condition (unconditional):
 {
   "op": "always"
@@ -269,6 +271,10 @@ A condition can be one of:
 - The "always" condition has no "vars" field.
 - Do NOT generate rules with "always" conditions that simply jump to the next page in sequence — sequential flow is automatic. Only use rules for conditional branching or non-linear navigation.
 - If no conditional logic is needed, set "rules" to an empty array: [].
+- Page order matters. Pages render sequentially by array position. Always place pages in the exact order the user should see them. Branching pages (jump targets) must be positioned immediately after the page that triggers the jump, so the fallback flow is logical if rules aren't evaluated.
+- Always-jump rules for branch convergence. After a branching page rejoins the main flow, always add an "op": "always" rule to explicitly jump it back to the correct convergence page. Do not rely on sequential fallback for branch pages.
+- Every possible answer must be covered. When writing jump rules for a question, every selectable option must be accounted for across the full set of conditions. No answer should fall through without an explicit rule. Do a final check: count the options on the source question and confirm each one maps to a condition.
+- Actions are evaluated top-to-bottom. The first matching "jump" action wins — subsequent jumps are ignored. All "hide" and math actions continue to evaluate even after a jump matches. Place "always" jump fallbacks last in the actions array.
 - Return the result as a single JSON object: { "pages": [...], "rules": [...] }
 - Output ONLY the raw JSON object. Do not wrap it in markdown code fences or include any explanation.
 `
@@ -342,17 +348,56 @@ function replaceIds(data: z.infer<typeof FunnelSchema>): z.infer<typeof FunnelSc
     }),
   }))
 
-  // Pass 3: replace references in rules
-  const remapConditionVar = (v: ConditionVar): ConditionVar => {
-    if (v.type === 'block' && typeof v.value === 'string' && idMap.has(v.value)) {
-      return { ...v, value: idMap.get(v.value)! }
+  // Build a lookup: newBlockId -> (label -> newOptionId) for resolving label-based constants
+  const blockLabelToOptionId = new Map<string, Map<string, string>>()
+  for (const page of pages) {
+    for (const block of page.blocks) {
+      if (hasOptions(block)) {
+        const labelMap = new Map<string, string>()
+        for (const option of block.properties.options) {
+          labelMap.set(option.label, option.id)
+        }
+        blockLabelToOptionId.set(block.id, labelMap)
+      }
     }
-    return v
   }
 
+  // Pass 3: replace references in rules
   const remapComparison = (condition: ComparisonCondition): ComparisonCondition => {
     if (condition.op === 'always') return condition
-    return { ...condition, vars: condition.vars.map(remapConditionVar) }
+    const vars = condition.vars.map((v): ConditionVar => {
+      if (v.type === 'block' && typeof v.value === 'string' && idMap.has(v.value)) {
+        return { ...v, value: idMap.get(v.value)! }
+      }
+      return v
+    })
+
+    // Resolve constant values: remap placeholder IDs and convert labels to option IDs
+    const blockVar = vars.find((v) => v.type === 'block')
+    const constantVar = vars.find((v) => v.type === 'constant')
+    if (blockVar && constantVar && typeof constantVar.value === 'string') {
+      const blockId = String(blockVar.value)
+      const constantValue = String(constantVar.value)
+
+      // If the constant is a placeholder ID that was remapped, use the new ULID
+      if (idMap.has(constantValue)) {
+        return {
+          ...condition,
+          vars: vars.map((v) => (v === constantVar ? { ...v, value: idMap.get(constantValue)! } : v)),
+        }
+      }
+
+      // If the constant is a label, convert it to the corresponding option ID
+      const labelMap = blockLabelToOptionId.get(blockId)
+      if (labelMap) {
+        const optionId = labelMap.get(constantValue)
+        if (optionId) {
+          return { ...condition, vars: vars.map((v) => (v === constantVar ? { ...v, value: optionId } : v)) }
+        }
+      }
+    }
+
+    return { ...condition, vars }
   }
 
   const remapCondition = (condition: Condition): Condition => {
