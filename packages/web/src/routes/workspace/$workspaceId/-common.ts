@@ -277,7 +277,7 @@ export function formatNumber(value: number, compact = false): string {
 }
 
 export function formatPercentage(value: number): string {
-  const formatted = value.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 2 })
+  const formatted = value.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 1 })
   return `${formatted}%`
 }
 
