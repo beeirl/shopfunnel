@@ -44,7 +44,7 @@ export namespace Submission {
       tx
         .update(SubmissionTable)
         .set({ completedAt: sql`NOW(3)` })
-        .where(eq(SubmissionTable.id, id)),
+        .where(and(eq(SubmissionTable.workspaceId, Actor.workspaceId()), eq(SubmissionTable.id, id))),
     )
   })
 

@@ -57,12 +57,14 @@ const submitAnswers = createServerFn()
   })
 
 const completeSubmission = createServerFn()
-  .inputValidator(z.object({ sessionId: z.string() }))
+  .inputValidator(z.object({ sessionId: z.string(), workspaceId: Identifier.schema('workspace') }))
   .handler(async ({ data }) => {
-    const submissionId = await Submission.fromSessionId(data.sessionId)
-    if (submissionId) {
-      await Submission.complete(submissionId)
-    }
+    await Actor.provide('system', { workspaceId: data.workspaceId }, async () => {
+      const submissionId = await Submission.fromSessionId(data.sessionId)
+      if (submissionId) {
+        await Submission.complete(submissionId)
+      }
+    })
   })
 
 export const Route = createFileRoute('/(funnel)/f/$funnelId')({
@@ -244,7 +246,7 @@ function RouteComponent() {
     const visitorId = visitor.id()
 
     await Promise.allSettled(pendingAnswerSubmissionsRef.current)
-    await completeSubmission({ data: { sessionId } })
+    await completeSubmission({ data: { sessionId, workspaceId: funnel.workspaceId } })
 
     trackEvent('funnel_completed')
     trackMetaPixelEvent('FunnelCompleted')
