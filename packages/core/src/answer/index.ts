@@ -1,7 +1,7 @@
 import { and, eq, inArray, isNull } from 'drizzle-orm'
 import { z } from 'zod'
+import { Actor } from '../actor'
 import { Database } from '../database'
-import { Funnel } from '../funnel'
 import { Identifier } from '../identifier'
 import { QuestionTable } from '../question/index.sql'
 import { Submission } from '../submission'
@@ -23,46 +23,38 @@ export namespace Answer {
     async (input) => {
       if (input.answers.length === 0) return
 
-      const funnel = await Funnel.getPublishedVersion(input.funnelId)
-      if (!funnel) throw new Error('Funnel not found')
-
       await Database.transaction(async (tx) => {
         let submissionId = await Submission.fromSessionId(input.sessionId)
         if (!submissionId) {
           submissionId = await Submission.create({
-            funnelId: funnel.id,
-            workspaceId: funnel.workspaceId,
+            funnelId: input.funnelId,
+            workspaceId: Actor.workspaceId(),
             sessionId: input.sessionId,
           })
         }
 
         const questions = await tx
-          .select({ id: QuestionTable.id, blockId: QuestionTable.blockId })
+          .select({ id: QuestionTable.id, blockId: QuestionTable.blockId, type: QuestionTable.type })
           .from(QuestionTable)
           .where(
             and(
-              eq(QuestionTable.workspaceId, funnel.workspaceId),
-              eq(QuestionTable.funnelId, funnel.id),
+              eq(QuestionTable.workspaceId, Actor.workspaceId()),
+              eq(QuestionTable.funnelId, input.funnelId),
               isNull(QuestionTable.archivedAt),
             ),
           )
 
-        const blocks = new Map(funnel.pages.flatMap((page) => page.blocks.map((block) => [block.id, block])))
-        const questionIds = new Map(questions.map((q) => [q.blockId, q.id]))
+        const questionByBlockId = new Map(questions.map((q) => [q.blockId, q]))
 
         const validAnswers = input.answers
           .map((a) => ({
             value: a.value,
-            questionId: questionIds.get(a.blockId),
-            block: blocks.get(a.blockId),
+            question: questionByBlockId.get(a.blockId),
           }))
-          .filter(
-            (a): a is typeof a & { questionId: string; block: NonNullable<typeof a.block> } =>
-              !!a.questionId && !!a.block,
-          )
+          .filter((a): a is typeof a & { question: NonNullable<typeof a.question> } => !!a.question)
         if (validAnswers.length === 0) return
 
-        const questionIdsList = validAnswers.map((a) => a.questionId)
+        const questionIdsList = validAnswers.map((a) => a.question.id)
 
         await tx
           .insert(AnswerTable)
@@ -70,9 +62,9 @@ export namespace Answer {
           .values(
             validAnswers.map((a) => ({
               id: Identifier.create('answer'),
-              workspaceId: funnel.workspaceId,
+              workspaceId: Actor.workspaceId(),
               submissionId,
-              questionId: a.questionId,
+              questionId: a.question.id,
             })),
           )
 
@@ -81,7 +73,7 @@ export namespace Answer {
           .from(AnswerTable)
           .where(
             and(
-              eq(AnswerTable.workspaceId, funnel.workspaceId),
+              eq(AnswerTable.workspaceId, Actor.workspaceId()),
               eq(AnswerTable.submissionId, submissionId),
               inArray(AnswerTable.questionId, questionIdsList),
             ),
@@ -93,23 +85,23 @@ export namespace Answer {
           await tx
             .delete(AnswerValueTable)
             .where(
-              and(eq(AnswerValueTable.workspaceId, funnel.workspaceId), inArray(AnswerValueTable.answerId, answerIds)),
+              and(eq(AnswerValueTable.workspaceId, Actor.workspaceId()), inArray(AnswerValueTable.answerId, answerIds)),
             )
         }
 
         const allValues = []
         for (const answer of validAnswers) {
-          const answerId = answerIdMap.get(answer.questionId)
+          const answerId = answerIdMap.get(answer.question.id)
           if (!answerId) continue
 
           const values = (() => {
-            if (answer.block.type === 'text_input') {
+            if (answer.question.type === 'text_input') {
               return [{ text: String(answer.value ?? '') }]
             }
-            if (answer.block.type === 'dropdown') {
+            if (answer.question.type === 'dropdown') {
               return [{ optionId: answer.value as string }]
             }
-            if (answer.block.type === 'multiple_choice' || answer.block.type === 'picture_choice') {
+            if (answer.question.type === 'multiple_choice' || answer.question.type === 'picture_choice') {
               const choiceIds = Array.isArray(answer.value) ? (answer.value as string[]) : [answer.value as string]
               return choiceIds.map((choiceId) => ({ optionId: choiceId }))
             }
@@ -119,7 +111,7 @@ export namespace Answer {
           for (const value of values) {
             allValues.push({
               id: Identifier.create('answer_value'),
-              workspaceId: funnel.workspaceId,
+              workspaceId: Actor.workspaceId(),
               answerId,
               ...value,
             })

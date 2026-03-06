@@ -42,6 +42,7 @@ const listQuestions = createServerFn()
 const submitAnswers = createServerFn()
   .inputValidator(
     z.object({
+      workspaceId: Identifier.schema('workspace'),
       funnelId: Identifier.schema('funnel'),
       sessionId: z.string(),
       answers: z.array(
@@ -53,7 +54,7 @@ const submitAnswers = createServerFn()
     }),
   )
   .handler(async ({ data }) => {
-    await Answer.submit(data)
+    await Actor.provide('system', { workspaceId: data.workspaceId }, () => Answer.submit(data))
   })
 
 const completeSubmission = createServerFn()
@@ -231,6 +232,7 @@ function RouteComponent() {
     if (Object.keys(page.values).length > 0) {
       const promise = submitAnswers({
         data: {
+          workspaceId: funnel.workspaceId,
           funnelId: funnel.id,
           sessionId: session.id(),
           answers: Object.entries(page.values).map(([blockId, value]) => ({ blockId, value })),
