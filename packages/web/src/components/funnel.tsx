@@ -375,8 +375,7 @@ export function Funnel({ funnel, mode = 'live', onPageChange, onPageComplete, on
     if (redirectUrl) {
       setRedirecting(true)
       localStorage.removeItem(VALUES_STORAGE_KEY)
-      await new Promise((resolve) => setTimeout(resolve, 2000))
-      await onComplete?.(values, redirectUrl)
+      await Promise.all([new Promise((resolve) => setTimeout(resolve, 2000)), onComplete?.(values, redirectUrl)])
     } else {
       setCurrentPageIndex(nextPageIndex)
       setHiddenBlockIds(nextHiddenBlockIds)

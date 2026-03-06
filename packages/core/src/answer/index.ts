@@ -1,4 +1,4 @@
-import { and, eq, isNull } from 'drizzle-orm'
+import { and, eq, inArray, isNull } from 'drizzle-orm'
 import { z } from 'zod'
 import { Database } from '../database'
 import { Funnel } from '../funnel'
@@ -35,7 +35,7 @@ export namespace Answer {
             sessionId: input.sessionId,
           })
         }
-        // Resolve blockIds to questionIds
+
         const questions = await tx
           .select({ id: QuestionTable.id, blockId: QuestionTable.blockId })
           .from(QuestionTable)
@@ -50,77 +50,84 @@ export namespace Answer {
         const blocks = new Map(funnel.pages.flatMap((page) => page.blocks.map((block) => [block.id, block])))
         const questionIds = new Map(questions.map((q) => [q.blockId, q.id]))
 
-        for (const answer of input.answers) {
-          const questionId = questionIds.get(answer.blockId)
-          if (!questionId) continue
+        const validAnswers = input.answers
+          .map((a) => ({
+            value: a.value,
+            questionId: questionIds.get(a.blockId),
+            block: blocks.get(a.blockId),
+          }))
+          .filter(
+            (a): a is typeof a & { questionId: string; block: NonNullable<typeof a.block> } =>
+              !!a.questionId && !!a.block,
+          )
+        if (validAnswers.length === 0) return
 
-          const block = blocks.get(answer.blockId)
-          if (!block) continue
+        const questionIdsList = validAnswers.map((a) => a.questionId)
 
-          const existingAnswer = await tx
-            .select({ id: AnswerTable.id })
-            .from(AnswerTable)
+        await tx
+          .insert(AnswerTable)
+          .ignore()
+          .values(
+            validAnswers.map((a) => ({
+              id: Identifier.create('answer'),
+              workspaceId: funnel.workspaceId,
+              submissionId,
+              questionId: a.questionId,
+            })),
+          )
+
+        const answers = await tx
+          .select({ id: AnswerTable.id, questionId: AnswerTable.questionId })
+          .from(AnswerTable)
+          .where(
+            and(
+              eq(AnswerTable.workspaceId, funnel.workspaceId),
+              eq(AnswerTable.submissionId, submissionId),
+              inArray(AnswerTable.questionId, questionIdsList),
+            ),
+          )
+        const answerIdMap = new Map(answers.map((a) => [a.questionId, a.id]))
+        const answerIds = answers.map((a) => a.id)
+
+        if (answerIds.length > 0) {
+          await tx
+            .delete(AnswerValueTable)
             .where(
-              and(
-                eq(AnswerTable.workspaceId, funnel.workspaceId),
-                eq(AnswerTable.submissionId, submissionId),
-                eq(AnswerTable.questionId, questionId),
-              ),
+              and(eq(AnswerValueTable.workspaceId, funnel.workspaceId), inArray(AnswerValueTable.answerId, answerIds)),
             )
-            .then((rows) => rows[0])
+        }
 
-          let answerId: string
-          if (existingAnswer) {
-            answerId = existingAnswer.id
-            await tx
-              .delete(AnswerValueTable)
-              .where(
-                and(
-                  eq(AnswerValueTable.workspaceId, funnel.workspaceId),
-                  eq(AnswerValueTable.answerId, existingAnswer.id),
-                ),
-              )
-          } else {
-            try {
-              answerId = Identifier.create('answer')
-              await tx.insert(AnswerTable).values({
-                id: answerId,
-                workspaceId: funnel.workspaceId,
-                submissionId,
-                questionId,
-              })
-            } catch {
-              continue
-            }
-          }
+        const allValues = []
+        for (const answer of validAnswers) {
+          const answerId = answerIdMap.get(answer.questionId)
+          if (!answerId) continue
 
           const values = (() => {
-            if (block.type === 'text_input') {
+            if (answer.block.type === 'text_input') {
               return [{ text: String(answer.value ?? '') }]
             }
-            if (block.type === 'dropdown') {
-              const choiceId = answer.value as string
-              return [{ optionId: choiceId }]
+            if (answer.block.type === 'dropdown') {
+              return [{ optionId: answer.value as string }]
             }
-            if (block.type === 'multiple_choice' || block.type === 'picture_choice') {
+            if (answer.block.type === 'multiple_choice' || answer.block.type === 'picture_choice') {
               const choiceIds = Array.isArray(answer.value) ? (answer.value as string[]) : [answer.value as string]
-              return choiceIds.map((choiceId) => {
-                return { optionId: choiceId }
-              })
+              return choiceIds.map((choiceId) => ({ optionId: choiceId }))
             }
             return []
           })()
 
-          if (values.length > 0) {
-            await tx.insert(AnswerValueTable).values(
-              values.map((value) => ({
-                id: Identifier.create('answer_value'),
-                workspaceId: funnel.workspaceId,
-                answerId,
-                ...value,
-              })),
-            )
+          for (const value of values) {
+            allValues.push({
+              id: Identifier.create('answer_value'),
+              workspaceId: funnel.workspaceId,
+              answerId,
+              ...value,
+            })
           }
+        }
+
+        if (allValues.length > 0) {
+          await tx.insert(AnswerValueTable).values(allValues)
         }
       })
     },
