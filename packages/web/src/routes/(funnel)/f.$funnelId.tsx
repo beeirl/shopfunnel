@@ -102,7 +102,7 @@ function RouteComponent() {
   const currentPageViewedAtRef = useRef<number | undefined>(undefined)
   const [currentPage, setCurrentPage] = useState<{ id: string; index: number; name: string } | undefined>(undefined)
 
-  const pendingAnswerSubmissionsRef = useRef<Set<Promise<unknown>>>(new Set())
+  const submissionQueueRef = useRef<Promise<unknown>>(Promise.resolve())
 
   const [session] = useState(() => {
     let id: string | undefined
@@ -230,16 +230,18 @@ function RouteComponent() {
     })
 
     if (Object.keys(page.values).length > 0) {
-      const promise = submitAnswers({
-        data: {
-          workspaceId: funnel.workspaceId,
-          funnelId: funnel.id,
-          sessionId: session.id(),
-          answers: Object.entries(page.values).map(([blockId, value]) => ({ blockId, value })),
-        },
-      })
-      pendingAnswerSubmissionsRef.current.add(promise)
-      promise.finally(() => pendingAnswerSubmissionsRef.current.delete(promise))
+      submissionQueueRef.current = submissionQueueRef.current
+        .catch(() => {})
+        .then(() =>
+          submitAnswers({
+            data: {
+              workspaceId: funnel.workspaceId,
+              funnelId: funnel.id,
+              sessionId: session.id(),
+              answers: Object.entries(page.values).map(([blockId, value]) => ({ blockId, value })),
+            },
+          }),
+        )
     }
   }
 
@@ -247,7 +249,7 @@ function RouteComponent() {
     const sessionId = session.id()
     const visitorId = visitor.id()
 
-    await Promise.allSettled(pendingAnswerSubmissionsRef.current)
+    await submissionQueueRef.current.catch(() => {})
     await completeSubmission({ data: { sessionId, workspaceId: funnel.workspaceId } })
 
     trackEvent('funnel_completed')
