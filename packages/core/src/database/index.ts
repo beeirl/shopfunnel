@@ -1,4 +1,4 @@
-import { Client } from '@planetscale/database'
+import { Client, DatabaseError } from '@planetscale/database'
 import { Resource } from '@shopfunnel/resource'
 import type { ExtractTablesWithRelations } from 'drizzle-orm'
 import { MySqlTransaction, type MySqlTransactionConfig } from 'drizzle-orm/mysql-core'
@@ -70,16 +70,30 @@ export namespace Database {
     try {
       const { tx } = TransactionContext.use()
       return callback(tx)
-    } catch (err) {
-      if (err instanceof Context.NotFound) {
+    } catch {
+      let attempts = 0
+      while (true) {
+        attempts++
         const effects: (() => void | Promise<void>)[] = []
-        const result = await client().transaction(async (tx) => {
-          return TransactionContext.provide({ tx, effects }, () => callback(tx))
-        }, config)
-        await Promise.all(effects.map((x) => x()))
-        return result
+        try {
+          const result = await client().transaction(async (tx) => {
+            return TransactionContext.provide({ tx, effects }, () => callback(tx))
+          }, config)
+          await Promise.all(effects.map((x) => x()))
+          return result
+        } catch (error) {
+          if (
+            attempts < 3 &&
+            error instanceof DatabaseError &&
+            (error.message.includes('try restarting transaction') ||
+              error.message.includes('exceeded timeout') ||
+              error.message.includes('unlocked closed connection'))
+          ) {
+            continue
+          }
+          throw error
+        }
       }
-      throw err
     }
   }
 }
