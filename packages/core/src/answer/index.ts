@@ -66,25 +66,24 @@ export namespace Answer {
             ),
           ),
       )
-
       const questionByBlockId = new Map(questions.map((q) => [q.blockId, q]))
 
-      const validAnswers = input.answers
+      const answersWithQuestion = input.answers
         .map((a) => ({
           value: a.value,
           question: questionByBlockId.get(a.blockId),
         }))
         .filter((a): a is typeof a & { question: NonNullable<typeof a.question> } => !!a.question)
-      if (validAnswers.length === 0) return
+      if (answersWithQuestion.length === 0) return
 
-      const questionIdsList = validAnswers.map((a) => a.question.id)
+      const questionIds = answersWithQuestion.map((a) => a.question.id)
 
       await Database.use((tx) =>
         tx
           .insert(AnswerTable)
           .ignore()
           .values(
-            validAnswers.map((a) => ({
+            answersWithQuestion.map((a) => ({
               id: Identifier.create('answer'),
               workspaceId: Actor.workspaceId(),
               submissionId,
@@ -101,14 +100,14 @@ export namespace Answer {
             and(
               eq(AnswerTable.workspaceId, Actor.workspaceId()),
               eq(AnswerTable.submissionId, submissionId),
-              inArray(AnswerTable.questionId, questionIdsList),
+              inArray(AnswerTable.questionId, questionIds),
             ),
           ),
       )
-      const answerIdMap = new Map(answers.map((a) => [a.questionId, a.id]))
+      const answerIdByQuestionId = new Map(answers.map((a) => [a.questionId, a.id]))
       const answerIds = answers.map((a) => a.id)
 
-      const allValues: {
+      const allAnswerValues: {
         id: string
         workspaceId: string
         answerId: string
@@ -117,38 +116,35 @@ export namespace Answer {
         optionId?: string
       }[] = []
 
-      for (const answer of validAnswers) {
-        const answerId = answerIdMap.get(answer.question.id)
+      for (const entry of answersWithQuestion) {
+        const answerId = answerIdByQuestionId.get(entry.question.id)
         if (!answerId) continue
 
-        if (answer.question.type === 'text_input') {
-          allValues.push({
-            id: Identifier.create('answer_value'),
-            workspaceId: Actor.workspaceId(),
-            answerId,
-            text: String(answer.value ?? ''),
-          })
-        } else if (answer.question.type === 'dropdown') {
-          allValues.push({
-            id: Identifier.create('answer_value'),
-            workspaceId: Actor.workspaceId(),
-            answerId,
-            optionId: answer.value as string,
-          })
-        } else if (answer.question.type === 'multiple_choice' || answer.question.type === 'picture_choice') {
-          const choiceIds = Array.isArray(answer.value) ? (answer.value as string[]) : [answer.value as string]
-          for (const choiceId of choiceIds) {
-            allValues.push({
-              id: Identifier.create('answer_value'),
-              workspaceId: Actor.workspaceId(),
-              answerId,
-              optionId: choiceId,
-            })
+        const answerValues = (() => {
+          if (entry.question.type === 'text_input') {
+            return [{ text: String(entry.value ?? '') }]
           }
+          if (entry.question.type === 'dropdown') {
+            return [{ optionId: entry.value as string }]
+          }
+          if (entry.question.type === 'multiple_choice' || entry.question.type === 'picture_choice') {
+            const choiceIds = Array.isArray(entry.value) ? (entry.value as string[]) : [entry.value as string]
+            return choiceIds.map((choiceId) => ({ optionId: choiceId }))
+          }
+          return []
+        })()
+
+        for (const answerValue of answerValues) {
+          allAnswerValues.push({
+            id: Identifier.create('answer_value'),
+            workspaceId: Actor.workspaceId(),
+            answerId,
+            ...answerValue,
+          })
         }
       }
 
-      if (allValues.length === 0) return
+      if (allAnswerValues.length === 0) return
 
       if (answerIds.length > 0) {
         await Database.use((tx) =>
@@ -160,7 +156,7 @@ export namespace Answer {
         )
       }
 
-      await Database.use((tx) => tx.insert(AnswerValueTable).values(allValues))
+      await Database.use((tx) => tx.insert(AnswerValueTable).values(allAnswerValues))
     },
   )
 }
