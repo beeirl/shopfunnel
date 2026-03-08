@@ -4,7 +4,7 @@ import { Actor } from '../actor'
 import { Database } from '../database'
 import { Identifier } from '../identifier'
 import { QuestionTable } from '../question/index.sql'
-import { Submission } from '../submission'
+import { SubmissionTable } from '../submission/index.sql'
 import { fn } from '../utils/fn'
 import { AnswerTable, AnswerValueTable } from './index.sql'
 
@@ -23,17 +23,39 @@ export namespace Answer {
     async (input) => {
       if (input.answers.length === 0) return
 
-      await Database.transaction(async (tx) => {
-        let submissionId = await Submission.fromSessionId(input.sessionId)
-        if (!submissionId) {
-          submissionId = await Submission.create({
-            funnelId: input.funnelId,
-            workspaceId: Actor.workspaceId(),
-            sessionId: input.sessionId,
-          })
-        }
+      const submissionId = await (async () => {
+        const existingId = await Database.use((tx) =>
+          tx
+            .select({ id: SubmissionTable.id })
+            .from(SubmissionTable)
+            .where(eq(SubmissionTable.sessionId, input.sessionId))
+            .then((rows) => rows[0]?.id),
+        )
+        if (existingId) return existingId
 
-        const questions = await tx
+        await Database.use((tx) =>
+          tx
+            .insert(SubmissionTable)
+            .ignore()
+            .values({
+              id: Identifier.create('submission'),
+              funnelId: input.funnelId,
+              workspaceId: Actor.workspaceId(),
+              sessionId: input.sessionId,
+            }),
+        )
+
+        return Database.use((tx) =>
+          tx
+            .select({ id: SubmissionTable.id })
+            .from(SubmissionTable)
+            .where(eq(SubmissionTable.sessionId, input.sessionId))
+            .then((rows) => rows[0]!.id),
+        )
+      })()
+
+      const questions = await Database.use((tx) =>
+        tx
           .select({ id: QuestionTable.id, blockId: QuestionTable.blockId, type: QuestionTable.type })
           .from(QuestionTable)
           .where(
@@ -42,21 +64,23 @@ export namespace Answer {
               eq(QuestionTable.funnelId, input.funnelId),
               isNull(QuestionTable.archivedAt),
             ),
-          )
+          ),
+      )
 
-        const questionByBlockId = new Map(questions.map((q) => [q.blockId, q]))
+      const questionByBlockId = new Map(questions.map((q) => [q.blockId, q]))
 
-        const validAnswers = input.answers
-          .map((a) => ({
-            value: a.value,
-            question: questionByBlockId.get(a.blockId),
-          }))
-          .filter((a): a is typeof a & { question: NonNullable<typeof a.question> } => !!a.question)
-        if (validAnswers.length === 0) return
+      const validAnswers = input.answers
+        .map((a) => ({
+          value: a.value,
+          question: questionByBlockId.get(a.blockId),
+        }))
+        .filter((a): a is typeof a & { question: NonNullable<typeof a.question> } => !!a.question)
+      if (validAnswers.length === 0) return
 
-        const questionIdsList = validAnswers.map((a) => a.question.id)
+      const questionIdsList = validAnswers.map((a) => a.question.id)
 
-        await tx
+      await Database.use((tx) =>
+        tx
           .insert(AnswerTable)
           .ignore()
           .values(
@@ -66,9 +90,11 @@ export namespace Answer {
               submissionId,
               questionId: a.question.id,
             })),
-          )
+          ),
+      )
 
-        const answers = await tx
+      const answers = await Database.use((tx) =>
+        tx
           .select({ id: AnswerTable.id, questionId: AnswerTable.questionId })
           .from(AnswerTable)
           .where(
@@ -77,51 +103,64 @@ export namespace Answer {
               eq(AnswerTable.submissionId, submissionId),
               inArray(AnswerTable.questionId, questionIdsList),
             ),
-          )
-        const answerIdMap = new Map(answers.map((a) => [a.questionId, a.id]))
-        const answerIds = answers.map((a) => a.id)
+          ),
+      )
+      const answerIdMap = new Map(answers.map((a) => [a.questionId, a.id]))
+      const answerIds = answers.map((a) => a.id)
 
-        if (answerIds.length > 0) {
-          await tx
-            .delete(AnswerValueTable)
-            .where(
-              and(eq(AnswerValueTable.workspaceId, Actor.workspaceId()), inArray(AnswerValueTable.answerId, answerIds)),
-            )
-        }
+      const allValues: {
+        id: string
+        workspaceId: string
+        answerId: string
+        text?: string
+        number?: number
+        optionId?: string
+      }[] = []
 
-        const allValues = []
-        for (const answer of validAnswers) {
-          const answerId = answerIdMap.get(answer.question.id)
-          if (!answerId) continue
+      for (const answer of validAnswers) {
+        const answerId = answerIdMap.get(answer.question.id)
+        if (!answerId) continue
 
-          const values = (() => {
-            if (answer.question.type === 'text_input') {
-              return [{ text: String(answer.value ?? '') }]
-            }
-            if (answer.question.type === 'dropdown') {
-              return [{ optionId: answer.value as string }]
-            }
-            if (answer.question.type === 'multiple_choice' || answer.question.type === 'picture_choice') {
-              const choiceIds = Array.isArray(answer.value) ? (answer.value as string[]) : [answer.value as string]
-              return choiceIds.map((choiceId) => ({ optionId: choiceId }))
-            }
-            return []
-          })()
-
-          for (const value of values) {
+        if (answer.question.type === 'text_input') {
+          allValues.push({
+            id: Identifier.create('answer_value'),
+            workspaceId: Actor.workspaceId(),
+            answerId,
+            text: String(answer.value ?? ''),
+          })
+        } else if (answer.question.type === 'dropdown') {
+          allValues.push({
+            id: Identifier.create('answer_value'),
+            workspaceId: Actor.workspaceId(),
+            answerId,
+            optionId: answer.value as string,
+          })
+        } else if (answer.question.type === 'multiple_choice' || answer.question.type === 'picture_choice') {
+          const choiceIds = Array.isArray(answer.value) ? (answer.value as string[]) : [answer.value as string]
+          for (const choiceId of choiceIds) {
             allValues.push({
               id: Identifier.create('answer_value'),
               workspaceId: Actor.workspaceId(),
               answerId,
-              ...value,
+              optionId: choiceId,
             })
           }
         }
+      }
 
-        if (allValues.length > 0) {
-          await tx.insert(AnswerValueTable).values(allValues)
-        }
-      })
+      if (allValues.length === 0) return
+
+      if (answerIds.length > 0) {
+        await Database.use((tx) =>
+          tx
+            .delete(AnswerValueTable)
+            .where(
+              and(eq(AnswerValueTable.workspaceId, Actor.workspaceId()), inArray(AnswerValueTable.answerId, answerIds)),
+            ),
+        )
+      }
+
+      await Database.use((tx) => tx.insert(AnswerValueTable).values(allValues))
     },
   )
 }

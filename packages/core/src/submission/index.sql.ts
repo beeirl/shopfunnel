@@ -1,4 +1,4 @@
-import { index, mysqlTable } from 'drizzle-orm/mysql-core'
+import { index, mysqlTable, uniqueIndex } from 'drizzle-orm/mysql-core'
 import { id, timestamp, timestampColumns, ulid, workspaceColumns, workspaceIndexes } from '../database/types'
 
 export const SubmissionTable = mysqlTable(
@@ -12,7 +12,7 @@ export const SubmissionTable = mysqlTable(
   },
   (table) => [
     ...workspaceIndexes(table),
-    index('session').on(table.sessionId),
+    uniqueIndex('global_session').on(table.sessionId),
     index('funnel').on(table.workspaceId, table.funnelId),
   ],
 )
