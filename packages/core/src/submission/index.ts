@@ -12,6 +12,7 @@ export namespace Submission {
   export const create = fn(
     z.object({
       funnelId: Identifier.schema('funnel'),
+      funnelVariantId: Identifier.schema('funnel_variant'),
       workspaceId: Identifier.schema('workspace'),
       sessionId: z.string(),
     }),
@@ -21,6 +22,7 @@ export namespace Submission {
         tx.insert(SubmissionTable).values({
           id,
           funnelId: input.funnelId,
+          funnelVariantId: input.funnelVariantId,
           workspaceId: input.workspaceId,
           sessionId: input.sessionId,
         }),
@@ -51,32 +53,36 @@ export namespace Submission {
   export const list = fn(
     z.object({
       funnelId: Identifier.schema('funnel'),
+      funnelVariantId: Identifier.schema('funnel_variant').optional(),
       page: z.number().int().positive().default(1),
       limit: z.number().int().min(1).max(100).default(50),
     }),
     async (input) => {
-      const { funnelId, page, limit } = input
+      const { funnelId, funnelVariantId, page, limit } = input
       const offset = (page - 1) * limit
 
-      const questions = await Question.list(funnelId)
+      const questions = funnelVariantId ? await Question.list({ funnelId, funnelVariantId }) : []
 
-      // Get total count
+      const conditions = [eq(SubmissionTable.workspaceId, Actor.workspaceId()), eq(SubmissionTable.funnelId, funnelId)]
+      if (funnelVariantId) {
+        conditions.push(eq(SubmissionTable.funnelVariantId, funnelVariantId))
+      }
+
       const countResult = await Database.use((tx) =>
         tx
           .select({ count: sql<number>`COUNT(*)` })
           .from(SubmissionTable)
-          .where(and(eq(SubmissionTable.workspaceId, Actor.workspaceId()), eq(SubmissionTable.funnelId, funnelId))),
+          .where(and(...conditions)),
       )
       const total = countResult[0]?.count ?? 0
 
       const totalPages = Math.ceil(total / limit)
 
-      // Fetch paginated submissions for this funnel
       const submissions = await Database.use((tx) =>
         tx
           .select()
           .from(SubmissionTable)
-          .where(and(eq(SubmissionTable.workspaceId, Actor.workspaceId()), eq(SubmissionTable.funnelId, funnelId)))
+          .where(and(...conditions))
           .orderBy(desc(SubmissionTable.updatedAt))
           .limit(limit)
           .offset(offset),
@@ -98,7 +104,6 @@ export namespace Submission {
         }
       }
 
-      // Fetch all answers for these submissions
       const submissionIds = submissions.map((s) => s.id)
       const answers = await Database.use((tx) =>
         tx
@@ -122,10 +127,8 @@ export namespace Submission {
           ),
       )
 
-      // Build a map of questionId -> options for label resolution
       const questionOptionByQuestionId = new Map(questions.map((q) => [q.id, q.options]))
 
-      // Group answers by submission
       const answersBySubmission = new Map<string, Map<string, string[]>>()
       for (const answer of answers) {
         let submissionAnswers = answersBySubmission.get(answer.submissionId)
@@ -140,7 +143,6 @@ export namespace Submission {
           submissionAnswers.set(answer.questionId, questionAnswers)
         }
 
-        // Resolve the answer value
         if (answer.text !== null) {
           questionAnswers.push(answer.text)
         } else if (answer.optionId !== null) {

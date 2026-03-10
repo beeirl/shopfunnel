@@ -8,7 +8,8 @@ import type {
   Block as BlockType,
   Condition,
   ConditionVar,
-  Info as FunnelType,
+  Page,
+  ResolvedSettings,
   Rule,
   Theme as ThemeType,
   Variables,
@@ -17,6 +18,16 @@ import { IconLoader2 as LoaderIcon } from '@tabler/icons-react'
 import { AnimatePresence, motion } from 'motion/react'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
+
+type FunnelType = {
+  id: string
+  title: string
+  pages: Page[]
+  rules: Rule[]
+  variables: Variables
+  theme: ThemeType
+  settings?: ResolvedSettings
+}
 
 export type Values = Record<string, unknown>
 

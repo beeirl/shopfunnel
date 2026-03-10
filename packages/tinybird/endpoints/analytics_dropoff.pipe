@@ -1,7 +1,9 @@
 DESCRIPTION >
     Page-level drop-off stats for a funnel.
-    When funnel_version is not provided, aggregates across all versions
-    but only includes pages that exist in the latest version.
+    When funnel_variant_id is provided, filters to that variant.
+    When funnel_version is provided, filters to that version.
+    Otherwise aggregates across all variants but only includes
+    pages that exist in the latest version.
 
 TOKEN api READ
 
@@ -24,7 +26,9 @@ SQL >
     FROM pages_mv
     WHERE workspace_id = {{ String(workspace_id, required=True) }}
         AND funnel_id = {{ String(funnel_id, required=True) }}
-        {% if defined(funnel_version) %}
+        {% if defined(funnel_variant_id) %}
+        AND funnel_variant_id = {{ String(funnel_variant_id) }}
+        {% elif defined(funnel_version) %}
         AND funnel_version = {{ UInt32(funnel_version) }}
         {% else %}
         AND page_id IN (
@@ -63,7 +67,9 @@ SQL >
     FROM kpis_mv
     WHERE workspace_id = {{ String(workspace_id, required=True) }}
         AND funnel_id = {{ String(funnel_id, required=True) }}
-        {% if defined(funnel_version) %}
+        {% if defined(funnel_variant_id) %}
+        AND funnel_variant_id = {{ String(funnel_variant_id) }}
+        {% elif defined(funnel_version) %}
         AND funnel_version = {{ UInt32(funnel_version) }}
         {% end %}
         {% if defined(start_date) %}

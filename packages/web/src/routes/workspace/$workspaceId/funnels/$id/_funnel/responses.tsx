@@ -17,23 +17,35 @@ import { createServerFn } from '@tanstack/react-start'
 import { createColumnHelper, flexRender, getCoreRowModel, useReactTable } from '@tanstack/react-table'
 import * as React from 'react'
 import { z } from 'zod'
+import { getFunnelQueryOptions } from '../-common'
+import { useFunnel } from './-context'
 
 const listSubmissions = createServerFn()
   .inputValidator(
     z.object({
       workspaceId: Identifier.schema('workspace'),
       funnelId: Identifier.schema('funnel'),
+      funnelVariantId: Identifier.schema('funnel_variant'),
       page: z.number().int().positive().default(1),
     }),
   )
   .handler(({ data }) => {
-    return withActor(() => Submission.list({ funnelId: data.funnelId, page: data.page, limit: 50 }), data.workspaceId)
+    return withActor(
+      () =>
+        Submission.list({ funnelId: data.funnelId, funnelVariantId: data.funnelVariantId, page: data.page, limit: 50 }),
+      data.workspaceId,
+    )
   })
 
-const listSubmissionsQueryOptions = (workspaceId: string, funnelId: string, page: number = 1) =>
+const listSubmissionsQueryOptions = (
+  workspaceId: string,
+  funnelId: string,
+  funnelVariantId: string,
+  page: number = 1,
+) =>
   queryOptions({
-    queryKey: ['submissions', workspaceId, funnelId, page],
-    queryFn: () => listSubmissions({ data: { workspaceId, funnelId, page } }),
+    queryKey: ['submissions', workspaceId, funnelId, funnelVariantId, page],
+    queryFn: () => listSubmissions({ data: { workspaceId, funnelId, funnelVariantId, page } }),
     placeholderData: keepPreviousData,
   })
 
@@ -47,8 +59,9 @@ export const Route = createFileRoute('/workspace/$workspaceId/funnels/$id/_funne
   loaderDeps: ({ search }) => ({ page: search.page }),
   component: RouteComponent,
   loader: async ({ context, params, deps }) => {
+    const funnel = await context.queryClient.ensureQueryData(getFunnelQueryOptions(params.workspaceId, params.id))
     await context.queryClient.ensureQueryData(
-      listSubmissionsQueryOptions(params.workspaceId, params.id, deps.page ?? 1),
+      listSubmissionsQueryOptions(params.workspaceId, params.id, funnel.variantId, deps.page ?? 1),
     )
   },
 })
@@ -64,10 +77,13 @@ function RouteComponent() {
   const params = Route.useParams()
   const search = Route.useSearch()
   const navigate = Route.useNavigate()
+  const funnel = useFunnel()
 
   const currentPage = search.page ?? 1
 
-  const { data, isFetching } = useSuspenseQuery(listSubmissionsQueryOptions(params.workspaceId, params.id, currentPage))
+  const { data, isFetching } = useSuspenseQuery(
+    listSubmissionsQueryOptions(params.workspaceId, params.id, funnel.data.variantId, currentPage),
+  )
 
   const goToPage = (newPage: number) => {
     navigate({ search: { page: newPage } })

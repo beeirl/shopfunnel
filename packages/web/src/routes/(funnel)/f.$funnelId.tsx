@@ -10,7 +10,7 @@ import { Question } from '@shopfunnel/core/question/index'
 import { Submission } from '@shopfunnel/core/submission/index'
 import { createFileRoute, notFound } from '@tanstack/react-router'
 import { createServerFn } from '@tanstack/react-start'
-import { getRequestHeader } from '@tanstack/react-start/server'
+import { deleteCookie, getCookie, getRequestHeader, setCookie } from '@tanstack/react-start/server'
 import { useEffect, useRef, useState } from 'react'
 import { ulid } from 'ulid'
 import { z } from 'zod'
@@ -19,9 +19,12 @@ declare const fbq: ((command: 'trackCustom', eventName: string) => void) | undef
 declare const _upstack: ((command: 'track', eventName: string) => void) | undefined
 
 const getFunnel = createServerFn()
-  .inputValidator(z.object({ shortId: z.string().length(8) }))
+  .inputValidator(z.object({ funnelShortId: z.string().length(8) }))
   .handler(async ({ data }) => {
-    const funnel = await FunnelCore.getPublishedVersion(data.shortId)
+    const cookieName = `sf_funnel_${data.funnelShortId}_variant_id`
+    const assignedVariantId = getCookie(cookieName) || undefined
+
+    const funnel = await FunnelCore.get({ funnelShortId: data.funnelShortId, funnelVariantId: assignedVariantId })
     if (!funnel) throw notFound()
 
     const host = getRequestHeader('host')
@@ -30,13 +33,27 @@ const getFunnel = createServerFn()
       if (host !== funnelHost) throw notFound()
     }
 
+    setCookie(cookieName, funnel.variantId, {
+      maxAge: 60 * 15, // 15 minutes
+      path: '/',
+      sameSite: 'lax',
+    })
+
     return funnel
   })
 
 const listQuestions = createServerFn()
-  .inputValidator(z.object({ funnelId: Identifier.schema('funnel'), workspaceId: Identifier.schema('workspace') }))
+  .inputValidator(
+    z.object({
+      funnelId: Identifier.schema('funnel'),
+      funnelVariantId: Identifier.schema('funnel_variant'),
+      workspaceId: Identifier.schema('workspace'),
+    }),
+  )
   .handler(async ({ data }) => {
-    return Actor.provide('system', { workspaceId: data.workspaceId }, () => Question.list(data.funnelId))
+    return Actor.provide('system', { workspaceId: data.workspaceId }, () =>
+      Question.list({ funnelId: data.funnelId, funnelVariantId: data.funnelVariantId }),
+    )
   })
 
 const submitAnswers = createServerFn()
@@ -44,6 +61,7 @@ const submitAnswers = createServerFn()
     z.object({
       workspaceId: Identifier.schema('workspace'),
       funnelId: Identifier.schema('funnel'),
+      funnelVariantId: Identifier.schema('funnel_variant').optional(),
       sessionId: z.string(),
       answers: z.array(
         z.object({
@@ -58,25 +76,32 @@ const submitAnswers = createServerFn()
   })
 
 const completeSubmission = createServerFn()
-  .inputValidator(z.object({ sessionId: z.string(), workspaceId: Identifier.schema('workspace') }))
+  .inputValidator(
+    z.object({
+      funnelShortId: z.string().length(8),
+      workspaceId: Identifier.schema('workspace'),
+      sessionId: z.string(),
+    }),
+  )
   .handler(async ({ data }) => {
     await Actor.provide('system', { workspaceId: data.workspaceId }, async () => {
       const submissionId = await Submission.fromSessionId(data.sessionId)
-      if (submissionId) {
-        await Submission.complete(submissionId)
-      }
+      if (submissionId) await Submission.complete(submissionId)
     })
+    deleteCookie(`sf_funnel_${data.funnelShortId}_variant_id`)
   })
 
 export const Route = createFileRoute('/(funnel)/f/$funnelId')({
   component: RouteComponent,
   ssr: true,
   loader: async ({ params }) => {
-    const funnel = await getFunnel({ data: { shortId: params.funnelId } })
+    const funnel = await getFunnel({ data: { funnelShortId: params.funnelId } })
     if (!funnel) throw notFound()
 
     const [questions, integrations] = await Promise.all([
-      listQuestions({ data: { funnelId: funnel.id, workspaceId: funnel.workspaceId } }),
+      listQuestions({
+        data: { funnelId: funnel.id, funnelVariantId: funnel.variantId, workspaceId: funnel.workspaceId },
+      }),
       listIntegrations({ data: { workspaceId: funnel.workspaceId } }),
     ])
 
@@ -176,7 +201,8 @@ function RouteComponent() {
       session_id: session.id(),
       workspace_id: funnel.workspaceId,
       funnel_id: funnel.id,
-      funnel_version: funnel.version,
+      funnel_variant_id: funnel.variantId,
+      funnel_variant_version: funnel.variantVersion,
       version: '1',
       payload,
       timestamp: new Date().toISOString(),
@@ -234,6 +260,7 @@ function RouteComponent() {
         data: {
           workspaceId: funnel.workspaceId,
           funnelId: funnel.id,
+          funnelVariantId: funnel.variantId,
           sessionId: session.id(),
           answers: Object.entries(page.values).map(([blockId, value]) => ({ blockId, value })),
         },
@@ -248,7 +275,7 @@ function RouteComponent() {
     const visitorId = visitor.id()
 
     await Promise.allSettled([...pendingAnswerSubmissionsRef.current])
-    await completeSubmission({ data: { sessionId, workspaceId: funnel.workspaceId } })
+    await completeSubmission({ data: { funnelShortId: funnel.shortId, workspaceId: funnel.workspaceId, sessionId } })
 
     trackEvent('funnel_completed')
     trackMetaPixelEvent('FunnelCompleted')
@@ -278,7 +305,9 @@ function RouteComponent() {
               visitorId,
               workspaceId: funnel.workspaceId,
               funnelId: funnel.id,
-              funnelVersion: funnel.version,
+              funnelVariantId: funnel.variantId,
+              funnelVariantVersion: funnel.variantVersion,
+              funnelVersion: funnel.variantVersion,
               integrationId: shopifyIntegration.id,
               integrationProvider: shopifyIntegration.provider,
             }),

@@ -8,6 +8,7 @@ SQL >
         workspace_id,
         funnel_id,
         funnel_version,
+        funnel_variant_id,
         session_id,
         anySimpleState(visitor_id) AS visitor_id,
         anySimpleState(device) AS device,
@@ -20,7 +21,7 @@ SQL >
         minSimpleState(timestamp) AS first_hit,
         maxSimpleState(timestamp) AS latest_hit
     FROM funnel_enter_events
-    GROUP BY date, workspace_id, funnel_id, funnel_version, session_id
+    GROUP BY date, workspace_id, funnel_id, funnel_version, funnel_variant_id, session_id
 
 TYPE MATERIALIZED
 DATASOURCE sessions_mv

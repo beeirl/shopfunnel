@@ -1,6 +1,5 @@
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { ButtonGroup } from '@/components/ui/button-group'
 import { Dialog } from '@/components/ui/dialog'
 import { Field } from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
@@ -12,11 +11,7 @@ import { cn } from '@/lib/utils'
 import { getSessionQueryOptions } from '@/routes/workspace/$workspaceId/-common'
 import { Funnel } from '@shopfunnel/core/funnel/index'
 import { Identifier } from '@shopfunnel/core/identifier'
-import {
-  IconChevronDown as ChevronDownIcon,
-  IconChevronLeft as ChevronLeftIcon,
-  IconLoader2 as LoaderIcon,
-} from '@tabler/icons-react'
+import { IconChevronLeft as ChevronLeftIcon, IconLoader2 as LoaderIcon } from '@tabler/icons-react'
 import { mutationOptions, useMutation, useQueryClient, useSuspenseQuery } from '@tanstack/react-query'
 import { createFileRoute, Link, linkOptions, MatchRoute, Outlet, useBlocker } from '@tanstack/react-router'
 import { createServerFn } from '@tanstack/react-start'
@@ -32,31 +27,19 @@ const publishFunnel = createServerFn({ method: 'POST' })
     z.object({
       workspaceId: Identifier.schema('workspace'),
       funnelId: Identifier.schema('funnel'),
+      funnelVariantId: Identifier.schema('funnel_variant'),
     }),
   )
   .handler(({ data }) => {
-    return withActor(() => Funnel.publish(data.funnelId), data.workspaceId)
+    return withActor(
+      () => Funnel.commit({ funnelId: data.funnelId, funnelVariantId: data.funnelVariantId }),
+      data.workspaceId,
+    )
   })
 
-const publishFunnelMutationOptions = (workspaceId: string, funnelId: string) =>
+const publishFunnelMutationOptions = (workspaceId: string, funnelId: string, funnelVariantId: string) =>
   mutationOptions({
-    mutationFn: () => publishFunnel({ data: { workspaceId, funnelId } }),
-  })
-
-const unpublishFunnel = createServerFn({ method: 'POST' })
-  .inputValidator(
-    z.object({
-      workspaceId: Identifier.schema('workspace'),
-      funnelId: Identifier.schema('funnel'),
-    }),
-  )
-  .handler(({ data }) => {
-    return withActor(() => Funnel.unpublish(data.funnelId), data.workspaceId)
-  })
-
-const unpublishFunnelMutationOptions = (workspaceId: string, funnelId: string) =>
-  mutationOptions({
-    mutationFn: () => unpublishFunnel({ data: { workspaceId, funnelId } }),
+    mutationFn: () => publishFunnel({ data: { workspaceId, funnelId, funnelVariantId } }),
   })
 
 export const Route = createFileRoute('/workspace/$workspaceId/funnels/$id/_funnel')({
@@ -192,8 +175,9 @@ function PublishButton() {
 
   const [isPublishing, setIsPublishing] = React.useState(false)
 
-  const publishMutation = useMutation(publishFunnelMutationOptions(params.workspaceId, params.id))
-  const unpublishMutation = useMutation(unpublishFunnelMutationOptions(params.workspaceId, params.id))
+  const publishMutation = useMutation(
+    publishFunnelMutationOptions(params.workspaceId, params.id, funnel.data.variantId),
+  )
 
   const handlePublish = async () => {
     setIsPublishing(true)
@@ -208,52 +192,35 @@ function PublishButton() {
     snackbar.add({ title: 'Link copied to clipboard', type: 'success' })
   }
 
-  const handleUnpublish = async () => {
-    setIsPublishing(true)
-    await unpublishMutation.mutateAsync()
-    await queryClient.invalidateQueries(getFunnelQueryOptions(params.workspaceId, params.id))
-    setIsPublishing(false)
-    snackbar.add({ title: 'Funnel unpublished', type: 'success' })
-  }
-
   return (
-    <ButtonGroup.Root className="min-w-28">
-      <Tooltip.Root disabled={funnel.data.draft || isPublishing}>
-        <Tooltip.Trigger
-          render={
-            <Button
-              className={cn(
-                'flex-1',
-                isPublishing && 'pointer-events-none',
-                !funnel.data.draft && !funnel.isSaving && 'opacity-50',
-              )}
-              disabled={funnel.isSaving}
-              onClick={funnel.data.draft ? handlePublish : undefined}
-            >
-              {isPublishing ? <LoaderIcon className="animate-spin" /> : 'Publish'}
-            </Button>
-          }
-        />
-        <Tooltip.Content side="left" sideOffset={8}>
-          No changes to publish
-        </Tooltip.Content>
-      </Tooltip.Root>
-      <Menu.Root>
-        <Menu.Trigger
-          render={
-            <Button size="icon">
-              <ChevronDownIcon />
-            </Button>
-          }
-        />
-        <Menu.Content align="end">
-          <Menu.Item onClick={handleCopyLink}>Copy shareable link</Menu.Item>
-          <Menu.Item disabled={!funnel.data.published} onClick={handleUnpublish}>
-            Unpublish
-          </Menu.Item>
-        </Menu.Content>
-      </Menu.Root>
-    </ButtonGroup.Root>
+    <Menu.Root>
+      <div className="flex items-center gap-1">
+        <Tooltip.Root disabled={funnel.data.hasChanges || isPublishing}>
+          <Tooltip.Trigger
+            render={
+              <Button
+                className={cn(
+                  'min-w-28',
+                  isPublishing && 'pointer-events-none',
+                  !funnel.data.hasChanges && !funnel.isSaving && 'opacity-50',
+                )}
+                disabled={funnel.isSaving}
+                onClick={funnel.data.hasChanges ? handlePublish : undefined}
+              >
+                {isPublishing ? <LoaderIcon className="animate-spin" /> : 'Publish'}
+              </Button>
+            }
+          />
+          <Tooltip.Content side="left" sideOffset={8}>
+            No changes to publish
+          </Tooltip.Content>
+        </Tooltip.Root>
+        <Menu.Trigger render={<Button variant="ghost" size="icon" />}>...</Menu.Trigger>
+      </div>
+      <Menu.Content align="end">
+        <Menu.Item onClick={handleCopyLink}>Copy shareable link</Menu.Item>
+      </Menu.Content>
+    </Menu.Root>
   )
 }
 
@@ -270,7 +237,7 @@ function NavigationBlocker() {
 
 function DraftBadge() {
   const funnel = useFunnel()
-  if (!funnel.data.draft) return null
+  if (!funnel.data.hasChanges) return null
   return <Badge variant="secondary">Draft</Badge>
 }
 
@@ -323,6 +290,11 @@ function RouteComponent() {
               </MatchRoute>
             ))}
             {session.isAdmin && <Settings />}
+            {session.isAdmin && (
+              <Button variant="ghost" nativeButton={false} render={<Link from={Route.fullPath} to="./variants" />}>
+                Variants
+              </Button>
+            )}
             {session.isSuperAdmin && <SchemaButton />}
           </div>
           <div className="flex items-center justify-end gap-2">

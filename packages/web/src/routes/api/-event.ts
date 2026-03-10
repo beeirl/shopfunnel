@@ -11,6 +11,14 @@ export const EventRoute = new Hono()
   .post('/', zValidator('json', Analytics.Event), async (c) => {
     let event = c.req.valid('json')
 
+    // Normalize: ensure variant fields are present for downstream (Tinybird)
+    // Old clients send funnel_version; Shopify pixel sends neither
+    event = {
+      ...event,
+      funnel_variant_id: event.funnel_variant_id ?? '',
+      funnel_variant_version: event.funnel_variant_version ?? event.funnel_version ?? 0,
+    }
+
     if (event.type === 'funnel_viewed') {
       const userAgent = c.req.header('user-agent') || ''
       const country = (c.req.raw.cf?.country as string) || undefined

@@ -7,6 +7,7 @@ export const QuestionTable = mysqlTable(
     ...workspaceColumns,
     ...timestampColumns,
     funnelId: id('funnel_id').notNull(),
+    funnelVariantId: id('funnel_variant_id').notNull(),
     blockId: ulid('block_id').notNull(),
     type: varchar('type', { length: 255 }).notNull(),
     title: varchar('title', { length: 255 }).notNull(),
@@ -16,6 +17,6 @@ export const QuestionTable = mysqlTable(
   (table) => [
     ...workspaceIndexes(table),
     index('funnel').on(table.funnelId),
-    unique('funnel_block').on(table.workspaceId, table.funnelId, table.blockId),
+    unique('funnel_variant_block').on(table.workspaceId, table.funnelId, table.funnelVariantId, table.blockId),
   ],
 )

@@ -3,6 +3,7 @@ SCHEMA >
     `workspace_id` String,
     `funnel_id` String,
     `funnel_version` UInt32,
+    `funnel_variant_id` String,
     `visitors` AggregateFunction(uniq, String),
     `starts` AggregateFunction(uniq, String),
     `completions` AggregateFunction(uniq, String),

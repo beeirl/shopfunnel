@@ -3,33 +3,57 @@ import { z } from 'zod'
 import { Actor } from '../actor'
 import { AnswerTable, AnswerValueTable } from '../answer/index.sql'
 import { Database } from '../database'
-import { Funnel } from '../funnel'
+import { FunnelVariantVersionTable } from '../funnel/index.sql'
 import { INPUT_BLOCKS, type Block, type InputBlock } from '../funnel/types'
 import { Identifier } from '../identifier'
 import { fn } from '../utils/fn'
 import { QuestionTable } from './index.sql'
 
 export namespace Question {
-  export const list = fn(Identifier.schema('funnel'), (funnelId) => {
-    return Database.use((tx) =>
-      tx
-        .select()
-        .from(QuestionTable)
-        .where(and(eq(QuestionTable.workspaceId, Actor.workspaceId()), eq(QuestionTable.funnelId, funnelId)))
-        .orderBy(isNotNull(QuestionTable.archivedAt), QuestionTable.index),
-    )
-  })
+  export const list = fn(
+    z.object({
+      funnelId: Identifier.schema('funnel'),
+      funnelVariantId: Identifier.schema('funnel_variant'),
+    }),
+    (input) => {
+      return Database.use((tx) =>
+        tx
+          .select()
+          .from(QuestionTable)
+          .where(
+            and(
+              eq(QuestionTable.workspaceId, Actor.workspaceId()),
+              eq(QuestionTable.funnelId, input.funnelId),
+              eq(QuestionTable.funnelVariantId, input.funnelVariantId),
+            ),
+          )
+          .orderBy(isNotNull(QuestionTable.archivedAt), QuestionTable.index),
+      )
+    },
+  )
 
   export const sync = fn(
     z.object({
       funnelId: Identifier.schema('funnel'),
+      funnelVariantId: Identifier.schema('funnel_variant'),
     }),
     async (input) => {
       await Database.use(async (tx) => {
-        const funnel = await Funnel.getCurrentVersion(input.funnelId)
-        if (!funnel) return
+        const latestVersion = await tx
+          .select()
+          .from(FunnelVariantVersionTable)
+          .where(
+            and(
+              eq(FunnelVariantVersionTable.workspaceId, Actor.workspaceId()),
+              eq(FunnelVariantVersionTable.funnelId, input.funnelId),
+              eq(FunnelVariantVersionTable.funnelVariantId, input.funnelVariantId),
+            ),
+          )
+          .orderBy(sql`${FunnelVariantVersionTable.number} DESC`)
+          .limit(1)
+          .then((rows) => rows[0])
+        if (!latestVersion) return
 
-        // Get existing non-archived questions for this funnel
         const existingQuestions = await tx
           .select()
           .from(QuestionTable)
@@ -37,13 +61,13 @@ export namespace Question {
             and(
               eq(QuestionTable.workspaceId, Actor.workspaceId()),
               eq(QuestionTable.funnelId, input.funnelId),
+              eq(QuestionTable.funnelVariantId, input.funnelVariantId),
               isNull(QuestionTable.archivedAt),
             ),
           )
 
         const existingQuestionByBlockId = new Map(existingQuestions.map((q) => [q.blockId, q]))
 
-        // Batch-fetch answered option IDs for all existing questions
         const answeredOptions = new Map<string, Set<string>>()
         if (existingQuestions.length > 0) {
           const rows = await tx
@@ -80,7 +104,7 @@ export namespace Question {
           }
         }
 
-        const inputBlocks = funnel.pages.flatMap((page) =>
+        const inputBlocks = latestVersion.pages.flatMap((page) =>
           page.blocks
             .filter((block): block is Block & { type: InputBlock } => INPUT_BLOCKS.includes(block.type as InputBlock))
             .map((block) => ({
@@ -89,7 +113,9 @@ export namespace Question {
               title: block.properties.name,
             })),
         )
-        const blockByBlockId = new Map(funnel.pages.flatMap((page) => page.blocks.map((block) => [block.id, block])))
+        const blockByBlockId = new Map(
+          latestVersion.pages.flatMap((page) => page.blocks.map((block) => [block.id, block])),
+        )
         const questionsToUpsert = inputBlocks.map((inputBlock, index) => {
           const question = existingQuestionByBlockId.get(inputBlock.blockId)
           const block = blockByBlockId.get(inputBlock.blockId)
@@ -106,10 +132,8 @@ export namespace Question {
           if (options) {
             const currentIds = new Set(options.map((o) => o.id))
 
-            // Current options in funnel order
             questionOptions = options.map((o) => ({ id: o.id, label: o.label }))
 
-            // Append archived options that have answers
             if (question?.options && answeredOptionIds) {
               for (const opt of question.options) {
                 if (!currentIds.has(opt.id) && answeredOptionIds.has(opt.id)) {
@@ -123,6 +147,7 @@ export namespace Question {
             id: question?.id ?? Identifier.create('question'),
             workspaceId: Actor.workspaceId(),
             funnelId: input.funnelId,
+            funnelVariantId: input.funnelVariantId,
             blockId: inputBlock.blockId,
             type: inputBlock.blockType,
             title: inputBlock.title,
@@ -131,7 +156,6 @@ export namespace Question {
           }
         })
 
-        // Batch upsert all questions
         if (questionsToUpsert.length > 0) {
           await tx
             .insert(QuestionTable)
@@ -147,13 +171,11 @@ export namespace Question {
             })
         }
 
-        // Handle questions that are no longer in the current version
         const inputBlockIds = new Set(inputBlocks.map((b) => b.blockId))
         const removedQuestions = existingQuestions.filter((q) => !inputBlockIds.has(q.blockId))
         if (removedQuestions.length > 0) {
           const removedQuestionIds = removedQuestions.map((q) => q.id)
 
-          // Batch check which have answers
           const answeredQuestions = await tx
             .select({ id: AnswerTable.questionId })
             .from(AnswerTable)
@@ -169,7 +191,6 @@ export namespace Question {
           const questionIdsToArchive = removedQuestionIds.filter((id) => answeredQuestionIds.has(id))
           const questionIdsToDelete = removedQuestionIds.filter((id) => !answeredQuestionIds.has(id))
 
-          // Batch archive questions with answers
           if (questionIdsToArchive.length > 0) {
             await tx
               .update(QuestionTable)
@@ -182,7 +203,6 @@ export namespace Question {
               )
           }
 
-          // Batch delete questions without answers
           if (questionIdsToDelete.length > 0) {
             await tx
               .delete(QuestionTable)

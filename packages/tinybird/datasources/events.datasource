@@ -10,6 +10,8 @@ SCHEMA >
     `workspace_id` String `json:$.workspace_id`,
     `funnel_id` String `json:$.funnel_id`,
     `funnel_version` UInt32 `json:$.funnel_version`,
+    `funnel_variant_id` String `json:$.funnel_variant_id`,
+    `funnel_variant_version` UInt32 `json:$.funnel_variant_version`,
     `version` LowCardinality(String) `json:$.version`,
     `payload` String `json:$.payload`,
     `timestamp` DateTime64(3) `json:$.timestamp`

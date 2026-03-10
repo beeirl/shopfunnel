@@ -6,7 +6,10 @@ export namespace Analytics {
     session_id: z.string(),
     workspace_id: z.string(),
     funnel_id: z.string(),
-    funnel_version: z.number(),
+    // Backward compat: old clients send funnel_version, new clients send variant fields
+    funnel_version: z.number().optional(),
+    funnel_variant_id: z.string().optional(),
+    funnel_variant_version: z.number().optional(),
     version: z.string(),
     timestamp: z.string(),
   })

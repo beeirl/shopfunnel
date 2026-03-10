@@ -3,6 +3,7 @@ SCHEMA >
     `workspace_id` String,
     `funnel_id` String,
     `funnel_version` UInt32,
+    `funnel_variant_id` String,
     `prev_page_id` String,
     `prev_page_name` SimpleAggregateFunction(any, String),
     `prev_page_index` SimpleAggregateFunction(any, UInt32),

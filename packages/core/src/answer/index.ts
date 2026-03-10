@@ -1,7 +1,8 @@
-import { and, eq, inArray, isNull } from 'drizzle-orm'
+import { and, desc, eq, inArray, isNull } from 'drizzle-orm'
 import { z } from 'zod'
 import { Actor } from '../actor'
 import { Database } from '../database'
+import { FunnelVariantTable } from '../funnel/index.sql'
 import { Identifier } from '../identifier'
 import { QuestionTable } from '../question/index.sql'
 import { SubmissionTable } from '../submission/index.sql'
@@ -12,6 +13,7 @@ export namespace Answer {
   export const submit = fn(
     z.object({
       funnelId: Identifier.schema('funnel'),
+      funnelVariantId: Identifier.schema('funnel_variant').optional(),
       sessionId: z.string(),
       answers: z.array(
         z.object({
@@ -22,6 +24,26 @@ export namespace Answer {
     }),
     async (input) => {
       if (input.answers.length === 0) return
+
+      // Resolve variant ID if not provided (backward compat with old clients)
+      const funnelVariantId =
+        input.funnelVariantId ??
+        (await Database.use((tx) =>
+          tx
+            .select({ id: FunnelVariantTable.id })
+            .from(FunnelVariantTable)
+            .where(
+              and(
+                eq(FunnelVariantTable.workspaceId, Actor.workspaceId()),
+                eq(FunnelVariantTable.funnelId, input.funnelId),
+                isNull(FunnelVariantTable.archivedAt),
+              ),
+            )
+            .orderBy(desc(FunnelVariantTable.createdAt))
+            .limit(1)
+            .then((rows) => rows[0]?.id),
+        ))
+      if (!funnelVariantId) return
 
       const submissionId = await (async () => {
         const existingId = await Database.use((tx) =>
@@ -40,6 +62,7 @@ export namespace Answer {
             .values({
               id: Identifier.create('submission'),
               funnelId: input.funnelId,
+              funnelVariantId,
               workspaceId: Actor.workspaceId(),
               sessionId: input.sessionId,
             }),
@@ -62,6 +85,7 @@ export namespace Answer {
             and(
               eq(QuestionTable.workspaceId, Actor.workspaceId()),
               eq(QuestionTable.funnelId, input.funnelId),
+              eq(QuestionTable.funnelVariantId, funnelVariantId),
               isNull(QuestionTable.archivedAt),
             ),
           ),

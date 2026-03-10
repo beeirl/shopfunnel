@@ -120,7 +120,7 @@ export const StripeRoute = new Hono().post('/webhook', async (c) => {
       if (stripeSubscription.status === 'incomplete_expired') {
         await Actor.provide('system', { workspaceId }, async () => {
           await Billing.unsubscribe({ stripeSubscriptionId })
-          await Funnel.unpublishAll()
+          await Funnel.deactivateAll()
         })
       } else if (stripeSubscription.status === 'active' || stripeSubscription.status === 'trialing') {
         const stripeSubscriptionItems = stripeSubscription.items?.data ?? []
@@ -187,7 +187,7 @@ export const StripeRoute = new Hono().post('/webhook', async (c) => {
 
       await Actor.provide('system', { workspaceId }, async () => {
         await Billing.unsubscribe({ stripeSubscriptionId })
-        await Funnel.unpublishAll()
+        await Funnel.deactivateAll()
       })
     }
   })()

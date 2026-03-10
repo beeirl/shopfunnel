@@ -12,20 +12,21 @@ export const getFunnel = createServerFn()
     z.object({
       workspaceId: Identifier.schema('workspace'),
       funnelId: Identifier.schema('funnel'),
+      funnelVariantId: Identifier.schema('funnel_variant').optional(),
     }),
   )
   .handler(({ data }) => {
     return withActor(async () => {
-      const funnel = await Funnel.getCurrentVersion(data.funnelId)
+      const funnel = await Funnel.getDraft({ funnelId: data.funnelId, funnelVariantId: data.funnelVariantId })
       if (!funnel) throw notFound()
       return funnel
     }, data.workspaceId)
   })
 
-export const getFunnelQueryOptions = (workspaceId: string, funnelId: string) =>
+export const getFunnelQueryOptions = (workspaceId: string, funnelId: string, funnelVariantId?: string) =>
   queryOptions({
-    queryKey: ['funnel', workspaceId, funnelId],
-    queryFn: () => getFunnel({ data: { workspaceId, funnelId } }),
+    queryKey: ['funnel', workspaceId, funnelId, funnelVariantId],
+    queryFn: () => getFunnel({ data: { workspaceId, funnelId, funnelVariantId } }),
   })
 
 export const updateFunnel = createServerFn({ method: 'POST' })
@@ -33,6 +34,7 @@ export const updateFunnel = createServerFn({ method: 'POST' })
     z.object({
       workspaceId: Identifier.schema('workspace'),
       funnelId: Identifier.schema('funnel'),
+      funnelVariantId: Identifier.schema('funnel_variant'),
       pages: z.array(Page).optional(),
       rules: z.array(Rule).optional(),
       theme: Theme.optional(),
@@ -50,7 +52,7 @@ export const updateFunnel = createServerFn({ method: 'POST' })
       }
       if (data.pages || data.rules || data.theme) {
         await Funnel.update({
-          id: data.funnelId,
+          funnelVariantId: data.funnelVariantId,
           pages: data.pages,
           rules: data.rules,
           theme: data.theme,

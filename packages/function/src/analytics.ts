@@ -14,7 +14,9 @@ export default {
         version: event.version,
         workspace_id: event.workspace_id,
         funnel_id: event.funnel_id,
-        funnel_version: event.funnel_version,
+        funnel_version: event.funnel_version ?? event.funnel_variant_version ?? 0,
+        funnel_variant_id: event.funnel_variant_id ?? '',
+        funnel_variant_version: event.funnel_variant_version ?? 0,
         payload: JSON.stringify(event.payload),
       }
     })

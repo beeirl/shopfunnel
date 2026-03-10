@@ -7,6 +7,7 @@ export const SubmissionTable = mysqlTable(
     ...workspaceColumns,
     ...timestampColumns,
     funnelId: id('funnel_id').notNull(),
+    funnelVariantId: id('funnel_variant_id'),
     sessionId: ulid('session_id').notNull(),
     completedAt: timestamp('completed_at'),
   },

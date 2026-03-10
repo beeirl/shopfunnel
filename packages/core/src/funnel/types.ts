@@ -1,9 +1,5 @@
 import { z } from 'zod'
 
-// ============================================
-// Block
-// ============================================
-
 export const TextInputBlock = z.object({
   id: z.string(),
   type: z.literal('text_input'),
@@ -213,10 +209,6 @@ export type Block = z.infer<typeof Block>
 export const INPUT_BLOCKS = ['text_input', 'multiple_choice', 'picture_choice', 'dropdown', 'binary_choice'] as const
 export type InputBlock = (typeof INPUT_BLOCKS)[number]
 
-// ============================================
-// Page
-// ============================================
-
 export const Page = z.object({
   id: z.string(),
   name: z.string(),
@@ -230,15 +222,7 @@ export const Page = z.object({
 })
 export type Page = z.infer<typeof Page>
 
-// ============================================
-// Variables
-// ============================================
-
 export type Variables = Record<string, string | number>
-
-// ============================================
-// Rules & Conditions
-// ============================================
 
 export const ConditionVar = z.object({
   type: z.enum(['block', 'variable', 'constant']),
@@ -298,10 +282,6 @@ export const Rule = z.object({
 })
 export type Rule = z.infer<typeof Rule>
 
-// ============================================
-// Theme
-// ============================================
-
 export const Theme = z.object({
   logoUrl: z.string().optional(),
   radius: z.string(),
@@ -314,10 +294,6 @@ export const Theme = z.object({
   }),
 })
 export type Theme = z.infer<typeof Theme>
-
-// ============================================
-// Settings
-// ============================================
 
 export const Settings = z.object({
   privacyUrl: z.string().optional(),
@@ -334,25 +310,26 @@ export interface ResolvedSettings extends Settings {
   metaImageUrl?: string | null
 }
 
-// ============================================
-// Info
-// ============================================
+export const TrafficSplit = z.object({
+  funnelVariantId: z.string(),
+  percentage: z.number().int().min(0).max(100),
+})
+export type TrafficSplit = z.infer<typeof TrafficSplit>
 
 export interface Info {
   id: string
   workspaceId: string
-  domainId: string | null
+  domainId?: string | null
   shortId: string
   title: string
-  version: number
+  variantId: string
+  variantTitle?: string
+  variantVersion?: number | null
   pages: Page[]
   rules: Rule[]
   variables: Variables
   theme: Theme
   settings?: ResolvedSettings
-  published: boolean
-  draft: boolean
   url: string
-  createdAt: Date
-  publishedAt: Date | null
+  createdAt?: Date
 }

@@ -17,7 +17,12 @@ SQL >
     FROM paths_mv
     WHERE workspace_id = {{ String(workspace_id, required=True) }}
         AND funnel_id = {{ String(funnel_id, required=True) }}
-        AND funnel_version = {{ UInt32(funnel_version, required=True) }}
+        {% if defined(funnel_variant_id) %}
+        AND funnel_variant_id = {{ String(funnel_variant_id) }}
+        {% end %}
+        {% if defined(funnel_version) %}
+        AND funnel_version = {{ UInt32(funnel_version) }}
+        {% end %}
         {% if defined(start_date) %}
         AND date >= parseDateTimeBestEffort({{ String(start_date) }})
         {% end %}

@@ -15,11 +15,14 @@ export function createFunnelCollection(workspaceId: string, funnelId: string, qu
       queryClient,
       getKey: () => 'funnel',
       onUpdate: async ({ transaction }) => {
-        const { changes } = transaction.mutations[0]!
+        const { changes, original } = transaction.mutations[0]!
+        const funnelVariantId = (original as { variantId?: string })?.variantId
+        if (!funnelVariantId) return
         await updateFunnel({
           data: {
             workspaceId,
             funnelId,
+            funnelVariantId,
             ...(changes.pages && { pages: changes.pages }),
             ...(changes.rules && { rules: changes.rules }),
             ...(changes.theme && { theme: changes.theme }),

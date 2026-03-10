@@ -40,7 +40,9 @@ register(({ analytics, browser, settings, init }) => {
         session_id: session.id,
         workspace_id: session.workspaceId,
         funnel_id: session.funnelId,
-        funnel_version: session.funnelVersion,
+        funnel_version: session.funnelVersion || 0,
+        funnel_variant_id: session.funnelVariantId || '',
+        funnel_variant_version: session.funnelVariantVersion || 0,
         version: '1',
         timestamp: new Date().toISOString(),
         payload: {
@@ -71,7 +73,9 @@ register(({ analytics, browser, settings, init }) => {
         session_id: session.id,
         workspace_id: session.workspaceId,
         funnel_id: session.funnelId,
-        funnel_version: session.funnelVersion,
+        funnel_version: session.funnelVersion || 0,
+        funnel_variant_id: session.funnelVariantId || '',
+        funnel_variant_version: session.funnelVariantVersion || 0,
         version: '1',
         timestamp: new Date().toISOString(),
         payload: {

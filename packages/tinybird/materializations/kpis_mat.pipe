@@ -8,6 +8,7 @@ SQL >
         workspace_id,
         funnel_id,
         funnel_version,
+        funnel_variant_id,
         uniqStateIf(session_id, type IN ('funnel_enter', 'funnel_viewed')) AS visitors,
         uniqStateIf(session_id, type IN ('funnel_start', 'funnel_started')) AS starts,
         uniqStateIf(session_id, type IN ('funnel_end', 'funnel_completed')) AS completions,
@@ -15,7 +16,7 @@ SQL >
         uniqStateIf(session_id, type IN ('external_page_view', 'external_page_viewed')) AS external_page_views,
         sumStateIf(JSONExtractFloat(payload, 'amount'), type IN ('external_checkout_complete', 'external_checkout_completed')) AS total_revenue
     FROM events
-    GROUP BY date, workspace_id, funnel_id, funnel_version
+    GROUP BY date, workspace_id, funnel_id, funnel_version, funnel_variant_id
 
 TYPE MATERIALIZED
 DATASOURCE kpis_mv
