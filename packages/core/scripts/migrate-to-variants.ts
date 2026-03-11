@@ -1,7 +1,6 @@
 import { and, eq, isNull } from 'drizzle-orm'
 import { Database } from '../src/database'
 import {
-  FunnelReleaseTable,
   FunnelTable,
   FunnelVariantDraftTable,
   FunnelVariantTable,
@@ -13,22 +12,21 @@ import { QuestionTable } from '../src/question/index.sql'
 import { SubmissionTable } from '../src/submission/index.sql'
 
 /**
- * Migration script: Migrate existing funnels to the variant/release system.
+ * Migration script: Migrate existing funnels to the variant system.
  *
- * For each non-archived funnel, this script:
+ * For each non-archived funnel without a mainVariantId, this script:
  *   1. Creates a "Main" funnel_variant
  *   2. Creates a funnel_variant_draft from the current version data
  *   3. Creates a funnel_variant_version from the published version data (if published)
- *   4. Creates a funnel_release with 100% traffic to the main variant (if published)
- *   5. Sets funnel.active_release_id to the new release
- *   6. Backfills question.funnel_variant_id for existing questions
- *   7. Backfills submission.funnel_variant_id for existing submissions
+ *   4. Sets funnel.main_variant_id to the new variant (if published)
+ *   5. Backfills question.funnel_variant_id for existing questions
+ *   6. Backfills submission.funnel_variant_id for existing submissions
  *
  * This script must be run AFTER the schema migration that adds the new tables
  * and columns, but BEFORE deploying new application code.
  *
  * Execution order:
- *   1. Run drizzle-kit generate + migrate
+ *   1. Run drizzle-kit generate + migrate (creates new tables/columns)
  *   2. Run this script
  *   3. Deploy Tinybird changes
  *   4. Deploy new application code
@@ -47,7 +45,7 @@ if (isDryRun) {
 console.log('Starting variant migration...\n')
 
 // ============================================
-// Fetch all non-archived funnels with their versions
+// Fetch all non-archived funnels
 // ============================================
 
 const funnels = await Database.use((tx) => tx.select().from(FunnelTable).where(isNull(FunnelTable.archivedAt)))
@@ -57,7 +55,7 @@ console.log(`Found ${funnels.length} non-archived funnel(s)\n`)
 let variantsCreated = 0
 let draftsCreated = 0
 let versionsCreated = 0
-let releasesCreated = 0
+let funnelsActivated = 0
 let questionsUpdated = 0
 let submissionsUpdated = 0
 let skipped = 0
@@ -78,7 +76,7 @@ for (const funnel of funnels) {
     continue
   }
 
-  // Get the current version data
+  // Get the current version data (the draft)
   const currentVersion = funnel.currentVersion
     ? await Database.use((tx) =>
         tx
@@ -123,6 +121,7 @@ for (const funnel of funnels) {
 
   const variantId = Identifier.create('funnel_variant')
   const isPublished = funnel.publishedVersion !== null && funnel.publishedVersion !== undefined
+  const hasDraft = funnel.currentVersion !== funnel.publishedVersion
 
   console.log(
     `  Migrating ${funnel.title} (${funnel.id}): ` +
@@ -130,14 +129,15 @@ for (const funnel of funnels) {
   )
 
   if (!isDryRun) {
-    await Database.use(async (tx) => {
+    await Database.transaction(async (tx) => {
       // 1. Create the "Main" variant
       await tx.insert(FunnelVariantTable).values({
         id: variantId,
         workspaceId: funnel.workspaceId,
         funnelId: funnel.id,
         title: 'Main',
-        hasDraft: funnel.currentVersion !== funnel.publishedVersion,
+        hasDraft,
+        publishedVersion: isPublished ? 1 : null,
       })
       variantsCreated++
 
@@ -168,43 +168,34 @@ for (const funnel of funnels) {
         })
         versionsCreated++
 
-        // 4. Create a release with 100% traffic
-        const releaseId = Identifier.create('funnel_release')
-        await tx.insert(FunnelReleaseTable).values({
-          id: releaseId,
-          workspaceId: funnel.workspaceId,
-          funnelId: funnel.id,
-          trafficSplit: [{ funnelVariantId: variantId, percentage: 100 }],
-        })
-        releasesCreated++
-
-        // 5. Set funnel.active_release_id
+        // 4. Set funnel.mainVariantId (only if published = live)
         await tx
           .update(FunnelTable)
-          .set({ activeReleaseId: releaseId })
+          .set({ mainVariantId: variantId })
           .where(and(eq(FunnelTable.workspaceId, funnel.workspaceId), eq(FunnelTable.id, funnel.id)))
+        funnelsActivated++
       }
 
-      // 6. Backfill question.funnel_variant_id
-      const result = await tx
+      // 5. Backfill question.funnel_variant_id
+      const questionResult = await tx
         .update(QuestionTable)
         .set({ funnelVariantId: variantId })
         .where(and(eq(QuestionTable.workspaceId, funnel.workspaceId), eq(QuestionTable.funnelId, funnel.id)))
-      questionsUpdated += result[0].affectedRows ?? 0
+      questionsUpdated += (questionResult as any)[0]?.affectedRows ?? 0
 
-      // 7. Backfill submission.funnel_variant_id
-      const subResult = await tx
+      // 6. Backfill submission.funnel_variant_id
+      const submissionResult = await tx
         .update(SubmissionTable)
         .set({ funnelVariantId: variantId })
         .where(and(eq(SubmissionTable.workspaceId, funnel.workspaceId), eq(SubmissionTable.funnelId, funnel.id)))
-      submissionsUpdated += subResult[0].affectedRows ?? 0
+      submissionsUpdated += (submissionResult as any)[0]?.affectedRows ?? 0
     })
   } else {
     variantsCreated++
     draftsCreated++
     if (isPublished) {
       versionsCreated++
-      releasesCreated++
+      funnelsActivated++
     }
   }
 }
@@ -219,7 +210,7 @@ console.log(`Skipped (already migrated): ${skipped}`)
 console.log(`Variants created: ${variantsCreated}`)
 console.log(`Drafts created: ${draftsCreated}`)
 console.log(`Versions created: ${versionsCreated}`)
-console.log(`Releases created: ${releasesCreated}`)
+console.log(`Funnels activated (mainVariantId set): ${funnelsActivated}`)
 console.log(`Questions backfilled: ${questionsUpdated}`)
 console.log(`Submissions backfilled: ${submissionsUpdated}`)
 

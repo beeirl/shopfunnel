@@ -13,6 +13,7 @@ SQL >
         funnel_id,
         funnel_version,
         funnel_variant_id,
+        funnel_experiment_id,
         JSONExtractString(payload, 'device') AS device,
         JSONExtractString(payload, 'os') AS os,
         JSONExtractString(payload, 'browser') AS browser,

@@ -4,13 +4,23 @@ import { head } from '@/routes/(funnel)/-head'
 import { Actor } from '@shopfunnel/core/actor'
 import { Analytics } from '@shopfunnel/core/analytics/index'
 import { Answer } from '@shopfunnel/core/answer/index'
+import { Database } from '@shopfunnel/core/database/index'
+import { DomainTable } from '@shopfunnel/core/domain/index.sql'
 import { Funnel as FunnelCore } from '@shopfunnel/core/funnel/index'
+import {
+  FunnelExperimentTable,
+  FunnelExperimentVariantTable,
+  FunnelTable,
+  FunnelVariantTable,
+  FunnelVariantVersionTable,
+} from '@shopfunnel/core/funnel/index.sql'
 import { Identifier } from '@shopfunnel/core/identifier'
 import { Question } from '@shopfunnel/core/question/index'
 import { Submission } from '@shopfunnel/core/submission/index'
 import { createFileRoute, notFound } from '@tanstack/react-router'
 import { createServerFn } from '@tanstack/react-start'
 import { deleteCookie, getCookie, getRequestHeader, setCookie } from '@tanstack/react-start/server'
+import { and, eq, getTableColumns, isNotNull, isNull } from 'drizzle-orm'
 import { useEffect, useRef, useState } from 'react'
 import { ulid } from 'ulid'
 import { z } from 'zod'
@@ -22,24 +32,122 @@ const getFunnel = createServerFn()
   .inputValidator(z.object({ funnelShortId: z.string().length(8) }))
   .handler(async ({ data }) => {
     const cookieName = `sf_funnel_${data.funnelShortId}_variant_id`
-    const assignedVariantId = getCookie(cookieName) || undefined
 
-    const funnel = await FunnelCore.get({ funnelShortId: data.funnelShortId, funnelVariantId: assignedVariantId })
-    if (!funnel) throw notFound()
+    const rows = await Database.use((tx) =>
+      tx
+        .select({
+          ...getTableColumns(FunnelTable),
+          domain: DomainTable,
+          experimentId: FunnelExperimentTable.id,
+          experimentVariantId: FunnelExperimentVariantTable.funnelVariantId,
+          experimentVariantWeight: FunnelExperimentVariantTable.weight,
+        })
+        .from(FunnelTable)
+        .leftJoin(DomainTable, eq(DomainTable.id, FunnelTable.domainId))
+        .leftJoin(
+          FunnelExperimentTable,
+          and(
+            eq(FunnelExperimentTable.workspaceId, FunnelTable.workspaceId),
+            eq(FunnelExperimentTable.funnelId, FunnelTable.id),
+            isNotNull(FunnelExperimentTable.startedAt),
+            isNull(FunnelExperimentTable.endedAt),
+          ),
+        )
+        .leftJoin(
+          FunnelExperimentVariantTable,
+          and(
+            eq(FunnelExperimentVariantTable.workspaceId, FunnelExperimentTable.workspaceId),
+            eq(FunnelExperimentVariantTable.funnelExperimentId, FunnelExperimentTable.id),
+          ),
+        )
+        .where(and(eq(FunnelTable.shortId, data.funnelShortId), isNull(FunnelTable.archivedAt))),
+    )
+    if (rows.length === 0) throw notFound()
+
+    const funnel = rows[0]!
+
+    const url = FunnelCore.getUrl({ shortId: funnel.shortId, hostname: funnel.domain?.hostname })
 
     const host = getRequestHeader('host')
-    if (host) {
-      const funnelHost = new URL(funnel.url).host
-      if (host !== funnelHost) throw notFound()
-    }
+    if (host !== new URL(url).host) throw notFound()
 
-    setCookie(cookieName, funnel.variantId, {
-      maxAge: 60 * 15, // 15 minutes
+    const variantId = (() => {
+      const assignedVariantId = getCookie(cookieName)
+      if (assignedVariantId) return assignedVariantId
+
+      const activeExperimentVariants = rows
+        .filter(
+          (r) => r.experimentVariantId !== null && r.experimentVariantWeight !== null && r.experimentVariantWeight > 0,
+        )
+        .map((r) => ({ id: r.experimentVariantId!, weight: r.experimentVariantWeight! }))
+
+      if (activeExperimentVariants.length > 0) {
+        const totalWeight = activeExperimentVariants.reduce((sum, v) => sum + v.weight, 0)
+        const rand = Math.random() * totalWeight
+        let cumulative = 0
+        for (const v of activeExperimentVariants) {
+          cumulative += v.weight
+          if (rand < cumulative) return v.id
+        }
+        return activeExperimentVariants[activeExperimentVariants.length - 1]!.id
+      }
+
+      return funnel.mainVariantId
+    })()
+    if (!variantId) throw notFound()
+
+    const variant = await Database.use((tx) =>
+      tx
+        .select({
+          id: FunnelVariantTable.id,
+          number: FunnelVariantVersionTable.number,
+          pages: FunnelVariantVersionTable.pages,
+          rules: FunnelVariantVersionTable.rules,
+          variables: FunnelVariantVersionTable.variables,
+          theme: FunnelVariantVersionTable.theme,
+        })
+        .from(FunnelVariantTable)
+        .innerJoin(
+          FunnelVariantVersionTable,
+          and(
+            eq(FunnelVariantVersionTable.workspaceId, FunnelVariantTable.workspaceId),
+            eq(FunnelVariantVersionTable.funnelId, FunnelVariantTable.funnelId),
+            eq(FunnelVariantVersionTable.funnelVariantId, FunnelVariantTable.id),
+            eq(FunnelVariantVersionTable.number, FunnelVariantTable.publishedVersion),
+          ),
+        )
+        .where(
+          and(
+            eq(FunnelVariantTable.workspaceId, funnel.workspaceId),
+            eq(FunnelVariantTable.funnelId, funnel.id),
+            eq(FunnelVariantTable.id, variantId),
+          ),
+        )
+        .then((rows) => rows[0]),
+    )
+    if (!variant) throw notFound()
+
+    setCookie(cookieName, variantId, {
+      maxAge: 60 * 30, // 30 minutes
       path: '/',
       sameSite: 'lax',
     })
 
-    return funnel
+    return {
+      id: funnel.id,
+      workspaceId: funnel.workspaceId,
+      shortId: funnel.shortId,
+      experimentId: funnel.experimentId,
+      variantId: variant.id,
+      variantVersion: variant.number,
+      url,
+      title: funnel.title,
+      pages: variant.pages,
+      rules: variant.rules,
+      variables: variant.variables,
+      theme: variant.theme,
+      settings: { ...funnel.settings, ...funnel.domain?.settings },
+    }
   })
 
 const listQuestions = createServerFn()
@@ -203,6 +311,7 @@ function RouteComponent() {
       funnel_id: funnel.id,
       funnel_variant_id: funnel.variantId,
       funnel_variant_version: funnel.variantVersion,
+      funnel_experiment_id: funnel.experimentId,
       version: '1',
       payload,
       timestamp: new Date().toISOString(),
@@ -308,6 +417,7 @@ function RouteComponent() {
               funnelVariantId: funnel.variantId,
               funnelVariantVersion: funnel.variantVersion,
               funnelVersion: funnel.variantVersion,
+              ...(funnel.experimentId && { funnelExperimentId: funnel.experimentId }),
               integrationId: shopifyIntegration.id,
               integrationProvider: shopifyIntegration.provider,
             }),

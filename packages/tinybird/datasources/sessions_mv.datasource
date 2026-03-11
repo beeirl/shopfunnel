@@ -4,6 +4,7 @@ SCHEMA >
     `funnel_id` String,
     `funnel_version` UInt32,
     `funnel_variant_id` String,
+    `funnel_experiment_id` String,
     `session_id` String,
     `visitor_id` SimpleAggregateFunction(any, String),
     `device` SimpleAggregateFunction(any, String),

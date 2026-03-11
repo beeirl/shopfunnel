@@ -1,4 +1,4 @@
-import { and, desc, eq, getTableColumns, isNull, max, sql } from 'drizzle-orm'
+import { and, desc, eq, getTableColumns, isNotNull, isNull, sql } from 'drizzle-orm'
 import { ulid } from 'ulid'
 import z from 'zod'
 import { Actor } from '../actor'
@@ -11,8 +11,9 @@ import { Identifier } from '../identifier'
 import { Question } from '../question'
 import { fn } from '../utils/fn'
 import {
+  FunnelExperimentTable,
+  FunnelExperimentVariantTable,
   FunnelFileTable,
-  FunnelReleaseTable,
   FunnelTable,
   FunnelVariantDraftTable,
   FunnelVariantTable,
@@ -43,136 +44,142 @@ export namespace Funnel {
     },
   ]
 
-  /**
-   * Unified public lookup.
-   * Looks up funnel by shortId → gets current release → resolves variant
-   * (uses funnelVariantId if provided for cookie-based assignment, otherwise random) →
-   * returns latest version of assigned variant.
-   */
   export const get = fn(
     z.object({
       funnelShortId: z.string().length(8),
-      funnelVariantId: z.string().optional(),
+      funnelVariantId: Identifier.schema('funnel_variant').optional(),
     }),
     async (input) => {
-      return Database.use(async (tx) => {
-        const funnel = await tx
+      const rows = await Database.use((tx) =>
+        tx
           .select({
             ...getTableColumns(FunnelTable),
             domain: DomainTable,
-            release: FunnelReleaseTable,
+            experimentVariant: {
+              id: FunnelExperimentVariantTable.funnelVariantId,
+              weight: FunnelExperimentVariantTable.weight,
+            },
           })
           .from(FunnelTable)
           .leftJoin(DomainTable, eq(DomainTable.id, FunnelTable.domainId))
-          .innerJoin(FunnelReleaseTable, eq(FunnelReleaseTable.id, FunnelTable.activeReleaseId))
-          .where(and(eq(FunnelTable.shortId, input.funnelShortId), isNull(FunnelTable.archivedAt)))
-          .then((rows) => rows[0])
-        if (!funnel) return
-
-        const variantId = (() => {
-          if (input.funnelVariantId) {
-            const isValid = funnel.release.trafficSplit.some(
-              (s) => s.funnelVariantId === input.funnelVariantId && s.percentage > 0,
-            )
-            if (isValid) return input.funnelVariantId
-          }
-
-          const activeSplits = funnel.release.trafficSplit.filter((s) => s.percentage > 0)
-          if (activeSplits.length === 0) return undefined
-
-          const rand = Math.random() * 100
-          let cumulative = 0
-          for (const split of activeSplits) {
-            cumulative += split.percentage
-            if (rand < cumulative) return split.funnelVariantId
-          }
-
-          return activeSplits[activeSplits.length - 1]!.funnelVariantId
-        })()
-        if (!variantId) return
-
-        const variantVersion = await tx
-          .select()
-          .from(FunnelVariantVersionTable)
-          .where(
+          .leftJoin(
+            FunnelExperimentTable,
             and(
-              eq(FunnelVariantVersionTable.workspaceId, funnel.workspaceId),
-              eq(FunnelVariantVersionTable.funnelId, funnel.id),
-              eq(FunnelVariantVersionTable.funnelVariantId, variantId),
+              eq(FunnelExperimentTable.workspaceId, FunnelTable.workspaceId),
+              eq(FunnelExperimentTable.funnelId, FunnelTable.id),
+              isNotNull(FunnelExperimentTable.startedAt),
+              isNull(FunnelExperimentTable.endedAt),
             ),
           )
-          .orderBy(desc(FunnelVariantVersionTable.number))
-          .limit(1)
-          .then((rows) => rows[0])
-        if (!variantVersion) return
+          .leftJoin(
+            FunnelExperimentVariantTable,
+            and(
+              eq(FunnelExperimentVariantTable.workspaceId, FunnelExperimentTable.workspaceId),
+              eq(FunnelExperimentVariantTable.funnelExperimentId, FunnelExperimentTable.id),
+            ),
+          )
+          .where(and(eq(FunnelTable.shortId, input.funnelShortId), isNull(FunnelTable.archivedAt))),
+      )
+      if (rows.length === 0) return
 
-        return {
-          id: funnel.id,
-          workspaceId: funnel.workspaceId,
-          shortId: funnel.shortId,
-          variantId,
-          variantVersion: variantVersion.number,
-          title: funnel.title,
-          pages: variantVersion.pages,
-          rules: variantVersion.rules,
-          variables: variantVersion.variables,
-          theme: variantVersion.theme,
-          settings: { ...funnel.settings, ...funnel.domain?.settings },
-          url: getUrl({ shortId: funnel.shortId, hostname: funnel.domain?.hostname }),
-        } satisfies Info
-      })
+      const funnel = rows[0]!
+
+      const variantId = (() => {
+        if (input.funnelVariantId) return input.funnelVariantId
+
+        const activeExperimentVariants = rows
+          .filter((r) => r.experimentVariant !== null && r.experimentVariant.weight > 0)
+          .map((r) => r.experimentVariant!)
+
+        if (activeExperimentVariants.length > 0) {
+          const totalWeight = activeExperimentVariants.reduce((sum, v) => sum + v.weight, 0)
+          const rand = Math.random() * totalWeight
+          let cumulative = 0
+          for (const v of activeExperimentVariants) {
+            cumulative += v.weight
+            if (rand < cumulative) return v.id
+          }
+          return activeExperimentVariants[activeExperimentVariants.length - 1]!.id
+        }
+
+        return funnel.mainVariantId ?? undefined
+      })()
+      if (!variantId) return
+
+      const variantVersion = await Database.use((tx) =>
+        tx
+          .select({
+            number: FunnelVariantVersionTable.number,
+            pages: FunnelVariantVersionTable.pages,
+            rules: FunnelVariantVersionTable.rules,
+            variables: FunnelVariantVersionTable.variables,
+            theme: FunnelVariantVersionTable.theme,
+          })
+          .from(FunnelVariantTable)
+          .innerJoin(
+            FunnelVariantVersionTable,
+            and(
+              eq(FunnelVariantVersionTable.workspaceId, FunnelVariantTable.workspaceId),
+              eq(FunnelVariantVersionTable.funnelId, FunnelVariantTable.funnelId),
+              eq(FunnelVariantVersionTable.funnelVariantId, FunnelVariantTable.id),
+              eq(FunnelVariantVersionTable.number, FunnelVariantTable.publishedVersion),
+            ),
+          )
+          .where(
+            and(
+              eq(FunnelVariantTable.workspaceId, funnel.workspaceId),
+              eq(FunnelVariantTable.funnelId, funnel.id),
+              eq(FunnelVariantTable.id, variantId),
+            ),
+          )
+          .then((rows) => rows[0]),
+      )
+      if (!variantVersion) return
+
+      return {
+        id: funnel.id,
+        workspaceId: funnel.workspaceId,
+        shortId: funnel.shortId,
+        variantId,
+        variantVersion: variantVersion.number,
+        title: funnel.title,
+        pages: variantVersion.pages,
+        rules: variantVersion.rules,
+        variables: variantVersion.variables,
+        theme: variantVersion.theme,
+        settings: { ...funnel.settings, ...funnel.domain?.settings },
+        url: getUrl({ shortId: funnel.shortId, hostname: funnel.domain?.hostname }),
+      } satisfies Info
     },
   )
 
   export const getDraft = fn(
     z.object({
-      funnelId: Identifier.schema('funnel'),
-      funnelVariantId: Identifier.schema('funnel_variant').optional(),
+      id: Identifier.schema('funnel'),
+      variantId: Identifier.schema('funnel_variant').optional(),
     }),
     async (input) => {
-      return Database.use(async (tx) => {
-        const funnel = await tx
+      const result = await Database.use((tx) =>
+        tx
           .select({
             ...getTableColumns(FunnelTable),
             domain: DomainTable,
+            variant: getTableColumns(FunnelVariantTable),
+            draft: getTableColumns(FunnelVariantDraftTable),
           })
           .from(FunnelTable)
           .leftJoin(DomainTable, eq(DomainTable.id, FunnelTable.domainId))
-          .where(
+          .innerJoin(
+            FunnelVariantTable,
             and(
-              eq(FunnelTable.workspaceId, Actor.workspaceId()),
-              eq(FunnelTable.id, input.funnelId),
-              isNull(FunnelTable.archivedAt),
+              eq(FunnelVariantTable.workspaceId, FunnelTable.workspaceId),
+              eq(FunnelVariantTable.funnelId, FunnelTable.id),
+              input.variantId
+                ? eq(FunnelVariantTable.id, input.variantId)
+                : eq(FunnelVariantTable.id, FunnelTable.mainVariantId),
+              isNull(FunnelVariantTable.archivedAt),
             ),
           )
-          .then((rows) => rows[0])
-        if (!funnel) return
-
-        let variantId = input.funnelVariantId
-        if (!variantId) {
-          const firstVariant = await tx
-            .select({ id: FunnelVariantTable.id })
-            .from(FunnelVariantTable)
-            .where(
-              and(
-                eq(FunnelVariantTable.workspaceId, Actor.workspaceId()),
-                eq(FunnelVariantTable.funnelId, input.funnelId),
-                isNull(FunnelVariantTable.archivedAt),
-              ),
-            )
-            .orderBy(desc(FunnelVariantTable.updatedAt))
-            .limit(1)
-            .then((rows) => rows[0])
-          if (!firstVariant) return
-          variantId = firstVariant.id
-        }
-
-        const variant = await tx
-          .select({
-            ...getTableColumns(FunnelVariantTable),
-            draft: FunnelVariantDraftTable,
-          })
-          .from(FunnelVariantTable)
           .innerJoin(
             FunnelVariantDraftTable,
             and(
@@ -183,31 +190,31 @@ export namespace Funnel {
           )
           .where(
             and(
-              eq(FunnelVariantTable.workspaceId, Actor.workspaceId()),
-              eq(FunnelVariantTable.id, variantId),
-              isNull(FunnelVariantTable.archivedAt),
+              eq(FunnelTable.workspaceId, Actor.workspaceId()),
+              eq(FunnelTable.id, input.id),
+              isNull(FunnelTable.archivedAt),
             ),
           )
-          .then((rows) => rows[0])
-        if (!variant) return
+          .then((rows) => rows[0]),
+      )
+      if (!result) return
 
-        return {
-          id: funnel.id,
-          workspaceId: funnel.workspaceId,
-          shortId: funnel.shortId,
-          variantId: variant.id,
-          url: getUrl({ shortId: funnel.shortId, hostname: funnel.domain?.hostname }),
-          title: funnel.title,
-          variantTitle: variant.title,
-          pages: variant.draft.pages,
-          rules: variant.draft.rules,
-          variables: variant.draft.variables,
-          theme: variant.draft.theme,
-          hasChanges: variant.hasDraft,
-          settings: { ...funnel.settings, ...funnel.domain?.settings },
-          createdAt: funnel.createdAt,
-        }
-      })
+      return {
+        id: result.id,
+        workspaceId: result.workspaceId,
+        shortId: result.shortId,
+        variantId: result.variant.id,
+        url: getUrl({ shortId: result.shortId, hostname: result.domain?.hostname }),
+        title: result.title,
+        variantTitle: result.variant.title,
+        pages: result.draft.pages,
+        rules: result.draft.rules,
+        variables: result.draft.variables,
+        theme: result.draft.theme,
+        hasChanges: result.variant.hasDraft,
+        settings: { ...result.settings, ...result.domain?.settings },
+        createdAt: result.createdAt,
+      }
     },
   )
 
@@ -234,34 +241,33 @@ export namespace Funnel {
 
   export const create = fn(z.void(), async () => {
     const id = Identifier.create('funnel')
-    const shortId = id.slice(-8)
-    const variantId = Identifier.create('funnel_variant')
+    const mainVariantId = Identifier.create('funnel_variant')
     const domain = await Domain.get()
 
     const pages = DEFAULT_PAGES()
 
-    await Database.use(async (tx) => {
+    await Database.transaction(async (tx) => {
       await tx.insert(FunnelTable).values({
         id,
         workspaceId: Actor.workspaceId(),
-        shortId,
+        shortId: id.slice(-8),
         title: 'New funnel',
         domainId: domain?.id,
-        originalVariantId: variantId,
+        mainVariantId,
       })
 
       await tx.insert(FunnelVariantTable).values({
-        id: variantId,
+        id: mainVariantId,
         workspaceId: Actor.workspaceId(),
         funnelId: id,
-        title: 'Original variant',
+        title: 'Main',
       })
 
       await tx.insert(FunnelVariantDraftTable).values({
         id: Identifier.create('funnel_variant_draft'),
         workspaceId: Actor.workspaceId(),
         funnelId: id,
-        funnelVariantId: variantId,
+        funnelVariantId: mainVariantId,
         pages,
         rules: [],
         variables: {},
@@ -343,80 +349,6 @@ export namespace Funnel {
     },
   )
 
-  export const commit = fn(
-    z.object({
-      funnelId: Identifier.schema('funnel'),
-      funnelVariantId: Identifier.schema('funnel_variant'),
-    }),
-    async (input) => {
-      await Billing.assert()
-      await Database.use(async (tx) => {
-        const funnel = await tx
-          .select()
-          .from(FunnelTable)
-          .where(and(eq(FunnelTable.workspaceId, Actor.workspaceId()), eq(FunnelTable.id, input.funnelId)))
-          .then((rows) => rows[0])
-        if (!funnel) return
-
-        const draft = await tx
-          .select()
-          .from(FunnelVariantDraftTable)
-          .where(
-            and(
-              eq(FunnelVariantDraftTable.workspaceId, Actor.workspaceId()),
-              eq(FunnelVariantDraftTable.funnelId, input.funnelId),
-              eq(FunnelVariantDraftTable.funnelVariantId, input.funnelVariantId),
-            ),
-          )
-          .then((rows) => rows[0])
-        if (!draft) return
-
-        const latestVariantVersion = await getLatestVariantVersionNumber({
-          funnelId: input.funnelId,
-          funnelVariantId: input.funnelVariantId,
-        })
-        const nextVariantVersion = (latestVariantVersion ?? 0) + 1
-
-        await tx.insert(FunnelVariantVersionTable).values({
-          workspaceId: Actor.workspaceId(),
-          funnelId: input.funnelId,
-          funnelVariantId: input.funnelVariantId,
-          number: nextVariantVersion,
-          pages: draft.pages,
-          rules: draft.rules,
-          variables: draft.variables,
-          theme: draft.theme,
-        })
-
-        await tx
-          .update(FunnelVariantTable)
-          .set({ hasDraft: false })
-          .where(
-            and(
-              eq(FunnelVariantTable.workspaceId, Actor.workspaceId()),
-              eq(FunnelVariantTable.id, input.funnelVariantId),
-            ),
-          )
-
-        if (!funnel.activeReleaseId) {
-          const releaseId = Identifier.create('funnel_release')
-          await tx.insert(FunnelReleaseTable).values({
-            id: releaseId,
-            workspaceId: Actor.workspaceId(),
-            funnelId: input.funnelId,
-            trafficSplit: [{ funnelVariantId: input.funnelVariantId, percentage: 100 }],
-          })
-          await tx
-            .update(FunnelTable)
-            .set({ activeReleaseId: releaseId })
-            .where(and(eq(FunnelTable.workspaceId, Actor.workspaceId()), eq(FunnelTable.id, input.funnelId)))
-        }
-      })
-
-      await Question.sync({ funnelId: input.funnelId, funnelVariantId: input.funnelVariantId })
-    },
-  )
-
   export const duplicate = fn(
     z.object({
       id: Identifier.schema('funnel'),
@@ -427,29 +359,78 @@ export namespace Funnel {
       const shortId = newId.slice(-8)
       const variantId = Identifier.create('funnel_variant')
 
-      await Database.use(async (tx) => {
-        const sourceDraft = await Funnel.getDraft({ funnelId: input.id })
-        if (!sourceDraft) throw new Error('Funnel not found')
+      const sourceFunnel = await Database.use((tx) =>
+        tx
+          .select({
+            title: FunnelTable.title,
+          })
+          .from(FunnelTable)
+          .where(
+            and(
+              eq(FunnelTable.workspaceId, Actor.workspaceId()),
+              eq(FunnelTable.id, input.id),
+              isNull(FunnelTable.archivedAt),
+            ),
+          )
+          .then((rows) => rows[0]),
+      )
+      if (!sourceFunnel) throw new Error('Funnel not found')
 
-        const title = input.title || `${sourceDraft.title} copy`
-        const domain = await Domain.get()
+      const sourceDraft = await Database.use((tx) =>
+        tx
+          .select({
+            pages: FunnelVariantDraftTable.pages,
+            rules: FunnelVariantDraftTable.rules,
+            variables: FunnelVariantDraftTable.variables,
+            theme: FunnelVariantDraftTable.theme,
+          })
+          .from(FunnelVariantDraftTable)
+          .innerJoin(
+            FunnelVariantTable,
+            and(
+              eq(FunnelVariantTable.workspaceId, FunnelVariantDraftTable.workspaceId),
+              eq(FunnelVariantTable.funnelId, FunnelVariantDraftTable.funnelId),
+              eq(FunnelVariantTable.id, FunnelVariantDraftTable.funnelVariantId),
+              isNull(FunnelVariantTable.archivedAt),
+            ),
+          )
+          .where(
+            and(
+              eq(FunnelVariantDraftTable.workspaceId, Actor.workspaceId()),
+              eq(FunnelVariantDraftTable.funnelId, input.id),
+            ),
+          )
+          .orderBy(desc(FunnelVariantTable.updatedAt))
+          .limit(1)
+          .then((rows) => rows[0]),
+      )
+      if (!sourceDraft) throw new Error('Funnel draft not found')
 
-        await tx.insert(FunnelTable).values({
+      const title = input.title || `${sourceFunnel.title} copy`
+      const domain = await Domain.get()
+
+      await Database.use((tx) =>
+        tx.insert(FunnelTable).values({
           id: newId,
           workspaceId: Actor.workspaceId(),
           shortId,
           title,
           domainId: domain?.id,
-        })
+          mainVariantId: variantId,
+        }),
+      )
 
-        await tx.insert(FunnelVariantTable).values({
+      await Database.use((tx) =>
+        tx.insert(FunnelVariantTable).values({
           id: variantId,
           workspaceId: Actor.workspaceId(),
           funnelId: newId,
           title: 'Main',
-        })
+        }),
+      )
 
-        await tx.insert(FunnelVariantDraftTable).values({
+      await Database.use((tx) =>
+        tx.insert(FunnelVariantDraftTable).values({
           id: Identifier.create('funnel_variant_draft'),
           workspaceId: Actor.workspaceId(),
           funnelId: newId,
@@ -458,23 +439,27 @@ export namespace Funnel {
           rules: sourceDraft.rules,
           variables: sourceDraft.variables,
           theme: sourceDraft.theme,
-        })
+        }),
+      )
 
-        const files = await tx
+      const files = await Database.use((tx) =>
+        tx
           .select()
           .from(FunnelFileTable)
-          .where(and(eq(FunnelFileTable.workspaceId, Actor.workspaceId()), eq(FunnelFileTable.funnelId, input.id)))
+          .where(and(eq(FunnelFileTable.workspaceId, Actor.workspaceId()), eq(FunnelFileTable.funnelId, input.id))),
+      )
 
-        if (files.length > 0) {
-          await tx.insert(FunnelFileTable).values(
+      if (files.length > 0) {
+        await Database.use((tx) =>
+          tx.insert(FunnelFileTable).values(
             files.map((f) => ({
               funnelId: newId,
               workspaceId: Actor.workspaceId(),
               fileId: f.fileId,
             })),
-          )
-        }
-      })
+          ),
+        )
+      }
 
       return newId
     },
@@ -513,24 +498,87 @@ export namespace Funnel {
         .update(FunnelTable)
         .set({
           archivedAt: sql`NOW(3)`,
-          activeReleaseId: null,
+          mainVariantId: null,
         })
         .where(and(eq(FunnelTable.workspaceId, Actor.workspaceId()), eq(FunnelTable.id, id)))
     })
+  })
+
+  export const deactivateAll = fn(z.void(), async () => {
+    await Database.use(async (tx) => {
+      await tx.update(FunnelTable).set({ mainVariantId: null }).where(eq(FunnelTable.workspaceId, Actor.workspaceId()))
+    })
+  })
+
+  export const listVariants = fn(Identifier.schema('funnel'), async (funnelId) => {
+    const rows = await Database.use((tx) =>
+      tx
+        .select({
+          ...getTableColumns(FunnelVariantTable),
+          mainVariantId: FunnelTable.mainVariantId,
+          experimentVariantWeight: FunnelExperimentVariantTable.weight,
+        })
+        .from(FunnelVariantTable)
+        .innerJoin(
+          FunnelTable,
+          and(
+            eq(FunnelTable.workspaceId, FunnelVariantTable.workspaceId),
+            eq(FunnelTable.id, FunnelVariantTable.funnelId),
+          ),
+        )
+        .leftJoin(
+          FunnelExperimentTable,
+          and(
+            eq(FunnelExperimentTable.workspaceId, FunnelVariantTable.workspaceId),
+            eq(FunnelExperimentTable.funnelId, FunnelVariantTable.funnelId),
+            isNotNull(FunnelExperimentTable.startedAt),
+            isNull(FunnelExperimentTable.endedAt),
+          ),
+        )
+        .leftJoin(
+          FunnelExperimentVariantTable,
+          and(
+            eq(FunnelExperimentVariantTable.workspaceId, FunnelExperimentTable.workspaceId),
+            eq(FunnelExperimentVariantTable.funnelExperimentId, FunnelExperimentTable.id),
+            eq(FunnelExperimentVariantTable.funnelVariantId, FunnelVariantTable.id),
+          ),
+        )
+        .where(
+          and(
+            eq(FunnelVariantTable.workspaceId, Actor.workspaceId()),
+            eq(FunnelVariantTable.funnelId, funnelId),
+            isNull(FunnelVariantTable.archivedAt),
+          ),
+        )
+        .orderBy(FunnelVariantTable.createdAt),
+    )
+
+    const hasExperiment = rows.some((r) => r.experimentVariantWeight !== null)
+
+    return rows.map((row) => ({
+      id: row.id,
+      funnelId: row.funnelId,
+      title: row.title,
+      hasDraft: row.hasDraft,
+      isMain: row.id === row.mainVariantId,
+      createdAt: row.createdAt,
+      updatedAt: row.updatedAt,
+      trafficPercentage: hasExperiment ? (row.experimentVariantWeight ?? 0) : row.id === row.mainVariantId ? 100 : 0,
+    }))
   })
 
   export const createVariant = fn(
     z.object({
       funnelId: Identifier.schema('funnel'),
       title: z.string().min(1).max(255),
+      fromId: Identifier.schema('funnel_variant'),
     }),
     (input) => {
       return Database.use(async (tx) => {
         const id = Identifier.create('funnel_variant')
 
-        // Verify the funnel exists and isn't archived
         const funnel = await tx
-          .select({ id: FunnelTable.id, originalVariantId: FunnelTable.originalVariantId })
+          .select({ id: FunnelTable.id })
           .from(FunnelTable)
           .where(
             and(
@@ -541,9 +589,7 @@ export namespace Funnel {
           )
           .then((rows) => rows[0])
         if (!funnel) throw new Error('Funnel not found')
-        if (!funnel.originalVariantId) throw new Error('Funnel has no original variant')
 
-        // Fetch the original variant's draft to copy from
         const sourceVariant = await tx
           .select({
             draft: FunnelVariantDraftTable,
@@ -560,12 +606,12 @@ export namespace Funnel {
             and(
               eq(FunnelVariantTable.workspaceId, Actor.workspaceId()),
               eq(FunnelVariantTable.funnelId, input.funnelId),
-              eq(FunnelVariantTable.id, funnel.originalVariantId),
+              eq(FunnelVariantTable.id, input.fromId),
               isNull(FunnelVariantTable.archivedAt),
             ),
           )
           .then((rows) => rows[0])
-        if (!sourceVariant) throw new Error('Original variant not found')
+        if (!sourceVariant) throw new Error('Source variant not found')
 
         await tx.insert(FunnelVariantTable).values({
           id,
@@ -590,159 +636,463 @@ export namespace Funnel {
     },
   )
 
-  export const listVariants = fn(Identifier.schema('funnel'), async (funnelId) => {
-    return Database.use(async (tx) => {
-      const funnel = await tx
-        .select({
-          originalVariantId: FunnelTable.originalVariantId,
-          release: FunnelReleaseTable,
-        })
-        .from(FunnelTable)
-        .leftJoin(FunnelReleaseTable, eq(FunnelReleaseTable.id, FunnelTable.activeReleaseId))
-        .where(and(eq(FunnelTable.workspaceId, Actor.workspaceId()), eq(FunnelTable.id, funnelId)))
-        .then((rows) => rows[0])
-      if (!funnel) return []
-
-      const trafficSplit = funnel.release?.trafficSplit ?? []
-
-      const variants = await tx
-        .select()
-        .from(FunnelVariantTable)
-        .where(
-          and(
-            eq(FunnelVariantTable.workspaceId, Actor.workspaceId()),
-            eq(FunnelVariantTable.funnelId, funnelId),
-            isNull(FunnelVariantTable.archivedAt),
-          ),
-        )
-        .orderBy(FunnelVariantTable.createdAt)
-
-      return variants.map((variant) => ({
-        id: variant.id,
-        funnelId: variant.funnelId,
-        title: variant.title,
-        hasDraft: variant.hasDraft,
-        isOriginal: variant.id === funnel.originalVariantId,
-        createdAt: variant.createdAt,
-        updatedAt: variant.updatedAt,
-        trafficPercentage: trafficSplit.find((s) => s.funnelVariantId === variant.id)?.percentage ?? 0,
-      }))
-    })
-  })
-
-  export const release = fn(
+  export const setMainVariant = fn(
     z.object({
       funnelId: Identifier.schema('funnel'),
-      trafficSplit: z.array(
-        z.object({
-          funnelVariantId: z.string(),
-          percentage: z.number().int().min(0).max(100),
-        }),
-      ),
+      funnelVariantId: Identifier.schema('funnel_variant'),
+    }),
+    async (input) => {
+      const result = await Database.use((tx) =>
+        tx
+          .select({
+            variantId: FunnelVariantTable.id,
+            publishedVersion: FunnelVariantTable.publishedVersion,
+            activeExperimentId: FunnelExperimentTable.id,
+          })
+          .from(FunnelVariantTable)
+          .leftJoin(
+            FunnelExperimentTable,
+            and(
+              eq(FunnelExperimentTable.workspaceId, FunnelVariantTable.workspaceId),
+              eq(FunnelExperimentTable.funnelId, FunnelVariantTable.funnelId),
+              isNotNull(FunnelExperimentTable.startedAt),
+              isNull(FunnelExperimentTable.endedAt),
+            ),
+          )
+          .where(
+            and(
+              eq(FunnelVariantTable.workspaceId, Actor.workspaceId()),
+              eq(FunnelVariantTable.id, input.funnelVariantId),
+              eq(FunnelVariantTable.funnelId, input.funnelId),
+              isNull(FunnelVariantTable.archivedAt),
+            ),
+          )
+          .then((rows) => rows[0]),
+      )
+      if (!result) throw new Error('Variant not found')
+      if (result.activeExperimentId) throw new Error('Cannot change main variant while an experiment is active')
+      if (result.publishedVersion === null) {
+        throw new Error('Variant must be published before it can be set as main')
+      }
+
+      await Database.use((tx) =>
+        tx
+          .update(FunnelTable)
+          .set({ mainVariantId: input.funnelVariantId })
+          .where(and(eq(FunnelTable.workspaceId, Actor.workspaceId()), eq(FunnelTable.id, input.funnelId))),
+      )
+    },
+  )
+
+  export const publishVariant = fn(
+    z.object({
+      funnelId: Identifier.schema('funnel'),
+      funnelVariantId: Identifier.schema('funnel_variant'),
     }),
     async (input) => {
       await Billing.assert()
 
-      const totalPercentage = input.trafficSplit.reduce((sum, s) => sum + s.percentage, 0)
-      if (totalPercentage !== 100) {
-        throw new Error(`Traffic split percentages must sum to 100, got ${totalPercentage}`)
-      }
-
-      const releaseId = Identifier.create('funnel_release')
-
-      await Database.use(async (tx) => {
-        const funnel = await tx
+      const funnel = await Database.use((tx) =>
+        tx
           .select()
           .from(FunnelTable)
           .where(and(eq(FunnelTable.workspaceId, Actor.workspaceId()), eq(FunnelTable.id, input.funnelId)))
-          .then((rows) => rows[0])
-        if (!funnel) throw new Error('Funnel not found')
+          .then((rows) => rows[0]),
+      )
+      if (!funnel) return
 
-        for (const split of input.trafficSplit) {
-          const latestVariantVersion = await getLatestVariantVersionNumber({
-            funnelId: input.funnelId,
-            funnelVariantId: split.funnelVariantId,
-          })
-
-          if (latestVariantVersion === null) {
-            const variantDraft = await tx
-              .select()
-              .from(FunnelVariantDraftTable)
-              .where(
-                and(
-                  eq(FunnelVariantDraftTable.workspaceId, Actor.workspaceId()),
-                  eq(FunnelVariantDraftTable.funnelId, input.funnelId),
-                  eq(FunnelVariantDraftTable.funnelVariantId, split.funnelVariantId),
-                ),
-              )
-              .then((rows) => rows[0])
-            if (!variantDraft) throw new Error(`No draft found for variant ${split.funnelVariantId}`)
-
-            await tx.insert(FunnelVariantVersionTable).values({
-              workspaceId: Actor.workspaceId(),
-              funnelId: input.funnelId,
-              funnelVariantId: split.funnelVariantId,
-              number: 1,
-              pages: variantDraft.pages,
-              rules: variantDraft.rules,
-              variables: variantDraft.variables,
-              theme: variantDraft.theme,
-            })
-
-            await Question.sync({ funnelId: input.funnelId, funnelVariantId: split.funnelVariantId })
-          }
-        }
-
-        await tx.insert(FunnelReleaseTable).values({
-          id: releaseId,
-          workspaceId: Actor.workspaceId(),
-          funnelId: input.funnelId,
-          trafficSplit: input.trafficSplit,
-        })
-
-        await tx
-          .update(FunnelTable)
-          .set({ activeReleaseId: releaseId })
-          .where(and(eq(FunnelTable.workspaceId, Actor.workspaceId()), eq(FunnelTable.id, input.funnelId)))
-      })
-
-      return releaseId
-    },
-  )
-
-  export const deactivateAll = fn(z.void(), async () => {
-    await Database.use(async (tx) => {
-      await tx
-        .update(FunnelTable)
-        .set({ activeReleaseId: null })
-        .where(eq(FunnelTable.workspaceId, Actor.workspaceId()))
-    })
-  })
-
-  const getLatestVariantVersionNumber = fn(
-    z.object({
-      funnelId: z.string(),
-      funnelVariantId: z.string(),
-    }),
-    async (input) => {
-      return Database.use(async (tx) => {
-        const result = await tx
-          .select({ number: max(FunnelVariantVersionTable.number) })
-          .from(FunnelVariantVersionTable)
+      const draft = await Database.use((tx) =>
+        tx
+          .select()
+          .from(FunnelVariantDraftTable)
           .where(
             and(
-              eq(FunnelVariantVersionTable.workspaceId, Actor.workspaceId()),
-              eq(FunnelVariantVersionTable.funnelId, input.funnelId),
-              eq(FunnelVariantVersionTable.funnelVariantId, input.funnelVariantId),
+              eq(FunnelVariantDraftTable.workspaceId, Actor.workspaceId()),
+              eq(FunnelVariantDraftTable.funnelId, input.funnelId),
+              eq(FunnelVariantDraftTable.funnelVariantId, input.funnelVariantId),
+            ),
+          )
+          .then((rows) => rows[0]),
+      )
+      if (!draft) return
+
+      await Database.transaction(async (tx) => {
+        await tx
+          .update(FunnelVariantTable)
+          .set({
+            hasDraft: false,
+            publishedVersion: sql`COALESCE(${FunnelVariantTable.publishedVersion}, 0) + 1`,
+          })
+          .where(
+            and(
+              eq(FunnelVariantTable.workspaceId, Actor.workspaceId()),
+              eq(FunnelVariantTable.id, input.funnelVariantId),
+            ),
+          )
+
+        const variant = await tx
+          .select({ publishedVersion: FunnelVariantTable.publishedVersion })
+          .from(FunnelVariantTable)
+          .where(
+            and(
+              eq(FunnelVariantTable.workspaceId, Actor.workspaceId()),
+              eq(FunnelVariantTable.id, input.funnelVariantId),
             ),
           )
           .then((rows) => rows[0])
-        return result?.number
+        if (!variant?.publishedVersion) return
+
+        await tx.insert(FunnelVariantVersionTable).values({
+          workspaceId: Actor.workspaceId(),
+          funnelId: input.funnelId,
+          funnelVariantId: input.funnelVariantId,
+          number: variant.publishedVersion,
+          pages: draft.pages,
+          rules: draft.rules,
+          variables: draft.variables,
+          theme: draft.theme,
+        })
+
+        if (!funnel.mainVariantId) {
+          await tx
+            .update(FunnelTable)
+            .set({ mainVariantId: input.funnelVariantId })
+            .where(and(eq(FunnelTable.workspaceId, Actor.workspaceId()), eq(FunnelTable.id, input.funnelId)))
+        }
+      })
+
+      await Question.sync({ funnelId: input.funnelId, funnelVariantId: input.funnelVariantId })
+    },
+  )
+
+  export const getExperiment = fn(Identifier.schema('funnel_experiment'), async (experimentId) => {
+    return Database.use(async (tx) => {
+      const experiment = await tx
+        .select()
+        .from(FunnelExperimentTable)
+        .where(
+          and(eq(FunnelExperimentTable.workspaceId, Actor.workspaceId()), eq(FunnelExperimentTable.id, experimentId)),
+        )
+        .then((rows) => rows[0])
+      if (!experiment) return
+
+      const experimentVariants = await tx
+        .select({
+          funnelVariantId: FunnelExperimentVariantTable.funnelVariantId,
+          weight: FunnelExperimentVariantTable.weight,
+          variantTitle: FunnelVariantTable.title,
+        })
+        .from(FunnelExperimentVariantTable)
+        .innerJoin(
+          FunnelVariantTable,
+          and(
+            eq(FunnelVariantTable.workspaceId, FunnelExperimentVariantTable.workspaceId),
+            eq(FunnelVariantTable.id, FunnelExperimentVariantTable.funnelVariantId),
+          ),
+        )
+        .where(
+          and(
+            eq(FunnelExperimentVariantTable.workspaceId, Actor.workspaceId()),
+            eq(FunnelExperimentVariantTable.funnelExperimentId, experimentId),
+          ),
+        )
+
+      return {
+        id: experiment.id,
+        funnelId: experiment.funnelId,
+        name: experiment.name,
+        status: experiment.endedAt
+          ? ('completed' as const)
+          : experiment.startedAt
+            ? ('running' as const)
+            : ('draft' as const),
+        startedAt: experiment.startedAt,
+        endedAt: experiment.endedAt,
+        createdAt: experiment.createdAt,
+        variants: experimentVariants.map((v) => ({
+          funnelVariantId: v.funnelVariantId,
+          variantTitle: v.variantTitle,
+          weight: v.weight,
+        })),
+      }
+    })
+  })
+
+  export const listExperiments = fn(Identifier.schema('funnel'), async (funnelId) => {
+    return Database.use(async (tx) => {
+      const experiments = await tx
+        .select()
+        .from(FunnelExperimentTable)
+        .where(
+          and(
+            eq(FunnelExperimentTable.workspaceId, Actor.workspaceId()),
+            eq(FunnelExperimentTable.funnelId, funnelId),
+            isNull(FunnelExperimentTable.archivedAt),
+          ),
+        )
+        .orderBy(desc(FunnelExperimentTable.createdAt))
+
+      return experiments.map((exp) => ({
+        id: exp.id,
+        funnelId: exp.funnelId,
+        name: exp.name,
+        status: exp.endedAt ? 'completed' : exp.startedAt ? 'running' : 'draft',
+        startedAt: exp.startedAt,
+        endedAt: exp.endedAt,
+        createdAt: exp.createdAt,
+      }))
+    })
+  })
+
+  export const upsertExperiment = fn(
+    z.object({
+      funnelId: Identifier.schema('funnel'),
+      name: z.string().min(1).max(255),
+      variants: z.array(
+        z.object({
+          funnelVariantId: Identifier.schema('funnel_variant'),
+          weight: z.number().int().min(0).max(100),
+        }),
+      ),
+      experimentId: Identifier.schema('funnel_experiment').optional(),
+    }),
+    async (input) => {
+      return Database.use(async (tx) => {
+        const funnel = await tx
+          .select({ id: FunnelTable.id })
+          .from(FunnelTable)
+          .where(
+            and(
+              eq(FunnelTable.workspaceId, Actor.workspaceId()),
+              eq(FunnelTable.id, input.funnelId),
+              isNull(FunnelTable.archivedAt),
+            ),
+          )
+          .then((rows) => rows[0])
+        if (!funnel) throw new Error('Funnel not found')
+
+        if (input.experimentId) {
+          const experiment = await tx
+            .select()
+            .from(FunnelExperimentTable)
+            .where(
+              and(
+                eq(FunnelExperimentTable.workspaceId, Actor.workspaceId()),
+                eq(FunnelExperimentTable.id, input.experimentId),
+              ),
+            )
+            .then((rows) => rows[0])
+          if (!experiment) throw new Error('Experiment not found')
+          if (experiment.startedAt) throw new Error('Cannot modify a started experiment')
+
+          await tx
+            .update(FunnelExperimentTable)
+            .set({ name: input.name })
+            .where(
+              and(
+                eq(FunnelExperimentTable.workspaceId, Actor.workspaceId()),
+                eq(FunnelExperimentTable.id, input.experimentId),
+              ),
+            )
+
+          await tx
+            .delete(FunnelExperimentVariantTable)
+            .where(
+              and(
+                eq(FunnelExperimentVariantTable.workspaceId, Actor.workspaceId()),
+                eq(FunnelExperimentVariantTable.funnelExperimentId, input.experimentId),
+              ),
+            )
+
+          if (input.variants.length > 0) {
+            await tx.insert(FunnelExperimentVariantTable).values(
+              input.variants.map((v) => ({
+                workspaceId: Actor.workspaceId(),
+                funnelExperimentId: input.experimentId!,
+                funnelVariantId: v.funnelVariantId,
+                weight: v.weight,
+              })),
+            )
+          }
+
+          return input.experimentId
+        }
+
+        const experimentId = Identifier.create('funnel_experiment')
+
+        await tx.insert(FunnelExperimentTable).values({
+          id: experimentId,
+          workspaceId: Actor.workspaceId(),
+          funnelId: input.funnelId,
+          name: input.name,
+        })
+
+        if (input.variants.length > 0) {
+          await tx.insert(FunnelExperimentVariantTable).values(
+            input.variants.map((v) => ({
+              workspaceId: Actor.workspaceId(),
+              funnelExperimentId: experimentId,
+              funnelVariantId: v.funnelVariantId,
+              weight: v.weight,
+            })),
+          )
+        }
+
+        return experimentId
       })
     },
   )
 
-  const getUrl = fn(
+  export const startExperiment = fn(Identifier.schema('funnel_experiment'), async (experimentId) => {
+    // Fetch the experiment + check for any other active experiment on the same funnel in one query
+    const experiments = await Database.use((tx) =>
+      tx
+        .select()
+        .from(FunnelExperimentTable)
+        .where(
+          and(
+            eq(FunnelExperimentTable.workspaceId, Actor.workspaceId()),
+            sql`(${FunnelExperimentTable.id} = ${experimentId} OR (${FunnelExperimentTable.startedAt} IS NOT NULL AND ${FunnelExperimentTable.endedAt} IS NULL))`,
+          ),
+        ),
+    )
+
+    const experiment = experiments.find((e) => e.id === experimentId)
+    if (!experiment) throw new Error('Experiment not found')
+    if (experiment.startedAt) throw new Error('Experiment is already started')
+
+    const activeExperiment = experiments.find(
+      (e) => e.id !== experimentId && e.startedAt && !e.endedAt && e.funnelId === experiment.funnelId,
+    )
+    if (activeExperiment) throw new Error('Another experiment is already active for this funnel')
+
+    // Fetch experiment variants + check if each has a published version
+    const experimentVariants = await Database.use((tx) =>
+      tx
+        .select({
+          funnelVariantId: FunnelExperimentVariantTable.funnelVariantId,
+          weight: FunnelExperimentVariantTable.weight,
+          publishedVersion: FunnelVariantTable.publishedVersion,
+        })
+        .from(FunnelExperimentVariantTable)
+        .innerJoin(
+          FunnelVariantTable,
+          and(
+            eq(FunnelVariantTable.workspaceId, FunnelExperimentVariantTable.workspaceId),
+            eq(FunnelVariantTable.id, FunnelExperimentVariantTable.funnelVariantId),
+          ),
+        )
+        .where(
+          and(
+            eq(FunnelExperimentVariantTable.workspaceId, Actor.workspaceId()),
+            eq(FunnelExperimentVariantTable.funnelExperimentId, experimentId),
+          ),
+        ),
+    )
+    if (experimentVariants.length === 0) throw new Error('Experiment must have at least one variant')
+
+    const totalWeight = experimentVariants.reduce((sum, v) => sum + v.weight, 0)
+    if (totalWeight !== 100) {
+      throw new Error(`Experiment variant weights must sum to 100, got ${totalWeight}`)
+    }
+
+    for (const v of experimentVariants) {
+      if (v.publishedVersion === null) {
+        throw new Error(`Variant ${v.funnelVariantId} must be published before it can be used in an experiment`)
+      }
+    }
+
+    await Database.use((tx) =>
+      tx
+        .update(FunnelExperimentTable)
+        .set({ startedAt: sql`NOW(3)` })
+        .where(
+          and(eq(FunnelExperimentTable.workspaceId, Actor.workspaceId()), eq(FunnelExperimentTable.id, experimentId)),
+        ),
+    )
+  })
+
+  export const endExperiment = fn(Identifier.schema('funnel_experiment'), async (experimentId) => {
+    await Database.use(async (tx) => {
+      const experiment = await tx
+        .select()
+        .from(FunnelExperimentTable)
+        .where(
+          and(eq(FunnelExperimentTable.workspaceId, Actor.workspaceId()), eq(FunnelExperimentTable.id, experimentId)),
+        )
+        .then((rows) => rows[0])
+      if (!experiment) throw new Error('Experiment not found')
+      if (!experiment.startedAt) throw new Error('Experiment has not been started')
+      if (experiment.endedAt) throw new Error('Experiment is already ended')
+
+      await tx
+        .update(FunnelExperimentTable)
+        .set({ endedAt: sql`NOW(3)` })
+        .where(
+          and(eq(FunnelExperimentTable.workspaceId, Actor.workspaceId()), eq(FunnelExperimentTable.id, experimentId)),
+        )
+    })
+  })
+
+  export const selectExperimentWinner = fn(
+    z.object({
+      experimentId: Identifier.schema('funnel_experiment'),
+      funnelVariantId: Identifier.schema('funnel_variant'),
+    }),
+    async (input) => {
+      const rows = await Database.use((tx) =>
+        tx
+          .select({
+            ...getTableColumns(FunnelExperimentTable),
+            experimentVariantId: FunnelExperimentVariantTable.funnelVariantId,
+          })
+          .from(FunnelExperimentTable)
+          .leftJoin(
+            FunnelExperimentVariantTable,
+            and(
+              eq(FunnelExperimentVariantTable.workspaceId, FunnelExperimentTable.workspaceId),
+              eq(FunnelExperimentVariantTable.funnelExperimentId, FunnelExperimentTable.id),
+            ),
+          )
+          .where(
+            and(
+              eq(FunnelExperimentTable.workspaceId, Actor.workspaceId()),
+              eq(FunnelExperimentTable.id, input.experimentId),
+            ),
+          ),
+      )
+      if (rows.length === 0) throw new Error('Experiment not found')
+
+      const experiment = rows[0]!
+      if (!experiment.startedAt) throw new Error('Experiment has not been started')
+
+      const isValid = rows.some((r) => r.experimentVariantId === input.funnelVariantId)
+      if (!isValid) throw new Error('Selected variant is not part of this experiment')
+
+      if (!experiment.endedAt) {
+        await Database.use((tx) =>
+          tx
+            .update(FunnelExperimentTable)
+            .set({ endedAt: sql`NOW(3)` })
+            .where(
+              and(
+                eq(FunnelExperimentTable.workspaceId, Actor.workspaceId()),
+                eq(FunnelExperimentTable.id, input.experimentId),
+              ),
+            ),
+        )
+      }
+
+      await Database.use((tx) =>
+        tx
+          .update(FunnelTable)
+          .set({ mainVariantId: input.funnelVariantId })
+          .where(and(eq(FunnelTable.workspaceId, Actor.workspaceId()), eq(FunnelTable.id, experiment.funnelId))),
+      )
+    },
+  )
+
+  export const getUrl = fn(
     z.object({
       shortId: z.string(),
       hostname: z.string().optional(),

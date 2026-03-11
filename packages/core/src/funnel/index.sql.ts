@@ -1,6 +1,6 @@
 import { boolean, index, int, json, mysqlTable, primaryKey, unique, uniqueIndex, varchar } from 'drizzle-orm/mysql-core'
 import { id, timestamp, timestampColumns, workspaceColumns, workspaceIndexes } from '../database/types'
-import type { Page, Rule, Settings, Theme, TrafficSplit, Variables } from './types'
+import type { Page, Rule, Settings, Theme, Variables } from './types'
 
 export const FunnelTable = mysqlTable(
   'funnel',
@@ -11,8 +11,7 @@ export const FunnelTable = mysqlTable(
     title: varchar('title', { length: 255 }).notNull(),
     settings: json('settings').$type<Settings>(),
     domainId: id('domain_id'),
-    activeReleaseId: id('active_release_id'),
-    originalVariantId: id('original_variant_id'),
+    mainVariantId: id('main_variant_id'),
     // Legacy columns — kept for migration compatibility
     currentVersion: int('current_version'),
     publishedVersion: int('published_version'),
@@ -29,6 +28,7 @@ export const FunnelVariantTable = mysqlTable(
     funnelId: id('funnel_id').notNull(),
     title: varchar('title', { length: 255 }).notNull(),
     hasDraft: boolean('has_draft').notNull().default(false),
+    publishedVersion: int('published_version'),
   },
   (table) => [...workspaceIndexes(table), index('funnel').on(table.workspaceId, table.funnelId)],
 )
@@ -67,15 +67,32 @@ export const FunnelVariantVersionTable = mysqlTable(
   (table) => [primaryKey({ columns: [table.workspaceId, table.funnelId, table.funnelVariantId, table.number] })],
 )
 
-export const FunnelReleaseTable = mysqlTable(
-  'funnel_release',
+export const FunnelExperimentTable = mysqlTable(
+  'funnel_experiment',
   {
     ...workspaceColumns,
     ...timestampColumns,
     funnelId: id('funnel_id').notNull(),
-    trafficSplit: json('traffic_split').$type<TrafficSplit[]>().notNull(),
+    name: varchar('name', { length: 255 }).notNull(),
+    startedAt: timestamp('started_at'),
+    endedAt: timestamp('ended_at'),
   },
   (table) => [...workspaceIndexes(table), index('funnel').on(table.workspaceId, table.funnelId)],
+)
+
+export const FunnelExperimentVariantTable = mysqlTable(
+  'funnel_experiment_variant',
+  {
+    ...timestampColumns,
+    workspaceId: id('workspace_id').notNull(),
+    funnelExperimentId: id('funnel_experiment_id').notNull(),
+    funnelVariantId: id('funnel_variant_id').notNull(),
+    weight: int('weight').notNull(),
+  },
+  (table) => [
+    primaryKey({ columns: [table.workspaceId, table.funnelExperimentId, table.funnelVariantId] }),
+    index('experiment').on(table.workspaceId, table.funnelExperimentId),
+  ],
 )
 
 // Legacy table — kept for migration compatibility

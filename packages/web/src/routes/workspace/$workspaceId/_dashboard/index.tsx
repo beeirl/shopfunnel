@@ -157,7 +157,7 @@ const getAnalyticsKpis = createServerFn()
 
 const getAnalyticsKpisQueryOptions = (workspaceId: string, filter: { startDate: string; endDate: string }) =>
   queryOptions({
-    queryKey: ['analytics-kpis', workspaceId, 'all', filter.startDate, filter.endDate],
+    queryKey: ['analytics-kpis', workspaceId, filter.startDate, filter.endDate],
     queryFn: () => getAnalyticsKpis({ data: { workspaceId, filter } }),
   })
 

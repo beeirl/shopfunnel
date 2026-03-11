@@ -17,6 +17,8 @@ import { createServerFn } from '@tanstack/react-start'
 import * as React from 'react'
 import { CartesianGrid, Line, LineChart, XAxis, YAxis } from 'recharts'
 import { z } from 'zod'
+import { getFunnelQueryOptions } from '../-common'
+import { useFunnel } from './-context'
 
 const DATE_RANGE_PERIODS = ['today', 'yesterday', '24h', '7d', '30d', 'month', 'year'] as const
 
@@ -128,6 +130,7 @@ const getAnalyticsDropoff = createServerFn()
     z.object({
       workspaceId: z.string(),
       funnelId: z.string(),
+      funnelVariantId: z.string().optional(),
       filter: z.object({
         startDate: z.string(),
         endDate: z.string(),
@@ -142,6 +145,7 @@ const getAnalyticsDropoff = createServerFn()
       start_date: data.filter.startDate,
       end_date: data.filter.endDate,
     })
+    if (data.funnelVariantId) params.set('funnel_variant_id', data.funnelVariantId)
 
     const response = await fetch(`https://api.us-east.aws.tinybird.co/v0/pipes/analytics_dropoff.json?${params}`, {
       headers: { Authorization: `Bearer ${token}` },
@@ -154,10 +158,11 @@ const getAnalyticsDropoffQueryOptions = (
   workspaceId: string,
   funnelId: string,
   filter: { startDate: string; endDate: string },
+  funnelVariantId?: string,
 ) =>
   queryOptions({
-    queryKey: ['analytics-dropoff', workspaceId, funnelId, filter.startDate, filter.endDate],
-    queryFn: () => getAnalyticsDropoff({ data: { workspaceId, funnelId, filter } }),
+    queryKey: ['analytics-dropoff', workspaceId, funnelId, funnelVariantId, filter.startDate, filter.endDate],
+    queryFn: () => getAnalyticsDropoff({ data: { workspaceId, funnelId, funnelVariantId, filter } }),
   })
 
 const chartConfig = {
@@ -189,12 +194,19 @@ export const Route = createFileRoute('/workspace/$workspaceId/funnels/$id/_funne
     const filter = { startDate: deps.startDate, endDate: deps.endDate }
     const granularity = computeGranularity(new Date(deps.startDate), new Date(deps.endDate))
 
+    const funnel = await context.queryClient.ensureQueryData(getFunnelQueryOptions(params.workspaceId, params.id))
+    const variantId = funnel.variantId
+
     await Promise.all([
-      context.queryClient.ensureQueryData(getAnalyticsFunnelKpisQueryOptions(params.workspaceId, params.id, filter)),
       context.queryClient.ensureQueryData(
-        getAnalyticsTimeseriesQueryOptions(params.workspaceId, params.id, filter, granularity),
+        getAnalyticsFunnelKpisQueryOptions(params.workspaceId, params.id, filter, variantId),
       ),
-      context.queryClient.ensureQueryData(getAnalyticsDropoffQueryOptions(params.workspaceId, params.id, filter)),
+      context.queryClient.ensureQueryData(
+        getAnalyticsTimeseriesQueryOptions(params.workspaceId, params.id, filter, granularity, variantId),
+      ),
+      context.queryClient.ensureQueryData(
+        getAnalyticsDropoffQueryOptions(params.workspaceId, params.id, filter, variantId),
+      ),
     ])
   },
 })
@@ -237,11 +249,18 @@ function RouteComponent() {
     [navigate],
   )
 
-  const funnelKpisQuery = useSuspenseQuery(getAnalyticsFunnelKpisQueryOptions(params.workspaceId, params.id, filter))
-  const timeseriesQuery = useSuspenseQuery(
-    getAnalyticsTimeseriesQueryOptions(params.workspaceId, params.id, filter, granularity),
+  const { data: funnel } = useFunnel()
+  const variantId = funnel.variantId
+
+  const funnelKpisQuery = useSuspenseQuery(
+    getAnalyticsFunnelKpisQueryOptions(params.workspaceId, params.id, filter, variantId),
   )
-  const dropoffQuery = useSuspenseQuery(getAnalyticsDropoffQueryOptions(params.workspaceId, params.id, filter))
+  const timeseriesQuery = useSuspenseQuery(
+    getAnalyticsTimeseriesQueryOptions(params.workspaceId, params.id, filter, granularity, variantId),
+  )
+  const dropoffQuery = useSuspenseQuery(
+    getAnalyticsDropoffQueryOptions(params.workspaceId, params.id, filter, variantId),
+  )
 
   const kpis = funnelKpisQuery.data?.[0] ?? null
   const timeseries = timeseriesQuery.data

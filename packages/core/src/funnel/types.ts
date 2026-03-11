@@ -310,12 +310,6 @@ export interface ResolvedSettings extends Settings {
   metaImageUrl?: string | null
 }
 
-export const TrafficSplit = z.object({
-  funnelVariantId: z.string(),
-  percentage: z.number().int().min(0).max(100),
-})
-export type TrafficSplit = z.infer<typeof TrafficSplit>
-
 export interface Info {
   id: string
   workspaceId: string

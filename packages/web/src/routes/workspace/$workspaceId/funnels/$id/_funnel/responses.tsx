@@ -17,7 +17,6 @@ import { createServerFn } from '@tanstack/react-start'
 import { createColumnHelper, flexRender, getCoreRowModel, useReactTable } from '@tanstack/react-table'
 import * as React from 'react'
 import { z } from 'zod'
-import { getFunnelQueryOptions } from '../-common'
 import { useFunnel } from './-context'
 
 const listSubmissions = createServerFn()
@@ -53,16 +52,18 @@ export const Route = createFileRoute('/workspace/$workspaceId/funnels/$id/_funne
   validateSearch: (search) =>
     z
       .object({
+        variant: z.string().optional(),
         page: z.coerce.number().int().positive().optional(),
       })
       .parse(search),
-  loaderDeps: ({ search }) => ({ page: search.page }),
+  loaderDeps: ({ search }) => ({ variant: search.variant, page: search.page }),
   component: RouteComponent,
   loader: async ({ context, params, deps }) => {
-    const funnel = await context.queryClient.ensureQueryData(getFunnelQueryOptions(params.workspaceId, params.id))
-    await context.queryClient.ensureQueryData(
-      listSubmissionsQueryOptions(params.workspaceId, params.id, funnel.variantId, deps.page ?? 1),
-    )
+    if (deps.variant) {
+      await context.queryClient.ensureQueryData(
+        listSubmissionsQueryOptions(params.workspaceId, params.id, deps.variant, deps.page ?? 1),
+      )
+    }
   },
 })
 

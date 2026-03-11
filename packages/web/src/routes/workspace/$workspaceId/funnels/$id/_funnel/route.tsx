@@ -13,7 +13,7 @@ import { Funnel } from '@shopfunnel/core/funnel/index'
 import { Identifier } from '@shopfunnel/core/identifier'
 import { IconChevronLeft as ChevronLeftIcon, IconLoader2 as LoaderIcon } from '@tabler/icons-react'
 import { mutationOptions, useMutation, useQueryClient, useSuspenseQuery } from '@tanstack/react-query'
-import { createFileRoute, Link, linkOptions, MatchRoute, Outlet, useBlocker } from '@tanstack/react-router'
+import { createFileRoute, Link, linkOptions, MatchRoute, Outlet, redirect, useBlocker } from '@tanstack/react-router'
 import { createServerFn } from '@tanstack/react-start'
 import * as React from 'react'
 import { z } from 'zod'
@@ -32,7 +32,7 @@ const publishFunnel = createServerFn({ method: 'POST' })
   )
   .handler(({ data }) => {
     return withActor(
-      () => Funnel.commit({ funnelId: data.funnelId, funnelVariantId: data.funnelVariantId }),
+      () => Funnel.publishVariant({ funnelId: data.funnelId, funnelVariantId: data.funnelVariantId }),
       data.workspaceId,
     )
   })
@@ -44,13 +44,28 @@ const publishFunnelMutationOptions = (workspaceId: string, funnelId: string, fun
 
 export const Route = createFileRoute('/workspace/$workspaceId/funnels/$id/_funnel')({
   component: RouteComponent,
-  loader: async ({ context, params }) => {
-    const funnelCollection = createFunnelCollection(params.workspaceId, params.id, context.queryClient)
+  validateSearch: z.object({
+    variant: z.string().optional(),
+  }),
+  loaderDeps: ({ search }) => ({ variant: search.variant }),
+  loader: async ({ context, params, deps }) => {
+    const funnelCollection = createFunnelCollection(params.workspaceId, params.id, context.queryClient, deps.variant)
 
     await Promise.all([
       funnelCollection.preload(),
       context.queryClient.ensureQueryData(getSessionQueryOptions(params.workspaceId)),
     ])
+
+    if (!deps.variant) {
+      const funnel = funnelCollection.get('funnel')
+      if (funnel) {
+        throw redirect({
+          to: '.',
+          search: (prev: Record<string, unknown>) => ({ ...prev, variant: funnel.variantId }),
+          replace: true,
+        })
+      }
+    }
 
     return { funnelCollection }
   },
@@ -241,6 +256,20 @@ function DraftBadge() {
   return <Badge variant="secondary">Draft</Badge>
 }
 
+function PreviewButton() {
+  const { data: funnel } = useFunnel()
+  return (
+    <Button
+      variant="ghost"
+      aria-label="Preview"
+      nativeButton={false}
+      render={<Link from={Route.fullPath} to="preview" search={{ variant: funnel.variantId }} target="_blank" />}
+    >
+      Preview
+    </Button>
+  )
+}
+
 const tabs = [
   { title: 'Edit', linkOptions: linkOptions({ from: Route.fullPath, to: './edit' }), adminOnly: true },
   { title: 'Insights', linkOptions: linkOptions({ from: Route.fullPath, to: './insights' }), adminOnly: false },
@@ -295,20 +324,16 @@ function RouteComponent() {
                 Variants
               </Button>
             )}
+            {session.isAdmin && (
+              <Button variant="ghost" nativeButton={false} render={<Link from={Route.fullPath} to="./experiments" />}>
+                Experiments
+              </Button>
+            )}
             {session.isSuperAdmin && <SchemaButton />}
           </div>
           <div className="flex items-center justify-end gap-2">
             <DraftBadge />
-            {session.isAdmin && (
-              <Button
-                variant="ghost"
-                aria-label="Preview"
-                nativeButton={false}
-                render={<Link from={Route.fullPath} to="preview" target="_blank" />}
-              >
-                Preview
-              </Button>
-            )}
+            {session.isAdmin && <PreviewButton />}
             {session.isAdmin && <PublishButton />}
           </div>
         </div>

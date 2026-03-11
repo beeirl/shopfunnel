@@ -17,7 +17,7 @@ export const getFunnel = createServerFn()
   )
   .handler(({ data }) => {
     return withActor(async () => {
-      const funnel = await Funnel.getDraft({ funnelId: data.funnelId, funnelVariantId: data.funnelVariantId })
+      const funnel = await Funnel.getDraft({ id: data.funnelId, variantId: data.funnelVariantId })
       if (!funnel) throw notFound()
       return funnel
     }, data.workspaceId)

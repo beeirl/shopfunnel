@@ -3,13 +3,18 @@ import { queryCollectionOptions } from '@tanstack/query-db-collection'
 import type { QueryClient } from '@tanstack/react-query'
 import { getFunnel, updateFunnel } from '../-common'
 
-export function createFunnelCollection(workspaceId: string, funnelId: string, queryClient: QueryClient) {
+export function createFunnelCollection(
+  workspaceId: string,
+  funnelId: string,
+  queryClient: QueryClient,
+  variantId?: string,
+) {
   return createCollection(
     queryCollectionOptions({
       id: funnelId,
-      queryKey: ['funnel', workspaceId, funnelId],
+      queryKey: ['funnel', workspaceId, funnelId, variantId],
       queryFn: async () => {
-        const funnel = await getFunnel({ data: { workspaceId, funnelId } })
+        const funnel = await getFunnel({ data: { workspaceId, funnelId, funnelVariantId: variantId } })
         return [funnel]
       },
       queryClient,

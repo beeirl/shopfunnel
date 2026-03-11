@@ -17,6 +17,7 @@ export const EventRoute = new Hono()
       ...event,
       funnel_variant_id: event.funnel_variant_id ?? '',
       funnel_variant_version: event.funnel_variant_version ?? event.funnel_version ?? 0,
+      funnel_experiment_id: event.funnel_experiment_id ?? '',
     }
 
     if (event.type === 'funnel_viewed') {

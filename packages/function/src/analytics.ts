@@ -17,6 +17,7 @@ export default {
         funnel_version: event.funnel_version ?? event.funnel_variant_version ?? 0,
         funnel_variant_id: event.funnel_variant_id ?? '',
         funnel_variant_version: event.funnel_variant_version ?? 0,
+        funnel_experiment_id: event.funnel_experiment_id ?? '',
         payload: JSON.stringify(event.payload),
       }
     })

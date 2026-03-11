@@ -28,6 +28,9 @@ SQL >
         {% if defined(funnel_variant_id) %}
         AND funnel_variant_id = {{ String(funnel_variant_id) }}
         {% end %}
+        {% if defined(funnel_experiment_id) %}
+        AND funnel_experiment_id = {{ String(funnel_experiment_id) }}
+        {% end %}
         {% if defined(funnel_version) %}
         AND funnel_version = {{ UInt32(funnel_version) }}
         {% end %}

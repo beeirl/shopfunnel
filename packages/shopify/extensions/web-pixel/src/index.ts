@@ -43,6 +43,7 @@ register(({ analytics, browser, settings, init }) => {
         funnel_version: session.funnelVersion || 0,
         funnel_variant_id: session.funnelVariantId || '',
         funnel_variant_version: session.funnelVariantVersion || 0,
+        funnel_experiment_id: session.funnelExperimentId || '',
         version: '1',
         timestamp: new Date().toISOString(),
         payload: {
@@ -76,6 +77,7 @@ register(({ analytics, browser, settings, init }) => {
         funnel_version: session.funnelVersion || 0,
         funnel_variant_id: session.funnelVariantId || '',
         funnel_variant_version: session.funnelVariantVersion || 0,
+        funnel_experiment_id: session.funnelExperimentId || '',
         version: '1',
         timestamp: new Date().toISOString(),
         payload: {

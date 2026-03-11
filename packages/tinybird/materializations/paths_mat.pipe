@@ -9,6 +9,7 @@ SQL >
         funnel_id,
         funnel_version,
         funnel_variant_id,
+        funnel_experiment_id,
         prev_page_id,
         anySimpleState(prev_page_name) AS prev_page_name,
         anySimpleState(toUInt32(prev_page_index)) AS prev_page_index,
@@ -19,7 +20,7 @@ SQL >
     FROM page_events
     WHERE type IN ('page_view', 'page_viewed')
         AND prev_page_id != ''
-    GROUP BY date, workspace_id, funnel_id, funnel_version, funnel_variant_id, prev_page_id, page_id
+    GROUP BY date, workspace_id, funnel_id, funnel_version, funnel_variant_id, funnel_experiment_id, prev_page_id, page_id
 
 TYPE MATERIALIZED
 DATASOURCE paths_mv

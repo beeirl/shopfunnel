@@ -12,6 +12,7 @@ SCHEMA >
     `funnel_version` UInt32 `json:$.funnel_version`,
     `funnel_variant_id` String `json:$.funnel_variant_id`,
     `funnel_variant_version` UInt32 `json:$.funnel_variant_version`,
+    `funnel_experiment_id` String `json:$.funnel_experiment_id`,
     `version` LowCardinality(String) `json:$.version`,
     `payload` String `json:$.payload`,
     `timestamp` DateTime64(3) `json:$.timestamp`
