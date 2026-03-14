@@ -17,6 +17,9 @@ SCHEMA >
     `payload` String `json:$.payload`,
     `timestamp` DateTime64(3) `json:$.timestamp`
 
+FORWARD_QUERY >
+    SELECT type, visitor_id, session_id, workspace_id, funnel_id, funnel_version, defaultValueOfTypeName('String') AS funnel_variant_id, defaultValueOfTypeName('UInt32') AS funnel_variant_version, defaultValueOfTypeName('String') AS funnel_experiment_id, version, payload, timestamp
+
 ENGINE MergeTree
 ENGINE_PARTITION_KEY toYYYYMM(timestamp)
 ENGINE_SORTING_KEY workspace_id, funnel_id, funnel_version, timestamp

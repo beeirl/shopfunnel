@@ -7,7 +7,7 @@ import { notFound } from '@tanstack/react-router'
 import { createServerFn } from '@tanstack/react-start'
 import { z } from 'zod'
 
-export const getFunnel = createServerFn()
+export const getFunnelVariantDraft = createServerFn()
   .inputValidator(
     z.object({
       workspaceId: Identifier.schema('workspace'),
@@ -23,10 +23,47 @@ export const getFunnel = createServerFn()
     }, data.workspaceId)
   })
 
-export const getFunnelQueryOptions = (workspaceId: string, funnelId: string, funnelVariantId?: string) =>
+export const getFunnelVariantDraftQueryOptions = (input: {
+  workspaceId: string
+  funnelId: string
+  funnelVariantId?: string
+}) =>
   queryOptions({
-    queryKey: ['funnel', workspaceId, funnelId, funnelVariantId],
-    queryFn: () => getFunnel({ data: { workspaceId, funnelId, funnelVariantId } }),
+    queryKey: ['funnel-variant-draft', input.workspaceId, input.funnelId, input.funnelVariantId],
+    queryFn: () => getFunnelVariantDraft({ data: input }),
+  })
+
+export const listVariants = createServerFn()
+  .inputValidator(
+    z.object({
+      workspaceId: Identifier.schema('workspace'),
+      funnelId: Identifier.schema('funnel'),
+    }),
+  )
+  .handler(({ data }) => {
+    return withActor(() => Funnel.listVariants(data.funnelId), data.workspaceId)
+  })
+
+export const listVariantsQueryOptions = (input: { workspaceId: string; funnelId: string }) =>
+  queryOptions({
+    queryKey: ['variants', input.workspaceId, input.funnelId],
+    queryFn: () => listVariants({ data: input }),
+  })
+
+export const createVariantFn = createServerFn({ method: 'POST' })
+  .inputValidator(
+    z.object({
+      workspaceId: Identifier.schema('workspace'),
+      funnelId: Identifier.schema('funnel'),
+      title: z.string().min(1).max(255),
+      fromId: Identifier.schema('funnel_variant'),
+    }),
+  )
+  .handler(({ data }) => {
+    return withActor(
+      () => Funnel.createVariant({ funnelId: data.funnelId, title: data.title, fromId: data.fromId }),
+      data.workspaceId,
+    )
   })
 
 export const updateFunnel = createServerFn({ method: 'POST' })

@@ -4,9 +4,7 @@ import { Dialog as DialogPrimitive } from '@base-ui/react/dialog'
 import { IconX as XIcon } from '@tabler/icons-react'
 import * as React from 'react'
 
-type DialogRootProps = DialogPrimitive.Root.Props
-
-function DialogRoot(props: DialogRootProps) {
+function DialogRoot<Payload>(props: DialogPrimitive.Root.Props<Payload>) {
   return <DialogPrimitive.Root data-slot="dialog" {...props} />
 }
 
@@ -135,4 +133,5 @@ export const Dialog = {
   Footer: DialogFooter,
   Title: DialogTitle,
   Description: DialogDescription,
+  createHandle: DialogPrimitive.createHandle,
 }

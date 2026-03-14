@@ -1,9 +1,12 @@
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
+import { ButtonGroup } from '@/components/ui/button-group'
 import { Dialog } from '@/components/ui/dialog'
 import { Field } from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
+import { Item } from '@/components/ui/item'
 import { Menu } from '@/components/ui/menu'
+import { Popover } from '@/components/ui/popover'
 import { Tooltip } from '@/components/ui/tooltip'
 import { withActor } from '@/context/auth.withActor'
 import { snackbar } from '@/lib/snackbar'
@@ -11,15 +14,33 @@ import { cn } from '@/lib/utils'
 import { getSessionQueryOptions } from '@/routes/workspace/$workspaceId/-common'
 import { Funnel } from '@shopfunnel/core/funnel/index'
 import { Identifier } from '@shopfunnel/core/identifier'
-import { IconChevronLeft as ChevronLeftIcon, IconLoader2 as LoaderIcon } from '@tabler/icons-react'
+import {
+  IconCheck as CheckIcon,
+  IconChevronDown as ChevronDownIcon,
+  IconChevronLeft as ChevronLeftIcon,
+  IconLoader2 as LoaderIcon,
+  IconStarFilled as StarFilledIcon,
+} from '@tabler/icons-react'
 import { mutationOptions, useMutation, useQueryClient, useSuspenseQuery } from '@tanstack/react-query'
-import { createFileRoute, Link, linkOptions, MatchRoute, Outlet, redirect, useBlocker } from '@tanstack/react-router'
+import {
+  createFileRoute,
+  Link,
+  linkOptions,
+  MatchRoute,
+  notFound,
+  Outlet,
+  redirect,
+  retainSearchParams,
+  useBlocker,
+} from '@tanstack/react-router'
 import { createServerFn } from '@tanstack/react-start'
+import { formatDistanceToNow } from 'date-fns'
 import * as React from 'react'
 import { z } from 'zod'
-import { getFunnelQueryOptions } from '../-common'
+import { getFunnelVariantDraftQueryOptions, listVariantsQueryOptions } from '../-common'
 import { createFunnelCollection } from './-common'
 import { FunnelProvider, useFunnel } from './-context'
+import { VariantCreateDialog } from './-variant-create-dialog'
 import { SchemaButton } from './edit/-components/schema-button'
 
 const publishFunnel = createServerFn({ method: 'POST' })
@@ -47,27 +68,33 @@ export const Route = createFileRoute('/workspace/$workspaceId/funnels/$id/_funne
   validateSearch: z.object({
     variant: z.string().optional(),
   }),
+  search: {
+    middlewares: [retainSearchParams(['variant'])],
+  },
   loaderDeps: ({ search }) => ({ variant: search.variant }),
   loader: async ({ context, params, deps }) => {
-    const funnelCollection = createFunnelCollection(params.workspaceId, params.id, context.queryClient, deps.variant)
-
-    await Promise.all([
-      funnelCollection.preload(),
+    const [variants] = await Promise.all([
+      context.queryClient.ensureQueryData(
+        listVariantsQueryOptions({ workspaceId: params.workspaceId, funnelId: params.id }),
+      ),
       context.queryClient.ensureQueryData(getSessionQueryOptions(params.workspaceId)),
     ])
 
     if (!deps.variant) {
-      const funnel = funnelCollection.get('funnel')
-      if (funnel) {
-        throw redirect({
-          to: '.',
-          search: (prev: Record<string, unknown>) => ({ ...prev, variant: funnel.variantId }),
-          replace: true,
-        })
-      }
+      const mainVariant = variants.find((v) => v.isMain)
+      if (!mainVariant) throw notFound()
+
+      throw redirect({
+        to: '.',
+        search: { variant: mainVariant.id },
+        replace: true,
+      })
     }
 
-    return { funnelCollection }
+    const funnelCollection = createFunnelCollection(params.workspaceId, params.id, deps.variant, context.queryClient)
+    await funnelCollection.preload()
+
+    return { funnelCollection, activeVariantId: deps.variant }
   },
 })
 
@@ -197,7 +224,9 @@ function PublishButton() {
   const handlePublish = async () => {
     setIsPublishing(true)
     await publishMutation.mutateAsync()
-    await queryClient.invalidateQueries(getFunnelQueryOptions(params.workspaceId, params.id))
+    await queryClient.invalidateQueries(
+      getFunnelVariantDraftQueryOptions({ workspaceId: params.workspaceId, funnelId: params.id }),
+    )
     setIsPublishing(false)
     snackbar.add({ title: 'Funnel published', type: 'success' })
   }
@@ -208,34 +237,40 @@ function PublishButton() {
   }
 
   return (
-    <Menu.Root>
-      <div className="flex items-center gap-1">
-        <Tooltip.Root disabled={funnel.data.hasChanges || isPublishing}>
-          <Tooltip.Trigger
-            render={
-              <Button
-                className={cn(
-                  'min-w-28',
-                  isPublishing && 'pointer-events-none',
-                  !funnel.data.hasChanges && !funnel.isSaving && 'opacity-50',
-                )}
-                disabled={funnel.isSaving}
-                onClick={funnel.data.hasChanges ? handlePublish : undefined}
-              >
-                {isPublishing ? <LoaderIcon className="animate-spin" /> : 'Publish'}
-              </Button>
-            }
-          />
-          <Tooltip.Content side="left" sideOffset={8}>
-            No changes to publish
-          </Tooltip.Content>
-        </Tooltip.Root>
-        <Menu.Trigger render={<Button variant="ghost" size="icon" />}>...</Menu.Trigger>
-      </div>
-      <Menu.Content align="end">
-        <Menu.Item onClick={handleCopyLink}>Copy shareable link</Menu.Item>
-      </Menu.Content>
-    </Menu.Root>
+    <ButtonGroup.Root className="min-w-28">
+      <Tooltip.Root disabled={funnel.data.hasChanges || isPublishing}>
+        <Tooltip.Trigger
+          render={
+            <Button
+              className={cn(
+                'flex-1',
+                isPublishing && 'pointer-events-none',
+                !funnel.data.hasChanges && !funnel.isSaving && 'opacity-50',
+              )}
+              disabled={funnel.isSaving}
+              onClick={funnel.data.hasChanges ? handlePublish : undefined}
+            >
+              {isPublishing ? <LoaderIcon className="animate-spin" /> : 'Publish'}
+            </Button>
+          }
+        />
+        <Tooltip.Content side="left" sideOffset={8}>
+          No changes to publish
+        </Tooltip.Content>
+      </Tooltip.Root>
+      <Menu.Root>
+        <Menu.Trigger
+          render={
+            <Button size="icon">
+              <ChevronDownIcon />
+            </Button>
+          }
+        />
+        <Menu.Content align="end">
+          <Menu.Item onClick={handleCopyLink}>Copy shareable link</Menu.Item>
+        </Menu.Content>
+      </Menu.Root>
+    </ButtonGroup.Root>
   )
 }
 
@@ -270,6 +305,93 @@ function PreviewButton() {
   )
 }
 
+function VariantSwitcher() {
+  const params = Route.useParams()
+  const search = Route.useSearch()
+
+  const variantsQuery = useSuspenseQuery(
+    listVariantsQueryOptions({ workspaceId: params.workspaceId, funnelId: params.id }),
+  )
+  const variants = variantsQuery.data
+
+  const activeVariant = variants.find((v) => v.id === search.variant)
+
+  const [popoverOpen, setPopoverOpen] = React.useState(false)
+  const [variantCreateHandle] = React.useState(() => VariantCreateDialog.createHandle())
+
+  const handleClosePopover = () => setPopoverOpen(false)
+
+  return (
+    <>
+      <span className="text-muted-foreground">/</span>
+      <Popover.Root open={popoverOpen} onOpenChange={setPopoverOpen}>
+        <Popover.Trigger
+          render={
+            <Button variant="ghost" className="gap-1.5">
+              <span className="max-w-32 truncate">{activeVariant?.title ?? 'Unknown'}</span>
+              {activeVariant && activeVariant.trafficPercentage > 0 && (
+                <Badge className="border-transparent bg-green-100 text-xs text-green-950 tabular-nums">
+                  Live {activeVariant.trafficPercentage}%
+                </Badge>
+              )}
+              <ChevronDownIcon className="size-3.5" />
+            </Button>
+          }
+        />
+        <Popover.Content align="start" className="max-w-[600px] min-w-[380px] p-0">
+          <div className="flex flex-col">
+            <div className="flex max-h-64 flex-col overflow-y-auto p-0.5">
+              {variants.map((variant) => (
+                <Item.Root
+                  key={variant.id}
+                  size="xs"
+                  className={cn('cursor-pointer hover:bg-accent', variant.id === search.variant && 'bg-accent/50')}
+                  render={
+                    <Link
+                      from={Route.fullPath}
+                      unsafeRelative="path"
+                      search={{ variant: variant.id }}
+                      onClick={handleClosePopover}
+                    />
+                  }
+                >
+                  <Item.Content>
+                    <Item.Title className="flex items-center gap-1.5">
+                      <span className="truncate">{variant.title}</span>
+                      {variant.isMain && <StarFilledIcon className="size-3.5 shrink-0 text-amber-500" />}
+                      {variant.trafficPercentage > 0 && (
+                        <Badge className="shrink-0 border-transparent bg-green-100 text-xs text-green-950">
+                          Live {variant.trafficPercentage}%
+                        </Badge>
+                      )}
+                    </Item.Title>
+                  </Item.Content>
+                  <span className="shrink-0 text-xs text-muted-foreground">
+                    Updated {formatDistanceToNow(variant.updatedAt, { addSuffix: false })} ago
+                  </span>
+                  <span className="flex size-4 shrink-0 items-center justify-center">
+                    {variant.id === search.variant && <CheckIcon className="size-3.5" />}
+                  </span>
+                </Item.Root>
+              ))}
+            </div>
+            <div className="border-t border-border p-2">
+              <Dialog.Trigger
+                handle={variantCreateHandle}
+                render={<Button variant="outline" className="w-full" />}
+                onClick={() => setPopoverOpen(false)}
+              >
+                Create new branch
+              </Dialog.Trigger>
+            </div>
+          </div>
+        </Popover.Content>
+      </Popover.Root>
+      <VariantCreateDialog handle={variantCreateHandle} />
+    </>
+  )
+}
+
 const tabs = [
   { title: 'Edit', linkOptions: linkOptions({ from: Route.fullPath, to: './edit' }), adminOnly: true },
   { title: 'Insights', linkOptions: linkOptions({ from: Route.fullPath, to: './insights' }), adminOnly: false },
@@ -278,7 +400,7 @@ const tabs = [
 
 function RouteComponent() {
   const params = Route.useParams()
-  const { funnelCollection } = Route.useLoaderData()
+  const { funnelCollection, activeVariantId } = Route.useLoaderData()
 
   const sessionQuery = useSuspenseQuery(getSessionQueryOptions(params.workspaceId))
   const session = sessionQuery.data
@@ -286,7 +408,7 @@ function RouteComponent() {
   const visibleTabs = tabs.filter((tab) => !tab.adminOnly || session.isAdmin)
 
   return (
-    <FunnelProvider collection={funnelCollection}>
+    <FunnelProvider collection={funnelCollection} activeVariantId={activeVariantId}>
       <NavigationBlocker />
       <div
         className="flex min-h-screen w-screen flex-col"
@@ -303,6 +425,7 @@ function RouteComponent() {
               <ChevronLeftIcon />
             </Button>
             <Title />
+            {session.isAdmin && <VariantSwitcher />}
           </div>
           <div className="flex items-center justify-center gap-1">
             {visibleTabs.map((tab) => (

@@ -49,13 +49,10 @@ const listSubmissionsQueryOptions = (
   })
 
 export const Route = createFileRoute('/workspace/$workspaceId/funnels/$id/_funnel/responses')({
-  validateSearch: (search) =>
-    z
-      .object({
-        variant: z.string().optional(),
-        page: z.coerce.number().int().positive().optional(),
-      })
-      .parse(search),
+  validateSearch: z.object({
+    variant: z.string().optional(),
+    page: z.coerce.number().int().positive().optional(),
+  }),
   loaderDeps: ({ search }) => ({ variant: search.variant, page: search.page }),
   component: RouteComponent,
   loader: async ({ context, params, deps }) => {

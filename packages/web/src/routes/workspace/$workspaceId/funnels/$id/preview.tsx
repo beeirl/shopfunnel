@@ -2,7 +2,7 @@ import { Funnel } from '@/components/funnel'
 import { useSuspenseQuery } from '@tanstack/react-query'
 import { createFileRoute } from '@tanstack/react-router'
 import { z } from 'zod'
-import { getFunnelQueryOptions } from './-common'
+import { getFunnelVariantDraftQueryOptions } from './-common'
 
 export const Route = createFileRoute('/workspace/$workspaceId/funnels/$id/preview')({
   component: RouteComponent,
@@ -12,7 +12,11 @@ export const Route = createFileRoute('/workspace/$workspaceId/funnels/$id/previe
   loaderDeps: ({ search }) => ({ variant: search.variant }),
   loader: async ({ context, params, deps }) => {
     const funnel = await context.queryClient.ensureQueryData(
-      getFunnelQueryOptions(params.workspaceId, params.id, deps.variant),
+      getFunnelVariantDraftQueryOptions({
+        workspaceId: params.workspaceId,
+        funnelId: params.id,
+        funnelVariantId: deps.variant,
+      }),
     )
     return { funnel }
   },
@@ -25,7 +29,13 @@ function RouteComponent() {
   const params = Route.useParams()
   const search = Route.useSearch()
 
-  const funnelQuery = useSuspenseQuery(getFunnelQueryOptions(params.workspaceId, params.id, search.variant))
+  const funnelQuery = useSuspenseQuery(
+    getFunnelVariantDraftQueryOptions({
+      workspaceId: params.workspaceId,
+      funnelId: params.id,
+      funnelVariantId: search.variant,
+    }),
+  )
   const funnel = funnelQuery.data
 
   return (

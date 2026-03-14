@@ -1,14 +1,15 @@
 import { withActor } from '@/context/auth.withActor'
 import { Funnel } from '@shopfunnel/core/funnel/index'
 import type { Settings } from '@shopfunnel/core/funnel/types'
-import { debounceStrategy } from '@tanstack/db'
+import { debounceStrategy, eq } from '@tanstack/db'
 import { usePacedMutations } from '@tanstack/react-db'
+import { useQueryClient } from '@tanstack/react-query'
 import { createServerFn } from '@tanstack/react-start'
 import * as React from 'react'
-import { type getFunnel, updateFunnel } from '../-common'
-import { FunnelCollection } from './-common'
+import { type getFunnelVariantDraft, getFunnelVariantDraftQueryOptions, updateFunnel } from '../-common'
+import type { FunnelCollection } from './-common'
 
-type FunnelData = NonNullable<Awaited<ReturnType<typeof getFunnel>>>
+type FunnelData = NonNullable<Awaited<ReturnType<typeof getFunnelVariantDraft>>>
 
 export const uploadFunnelFile = createServerFn({ method: 'POST' })
   .inputValidator((input: unknown) => {
@@ -62,28 +63,33 @@ export function useFunnel() {
 interface FunnelProviderProps {
   children: React.ReactNode
   collection: FunnelCollection
+  activeVariantId: string
 }
 
-export function FunnelProvider({ children, collection }: FunnelProviderProps) {
-  const [funnel, setFunnel] = React.useState<FunnelData | null>(() => collection.get('funnel') ?? null)
+export function FunnelProvider({ children, collection, activeVariantId }: FunnelProviderProps) {
+  const queryClient = useQueryClient()
+  const [funnel, setFunnel] = React.useState<FunnelData | null>(() => collection.get(activeVariantId) ?? null)
 
   const [isSaving, setIsSaving] = React.useState(false)
 
   React.useEffect(() => {
     const subscription = collection.subscribeChanges(
       () => {
-        setFunnel(collection.get('funnel') ?? null)
+        setFunnel(collection.get(activeVariantId) ?? null)
       },
-      { includeInitialState: true },
+      {
+        includeInitialState: true,
+        where: (row) => eq(row.variantId, activeVariantId),
+      },
     )
 
     return () => subscription.unsubscribe()
-  }, [collection])
+  }, [collection, activeVariantId])
 
   const mutate = usePacedMutations<SaveFunnelInput, FunnelData>({
     onMutate: (values) => {
       setIsSaving(true)
-      collection.update('funnel', (funnel) => {
+      collection.update(activeVariantId, (funnel) => {
         if (values.pages) funnel.pages = values.pages
         if (values.rules) funnel.rules = values.rules
         if (values.theme) funnel.theme = values.theme
@@ -95,11 +101,12 @@ export function FunnelProvider({ children, collection }: FunnelProviderProps) {
     mutationFn: async ({ transaction }) => {
       const mutation = transaction.mutations.find((m) => m.type === 'update')
       if (mutation) {
+        const original = mutation.original as FunnelData
         await updateFunnel({
           data: {
-            funnelId: funnel!.id,
-            funnelVariantId: funnel!.variantId,
-            workspaceId: funnel!.workspaceId,
+            funnelId: original.id,
+            funnelVariantId: original.variantId,
+            workspaceId: original.workspaceId,
             ...(mutation.changes.pages && { pages: mutation.changes.pages }),
             ...(mutation.changes.rules && { rules: mutation.changes.rules }),
             ...(mutation.changes.theme && { theme: mutation.changes.theme }),
@@ -107,9 +114,16 @@ export function FunnelProvider({ children, collection }: FunnelProviderProps) {
             ...(mutation.changes.settings && { settings: mutation.changes.settings as Settings }),
           },
         })
+        await queryClient.invalidateQueries({
+          ...getFunnelVariantDraftQueryOptions({
+            workspaceId: original.workspaceId,
+            funnelId: original.id,
+            funnelVariantId: original.variantId,
+          }),
+          exact: true,
+        })
       }
-      await collection.utils.refetch()
-      setFunnel(collection.get('funnel') ?? null)
+      setFunnel(collection.get(activeVariantId) ?? null)
       setIsSaving(false)
     },
     strategy: debounceStrategy({ wait: 3000 }),
@@ -118,7 +132,7 @@ export function FunnelProvider({ children, collection }: FunnelProviderProps) {
   const save = React.useCallback(
     async (input: SaveFunnelInput) => {
       setIsSaving(true)
-      const tx = collection.update('funnel', (draft) => {
+      const tx = collection.update(activeVariantId, (draft) => {
         if (input.pages) draft.pages = input.pages
         if (input.rules) draft.rules = input.rules
         if (input.theme) draft.theme = input.theme
@@ -126,18 +140,27 @@ export function FunnelProvider({ children, collection }: FunnelProviderProps) {
         if (input.settings) draft.settings = input.settings
       })
       await tx.isPersisted.promise
-      setFunnel(collection.get('funnel') ?? null)
+      const current = collection.get(activeVariantId) as FunnelData
+      await queryClient.invalidateQueries({
+        ...getFunnelVariantDraftQueryOptions({
+          workspaceId: current.workspaceId,
+          funnelId: current.id,
+          funnelVariantId: current.variantId,
+        }),
+        exact: true,
+      })
+      setFunnel(collection.get(activeVariantId) ?? null)
       setIsSaving(false)
     },
-    [collection],
+    [collection, activeVariantId, queryClient],
   )
 
   const maybeSave = React.useCallback(
     (input: SaveFunnelInput) => {
       mutate(input)
-      setFunnel(collection.get('funnel') ?? null)
+      setFunnel(collection.get(activeVariantId) ?? null)
     },
-    [mutate, collection],
+    [mutate, collection, activeVariantId],
   )
 
   const uploadFile = React.useCallback(

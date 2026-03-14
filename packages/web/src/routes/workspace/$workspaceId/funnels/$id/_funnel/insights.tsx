@@ -17,7 +17,6 @@ import { createServerFn } from '@tanstack/react-start'
 import * as React from 'react'
 import { CartesianGrid, Line, LineChart, XAxis, YAxis } from 'recharts'
 import { z } from 'zod'
-import { getFunnelQueryOptions } from '../-common'
 import { useFunnel } from './-context'
 
 const DATE_RANGE_PERIODS = ['today', 'yesterday', '24h', '7d', '30d', 'month', 'year'] as const
@@ -178,6 +177,7 @@ type KpiItem = {
 export const Route = createFileRoute('/workspace/$workspaceId/funnels/$id/_funnel/insights')({
   component: RouteComponent,
   validateSearch: z.object({
+    variant: z.string().optional(),
     period: z.enum(DATE_RANGE_PERIODS).optional(),
     from: z.string().optional(),
     to: z.string().optional(),
@@ -185,27 +185,27 @@ export const Route = createFileRoute('/workspace/$workspaceId/funnels/$id/_funne
   loaderDeps: ({ search }) => {
     const resolved = resolveSearch(search)
     return {
+      variant: search.variant,
       period: resolved.period,
       startDate: resolved.from.toISOString(),
       endDate: resolved.to.toISOString(),
     }
   },
   loader: async ({ context, params, deps }) => {
+    if (!deps.variant) return
+
     const filter = { startDate: deps.startDate, endDate: deps.endDate }
     const granularity = computeGranularity(new Date(deps.startDate), new Date(deps.endDate))
 
-    const funnel = await context.queryClient.ensureQueryData(getFunnelQueryOptions(params.workspaceId, params.id))
-    const variantId = funnel.variantId
-
     await Promise.all([
       context.queryClient.ensureQueryData(
-        getAnalyticsFunnelKpisQueryOptions(params.workspaceId, params.id, filter, variantId),
+        getAnalyticsFunnelKpisQueryOptions(params.workspaceId, params.id, filter, deps.variant),
       ),
       context.queryClient.ensureQueryData(
-        getAnalyticsTimeseriesQueryOptions(params.workspaceId, params.id, filter, granularity, variantId),
+        getAnalyticsTimeseriesQueryOptions(params.workspaceId, params.id, filter, granularity, deps.variant),
       ),
       context.queryClient.ensureQueryData(
-        getAnalyticsDropoffQueryOptions(params.workspaceId, params.id, filter, variantId),
+        getAnalyticsDropoffQueryOptions(params.workspaceId, params.id, filter, deps.variant),
       ),
     ])
   },

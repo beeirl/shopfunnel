@@ -64,7 +64,9 @@ export const FunnelVariantVersionTable = mysqlTable(
     variables: json('variables').$type<Variables>().notNull(),
     theme: json('theme').$type<Theme>().notNull(),
   },
-  (table) => [primaryKey({ columns: [table.workspaceId, table.funnelId, table.funnelVariantId, table.number] })],
+  (table) => [
+    primaryKey({ name: 'pk', columns: [table.workspaceId, table.funnelId, table.funnelVariantId, table.number] }),
+  ],
 )
 
 export const FunnelExperimentTable = mysqlTable(
@@ -90,7 +92,7 @@ export const FunnelExperimentVariantTable = mysqlTable(
     weight: int('weight').notNull(),
   },
   (table) => [
-    primaryKey({ columns: [table.workspaceId, table.funnelExperimentId, table.funnelVariantId] }),
+    primaryKey({ name: 'pk', columns: [table.workspaceId, table.funnelExperimentId, table.funnelVariantId] }),
     index('experiment').on(table.workspaceId, table.funnelExperimentId),
   ],
 )

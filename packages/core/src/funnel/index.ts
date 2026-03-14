@@ -349,6 +349,28 @@ export namespace Funnel {
     },
   )
 
+  export const updateVariantName = fn(
+    z.object({
+      funnelId: Identifier.schema('funnel'),
+      funnelVariantId: Identifier.schema('funnel_variant'),
+      title: z.string().min(1).max(255),
+    }),
+    async (input) => {
+      await Database.use((tx) =>
+        tx
+          .update(FunnelVariantTable)
+          .set({ title: input.title })
+          .where(
+            and(
+              eq(FunnelVariantTable.workspaceId, Actor.workspaceId()),
+              eq(FunnelVariantTable.funnelId, input.funnelId),
+              eq(FunnelVariantTable.id, input.funnelVariantId),
+            ),
+          ),
+      )
+    },
+  )
+
   export const duplicate = fn(
     z.object({
       id: Identifier.schema('funnel'),
@@ -516,6 +538,8 @@ export namespace Funnel {
         .select({
           ...getTableColumns(FunnelVariantTable),
           mainVariantId: FunnelTable.mainVariantId,
+          shortId: FunnelTable.shortId,
+          domainHostname: DomainTable.hostname,
           experimentVariantWeight: FunnelExperimentVariantTable.weight,
         })
         .from(FunnelVariantTable)
@@ -526,6 +550,7 @@ export namespace Funnel {
             eq(FunnelTable.id, FunnelVariantTable.funnelId),
           ),
         )
+        .leftJoin(DomainTable, eq(DomainTable.id, FunnelTable.domainId))
         .leftJoin(
           FunnelExperimentTable,
           and(
@@ -550,7 +575,10 @@ export namespace Funnel {
             isNull(FunnelVariantTable.archivedAt),
           ),
         )
-        .orderBy(FunnelVariantTable.createdAt),
+        .orderBy(
+          desc(sql`${FunnelVariantTable.id} = ${FunnelTable.mainVariantId}`),
+          desc(FunnelVariantTable.updatedAt),
+        ),
     )
 
     const hasExperiment = rows.some((r) => r.experimentVariantWeight !== null)
@@ -564,6 +592,7 @@ export namespace Funnel {
       createdAt: row.createdAt,
       updatedAt: row.updatedAt,
       trafficPercentage: hasExperiment ? (row.experimentVariantWeight ?? 0) : row.id === row.mainVariantId ? 100 : 0,
+      url: `${getUrl({ shortId: row.shortId, hostname: row.domainHostname ?? undefined })}?variantId=${row.id}`,
     }))
   })
 
