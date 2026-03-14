@@ -56,6 +56,19 @@ export function BinaryChoiceBlockPanel({
           <Pane.Title>{blockInfo?.name}</Pane.Title>
         </Pane.Header>
         <Pane.Content>
+          <Pane.Group>
+            <Pane.GroupHeader>
+              <Pane.GroupLabel>Label</Pane.GroupLabel>
+            </Pane.GroupHeader>
+            <Input
+              placeholder="Label..."
+              value={block.properties.label || ''}
+              onValueChange={(value) =>
+                onBlockUpdate({ properties: { ...block.properties, label: value || undefined } })
+              }
+            />
+          </Pane.Group>
+          <Pane.Separator />
           {options.map((choice, index) => (
             <React.Fragment key={choice.id}>
               {index > 0 && <Pane.Separator />}

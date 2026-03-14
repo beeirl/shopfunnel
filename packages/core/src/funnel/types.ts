@@ -181,6 +181,7 @@ export const BinaryChoiceBlock = z.object({
   type: z.literal('binary_choice'),
   properties: z.object({
     name: z.string(),
+    label: z.string().optional(),
     options: z.array(
       z.object({
         id: z.string(),
