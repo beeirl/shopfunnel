@@ -152,7 +152,7 @@ function PageNode({ data }: { data: PageNodeData }) {
         style={{ width: PAGE_WIDTH, height: PAGE_HEIGHT }}
       >
         {/* Scrollable content area */}
-        <div className="nowheel flex h-full flex-col overflow-y-auto">
+        <div className={cn('nowheel flex h-full flex-col overflow-y-auto', binaryChoiceBlock && 'pb-[96px]')}>
           <div className="mx-auto flex w-full max-w-sm flex-1 flex-col px-6 pt-8">
             {page.blocks.length === 0 ? (
               <Empty.Root>
@@ -176,36 +176,37 @@ function PageNode({ data }: { data: PageNodeData }) {
               </div>
             )}
 
-            {/* Binary choice block (sticky at bottom) */}
-            {(binaryChoiceBlock || showNextButton) && (
-              <div
-                className={cn('sticky bottom-0 mt-auto w-full pt-4 pb-5', binaryChoiceBlock && 'bg-(--sf-background)')}
-              >
-                {binaryChoiceBlock && (
-                  <div
-                    className={cn(showNextButton && 'mb-3')}
-                    data-slot="block"
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      handleBlockSelect(binaryChoiceBlock.id)
-                    }}
-                  >
-                    <div
-                      className={cn(
-                        'relative ring-primary',
-                        selectedBlockId === binaryChoiceBlock.id && 'ring-2',
-                        selectedBlockId !== binaryChoiceBlock.id && 'hover:ring-2',
-                      )}
-                    >
-                      <BinaryChoiceBlock block={binaryChoiceBlock as BinaryChoiceBlockType} static />
-                    </div>
-                  </div>
-                )}
-                {showNextButton && <NextButton static>{page.properties?.buttonText || 'Next'}</NextButton>}
+            {showNextButton && (
+              <div className="sticky bottom-0 mt-auto w-full pt-4 pb-5">
+                <NextButton static>{page.properties?.buttonText || 'Next'}</NextButton>
               </div>
             )}
           </div>
         </div>
+
+        {/* Binary choice block (fixed at bottom, matching live funnel layout) */}
+        {binaryChoiceBlock && (
+          <div className="absolute inset-x-0 bottom-0 z-10 bg-(--sf-background) px-6">
+            <div
+              className="mx-auto max-w-sm py-6"
+              data-slot="block"
+              onClick={(e) => {
+                e.stopPropagation()
+                handleBlockSelect(binaryChoiceBlock.id)
+              }}
+            >
+              <div
+                className={cn(
+                  'relative ring-primary',
+                  selectedBlockId === binaryChoiceBlock.id && 'ring-2',
+                  selectedBlockId !== binaryChoiceBlock.id && 'hover:ring-2',
+                )}
+              >
+                <BinaryChoiceBlock block={binaryChoiceBlock as BinaryChoiceBlockType} static />
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Logic button */}
         {!isEnd && (

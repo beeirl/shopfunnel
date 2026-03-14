@@ -2,14 +2,20 @@ import { getBlockInfo } from '@/components/block'
 import { Image } from '@/components/image'
 import { Button } from '@/components/ui/button'
 import { InputGroup } from '@/components/ui/input-group'
-import { SegmentedControl } from '@/components/ui/segmented-control'
+import { Select } from '@/components/ui/select'
 import { Textarea } from '@/components/ui/textarea'
 import type { HtmlBlock as HtmlBlockType } from '@shopfunnel/core/funnel/types'
 import { IconCopy as CopyIcon, IconPhoto as PhotoIcon, IconPlus as PlusIcon } from '@tabler/icons-react'
-import { Field } from '../field'
 import { MediaPicker } from '../media-picker'
 import { Pane } from '../pane'
 import { Panel } from '../panel'
+
+const BLEED_OPTIONS = [
+  { value: 'none', label: 'None' },
+  { value: 'horizontal', label: 'Horizontal' },
+  { value: 'vertical', label: 'Vertical' },
+  { value: 'full', label: 'Full' },
+] as const
 
 export function HtmlBlockPanel({
   block,
@@ -50,22 +56,33 @@ export function HtmlBlockPanel({
           <Pane.Separator />
           <Pane.Group>
             <Pane.GroupHeader>
-              <Pane.GroupLabel>Options</Pane.GroupLabel>
+              <Pane.GroupLabel>Bleed</Pane.GroupLabel>
             </Pane.GroupHeader>
-            <Field.Root>
-              <Field.Label>Full Width</Field.Label>
-              <Field.Control>
-                <SegmentedControl.Root
-                  value={block.properties.fullWidth ?? false}
-                  onValueChange={(value: boolean) =>
-                    onBlockUpdate({ properties: { ...block.properties, fullWidth: value } })
-                  }
-                >
-                  <SegmentedControl.Segment value={false}>No</SegmentedControl.Segment>
-                  <SegmentedControl.Segment value={true}>Yes</SegmentedControl.Segment>
-                </SegmentedControl.Root>
-              </Field.Control>
-            </Field.Root>
+            <Select.Root
+              items={BLEED_OPTIONS}
+              value={block.properties.bleed ?? 'none'}
+              onValueChange={(value) =>
+                onBlockUpdate({
+                  properties: {
+                    ...block.properties,
+                    bleed: value as 'none' | 'horizontal' | 'vertical' | 'full',
+                  },
+                })
+              }
+            >
+              <Select.Trigger className="w-full">
+                <Select.Value />
+              </Select.Trigger>
+              <Select.Content alignItemWithTrigger={false}>
+                <Select.Group>
+                  {BLEED_OPTIONS.map((option) => (
+                    <Select.Item key={option.value} value={option.value}>
+                      {option.label}
+                    </Select.Item>
+                  ))}
+                </Select.Group>
+              </Select.Content>
+            </Select.Root>
           </Pane.Group>
           <Pane.Separator />
           <Pane.Group>

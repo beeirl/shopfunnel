@@ -468,20 +468,20 @@ export function Funnel({ funnel, mode = 'live', onPageChange, onPageComplete, on
                       </div>
                     ))}
                   </div>
-                  {hasStickyFooter && (
-                    <div className={cn('sticky bottom-0 pb-6', binaryChoiceBlock && 'bg-(--sf-background)')}>
-                      {binaryChoiceBlock && (
-                        <div className={cn(showNextButton && 'mb-3')}>
-                          <BinaryChoiceBlock
-                            block={binaryChoiceBlock}
-                            value={values[binaryChoiceBlock.id] as string | null}
-                            onValueChange={(value) => handleBlockValueChange(binaryChoiceBlock.id, value)}
-                          />
-                        </div>
-                      )}
-                      {showNextButton && (
-                        <NextButton onClick={() => next(values)}>{currentPage.properties.buttonText}</NextButton>
-                      )}
+                  {showNextButton && (
+                    <div className="sticky bottom-0 pb-6">
+                      <NextButton onClick={() => next(values)}>{currentPage.properties.buttonText}</NextButton>
+                    </div>
+                  )}
+                  {binaryChoiceBlock && (
+                    <div className="fixed inset-x-0 bottom-0 z-10 bg-(--sf-background) px-6">
+                      <div className="mx-auto max-w-sm py-6">
+                        <BinaryChoiceBlock
+                          block={binaryChoiceBlock}
+                          value={values[binaryChoiceBlock.id] as string | null}
+                          onValueChange={(value) => handleBlockValueChange(binaryChoiceBlock.id, value)}
+                        />
+                      </div>
                     </div>
                   )}
                   {showLegalDisclaimer && (

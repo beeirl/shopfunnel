@@ -215,7 +215,7 @@ Blocks use a discriminated union on the "type" field. Every block has an "id" (u
   "type": "html",
   "properties": {
     "html": string (raw HTML),
-    "fullWidth"?: boolean,
+    "bleed"?: "none" | "horizontal" | "vertical" | "full",
     "media": [
       {
         "type": "image",

@@ -165,7 +165,7 @@ export const HtmlBlock = z.object({
   type: z.literal('html'),
   properties: z.object({
     html: z.string(),
-    fullWidth: z.boolean().optional(),
+    bleed: z.enum(['none', 'horizontal', 'vertical', 'full']).optional(),
     media: z.array(
       z.object({
         type: z.literal('image'),

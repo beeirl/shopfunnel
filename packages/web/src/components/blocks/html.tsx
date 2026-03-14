@@ -26,20 +26,9 @@ export function HtmlBlock(props: HtmlBlockProps) {
     '    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>',
     '    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">',
     '    <style>',
-    '      *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }',
+    '      *, *::before, *::after { margin: 0; box-sizing: border-box; }',
     '      html { height: auto !important; overflow: hidden; }',
-    '      body {',
-    '        height: auto !important;',
-    '        overflow: hidden;',
-    "        font-family: 'Inter', system-ui, -apple-system, sans-serif;",
-    '        font-size: 16px;',
-    '        line-height: 1.5;',
-    '        color: #0a0a0a;',
-    '        -webkit-font-smoothing: antialiased;',
-    '        -moz-osx-font-smoothing: grayscale;',
-    '      }',
-    '      img, video { max-width: 100%; height: auto; display: block; }',
-    '      a { color: inherit; }',
+    "      body { height: auto !important; overflow: hidden; font-family: 'Inter', system-ui, -apple-system, sans-serif; }",
     '    </style>',
     '  </head>',
     `  <body>${props.block.properties.html}</body>`,
@@ -75,10 +64,6 @@ export function HtmlBlock(props: HtmlBlockProps) {
       if (cancelled) return
 
       const doc = iframe.contentDocument
-      if (doc?.body) {
-        doc.body.style.margin = '0px'
-        doc.body.style.padding = '0px'
-      }
 
       if (doc?.documentElement) {
         const height = doc.documentElement.getBoundingClientRect().height
@@ -104,12 +89,18 @@ export function HtmlBlock(props: HtmlBlockProps) {
     }
   }, [content])
 
+  const bleed = props.block.properties.bleed ?? 'none'
+  const bleedX = bleed === 'horizontal' || bleed === 'full'
+  const bleedY = bleed === 'vertical' || bleed === 'full'
+
   return (
     <div
       className={cn(
-        'overflow-hidden group-not-data-first/block:mt-6',
+        'overflow-hidden',
+        !bleedY && 'group-not-data-first/block:mt-6',
+        bleedY && '-mb-6 group-data-first/block:-mt-6',
+        bleedX && '-mx-6',
         props.static && 'pointer-events-none',
-        props.block.properties.fullWidth && '-mx-6',
       )}
     >
       <iframe
