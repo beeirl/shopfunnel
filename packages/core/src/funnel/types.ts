@@ -165,6 +165,7 @@ export const HtmlBlock = z.object({
   type: z.literal('html'),
   properties: z.object({
     html: z.string(),
+    fullWidth: z.boolean().optional(),
     media: z.array(
       z.object({
         type: z.literal('image'),
@@ -174,6 +175,23 @@ export const HtmlBlock = z.object({
   }),
 })
 export type HtmlBlock = z.infer<typeof HtmlBlock>
+
+export const BinaryChoiceBlock = z.object({
+  id: z.string(),
+  type: z.literal('binary_choice'),
+  properties: z.object({
+    name: z.string(),
+    options: z.array(
+      z.object({
+        id: z.string(),
+        label: z.string(),
+        backgroundColor: z.string().optional(),
+        foregroundColor: z.string().optional(),
+      }),
+    ),
+  }),
+})
+export type BinaryChoiceBlock = z.infer<typeof BinaryChoiceBlock>
 
 export const Block = z.discriminatedUnion('type', [
   TextInputBlock,
@@ -187,10 +205,11 @@ export const Block = z.discriminatedUnion('type', [
   LoaderBlock,
   SpacerBlock,
   HtmlBlock,
+  BinaryChoiceBlock,
 ])
 export type Block = z.infer<typeof Block>
 
-export const INPUT_BLOCKS = ['text_input', 'multiple_choice', 'picture_choice', 'dropdown'] as const
+export const INPUT_BLOCKS = ['text_input', 'multiple_choice', 'picture_choice', 'dropdown', 'binary_choice'] as const
 export type InputBlock = (typeof INPUT_BLOCKS)[number]
 
 // ============================================
@@ -204,6 +223,8 @@ export const Page = z.object({
   properties: z.object({
     buttonText: z.string(),
     redirectUrl: z.string().optional(),
+    showProgressBar: z.boolean().optional(),
+    headerPosition: z.enum(['relative', 'fixed']).optional(),
   }),
 })
 export type Page = z.infer<typeof Page>

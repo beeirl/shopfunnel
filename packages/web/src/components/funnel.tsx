@@ -1,8 +1,10 @@
 import { Block } from '@/components/block'
+import { BinaryChoiceBlock } from '@/components/blocks/binary-choice'
 import { Image } from '@/components/image'
 import { NextButton } from '@/components/next-button'
 import { cn } from '@/lib/utils'
 import type {
+  BinaryChoiceBlock as BinaryChoiceBlockType,
   Block as BlockType,
   Condition,
   ConditionVar,
@@ -212,11 +214,13 @@ export function shouldAutoAdvance(blocks: BlockType[]): boolean {
     block.type === 'text_input' ||
     block.type === 'multiple_choice' ||
     block.type === 'dropdown' ||
-    block.type === 'picture_choice'
+    block.type === 'picture_choice' ||
+    block.type === 'binary_choice'
 
   const advancesAutomatically = (block: BlockType) =>
     block.type === 'loader' ||
     block.type === 'dropdown' ||
+    block.type === 'binary_choice' ||
     (block.type === 'multiple_choice' && !block.properties.multiple) ||
     (block.type === 'picture_choice' && !block.properties.multiple)
 
@@ -275,8 +279,18 @@ export function Funnel({ funnel, mode = 'live', onPageChange, onPageComplete, on
     [visibleBlocks, values, variables],
   )
 
+  const contentBlocks = useMemo(
+    () => resolvedBlocks.filter((block) => block.type !== 'binary_choice'),
+    [resolvedBlocks],
+  )
+  const binaryChoiceBlock = useMemo(
+    () => resolvedBlocks.find((block): block is BinaryChoiceBlockType => block.type === 'binary_choice'),
+    [resolvedBlocks],
+  )
+
   const showLegalDisclaimer = currentPageIndex === 0 && funnel.settings?.privacyUrl && funnel.settings?.termsUrl
   const showNextButton = !shouldAutoAdvance(visibleBlocks)
+  const hasStickyFooter = !!binaryChoiceBlock || showNextButton
 
   useEffect(() => {
     if (mode === 'preview') return
@@ -396,31 +410,35 @@ export function Funnel({ funnel, mode = 'live', onPageChange, onPageComplete, on
     <>
       <FunnelStyle theme={funnel.theme} />
       <div className="relative flex min-h-dvh flex-col bg-(--sf-background) px-6">
-        <div className="mx-auto flex w-full max-w-sm flex-1 flex-col">
-          <div className="flex h-16 w-full items-center justify-center">
-            {funnel.theme.logoUrl ? (
-              <Image
-                src={funnel.theme.logoUrl}
-                alt={`${funnel.title} logo`}
-                className="h-9 w-auto"
-                layout="fixed"
-                width={300}
-                height={36}
-                operations={{ fit: 'contain' }}
-                unstyled
-                priority
-              />
-            ) : (
-              <span className="text-xl font-bold text-(--sf-foreground)">{funnel.title}</span>
+        <div className="relative mx-auto flex w-full max-w-sm flex-1 flex-col">
+          <div className={cn('w-full', currentPage?.properties.headerPosition === 'fixed' && 'absolute top-0')}>
+            <div className="flex h-16 w-full items-center justify-center">
+              {funnel.theme.logoUrl ? (
+                <Image
+                  src={funnel.theme.logoUrl}
+                  alt={`${funnel.title} logo`}
+                  className="h-9 w-auto"
+                  layout="fixed"
+                  width={300}
+                  height={36}
+                  operations={{ fit: 'contain' }}
+                  unstyled
+                  priority
+                />
+              ) : (
+                <span className="text-xl font-bold text-(--sf-foreground)">{funnel.title}</span>
+              )}
+            </div>
+            {(currentPage?.properties.showProgressBar ?? true) && (
+              <div className="h-1.5 w-full rounded-(--sf-radius) bg-(--sf-muted)">
+                <motion.div
+                  className="h-full rounded-(--sf-radius) bg-(--sf-primary)"
+                  initial={{ width: 0 }}
+                  animate={{ width: `${(currentPageIndex / funnel.pages.length) * 100}%` }}
+                  transition={{ duration: 0.3, ease: 'easeOut' }}
+                />
+              </div>
             )}
-          </div>
-          <div className="h-1.5 w-full rounded-(--sf-radius) bg-(--sf-muted)">
-            <motion.div
-              className="h-full rounded-(--sf-radius) bg-(--sf-primary)"
-              initial={{ width: 0 }}
-              animate={{ width: `${(currentPageIndex / funnel.pages.length) * 100}%` }}
-              transition={{ duration: 0.3, ease: 'easeOut' }}
-            />
           </div>
           <AnimatePresence initial={false} mode="wait" onExitComplete={handlePageChangeComplete}>
             <motion.div
@@ -434,7 +452,7 @@ export function Funnel({ funnel, mode = 'live', onPageChange, onPageComplete, on
               {currentPage && (
                 <>
                   <div className="flex-1 py-6">
-                    {resolvedBlocks.map((block, index) => (
+                    {contentBlocks.map((block, index) => (
                       <div key={block.id}>
                         <Block
                           block={block}
@@ -450,16 +468,27 @@ export function Funnel({ funnel, mode = 'live', onPageChange, onPageComplete, on
                       </div>
                     ))}
                   </div>
-                  {showNextButton && (
-                    <div className="sticky bottom-0 pb-6">
-                      <NextButton onClick={() => next(values)}>{currentPage.properties.buttonText}</NextButton>
+                  {hasStickyFooter && (
+                    <div className={cn('sticky bottom-0 pb-6', binaryChoiceBlock && 'bg-(--sf-background)')}>
+                      {binaryChoiceBlock && (
+                        <div className={cn(showNextButton && 'mb-3')}>
+                          <BinaryChoiceBlock
+                            block={binaryChoiceBlock}
+                            value={values[binaryChoiceBlock.id] as string | null}
+                            onValueChange={(value) => handleBlockValueChange(binaryChoiceBlock.id, value)}
+                          />
+                        </div>
+                      )}
+                      {showNextButton && (
+                        <NextButton onClick={() => next(values)}>{currentPage.properties.buttonText}</NextButton>
+                      )}
                     </div>
                   )}
                   {showLegalDisclaimer && (
                     <div
                       className={cn(
                         'py-3 text-center text-[0.625rem] text-balance text-(--sf-muted-foreground)',
-                        showNextButton && 'z-1 -mt-3 pt-0',
+                        hasStickyFooter && 'z-1 -mt-3 pt-0',
                       )}
                     >
                       By clicking any of the options above, you agree with the{' '}

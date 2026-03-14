@@ -1,3 +1,4 @@
+import { BinaryChoiceBlock } from '@/components/blocks/binary-choice'
 import { DropdownBlock } from '@/components/blocks/dropdown'
 import { GaugeBlock } from '@/components/blocks/gauge'
 import { HeadingBlock } from '@/components/blocks/heading'
@@ -10,6 +11,7 @@ import { PictureChoiceBlock } from '@/components/blocks/picture-choice'
 import { SpacerBlock } from '@/components/blocks/spacer'
 import { TextInputBlock } from '@/components/blocks/text-input'
 import type {
+  BinaryChoiceBlock as BinaryChoiceBlockType,
   Block as BlockType,
   DropdownBlock as DropdownBlockType,
   GaugeBlock as GaugeBlockType,
@@ -27,6 +29,7 @@ import {
   IconArrowsVertical as ArrowsVerticalIcon,
   IconChevronDown as ChevronDownIcon,
   IconCode as CodeIcon,
+  IconColumns as ColumnsIcon,
   IconGauge as GaugeIcon,
   IconHeading as HeadingIcon,
   IconLayoutGrid as LayoutGridIcon,
@@ -136,6 +139,13 @@ export function getBlockInfo(type: BlockType['type']): BlockInfo {
         description: 'Embed custom HTML content in a sandboxed iframe.',
         icon: CodeIcon,
       }
+    case 'binary_choice':
+      return {
+        type: 'binary_choice',
+        name: 'Binary Choice',
+        description: 'Display two large side-by-side buttons sticky at the bottom of the page.',
+        icon: ColumnsIcon,
+      }
   }
 }
 
@@ -206,6 +216,15 @@ BLOCKS['loader'] = (props) => (
 BLOCKS['spacer'] = (props) => <SpacerBlock block={props.block as SpacerBlockType} static={props.static} />
 
 BLOCKS['html'] = (props) => <HtmlBlock block={props.block as HtmlBlockType} static={props.static} />
+
+BLOCKS['binary_choice'] = (props) => (
+  <BinaryChoiceBlock
+    block={props.block as BinaryChoiceBlockType}
+    static={props.static}
+    value={props.value as string | null}
+    onValueChange={props.onValueChange as (value: string | null) => void}
+  />
+)
 
 export function Block(props: BlockProps) {
   return (

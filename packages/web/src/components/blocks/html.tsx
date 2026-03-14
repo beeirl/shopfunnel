@@ -105,7 +105,13 @@ export function HtmlBlock(props: HtmlBlockProps) {
   }, [content])
 
   return (
-    <div className={cn('overflow-hidden group-not-data-first/block:mt-6', props.static && 'pointer-events-none')}>
+    <div
+      className={cn(
+        'overflow-hidden group-not-data-first/block:mt-6',
+        props.static && 'pointer-events-none',
+        props.block.properties.fullWidth && '-mx-6',
+      )}
+    >
       <iframe
         className={cn('block w-full overflow-hidden border-none', !ready && 'invisible')}
         ref={iframeRef}

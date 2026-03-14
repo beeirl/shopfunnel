@@ -1,6 +1,7 @@
 import type { Block as BlockType } from '@shopfunnel/core/funnel/types'
 import { useFunnelEditor } from '../-context'
 import { useFunnel } from '../../-context'
+import { BinaryChoiceBlockPanel } from './block-panels/binary-choice'
 import { DropdownBlockPanel } from './block-panels/dropdown'
 import { GaugeBlockPanel } from './block-panels/gauge'
 import { HeadingBlockPanel } from './block-panels/heading'
@@ -70,5 +71,7 @@ export function BlockPanel() {
           onHtmlChange={handleHtmlChange}
         />
       )
+    case 'binary_choice':
+      return <BinaryChoiceBlockPanel block={block} theme={funnel.theme} onBlockUpdate={handleBlockUpdate} />
   }
 }

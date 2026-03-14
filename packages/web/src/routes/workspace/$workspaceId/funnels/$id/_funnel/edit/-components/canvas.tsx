@@ -1,4 +1,5 @@
 import { Block, getBlockInfo } from '@/components/block'
+import { BinaryChoiceBlock } from '@/components/blocks/binary-choice'
 import { FunnelStyle, shouldAutoAdvance } from '@/components/funnel'
 import { NextButton } from '@/components/next-button'
 import { Button } from '@/components/ui/button'
@@ -6,7 +7,12 @@ import { ButtonGroup } from '@/components/ui/button-group'
 import { Empty } from '@/components/ui/empty'
 import { cn } from '@/lib/utils'
 import * as dagre from '@dagrejs/dagre'
-import type { Block as BlockType, Page as PageType, Rule, Theme } from '@shopfunnel/core/funnel/types'
+import type {
+  BinaryChoiceBlock as BinaryChoiceBlockType,
+  Block as BlockType,
+  Page as PageType,
+  Rule,
+} from '@shopfunnel/core/funnel/types'
 import {
   IconArrowsSplit2 as BranchIcon,
   IconMaximize as MaximizeIcon,
@@ -93,21 +99,24 @@ function SelectableBlock({ block, index, selected, variant, onSelect }: Selectab
 
 interface PageNodeData extends Record<string, unknown> {
   page: PageType
-  theme: Theme
+  variant?: 'outline' | 'soft'
   pageIndex: number
   selected: boolean
   selectedBlockId: string | null
   hasRules: boolean
   isStart: boolean
   isEnd: boolean
-  onPageSelect: (pageId: string) => void
   onBlockSelect: (blockId: string, pageId: string) => void
   onLogicClick: () => void
 }
 
 function PageNode({ data }: { data: PageNodeData }) {
-  const { page, theme, pageIndex, selected, selectedBlockId, hasRules, isStart, isEnd, onBlockSelect, onLogicClick } =
+  const { page, variant, pageIndex, selected, selectedBlockId, hasRules, isStart, isEnd, onBlockSelect, onLogicClick } =
     data
+
+  const contentBlocks = page.blocks.filter((block) => block.type !== 'binary_choice')
+  const binaryChoiceBlock = page.blocks.find((block) => block.type === 'binary_choice')
+  const showNextButton = page.blocks.length > 0 && !shouldAutoAdvance(page.blocks)
 
   const handleBlockSelect = (blockId: string) => {
     onBlockSelect(blockId, page.id)
@@ -154,23 +163,45 @@ function PageNode({ data }: { data: PageNodeData }) {
               </Empty.Root>
             ) : (
               <div className="flex flex-col">
-                {page.blocks.map((block, index) => (
+                {contentBlocks.map((block, index) => (
                   <SelectableBlock
                     key={block.id}
                     block={block}
                     index={index}
                     selected={selectedBlockId === block.id}
-                    variant={theme.style}
+                    variant={variant}
                     onSelect={() => handleBlockSelect(block.id)}
                   />
                 ))}
               </div>
             )}
 
-            {/* Next button */}
-            {page.blocks.length > 0 && !shouldAutoAdvance(page.blocks) && (
-              <div className="sticky bottom-0 mt-auto w-full pt-4 pb-5">
-                <NextButton static>{page.properties?.buttonText || 'Next'}</NextButton>
+            {/* Binary choice block (sticky at bottom) */}
+            {(binaryChoiceBlock || showNextButton) && (
+              <div
+                className={cn('sticky bottom-0 mt-auto w-full pt-4 pb-5', binaryChoiceBlock && 'bg-(--sf-background)')}
+              >
+                {binaryChoiceBlock && (
+                  <div
+                    className={cn(showNextButton && 'mb-3')}
+                    data-slot="block"
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      handleBlockSelect(binaryChoiceBlock.id)
+                    }}
+                  >
+                    <div
+                      className={cn(
+                        'relative ring-primary',
+                        selectedBlockId === binaryChoiceBlock.id && 'ring-2',
+                        selectedBlockId !== binaryChoiceBlock.id && 'hover:ring-2',
+                      )}
+                    >
+                      <BinaryChoiceBlock block={binaryChoiceBlock as BinaryChoiceBlockType} static />
+                    </div>
+                  </div>
+                )}
+                {showNextButton && <NextButton static>{page.properties?.buttonText || 'Next'}</NextButton>}
               </div>
             )}
           </div>
@@ -209,10 +240,10 @@ const nodeTypes = {
 // Layout
 // =============================================================================
 
-function getLayoutedElements(
-  nodes: Node<PageNodeData>[],
+function getLayoutedElements<T extends Record<string, unknown>>(
+  nodes: Node<T>[],
   edges: Edge[],
-): { nodes: Node<PageNodeData>[]; edges: Edge[] } {
+): { nodes: Node<T>[]; edges: Edge[] } {
   const g = new dagre.graphlib.Graph().setDefaultEdgeLabel(() => ({}))
 
   g.setGraph({
@@ -470,29 +501,42 @@ export function Canvas() {
     [mode, handlePageSelect],
   )
 
-  const { nodes, edges } = React.useMemo(() => {
+  const { layoutedNodes, edges } = React.useMemo(() => {
     const edges = createEdges(pages, rules)
-    const nodes: Node<PageNodeData>[] = pages.map((page, index) => ({
+    const nodes: Node<{ page: PageType }>[] = pages.map((page) => ({
       id: page.id,
       type: 'page',
       position: { x: 0, y: 0 },
       className: 'focus-visible:outline-none',
-      data: {
-        page,
-        theme,
-        pageIndex: index,
-        selected: selectedPageId === page.id,
-        selectedBlockId,
-        hasRules: rules.some((r) => r.pageId === page.id && r.actions.length > 0),
-        isStart: index === 0,
-        isEnd: !edges.some((e) => e.source === page.id),
-        onPageSelect: handlePageSelect,
-        onBlockSelect: handleBlockSelect,
-        onLogicClick: () => showLogic(page.id),
-      },
+      data: { page },
     }))
-    return getLayoutedElements(nodes, edges)
-  }, [pages, rules, theme, selectedPageId, selectedBlockId, handlePageSelect, handleBlockSelect, showLogic])
+
+    const { nodes: layoutedNodes } = getLayoutedElements(nodes, edges)
+
+    return { layoutedNodes, edges }
+  }, [pages, rules])
+
+  const nodes = React.useMemo(() => {
+    const pagesWithRules = new Set(rules.filter((rule) => rule.actions.length > 0).map((rule) => rule.pageId))
+
+    return layoutedNodes.map(
+      (node, index): Node<PageNodeData> => ({
+        ...node,
+        data: {
+          page: node.data.page,
+          variant: theme.style,
+          pageIndex: index,
+          selected: selectedPageId === node.id,
+          selectedBlockId,
+          hasRules: pagesWithRules.has(node.id),
+          isStart: index === 0,
+          isEnd: !edges.some((edge) => edge.source === node.id),
+          onBlockSelect: handleBlockSelect,
+          onLogicClick: () => showLogic(node.id),
+        },
+      }),
+    )
+  }, [layoutedNodes, edges, rules, theme.style, selectedPageId, selectedBlockId, handleBlockSelect, showLogic])
 
   return (
     <>

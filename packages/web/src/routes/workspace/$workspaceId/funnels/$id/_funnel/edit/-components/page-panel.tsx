@@ -1,11 +1,19 @@
 import { shouldAutoAdvance } from '@/components/funnel'
 import { Input } from '@/components/ui/input'
+import { SegmentedControl } from '@/components/ui/segmented-control'
+import { Select } from '@/components/ui/select'
 import { INPUT_BLOCKS, type Block, type Page } from '@shopfunnel/core/funnel/types'
 import { getBlockName, getDefaultPageName } from '../-common'
 import { useFunnelEditor } from '../-context'
 import { useFunnel } from '../../-context'
+import { Field } from './field'
 import { Pane } from './pane'
 import { Panel } from './panel'
+
+const HEADER_POSITION_OPTIONS = [
+  { value: 'relative', label: 'Relative' },
+  { value: 'fixed', label: 'Fixed' },
+] as const
 
 // =============================================================================
 // PagePanel
@@ -80,6 +88,51 @@ export function PagePanel() {
               placeholder="https://..."
               onValueChange={(value) => handlePageUpdate({ properties: { ...page.properties, redirectUrl: value } })}
             />
+          </Pane.Group>
+          <Pane.Separator />
+          <Pane.Group>
+            <Pane.GroupHeader>
+              <Pane.GroupLabel>Header</Pane.GroupLabel>
+            </Pane.GroupHeader>
+            <Field.Root>
+              <Field.Label>Progress Bar</Field.Label>
+              <Field.Control>
+                <SegmentedControl.Root
+                  value={page.properties?.showProgressBar ?? true}
+                  onValueChange={(value: boolean) =>
+                    handlePageUpdate({ properties: { ...page.properties, showProgressBar: value } })
+                  }
+                >
+                  <SegmentedControl.Segment value={true}>Show</SegmentedControl.Segment>
+                  <SegmentedControl.Segment value={false}>Hide</SegmentedControl.Segment>
+                </SegmentedControl.Root>
+              </Field.Control>
+            </Field.Root>
+            <Field.Root>
+              <Field.Label>Position</Field.Label>
+              <Field.Control>
+                <Select.Root
+                  items={HEADER_POSITION_OPTIONS}
+                  value={page.properties?.headerPosition ?? 'relative'}
+                  onValueChange={(value: 'relative' | 'fixed') =>
+                    handlePageUpdate({ properties: { ...page.properties, headerPosition: value } })
+                  }
+                >
+                  <Select.Trigger className="w-full">
+                    <Select.Value />
+                  </Select.Trigger>
+                  <Select.Content alignItemWithTrigger={false}>
+                    <Select.Group>
+                      {HEADER_POSITION_OPTIONS.map((option) => (
+                        <Select.Item key={option.value} value={option.value}>
+                          {option.label}
+                        </Select.Item>
+                      ))}
+                    </Select.Group>
+                  </Select.Content>
+                </Select.Root>
+              </Field.Control>
+            </Field.Root>
           </Pane.Group>
         </Pane.Content>
       </Pane.Root>

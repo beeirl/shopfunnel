@@ -17,7 +17,12 @@ function cleanBrokenRules(pages: Page[], rules: Rule[]): Rule[] {
   const getOptionIds = (blockId: string) => {
     const block = allBlocks.get(blockId)
     if (!block) return null
-    if (block.type === 'multiple_choice' || block.type === 'picture_choice' || block.type === 'dropdown') {
+    if (
+      block.type === 'multiple_choice' ||
+      block.type === 'picture_choice' ||
+      block.type === 'dropdown' ||
+      block.type === 'binary_choice'
+    ) {
       return new Set(block.properties.options.map((o) => o.id))
     }
     return null
@@ -88,7 +93,10 @@ function cleanBrokenRules(pages: Page[], rules: Rule[]): Rule[] {
 function cloneBlock(block: Block): Block {
   const cloned = { ...block, id: ulid() }
   if (
-    (cloned.type === 'multiple_choice' || cloned.type === 'picture_choice' || cloned.type === 'dropdown') &&
+    (cloned.type === 'multiple_choice' ||
+      cloned.type === 'picture_choice' ||
+      cloned.type === 'dropdown' ||
+      cloned.type === 'binary_choice') &&
     'options' in cloned.properties
   ) {
     return {

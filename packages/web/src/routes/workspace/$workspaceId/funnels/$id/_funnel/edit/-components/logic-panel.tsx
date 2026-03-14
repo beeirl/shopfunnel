@@ -24,7 +24,10 @@ import { Panel } from './panel'
 // Types
 // =============================================================================
 
-type InputBlock = Extract<BlockType, { type: 'text_input' | 'multiple_choice' | 'picture_choice' | 'dropdown' }>
+type InputBlock = Extract<
+  BlockType,
+  { type: 'text_input' | 'multiple_choice' | 'picture_choice' | 'dropdown' | 'binary_choice' }
+>
 
 interface RuleProps {
   action: RuleActionType
@@ -60,7 +63,12 @@ function isLogicalCondition(condition: ConditionType): condition is LogicalCondi
 }
 
 function getBlockOptions(block: InputBlock): Array<{ id: string; label: string }> {
-  if (block.type === 'multiple_choice' || block.type === 'picture_choice' || block.type === 'dropdown') {
+  if (
+    block.type === 'multiple_choice' ||
+    block.type === 'picture_choice' ||
+    block.type === 'dropdown' ||
+    block.type === 'binary_choice'
+  ) {
     return block.properties.options
   }
   return []

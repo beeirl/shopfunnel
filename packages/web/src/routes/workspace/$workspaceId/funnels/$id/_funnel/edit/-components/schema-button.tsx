@@ -32,7 +32,9 @@ Each page is an object with the following shape:
   "blocks": Block[],
   "properties": {
     "buttonText": string,
-    "redirectUrl"?: string
+    "redirectUrl"?: string,
+    "showProgressBar"?: boolean,
+    "headerPosition"?: "relative" | "fixed"
   }
 }
 
@@ -124,6 +126,23 @@ Blocks use a discriminated union on the "type" field. Every block has an "id" (u
   }
 }
 
+### binary_choice
+{
+  "id": string,
+  "type": "binary_choice",
+  "properties": {
+    "name": string,
+    "options": [
+      {
+        "id": string,
+        "label": string,
+        "backgroundColor"?: string,
+        "foregroundColor"?: string
+      }
+    ]
+  }
+}
+
 ### heading
 {
   "id": string,
@@ -196,6 +215,7 @@ Blocks use a discriminated union on the "type" field. Every block has an "id" (u
   "type": "html",
   "properties": {
     "html": string (raw HTML),
+    "fullWidth"?: boolean,
     "media": [
       {
         "type": "image",
@@ -250,7 +270,7 @@ A condition can be one of:
   ]
 }
 
-When comparing against a multiple_choice, picture_choice, or dropdown block, the "constant" value must be the option's "id" (e.g. "opt_yes"), NOT the option's label text.
+When comparing against a multiple_choice, picture_choice, dropdown, or binary_choice block, the "constant" value must be the option's "id" (e.g. "opt_yes"), NOT the option's label text.
 
 2. Always condition (unconditional):
 {
@@ -265,7 +285,7 @@ When comparing against a multiple_choice, picture_choice, or dropdown block, the
 
 ## Important Rules
 
-- Input block types are: text_input, multiple_choice, picture_choice, dropdown. These are the only blocks that can be referenced in rule conditions.
+- Input block types are: text_input, multiple_choice, picture_choice, dropdown, binary_choice. These are the only blocks that can be referenced in rule conditions.
 - Rule pageId must reference an existing page id.
 - Jump action "to" values must reference an existing page id.
 - The "always" condition has no "vars" field.

@@ -81,6 +81,18 @@ function createBlock(type: Block['type']): Block {
       return { id: ulid(), type: 'spacer', properties: { size: 'md' } }
     case 'html':
       return { id: ulid(), type: 'html', properties: { html: '', media: [] } }
+    case 'binary_choice':
+      return {
+        id: ulid(),
+        type: 'binary_choice',
+        properties: {
+          name: 'Binary Choice',
+          options: [
+            { id: ulid(), label: 'Option 1' },
+            { id: ulid(), label: 'Option 2' },
+          ],
+        },
+      }
   }
 }
 

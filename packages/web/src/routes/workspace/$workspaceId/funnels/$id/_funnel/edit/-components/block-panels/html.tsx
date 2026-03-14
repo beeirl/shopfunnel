@@ -2,9 +2,11 @@ import { getBlockInfo } from '@/components/block'
 import { Image } from '@/components/image'
 import { Button } from '@/components/ui/button'
 import { InputGroup } from '@/components/ui/input-group'
+import { SegmentedControl } from '@/components/ui/segmented-control'
 import { Textarea } from '@/components/ui/textarea'
 import type { HtmlBlock as HtmlBlockType } from '@shopfunnel/core/funnel/types'
 import { IconCopy as CopyIcon, IconPhoto as PhotoIcon, IconPlus as PlusIcon } from '@tabler/icons-react'
+import { Field } from '../field'
 import { MediaPicker } from '../media-picker'
 import { Pane } from '../pane'
 import { Panel } from '../panel'
@@ -44,6 +46,26 @@ export function HtmlBlockPanel({
               onChange={(e) => onHtmlChange(e.target.value)}
               rows={8}
             />
+          </Pane.Group>
+          <Pane.Separator />
+          <Pane.Group>
+            <Pane.GroupHeader>
+              <Pane.GroupLabel>Options</Pane.GroupLabel>
+            </Pane.GroupHeader>
+            <Field.Root>
+              <Field.Label>Full Width</Field.Label>
+              <Field.Control>
+                <SegmentedControl.Root
+                  value={block.properties.fullWidth ?? false}
+                  onValueChange={(value: boolean) =>
+                    onBlockUpdate({ properties: { ...block.properties, fullWidth: value } })
+                  }
+                >
+                  <SegmentedControl.Segment value={false}>No</SegmentedControl.Segment>
+                  <SegmentedControl.Segment value={true}>Yes</SegmentedControl.Segment>
+                </SegmentedControl.Root>
+              </Field.Control>
+            </Field.Root>
           </Pane.Group>
           <Pane.Separator />
           <Pane.Group>

@@ -124,7 +124,7 @@ export namespace Answer {
           if (entry.question.type === 'text_input') {
             return [{ text: String(entry.value ?? '') }]
           }
-          if (entry.question.type === 'dropdown') {
+          if (entry.question.type === 'dropdown' || entry.question.type === 'binary_choice') {
             return [{ optionId: entry.value as string }]
           }
           if (entry.question.type === 'multiple_choice' || entry.question.type === 'picture_choice') {
