@@ -27,7 +27,7 @@ export const Route = createRootRouteWithContext<{
     ],
     links: [
       { rel: 'stylesheet', href: styles },
-      ...(!matches.some((m) => ['/f/$funnelId', '/r/$'].includes(m.routeId as string))
+      ...(!matches.some((m) => ['/(funnel)/f/$funnelId', '/(funnel)/r/$'].includes(m.routeId as string))
         ? [{ rel: 'icon', type: 'image/svg+xml', href: '/favicon.svg' }]
         : []),
     ],
