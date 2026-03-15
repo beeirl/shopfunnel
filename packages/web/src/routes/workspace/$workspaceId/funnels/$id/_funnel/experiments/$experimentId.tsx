@@ -1,15 +1,23 @@
 import { DataGrid } from '@/components/data-grid'
-import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
+import { Dialog } from '@/components/ui/dialog'
 import { Spinner } from '@/components/ui/spinner'
 import { withActor } from '@/context/auth.withActor'
 import { getSessionQueryOptions } from '@/routes/workspace/$workspaceId/-common'
 import { Heading } from '@/routes/workspace/$workspaceId/_dashboard/-components/heading'
+import { listVariantsQueryOptions } from '@/routes/workspace/$workspaceId/funnels/$id/-common'
+import { TrafficSplitInput } from '@/routes/workspace/$workspaceId/funnels/$id/_funnel/experiments/-traffic-split-input'
 import { Funnel } from '@shopfunnel/core/funnel/index'
 import { Identifier } from '@shopfunnel/core/identifier'
+import {
+  IconArrowsSplit as ArrowsSplitIcon,
+  IconPlayerPlayFilled as PlayerPlayFilledIcon,
+  IconPlayerStopFilled as PlayerStopFilledIcon,
+} from '@tabler/icons-react'
 import { queryOptions, useMutation, useQueryClient, useSuspenseQuery } from '@tanstack/react-query'
 import { createFileRoute, redirect } from '@tanstack/react-router'
 import { createServerFn } from '@tanstack/react-start'
+import * as React from 'react'
 import { z } from 'zod'
 
 const getExperiment = createServerFn()
@@ -70,6 +78,34 @@ const selectWinnerFn = createServerFn({ method: 'POST' })
     )
   })
 
+const updateTrafficSplitFn = createServerFn({ method: 'POST' })
+  .inputValidator(
+    z.object({
+      workspaceId: Identifier.schema('workspace'),
+      funnelId: Identifier.schema('funnel'),
+      experimentId: Identifier.schema('funnel_experiment'),
+      name: z.string().min(1).max(255),
+      variants: z.array(
+        z.object({
+          funnelVariantId: z.string(),
+          weight: z.number().int().min(0).max(100),
+        }),
+      ),
+    }),
+  )
+  .handler(({ data }) => {
+    return withActor(
+      () =>
+        Funnel.upsertExperiment({
+          funnelId: data.funnelId,
+          experimentId: data.experimentId,
+          name: data.name,
+          variants: data.variants,
+        }),
+      data.workspaceId,
+    )
+  })
+
 export const Route = createFileRoute('/workspace/$workspaceId/funnels/$id/_funnel/experiments/$experimentId')({
   component: RouteComponent,
   beforeLoad: async ({ context, params }) => {
@@ -79,27 +115,16 @@ export const Route = createFileRoute('/workspace/$workspaceId/funnels/$id/_funne
     }
   },
   loader: async ({ context, params }) => {
-    await context.queryClient.ensureQueryData(
-      getExperimentQueryOptions({ workspaceId: params.workspaceId, experimentId: params.experimentId }),
-    )
+    await Promise.all([
+      context.queryClient.ensureQueryData(
+        getExperimentQueryOptions({ workspaceId: params.workspaceId, experimentId: params.experimentId }),
+      ),
+      context.queryClient.ensureQueryData(
+        listVariantsQueryOptions({ workspaceId: params.workspaceId, funnelId: params.id }),
+      ),
+    ])
   },
 })
-
-function StatusBadge({ status }: { status: string }) {
-  switch (status) {
-    case 'running':
-      return (
-        <Badge className="border-transparent bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400">
-          Running
-        </Badge>
-      )
-    case 'completed':
-      return <Badge variant="secondary">Completed</Badge>
-    case 'draft':
-    default:
-      return <Badge variant="outline">Draft</Badge>
-  }
-}
 
 function RouteComponent() {
   const params = Route.useParams()
@@ -157,9 +182,7 @@ function RouteComponent() {
     },
   })
 
-  const isRunning = experiment.status === 'running'
-  const isCompleted = experiment.status === 'completed'
-  const isDraft = experiment.status === 'draft'
+  const [editDialogOpen, setEditDialogOpen] = React.useState(false)
 
   return (
     <div className="p-6 sm:pt-10">
@@ -167,27 +190,30 @@ function RouteComponent() {
         <Heading.Root>
           <Heading.Content>
             <Heading.Title>{experiment.name}</Heading.Title>
-            <div className="mt-1">
-              <StatusBadge status={experiment.status} />
-            </div>
           </Heading.Content>
           <Heading.Actions>
-            {isDraft && (
-              <Button onClick={() => startMutation.mutate()} disabled={startMutation.isPending}>
-                {startMutation.isPending && <Spinner />}
+            {experiment.status !== 'ended' && (
+              <Button size="lg" variant="outline" onClick={() => setEditDialogOpen(true)}>
+                <ArrowsSplitIcon />
+                Edit traffic split
+              </Button>
+            )}
+            {experiment.status === 'draft' && (
+              <Button size="lg" onClick={() => startMutation.mutate()} disabled={startMutation.isPending}>
+                {startMutation.isPending ? <Spinner /> : <PlayerPlayFilledIcon />}
                 Start
               </Button>
             )}
-            {isRunning && (
-              <Button variant="outline" onClick={() => endMutation.mutate()} disabled={endMutation.isPending}>
-                {endMutation.isPending && <Spinner />}
+            {experiment.status === 'started' && (
+              <Button size="lg" variant="outline" onClick={() => endMutation.mutate()} disabled={endMutation.isPending}>
+                {endMutation.isPending ? <Spinner /> : <PlayerStopFilledIcon />}
                 Stop
               </Button>
             )}
           </Heading.Actions>
         </Heading.Root>
 
-        <DataGrid.Root className="grid-cols-[1fr_auto_auto]">
+        <DataGrid.Root className="grid-cols-[auto_auto_auto]">
           <DataGrid.Header>
             <DataGrid.Head>Variant</DataGrid.Head>
             <DataGrid.Head>Traffic split</DataGrid.Head>
@@ -203,7 +229,7 @@ function RouteComponent() {
                   <span className="text-sm text-muted-foreground">{variant.weight}%</span>
                 </DataGrid.Cell>
                 <DataGrid.Cell>
-                  {isRunning && (
+                  {experiment.status === 'started' && (
                     <Button
                       variant="outline"
                       size="sm"
@@ -221,7 +247,81 @@ function RouteComponent() {
             ))}
           </DataGrid.Body>
         </DataGrid.Root>
+
+        <EditTrafficSplitDialog open={editDialogOpen} onOpenChange={setEditDialogOpen} experiment={experiment} />
       </div>
     </div>
+  )
+}
+
+function EditTrafficSplitDialog({
+  open,
+  onOpenChange,
+  experiment,
+}: {
+  open: boolean
+  onOpenChange: (open: boolean) => void
+  experiment: { id: string; funnelId: string; name: string; variants: { funnelVariantId: string; weight: number }[] }
+}) {
+  const params = Route.useParams()
+  const queryClient = useQueryClient()
+
+  const variantsQuery = useSuspenseQuery(
+    listVariantsQueryOptions({ workspaceId: params.workspaceId, funnelId: params.id }),
+  )
+  const variants = variantsQuery.data
+
+  const [weights, setWeights] = React.useState(
+    experiment.variants.map((v) => ({ funnelVariantId: v.funnelVariantId, weight: v.weight })),
+  )
+
+  const mutation = useMutation({
+    mutationFn: () =>
+      updateTrafficSplitFn({
+        data: {
+          workspaceId: params.workspaceId,
+          funnelId: experiment.funnelId,
+          experimentId: experiment.id,
+          name: experiment.name,
+          variants: weights,
+        },
+      }),
+    onSuccess: () => {
+      queryClient.invalidateQueries(
+        getExperimentQueryOptions({ workspaceId: params.workspaceId, experimentId: params.experimentId }),
+      )
+      onOpenChange(false)
+    },
+  })
+
+  const totalWeight = weights.reduce((sum, w) => sum + w.weight, 0)
+  const isValid = weights.length >= 2 && totalWeight === 100
+
+  const handleOpenChange = (nextOpen: boolean) => {
+    if (nextOpen) {
+      setWeights(experiment.variants.map((v) => ({ funnelVariantId: v.funnelVariantId, weight: v.weight })))
+    }
+    onOpenChange(nextOpen)
+  }
+
+  return (
+    <Dialog.Root open={open} onOpenChange={handleOpenChange}>
+      <Dialog.Content className="sm:max-w-md">
+        <Dialog.Header>
+          <Dialog.Title>Edit traffic split</Dialog.Title>
+          <Dialog.Description>Adjust the traffic weight for each variant. Weights must sum to 100%.</Dialog.Description>
+        </Dialog.Header>
+
+        <TrafficSplitInput variants={variants} weights={weights} onWeightsChange={setWeights} />
+
+        <Dialog.Footer>
+          <Dialog.Close render={<Button variant="outline" />}>Cancel</Dialog.Close>
+          <Button onClick={() => mutation.mutate()} disabled={!isValid || mutation.isPending}>
+            {mutation.isPending && <Spinner />}
+            Save
+          </Button>
+        </Dialog.Footer>
+      </Dialog.Content>
+    </Dialog.Root>
   )
 }

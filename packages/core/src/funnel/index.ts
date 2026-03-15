@@ -831,9 +831,9 @@ export namespace Funnel {
         funnelId: experiment.funnelId,
         name: experiment.name,
         status: experiment.endedAt
-          ? ('completed' as const)
+          ? ('ended' as const)
           : experiment.startedAt
-            ? ('running' as const)
+            ? ('started' as const)
             : ('draft' as const),
         startedAt: experiment.startedAt,
         endedAt: experiment.endedAt,
@@ -865,7 +865,7 @@ export namespace Funnel {
         id: exp.id,
         funnelId: exp.funnelId,
         name: exp.name,
-        status: exp.endedAt ? 'completed' : exp.startedAt ? 'running' : 'draft',
+        status: exp.endedAt ? 'ended' : exp.startedAt ? 'started' : 'draft',
         startedAt: exp.startedAt,
         endedAt: exp.endedAt,
         createdAt: exp.createdAt,
@@ -912,7 +912,7 @@ export namespace Funnel {
             )
             .then((rows) => rows[0])
           if (!experiment) throw new Error('Experiment not found')
-          if (experiment.startedAt) throw new Error('Cannot modify a started experiment')
+          if (experiment.endedAt) throw new Error('Cannot modify a completed experiment')
 
           await tx
             .update(FunnelExperimentTable)

@@ -18,6 +18,7 @@ import {
   IconCheck as CheckIcon,
   IconChevronDown as ChevronDownIcon,
   IconChevronLeft as ChevronLeftIcon,
+  IconLink as LinkIcon,
   IconLoader2 as LoaderIcon,
   IconStarFilled as StarFilledIcon,
 } from '@tabler/icons-react'
@@ -40,7 +41,7 @@ import { z } from 'zod'
 import { getFunnelVariantDraftQueryOptions, listVariantsQueryOptions } from '../-common'
 import { createFunnelCollection } from './-common'
 import { FunnelProvider, useFunnel } from './-context'
-import { VariantCreateDialog } from './-variant-create-dialog'
+import { CreateVariantDialog } from './-create-variant-dialog'
 import { SchemaButton } from './edit/-components/schema-button'
 
 const publishFunnel = createServerFn({ method: 'POST' })
@@ -236,6 +237,13 @@ function PublishButton() {
     snackbar.add({ title: 'Link copied to clipboard', type: 'success' })
   }
 
+  const handleCopyVariantLink = () => {
+    const url = new URL(funnel.data.url)
+    url.searchParams.set('variantId', funnel.data.variantId)
+    navigator.clipboard.writeText(url.toString())
+    snackbar.add({ title: 'Link copied to clipboard', type: 'success' })
+  }
+
   return (
     <ButtonGroup.Root className="min-w-28">
       <Tooltip.Root disabled={funnel.data.hasChanges || isPublishing}>
@@ -267,7 +275,14 @@ function PublishButton() {
           }
         />
         <Menu.Content align="end">
-          <Menu.Item onClick={handleCopyLink}>Copy shareable link</Menu.Item>
+          <Menu.Item onClick={handleCopyLink}>
+            <LinkIcon />
+            Copy link
+          </Menu.Item>
+          <Menu.Item onClick={handleCopyVariantLink}>
+            <LinkIcon />
+            Copy variant link
+          </Menu.Item>
         </Menu.Content>
       </Menu.Root>
     </ButtonGroup.Root>
@@ -305,6 +320,8 @@ function PreviewButton() {
   )
 }
 
+const createVariantDialogHandle = CreateVariantDialog.createHandle()
+
 function VariantSwitcher() {
   const params = Route.useParams()
   const search = Route.useSearch()
@@ -317,7 +334,6 @@ function VariantSwitcher() {
   const activeVariant = variants.find((v) => v.id === search.variant)
 
   const [popoverOpen, setPopoverOpen] = React.useState(false)
-  const [variantCreateHandle] = React.useState(() => VariantCreateDialog.createHandle())
 
   const handleClosePopover = () => setPopoverOpen(false)
 
@@ -377,7 +393,7 @@ function VariantSwitcher() {
             </div>
             <div className="border-t border-border p-2">
               <Dialog.Trigger
-                handle={variantCreateHandle}
+                handle={createVariantDialogHandle}
                 render={<Button variant="outline" className="w-full" />}
                 onClick={() => setPopoverOpen(false)}
               >
@@ -387,7 +403,7 @@ function VariantSwitcher() {
           </div>
         </Popover.Content>
       </Popover.Root>
-      <VariantCreateDialog handle={variantCreateHandle} />
+      <CreateVariantDialog handle={createVariantDialogHandle} />
     </>
   )
 }

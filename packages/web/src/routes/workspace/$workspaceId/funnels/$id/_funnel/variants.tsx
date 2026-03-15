@@ -26,7 +26,7 @@ import { formatDistanceToNow } from 'date-fns'
 import * as React from 'react'
 import { z } from 'zod'
 import { listVariantsQueryOptions } from '../-common'
-import { VariantCreateDialog } from './-variant-create-dialog'
+import { CreateVariantDialog } from './-create-variant-dialog'
 
 const setMainVariantFn = createServerFn({ method: 'POST' })
   .inputValidator(
@@ -79,25 +79,25 @@ export const Route = createFileRoute('/workspace/$workspaceId/funnels/$id/_funne
   },
 })
 
-type VariantRenamePayload = { id: string; title: string }
-type VariantRenameHandle = ReturnType<typeof Dialog.createHandle<VariantRenamePayload>>
+type RenameVariantPayload = { id: string; title: string }
+type RenameVariantHandle = ReturnType<typeof Dialog.createHandle<RenameVariantPayload>>
 
-function VariantRenameDialog({ handle }: { handle: VariantRenameHandle }) {
+function RenameVariantDialog({ handle }: { handle: RenameVariantHandle }) {
   return (
     <Dialog.Root handle={handle}>
-      {({ payload }) => (payload ? <VariantRenameDialogContent handle={handle} payload={payload} /> : null)}
+      {({ payload }) => (payload ? <RenameVariantDialogContent handle={handle} payload={payload} /> : null)}
     </Dialog.Root>
   )
 }
 
-VariantRenameDialog.createHandle = Dialog.createHandle<VariantRenamePayload>
+RenameVariantDialog.createHandle = Dialog.createHandle<RenameVariantPayload>
 
-function VariantRenameDialogContent({
+function RenameVariantDialogContent({
   handle,
   payload,
 }: {
-  handle: VariantRenameHandle
-  payload: VariantRenamePayload
+  handle: RenameVariantHandle
+  payload: RenameVariantPayload
 }) {
   const params = Route.useParams()
   const queryClient = useQueryClient()
@@ -165,6 +165,9 @@ function VariantRenameDialogContent({
   )
 }
 
+const createVariantDialogHandle = CreateVariantDialog.createHandle()
+const renameVariantDialogHandle = RenameVariantDialog.createHandle()
+
 function RouteComponent() {
   const params = Route.useParams()
   const queryClient = useQueryClient()
@@ -188,9 +191,6 @@ function RouteComponent() {
     },
   })
 
-  const [variantCreateHandle] = React.useState(() => VariantCreateDialog.createHandle())
-  const [variantRenameHandle] = React.useState(() => VariantRenameDialog.createHandle())
-
   const handleCopyLink = (url: string) => {
     navigator.clipboard.writeText(url)
     snackbar.add({ title: 'Link copied to clipboard', type: 'success' })
@@ -204,7 +204,7 @@ function RouteComponent() {
             <Heading.Title>Variants</Heading.Title>
           </Heading.Content>
           <Heading.Actions>
-            <Dialog.Trigger handle={variantCreateHandle} render={<Button />}>
+            <Dialog.Trigger handle={createVariantDialogHandle} render={<Button />}>
               <PlusIcon />
               Create variant
             </Dialog.Trigger>
@@ -248,7 +248,7 @@ function RouteComponent() {
                     <Menu.Content align="end">
                       <Menu.Item onClick={() => handleCopyLink(variant.url)}>
                         <LinkIcon />
-                        Copy shareable link
+                        Copy link
                       </Menu.Item>
                       {!variant.isMain && (
                         <Menu.Item
@@ -260,7 +260,9 @@ function RouteComponent() {
                         </Menu.Item>
                       )}
                       <Menu.Item
-                        onClick={() => variantRenameHandle.openWithPayload({ id: variant.id, title: variant.title })}
+                        onClick={() =>
+                          renameVariantDialogHandle.openWithPayload({ id: variant.id, title: variant.title })
+                        }
                       >
                         <PencilIcon />
                         Rename
@@ -273,8 +275,8 @@ function RouteComponent() {
           </DataGrid.Body>
         </DataGrid.Root>
 
-        <VariantRenameDialog handle={variantRenameHandle} />
-        <VariantCreateDialog handle={variantCreateHandle} />
+        <RenameVariantDialog handle={renameVariantDialogHandle} />
+        <CreateVariantDialog handle={createVariantDialogHandle} />
       </div>
     </div>
   )

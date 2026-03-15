@@ -11,7 +11,7 @@ import { useFunnel } from './-context'
 
 type DialogHandle = ReturnType<typeof Dialog.createHandle>
 
-function VariantCreateDialog({ handle }: { handle: DialogHandle }) {
+function CreateVariantDialog({ handle }: { handle: DialogHandle }) {
   const { data: funnel } = useFunnel()
   const router = useRouter()
   const queryClient = useQueryClient()
@@ -88,6 +88,6 @@ function VariantCreateDialog({ handle }: { handle: DialogHandle }) {
   )
 }
 
-VariantCreateDialog.createHandle = Dialog.createHandle
+CreateVariantDialog.createHandle = Dialog.createHandle
 
-export { VariantCreateDialog }
+export { CreateVariantDialog }
