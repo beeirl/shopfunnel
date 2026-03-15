@@ -3,7 +3,6 @@ import { Button } from '@/components/ui/button'
 import { Dialog } from '@/components/ui/dialog'
 import { Spinner } from '@/components/ui/spinner'
 import { withActor } from '@/context/auth.withActor'
-import { getSessionQueryOptions } from '@/routes/workspace/$workspaceId/-common'
 import { Heading } from '@/routes/workspace/$workspaceId/_dashboard/-components/heading'
 import { listVariantsQueryOptions } from '@/routes/workspace/$workspaceId/funnels/$id/-common'
 import { TrafficSplitInput } from '@/routes/workspace/$workspaceId/funnels/$id/_funnel/experiments/-traffic-split-input'
@@ -11,31 +10,16 @@ import { Funnel } from '@shopfunnel/core/funnel/index'
 import { Identifier } from '@shopfunnel/core/identifier'
 import {
   IconArrowsSplit as ArrowsSplitIcon,
+  IconChartBar as ChartBarIcon,
   IconPlayerPlayFilled as PlayerPlayFilledIcon,
   IconPlayerStopFilled as PlayerStopFilledIcon,
 } from '@tabler/icons-react'
-import { queryOptions, useMutation, useQueryClient, useSuspenseQuery } from '@tanstack/react-query'
-import { createFileRoute, redirect } from '@tanstack/react-router'
+import { useMutation, useQueryClient, useSuspenseQuery } from '@tanstack/react-query'
+import { createFileRoute, Link } from '@tanstack/react-router'
 import { createServerFn } from '@tanstack/react-start'
 import * as React from 'react'
 import { z } from 'zod'
-
-const getExperiment = createServerFn()
-  .inputValidator(
-    z.object({
-      workspaceId: Identifier.schema('workspace'),
-      experimentId: Identifier.schema('funnel_experiment'),
-    }),
-  )
-  .handler(({ data }) => {
-    return withActor(() => Funnel.getExperiment(data.experimentId), data.workspaceId)
-  })
-
-const getExperimentQueryOptions = (input: { workspaceId: string; experimentId: string }) =>
-  queryOptions({
-    queryKey: ['experiment', input.workspaceId, input.experimentId],
-    queryFn: () => getExperiment({ data: input }),
-  })
+import { getExperimentQueryOptions } from './-common'
 
 const startExperimentFn = createServerFn({ method: 'POST' })
   .inputValidator(
@@ -106,24 +90,8 @@ const updateTrafficSplitFn = createServerFn({ method: 'POST' })
     )
   })
 
-export const Route = createFileRoute('/workspace/$workspaceId/funnels/$id/_funnel/experiments/$experimentId')({
+export const Route = createFileRoute('/workspace/$workspaceId/funnels/$id/_funnel/experiments/$experimentId/')({
   component: RouteComponent,
-  beforeLoad: async ({ context, params }) => {
-    const session = await context.queryClient.ensureQueryData(getSessionQueryOptions(params.workspaceId))
-    if (!session.isAdmin) {
-      throw redirect({ to: '/workspace/$workspaceId/funnels/$id/responses', params })
-    }
-  },
-  loader: async ({ context, params }) => {
-    await Promise.all([
-      context.queryClient.ensureQueryData(
-        getExperimentQueryOptions({ workspaceId: params.workspaceId, experimentId: params.experimentId }),
-      ),
-      context.queryClient.ensureQueryData(
-        listVariantsQueryOptions({ workspaceId: params.workspaceId, funnelId: params.id }),
-      ),
-    ])
-  },
 })
 
 function RouteComponent() {
@@ -192,6 +160,10 @@ function RouteComponent() {
             <Heading.Title>{experiment.name}</Heading.Title>
           </Heading.Content>
           <Heading.Actions>
+            <Button size="lg" variant="outline" render={<Link from={Route.fullPath} to="./analytics" />}>
+              <ChartBarIcon />
+              Analytics
+            </Button>
             {experiment.status !== 'ended' && (
               <Button size="lg" variant="outline" onClick={() => setEditDialogOpen(true)}>
                 <ArrowsSplitIcon />

@@ -36,19 +36,4 @@ SQL >
         AND date <= parseDateTimeBestEffort({{ String(end_date) }})
         {% end %}
 
-NODE endpoint_node
-SQL >
-    SELECT
-        total_visitors,
-        total_starts,
-        total_completions,
-        total_orders,
-        total_revenue,
-        if(total_visitors > 0, round(total_starts / total_visitors * 100, 1), 0) AS start_rate,
-        if(total_visitors > 0, round(total_completions / total_visitors * 100, 1), 0) AS completion_rate,
-        if(total_visitors > 0, round(total_orders / total_visitors * 100, 1), 0) AS conversion_rate,
-        if(total_visitors > 0, round(total_revenue / total_visitors, 2), 0) AS revenue_per_visitor,
-        if(total_orders > 0, round(total_revenue / total_orders, 2), 0) AS avg_order_value
-    FROM analytics_kpis_node
-
 TYPE endpoint

@@ -1,7 +1,8 @@
 DESCRIPTION >
-    Per-funnel analytics KPIs: returns one row per funnel with computed metrics.
+    Per-funnel, per-variant analytics KPIs: returns one row per funnel+variant with raw metrics.
     When funnel_id is provided, filters to that single funnel.
     When funnel_variant_id is provided, filters to that variant.
+    When funnel_experiment_id is provided, filters to that experiment.
     Supports date filtering.
 
 TOKEN api READ
@@ -11,6 +12,7 @@ SQL >
     %
     SELECT
         funnel_id,
+        funnel_variant_id,
         uniqMerge(visitors) AS total_visitors,
         uniqMerge(starts) AS total_starts,
         uniqMerge(completions) AS total_completions,
@@ -36,22 +38,6 @@ SQL >
         {% if defined(end_date) %}
         AND date <= parseDateTimeBestEffort({{ String(end_date) }})
         {% end %}
-    GROUP BY funnel_id
-
-NODE endpoint_node
-SQL >
-    SELECT
-        funnel_id,
-        total_visitors,
-        total_starts,
-        total_completions,
-        total_orders,
-        total_revenue,
-        if(total_visitors > 0, round(total_starts / total_visitors * 100, 1), 0) AS start_rate,
-        if(total_visitors > 0, round(total_completions / total_visitors * 100, 1), 0) AS completion_rate,
-        if(total_visitors > 0, round(total_orders / total_visitors * 100, 1), 0) AS conversion_rate,
-        if(total_visitors > 0, round(total_revenue / total_visitors, 2), 0) AS revenue_per_visitor,
-        if(total_orders > 0, round(total_revenue / total_orders, 2), 0) AS avg_order_value
-    FROM analytics_funnel_kpis_node
+    GROUP BY funnel_id, funnel_variant_id
 
 TYPE endpoint

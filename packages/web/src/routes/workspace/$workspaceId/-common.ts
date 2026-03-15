@@ -281,13 +281,15 @@ export function formatPercentage(value: number): string {
   return `${formatted}%`
 }
 
-type FunnelKpis = {
-  funnel_id: string
+type AnalyticsKpiTotals = {
   total_visitors: number
   total_starts: number
   total_completions: number
   total_orders: number
   total_revenue: number
+}
+
+type AnalyticsKpiDerived = {
   start_rate: number
   completion_rate: number
   conversion_rate: number
@@ -295,65 +297,138 @@ type FunnelKpis = {
   avg_order_value: number
 }
 
-const getAnalyticsFunnelKpis = createServerFn()
+export type AnalyticsKpiRow = AnalyticsKpiTotals & AnalyticsKpiDerived & Record<string, unknown>
+export type AnalyticsTimeseriesRow = {
+  date: string
+  visitors: number
+} & Record<string, unknown>
+
+function serializeAnalyticsKpis<T extends AnalyticsKpiTotals & Record<string, unknown>>(
+  row: T,
+): T & AnalyticsKpiDerived {
+  const v = row.total_visitors
+  const o = row.total_orders
+  return {
+    ...row,
+    start_rate: v > 0 ? Math.round((row.total_starts / v) * 1000) / 10 : 0,
+    completion_rate: v > 0 ? Math.round((row.total_completions / v) * 1000) / 10 : 0,
+    conversion_rate: v > 0 ? Math.round((row.total_orders / v) * 1000) / 10 : 0,
+    revenue_per_visitor: v > 0 ? Math.round((row.total_revenue / v) * 100) / 100 : 0,
+    avg_order_value: o > 0 ? Math.round((row.total_revenue / o) * 100) / 100 : 0,
+  }
+}
+
+const getAnalyticsKpis = createServerFn()
   .inputValidator(
     z.object({
       workspaceId: z.string(),
+      startDate: z.string(),
+      endDate: z.string(),
       funnelId: z.string().optional(),
       funnelVariantId: z.string().optional(),
-      filter: z.object({
-        startDate: z.string(),
-        endDate: z.string(),
-      }),
+      funnelExperimentId: z.string().optional(),
     }),
   )
   .handler(async ({ data }) => {
     const token = Resource.TINYBIRD_TOKEN.value
     const params = new URLSearchParams({
       workspace_id: data.workspaceId,
-      start_date: data.filter.startDate,
-      end_date: data.filter.endDate,
+      start_date: data.startDate,
+      end_date: data.endDate,
     })
     if (data.funnelId) params.set('funnel_id', data.funnelId)
     if (data.funnelVariantId) params.set('funnel_variant_id', data.funnelVariantId)
+    if (data.funnelExperimentId) params.set('funnel_experiment_id', data.funnelExperimentId)
+
+    const response = await fetch(`https://api.us-east.aws.tinybird.co/v0/pipes/analytics_kpis.json?${params}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+    const json: any = await response.json()
+    const raw = json?.data?.[0] ?? null
+    return raw ? serializeAnalyticsKpis(raw) : null
+  })
+
+export const getAnalyticsKpisQueryOptions = (input: {
+  workspaceId: string
+  funnelId?: string
+  funnelVariantId?: string
+  funnelExperimentId?: string
+  startDate: string
+  endDate: string
+}) =>
+  queryOptions<AnalyticsKpiRow | null>({
+    queryKey: [
+      'analytics-kpis',
+      input.workspaceId,
+      input.funnelId,
+      input.funnelVariantId,
+      input.funnelExperimentId,
+      input.startDate,
+      input.endDate,
+    ],
+    queryFn: () => getAnalyticsKpis({ data: input }),
+  })
+
+const getAnalyticsFunnelKpis = createServerFn()
+  .inputValidator(
+    z.object({
+      workspaceId: z.string(),
+      startDate: z.string(),
+      endDate: z.string(),
+      funnelId: z.string().optional(),
+      funnelVariantId: z.string().optional(),
+      funnelExperimentId: z.string().optional(),
+    }),
+  )
+  .handler(async ({ data }) => {
+    const token = Resource.TINYBIRD_TOKEN.value
+    const params = new URLSearchParams({
+      workspace_id: data.workspaceId,
+      start_date: data.startDate,
+      end_date: data.endDate,
+    })
+    if (data.funnelId) params.set('funnel_id', data.funnelId)
+    if (data.funnelVariantId) params.set('funnel_variant_id', data.funnelVariantId)
+    if (data.funnelExperimentId) params.set('funnel_experiment_id', data.funnelExperimentId)
 
     const response = await fetch(`https://api.us-east.aws.tinybird.co/v0/pipes/analytics_funnel_kpis.json?${params}`, {
       headers: { Authorization: `Bearer ${token}` },
     })
-    const json = (await response.json()) as { data: FunnelKpis[] }
-    return json.data ?? []
+    const json: any = await response.json()
+    const rows = Array.isArray(json?.data) ? json.data : []
+    return rows.map(serializeAnalyticsKpis)
   })
 
-export const getAnalyticsFunnelKpisQueryOptions = (
-  workspaceId: string,
-  funnelId: string | undefined,
-  filter: { startDate: string; endDate: string },
-  funnelVariantId?: string,
-) =>
-  queryOptions({
-    queryKey: ['analytics-funnel-kpis', workspaceId, funnelId, funnelVariantId, filter.startDate, filter.endDate],
-    queryFn: () => getAnalyticsFunnelKpis({ data: { workspaceId, funnelId, funnelVariantId, filter } }),
+export const getAnalyticsFunnelKpisQueryOptions = (input: {
+  workspaceId: string
+  funnelId?: string
+  funnelVariantId?: string
+  funnelExperimentId?: string
+  startDate: string
+  endDate: string
+}) =>
+  queryOptions<AnalyticsKpiRow[]>({
+    queryKey: [
+      'analytics-funnel-kpis',
+      input.workspaceId,
+      input.funnelId,
+      input.funnelVariantId,
+      input.funnelExperimentId,
+      input.startDate,
+      input.endDate,
+    ],
+    queryFn: () => getAnalyticsFunnelKpis({ data: input }),
   })
-
-type TimeseriesPoint = {
-  date: string
-  visitors: number
-  starts: number
-  completions: number
-  orders: number
-  total_revenue: number
-}
 
 const getAnalyticsTimeseries = createServerFn()
   .inputValidator(
     z.object({
       workspaceId: z.string(),
+      startDate: z.string(),
+      endDate: z.string(),
       funnelId: z.string().optional(),
       funnelVariantId: z.string().optional(),
-      filter: z.object({
-        startDate: z.string(),
-        endDate: z.string(),
-      }),
+      funnelExperimentId: z.string().optional(),
       granularity: z.enum(['hour', 'day']),
     }),
   )
@@ -361,36 +436,40 @@ const getAnalyticsTimeseries = createServerFn()
     const token = Resource.TINYBIRD_TOKEN.value
     const params = new URLSearchParams({
       workspace_id: data.workspaceId,
-      start_date: data.filter.startDate,
-      end_date: data.filter.endDate,
+      start_date: data.startDate,
+      end_date: data.endDate,
       granularity: data.granularity,
     })
     if (data.funnelId) params.set('funnel_id', data.funnelId)
     if (data.funnelVariantId) params.set('funnel_variant_id', data.funnelVariantId)
+    if (data.funnelExperimentId) params.set('funnel_experiment_id', data.funnelExperimentId)
 
     const response = await fetch(`https://api.us-east.aws.tinybird.co/v0/pipes/analytics_timeseries.json?${params}`, {
       headers: { Authorization: `Bearer ${token}` },
     })
-    const json = (await response.json()) as { data: TimeseriesPoint[] }
-    return json.data ?? []
+    const json: any = await response.json()
+    return Array.isArray(json?.data) ? json.data : []
   })
 
-export const getAnalyticsTimeseriesQueryOptions = (
-  workspaceId: string,
-  funnelId: string | undefined,
-  filter: { startDate: string; endDate: string },
-  granularity: 'hour' | 'day',
-  funnelVariantId?: string,
-) =>
-  queryOptions({
+export const getAnalyticsTimeseriesQueryOptions = (input: {
+  workspaceId: string
+  funnelId?: string
+  funnelVariantId?: string
+  funnelExperimentId?: string
+  startDate: string
+  endDate: string
+  granularity: 'hour' | 'day'
+}) =>
+  queryOptions<AnalyticsTimeseriesRow[]>({
     queryKey: [
       'analytics-timeseries',
-      workspaceId,
-      funnelId,
-      funnelVariantId,
-      filter.startDate,
-      filter.endDate,
-      granularity,
+      input.workspaceId,
+      input.funnelId,
+      input.funnelVariantId,
+      input.funnelExperimentId,
+      input.startDate,
+      input.endDate,
+      input.granularity,
     ],
-    queryFn: () => getAnalyticsTimeseries({ data: { workspaceId, funnelId, funnelVariantId, filter, granularity } }),
+    queryFn: () => getAnalyticsTimeseries({ data: input }),
   })

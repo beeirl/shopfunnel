@@ -8,11 +8,11 @@ import {
   formatNumber,
   formatPercentage,
   getAnalyticsFunnelKpisQueryOptions,
+  getAnalyticsKpisQueryOptions,
   getAnalyticsTimeseriesQueryOptions,
 } from '@/routes/workspace/$workspaceId/-common'
 import { Funnel } from '@shopfunnel/core/funnel/index'
 import { Identifier } from '@shopfunnel/core/identifier'
-import { Resource } from '@shopfunnel/resource'
 import { IconChartBar as ChartBarIcon } from '@tabler/icons-react'
 import { queryOptions, useSuspenseQuery } from '@tanstack/react-query'
 import { createFileRoute, Link, useNavigate } from '@tanstack/react-router'
@@ -117,50 +117,6 @@ function formatDateForChart(utcDateStr: string, granularity: 'hour' | 'day'): st
   return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
 }
 
-type AnalyticsKpis = {
-  total_visitors: number
-  total_starts: number
-  total_completions: number
-  total_orders: number
-  total_revenue: number
-  start_rate: number
-  completion_rate: number
-  conversion_rate: number
-  revenue_per_visitor: number
-  avg_order_value: number
-}
-
-const getAnalyticsKpis = createServerFn()
-  .inputValidator(
-    z.object({
-      workspaceId: z.string(),
-      filter: z.object({
-        startDate: z.string(),
-        endDate: z.string(),
-      }),
-    }),
-  )
-  .handler(async ({ data }) => {
-    const token = Resource.TINYBIRD_TOKEN.value
-    const params = new URLSearchParams({
-      workspace_id: data.workspaceId,
-      start_date: data.filter.startDate,
-      end_date: data.filter.endDate,
-    })
-
-    const response = await fetch(`https://api.us-east.aws.tinybird.co/v0/pipes/analytics_kpis.json?${params}`, {
-      headers: { Authorization: `Bearer ${token}` },
-    })
-    const json = (await response.json()) as { data: AnalyticsKpis[] }
-    return json.data?.[0] ?? null
-  })
-
-const getAnalyticsKpisQueryOptions = (workspaceId: string, filter: { startDate: string; endDate: string }) =>
-  queryOptions({
-    queryKey: ['analytics-kpis', workspaceId, filter.startDate, filter.endDate],
-    queryFn: () => getAnalyticsKpis({ data: { workspaceId, filter } }),
-  })
-
 const listFunnels = createServerFn()
   .inputValidator(Identifier.schema('workspace'))
   .handler(({ data: workspaceId }) => {
@@ -198,11 +154,13 @@ export const Route = createFileRoute('/workspace/$workspaceId/_dashboard/')({
     const granularity = computeGranularity(new Date(deps.startDate), new Date(deps.endDate))
 
     await Promise.all([
-      context.queryClient.ensureQueryData(getAnalyticsKpisQueryOptions(params.workspaceId, filter)),
+      context.queryClient.ensureQueryData(getAnalyticsKpisQueryOptions({ workspaceId: params.workspaceId, ...filter })),
       context.queryClient.ensureQueryData(
-        getAnalyticsTimeseriesQueryOptions(params.workspaceId, undefined, filter, granularity),
+        getAnalyticsTimeseriesQueryOptions({ workspaceId: params.workspaceId, ...filter, granularity }),
       ),
-      context.queryClient.ensureQueryData(getAnalyticsFunnelKpisQueryOptions(params.workspaceId, undefined, filter)),
+      context.queryClient.ensureQueryData(
+        getAnalyticsFunnelKpisQueryOptions({ workspaceId: params.workspaceId, ...filter }),
+      ),
       context.queryClient.ensureQueryData(listFunnelsQueryOptions(params.workspaceId)),
     ])
   },
@@ -246,11 +204,13 @@ function RouteComponent() {
     [navigate],
   )
 
-  const kpisQuery = useSuspenseQuery(getAnalyticsKpisQueryOptions(params.workspaceId, filter))
+  const kpisQuery = useSuspenseQuery(getAnalyticsKpisQueryOptions({ workspaceId: params.workspaceId, ...filter }))
   const timeseriesQuery = useSuspenseQuery(
-    getAnalyticsTimeseriesQueryOptions(params.workspaceId, undefined, filter, granularity),
+    getAnalyticsTimeseriesQueryOptions({ workspaceId: params.workspaceId, ...filter, granularity }),
   )
-  const funnelKpisQuery = useSuspenseQuery(getAnalyticsFunnelKpisQueryOptions(params.workspaceId, undefined, filter))
+  const funnelKpisQuery = useSuspenseQuery(
+    getAnalyticsFunnelKpisQueryOptions({ workspaceId: params.workspaceId, ...filter }),
+  )
   const funnelsQuery = useSuspenseQuery(listFunnelsQueryOptions(params.workspaceId))
 
   const kpis = kpisQuery.data
