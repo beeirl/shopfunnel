@@ -221,8 +221,8 @@ export function shouldAutoAdvance(blocks: BlockType[]): boolean {
     block.type === 'loader' ||
     block.type === 'dropdown' ||
     block.type === 'binary_choice' ||
-    (block.type === 'multiple_choice' && !block.properties.multiple) ||
-    (block.type === 'picture_choice' && !block.properties.multiple)
+    (block.type === 'multiple_choice' && !block.properties.multiple && block.validations.required) ||
+    (block.type === 'picture_choice' && !block.properties.multiple && block.validations.required)
 
   const inputBlockCount = blocks.filter(isInputBlock).length
   if (inputBlockCount > 1) return false
