@@ -1,4 +1,4 @@
-import { shouldAutoAdvance } from '@/components/funnel'
+import { shouldShowNextButton } from '@/components/funnel'
 import { Input } from '@/components/ui/input'
 import { SegmentedControl } from '@/components/ui/segmented-control'
 import { Select } from '@/components/ui/select'
@@ -27,7 +27,7 @@ export function PagePanel() {
 
   const page = selectedPage
   const pageIndex = funnel.pages.findIndex((p) => p.id === page.id)
-  const showButtonText = !shouldAutoAdvance(page.blocks)
+  const showButtonText = shouldShowNextButton(page.blocks)
 
   const handlePageUpdate = (updates: Partial<Page>) => {
     // If name is being updated, also update input block names

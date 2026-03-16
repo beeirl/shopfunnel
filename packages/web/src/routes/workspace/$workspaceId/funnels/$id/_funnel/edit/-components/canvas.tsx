@@ -1,6 +1,6 @@
 import { Block, getBlockInfo } from '@/components/block'
 import { BinaryChoiceBlock } from '@/components/blocks/binary-choice'
-import { FunnelStyle, shouldAutoAdvance } from '@/components/funnel'
+import { FunnelStyle, shouldShowNextButton } from '@/components/funnel'
 import { NextButton } from '@/components/next-button'
 import { Button } from '@/components/ui/button'
 import { ButtonGroup } from '@/components/ui/button-group'
@@ -116,7 +116,7 @@ function PageNode({ data }: { data: PageNodeData }) {
 
   const contentBlocks = page.blocks.filter((block) => block.type !== 'binary_choice')
   const binaryChoiceBlock = page.blocks.find((block) => block.type === 'binary_choice')
-  const showNextButton = page.blocks.length > 0 && !shouldAutoAdvance(page.blocks)
+  const showNextButton = page.blocks.length > 0 && shouldShowNextButton(page.blocks)
 
   const handleBlockSelect = (blockId: string) => {
     onBlockSelect(blockId, page.id)

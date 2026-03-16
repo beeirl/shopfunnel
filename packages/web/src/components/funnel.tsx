@@ -209,7 +209,7 @@ function resolveBlocks(blocks: BlockType[], values: Values, variables: Variables
   return blocks.map((block) => resolveValue(block) as BlockType)
 }
 
-export function shouldAutoAdvance(blocks: BlockType[]): boolean {
+function shouldAutoAdvance(blocks: BlockType[]): boolean {
   const isInputBlock = (block: BlockType) =>
     block.type === 'text_input' ||
     block.type === 'multiple_choice' ||
@@ -221,13 +221,24 @@ export function shouldAutoAdvance(blocks: BlockType[]): boolean {
     block.type === 'loader' ||
     block.type === 'dropdown' ||
     block.type === 'binary_choice' ||
-    (block.type === 'multiple_choice' && !block.properties.multiple && block.validations.required) ||
-    (block.type === 'picture_choice' && !block.properties.multiple && block.validations.required)
+    (block.type === 'multiple_choice' && !block.properties.multiple) ||
+    (block.type === 'picture_choice' && !block.properties.multiple)
 
   const inputBlockCount = blocks.filter(isInputBlock).length
   if (inputBlockCount > 1) return false
 
   return blocks.some(advancesAutomatically)
+}
+
+export function shouldShowNextButton(blocks: BlockType[]): boolean {
+  if (!shouldAutoAdvance(blocks)) return true
+
+  return blocks.some(
+    (block) =>
+      (block.type === 'multiple_choice' || block.type === 'picture_choice') &&
+      !block.properties.multiple &&
+      !block.validations.required,
+  )
 }
 
 export function FunnelStyle({ theme }: { theme: ThemeType }) {
@@ -289,7 +300,7 @@ export function Funnel({ funnel, mode = 'live', onPageChange, onPageComplete, on
   )
 
   const showLegalDisclaimer = currentPageIndex === 0 && funnel.settings?.privacyUrl && funnel.settings?.termsUrl
-  const showNextButton = !shouldAutoAdvance(visibleBlocks)
+  const showNextButton = shouldShowNextButton(visibleBlocks)
   const hasStickyFooter = !!binaryChoiceBlock || showNextButton
 
   useEffect(() => {
