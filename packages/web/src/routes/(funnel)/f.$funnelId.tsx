@@ -72,9 +72,6 @@ const getFunnel = createServerFn()
     if (host !== new URL(url).host) throw notFound()
 
     const variantId = (() => {
-      const assignedVariantId = getCookie(cookieName)
-      if (assignedVariantId) return assignedVariantId
-
       const activeExperimentVariants = rows
         .filter(
           (r) => r.experimentVariantId !== null && r.experimentVariantWeight !== null && r.experimentVariantWeight > 0,
@@ -82,6 +79,12 @@ const getFunnel = createServerFn()
         .map((r) => ({ id: r.experimentVariantId!, weight: r.experimentVariantWeight! }))
 
       if (activeExperimentVariants.length > 0) {
+        // Only honor the cookie if it matches an active experiment variant
+        const assignedVariantId = getCookie(cookieName)
+        if (assignedVariantId && activeExperimentVariants.some((v) => v.id === assignedVariantId)) {
+          return assignedVariantId
+        }
+
         const totalWeight = activeExperimentVariants.reduce((sum, v) => sum + v.weight, 0)
         const rand = Math.random() * totalWeight
         let cumulative = 0
@@ -92,6 +95,8 @@ const getFunnel = createServerFn()
         return activeExperimentVariants[activeExperimentVariants.length - 1]!.id
       }
 
+      // No active experiment — clear any stale cookie and fall back to main variant
+      deleteCookie(cookieName)
       return funnel.mainVariantId
     })()
     if (!variantId) throw notFound()

@@ -168,7 +168,7 @@ export function PricingTable({ animate, mode }: { animate?: boolean; mode: 'crea
           interval: isYearly ? 'year' : 'month',
         },
       })
-      await queryClient.invalidateQueries({ queryKey: ['billing', params.workspaceId] })
+      await queryClient.invalidateQueries(getBillingQueryOptions(params.workspaceId))
       snackbar.add({ title: 'Plan upgraded successfully', type: 'success' })
       setUpgradeDialogOpen(false)
       navigate({ to: '/workspace/$workspaceId', params: { workspaceId: params.workspaceId } })
@@ -191,7 +191,7 @@ export function PricingTable({ animate, mode }: { animate?: boolean; mode: 'crea
           interval: isYearly ? 'year' : 'month',
         },
       })
-      await queryClient.invalidateQueries({ queryKey: ['billing', params.workspaceId] })
+      await queryClient.invalidateQueries(getBillingQueryOptions(params.workspaceId))
       snackbar.add({ title: 'Downgrade scheduled', type: 'success' })
       setDowngradeDialogOpen(false)
       navigate({ to: '/workspace/$workspaceId', params: { workspaceId: params.workspaceId } })

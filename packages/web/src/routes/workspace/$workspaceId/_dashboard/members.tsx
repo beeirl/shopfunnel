@@ -175,9 +175,7 @@ function MembersRoute() {
           <Heading.Title>Members</Heading.Title>
         </Heading.Content>
         <Heading.Actions>
-          <Button size="lg" onClick={() => setInviteDialogOpen(true)}>
-            Invite member
-          </Button>
+          <Button onClick={() => setInviteDialogOpen(true)}>Invite member</Button>
         </Heading.Actions>
       </Heading.Root>
 

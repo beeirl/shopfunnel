@@ -125,7 +125,7 @@ export function BillingDialog({ open, onOpenChange }: { open: boolean; onOpenCha
     setIsManagedAddonUpdating(true)
     try {
       await addAddon({ data: { workspaceId: params.workspaceId, addon: 'managed' } })
-      await queryClient.invalidateQueries({ queryKey: ['billing', params.workspaceId] })
+      await queryClient.invalidateQueries(getBillingQueryOptions(params.workspaceId))
       snackbar.add({ title: 'Managed service added', type: 'success' })
     } catch (error) {
       console.error('Failed to add managed addon:', error)
@@ -138,7 +138,7 @@ export function BillingDialog({ open, onOpenChange }: { open: boolean; onOpenCha
     setIsManagedAddonUpdating(true)
     try {
       await removeAddon({ data: { workspaceId: params.workspaceId, addon: 'managed' } })
-      await queryClient.invalidateQueries({ queryKey: ['billing', params.workspaceId] })
+      await queryClient.invalidateQueries(getBillingQueryOptions(params.workspaceId))
       snackbar.add({ title: 'Managed service removed', type: 'success' })
     } catch (error) {
       console.error('Failed to remove managed addon:', error)
@@ -151,7 +151,7 @@ export function BillingDialog({ open, onOpenChange }: { open: boolean; onOpenCha
     setIsCancellingDowngrade(true)
     try {
       await cancelDowngrade({ data: { workspaceId: params.workspaceId } })
-      await queryClient.invalidateQueries({ queryKey: ['billing', params.workspaceId] })
+      await queryClient.invalidateQueries(getBillingQueryOptions(params.workspaceId))
       snackbar.add({ title: 'Downgrade cancelled', type: 'success' })
     } catch (error) {
       console.error('Failed to cancel downgrade:', error)

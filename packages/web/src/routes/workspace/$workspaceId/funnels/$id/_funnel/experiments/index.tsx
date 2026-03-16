@@ -11,11 +11,12 @@ import { withActor } from '@/context/auth.withActor'
 import { getSessionQueryOptions } from '@/routes/workspace/$workspaceId/-common'
 import { Heading } from '@/routes/workspace/$workspaceId/_dashboard/-components/heading'
 import { listVariantsQueryOptions } from '@/routes/workspace/$workspaceId/funnels/$id/-common'
+import { listExperimentsQueryOptions } from '@/routes/workspace/$workspaceId/funnels/$id/_funnel/experiments/-common'
 import { TrafficSplitInput } from '@/routes/workspace/$workspaceId/funnels/$id/_funnel/experiments/-traffic-split-input'
 import { Funnel } from '@shopfunnel/core/funnel/index'
 import { Identifier } from '@shopfunnel/core/identifier'
 import { IconFlask as FlaskIcon, IconPlus as PlusIcon } from '@tabler/icons-react'
-import { queryOptions, useMutation, useQueryClient, useSuspenseQuery } from '@tanstack/react-query'
+import { useMutation, useQueryClient, useSuspenseQuery } from '@tanstack/react-query'
 import { createFileRoute, Link, redirect } from '@tanstack/react-router'
 import { createServerFn } from '@tanstack/react-start'
 import { formatDistanceToNow } from 'date-fns'
@@ -46,23 +47,6 @@ const createExperimentFn = createServerFn({ method: 'POST' })
         }),
       data.workspaceId,
     )
-  })
-
-const listExperiments = createServerFn()
-  .inputValidator(
-    z.object({
-      workspaceId: Identifier.schema('workspace'),
-      funnelId: Identifier.schema('funnel'),
-    }),
-  )
-  .handler(({ data }) => {
-    return withActor(() => Funnel.listExperiments(data.funnelId), data.workspaceId)
-  })
-
-const listExperimentsQueryOptions = (input: { workspaceId: string; funnelId: string }) =>
-  queryOptions({
-    queryKey: ['experiments', input.workspaceId, input.funnelId],
-    queryFn: () => listExperiments({ data: input }),
   })
 
 export const Route = createFileRoute('/workspace/$workspaceId/funnels/$id/_funnel/experiments/')({
@@ -123,7 +107,7 @@ function RouteComponent() {
             <Heading.Title>Experiments</Heading.Title>
           </Heading.Content>
           <Heading.Actions>
-            <Button size="lg" onClick={() => setDialogOpen(true)}>
+            <Button onClick={() => setDialogOpen(true)}>
               <PlusIcon />
               Create experiment
             </Button>

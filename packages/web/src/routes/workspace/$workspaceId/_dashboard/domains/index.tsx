@@ -162,9 +162,7 @@ function DomainsRoute() {
             <Heading.Title>Domains</Heading.Title>
           </Heading.Content>
           <Heading.Actions>
-            <Button size="lg" onClick={() => setDialogOpen(true)}>
-              Add a domain
-            </Button>
+            <Button onClick={() => setDialogOpen(true)}>Add a domain</Button>
           </Heading.Actions>
         </Heading.Root>
 

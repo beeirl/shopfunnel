@@ -217,7 +217,7 @@ function RouteComponent() {
         </Heading.Content>
         {isAdmin && (
           <Heading.Actions>
-            <Button size="lg" onClick={handleFunnelCreate} disabled={isCreating}>
+            <Button onClick={handleFunnelCreate} disabled={isCreating}>
               {isCreating && <LoaderIcon className="animate-spin" />}
               Create a Funnel
             </Button>

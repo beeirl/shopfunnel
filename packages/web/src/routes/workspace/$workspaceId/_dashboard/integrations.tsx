@@ -139,7 +139,7 @@ function IntegrationsRoute() {
         </Heading.Content>
         <Heading.Actions>
           <Dialog.Root open={addIntegrationDialogOpen} onOpenChange={setAddIntegrationDialogOpen}>
-            <Dialog.Trigger render={<Button size="lg" />}>Add a integration</Dialog.Trigger>
+            <Dialog.Trigger render={<Button />}>Add a integration</Dialog.Trigger>
             <Dialog.Content>
               <Dialog.Header>
                 <Dialog.Title>Add Integration</Dialog.Title>

@@ -229,16 +229,14 @@ function RouteComponent() {
                 </DataGrid.Cell>
                 <DataGrid.Cell hideOnMobile>
                   <span className="flex items-center gap-2">
-                    <span className="text-sm text-muted-foreground tabular-nums">{variant.trafficPercentage}%</span>
+                    <span className="text-sm tabular-nums">{variant.trafficPercentage}%</span>
                     {variant.trafficPercentage > 0 && (
                       <Badge className="shrink-0 border-transparent bg-green-100 text-xs text-green-950">Live</Badge>
                     )}
                   </span>
                 </DataGrid.Cell>
                 <DataGrid.Cell hideOnMobile>
-                  <span className="text-sm text-muted-foreground">
-                    {formatDistanceToNow(variant.updatedAt, { addSuffix: true })}
-                  </span>
+                  <span className="text-sm">{formatDistanceToNow(variant.updatedAt, { addSuffix: true })}</span>
                 </DataGrid.Cell>
                 <DataGrid.Cell>
                   <Menu.Root>

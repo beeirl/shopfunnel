@@ -75,6 +75,7 @@ export const FunnelExperimentTable = mysqlTable(
     ...workspaceColumns,
     ...timestampColumns,
     funnelId: id('funnel_id').notNull(),
+    winnerVariantId: id('winner_variant_id'),
     name: varchar('name', { length: 255 }).notNull(),
     startedAt: timestamp('started_at'),
     endedAt: timestamp('ended_at'),

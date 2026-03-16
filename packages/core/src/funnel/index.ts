@@ -842,6 +842,7 @@ export namespace Funnel {
           funnelVariantId: v.funnelVariantId,
           variantTitle: v.variantTitle,
           weight: v.weight,
+          isWinner: v.funnelVariantId === experiment.winnerVariantId,
         })),
       }
     })
@@ -1069,8 +1070,8 @@ export namespace Funnel {
       funnelVariantId: Identifier.schema('funnel_variant'),
     }),
     async (input) => {
-      const rows = await Database.use((tx) =>
-        tx
+      await Database.transaction(async (tx) => {
+        const rows = await tx
           .select({
             ...getTableColumns(FunnelExperimentTable),
             experimentVariantId: FunnelExperimentVariantTable.funnelVariantId,
@@ -1088,36 +1089,34 @@ export namespace Funnel {
               eq(FunnelExperimentTable.workspaceId, Actor.workspaceId()),
               eq(FunnelExperimentTable.id, input.experimentId),
             ),
-          ),
-      )
-      if (rows.length === 0) throw new Error('Experiment not found')
+          )
+        if (rows.length === 0) throw new Error('Experiment not found')
 
-      const experiment = rows[0]!
-      if (!experiment.startedAt) throw new Error('Experiment has not been started')
+        const experiment = rows[0]!
+        if (!experiment.startedAt) throw new Error('Experiment has not been started')
+        if (experiment.winnerVariantId) throw new Error('A winner has already been selected for this experiment')
 
-      const isValid = rows.some((r) => r.experimentVariantId === input.funnelVariantId)
-      if (!isValid) throw new Error('Selected variant is not part of this experiment')
+        const isValid = rows.some((r) => r.experimentVariantId === input.funnelVariantId)
+        if (!isValid) throw new Error('Selected variant is not part of this experiment')
 
-      if (!experiment.endedAt) {
-        await Database.use((tx) =>
-          tx
-            .update(FunnelExperimentTable)
-            .set({ endedAt: sql`NOW(3)` })
-            .where(
-              and(
-                eq(FunnelExperimentTable.workspaceId, Actor.workspaceId()),
-                eq(FunnelExperimentTable.id, input.experimentId),
-              ),
+        await tx
+          .update(FunnelExperimentTable)
+          .set({
+            winnerVariantId: input.funnelVariantId,
+            ...(!experiment.endedAt ? { endedAt: sql`NOW(3)` } : {}),
+          })
+          .where(
+            and(
+              eq(FunnelExperimentTable.workspaceId, Actor.workspaceId()),
+              eq(FunnelExperimentTable.id, input.experimentId),
             ),
-        )
-      }
+          )
 
-      await Database.use((tx) =>
-        tx
+        await tx
           .update(FunnelTable)
           .set({ mainVariantId: input.funnelVariantId })
-          .where(and(eq(FunnelTable.workspaceId, Actor.workspaceId()), eq(FunnelTable.id, experiment.funnelId))),
-      )
+          .where(and(eq(FunnelTable.workspaceId, Actor.workspaceId()), eq(FunnelTable.id, experiment.funnelId)))
+      })
     },
   )
 

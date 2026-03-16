@@ -5,6 +5,7 @@ import { Spinner } from '@/components/ui/spinner'
 import { withActor } from '@/context/auth.withActor'
 import { Heading } from '@/routes/workspace/$workspaceId/_dashboard/-components/heading'
 import { listVariantsQueryOptions } from '@/routes/workspace/$workspaceId/funnels/$id/-common'
+import { listExperimentsQueryOptions } from '@/routes/workspace/$workspaceId/funnels/$id/_funnel/experiments/-common'
 import { TrafficSplitInput } from '@/routes/workspace/$workspaceId/funnels/$id/_funnel/experiments/-traffic-split-input'
 import { Funnel } from '@shopfunnel/core/funnel/index'
 import { Identifier } from '@shopfunnel/core/identifier'
@@ -13,6 +14,7 @@ import {
   IconChartBar as ChartBarIcon,
   IconPlayerPlayFilled as PlayerPlayFilledIcon,
   IconPlayerStopFilled as PlayerStopFilledIcon,
+  IconTrophy as TrophyIcon,
 } from '@tabler/icons-react'
 import { useMutation, useQueryClient, useSuspenseQuery } from '@tanstack/react-query'
 import { createFileRoute, Link } from '@tanstack/react-router'
@@ -147,6 +149,10 @@ function RouteComponent() {
       queryClient.invalidateQueries(
         getExperimentQueryOptions({ workspaceId: params.workspaceId, experimentId: params.experimentId }),
       )
+      queryClient.invalidateQueries(
+        listExperimentsQueryOptions({ workspaceId: params.workspaceId, funnelId: params.id }),
+      )
+      queryClient.invalidateQueries(listVariantsQueryOptions({ workspaceId: params.workspaceId, funnelId: params.id }))
     },
   })
 
@@ -160,24 +166,24 @@ function RouteComponent() {
             <Heading.Title>{experiment.name}</Heading.Title>
           </Heading.Content>
           <Heading.Actions>
-            <Button size="lg" variant="outline" render={<Link from={Route.fullPath} to="./analytics" />}>
+            <Button variant="outline" render={<Link from={Route.fullPath} to="./analytics" />}>
               <ChartBarIcon />
               Analytics
             </Button>
             {experiment.status !== 'ended' && (
-              <Button size="lg" variant="outline" onClick={() => setEditDialogOpen(true)}>
+              <Button variant="outline" onClick={() => setEditDialogOpen(true)}>
                 <ArrowsSplitIcon />
                 Edit traffic split
               </Button>
             )}
             {experiment.status === 'draft' && (
-              <Button size="lg" onClick={() => startMutation.mutate()} disabled={startMutation.isPending}>
+              <Button onClick={() => startMutation.mutate()} disabled={startMutation.isPending}>
                 {startMutation.isPending ? <Spinner /> : <PlayerPlayFilledIcon />}
                 Start
               </Button>
             )}
             {experiment.status === 'started' && (
-              <Button size="lg" variant="outline" onClick={() => endMutation.mutate()} disabled={endMutation.isPending}>
+              <Button variant="outline" onClick={() => endMutation.mutate()} disabled={endMutation.isPending}>
                 {endMutation.isPending ? <Spinner /> : <PlayerStopFilledIcon />}
                 Stop
               </Button>
@@ -195,7 +201,10 @@ function RouteComponent() {
             {experiment.variants.map((variant) => (
               <DataGrid.Row key={variant.funnelVariantId}>
                 <DataGrid.Cell>
-                  <span className="truncate text-sm font-medium">{variant.variantTitle}</span>
+                  <div className="flex items-center gap-2">
+                    <span className="truncate text-sm font-medium">{variant.variantTitle}</span>
+                    {variant.isWinner && <TrophyIcon className="size-4 text-amber-600" />}
+                  </div>
                 </DataGrid.Cell>
                 <DataGrid.Cell>
                   <span className="text-sm text-muted-foreground">{variant.weight}%</span>
