@@ -1,4 +1,4 @@
-import { boolean, index, int, json, mysqlTable, primaryKey, unique, uniqueIndex, varchar } from 'drizzle-orm/mysql-core'
+import { index, int, json, mysqlTable, primaryKey, unique, uniqueIndex, varchar } from 'drizzle-orm/mysql-core'
 import { id, timestamp, timestampColumns, workspaceColumns, workspaceIndexes } from '../database/types'
 import type { Page, Rule, Settings, Theme, Variables } from './types'
 
@@ -27,7 +27,6 @@ export const FunnelVariantTable = mysqlTable(
     ...timestampColumns,
     funnelId: id('funnel_id').notNull(),
     title: varchar('title', { length: 255 }).notNull(),
-    hasDraft: boolean('has_draft').notNull().default(false),
     publishedVersion: int('published_version'),
   },
   (table) => [...workspaceIndexes(table), index('funnel').on(table.workspaceId, table.funnelId)],
@@ -44,6 +43,7 @@ export const FunnelVariantDraftTable = mysqlTable(
     rules: json('rules').$type<Rule[]>().notNull(),
     variables: json('variables').$type<Variables>().notNull(),
     theme: json('theme').$type<Theme>().notNull(),
+    editedAt: timestamp('edited_at'),
   },
   (table) => [
     ...workspaceIndexes(table),

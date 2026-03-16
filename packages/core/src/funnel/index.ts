@@ -166,6 +166,7 @@ export namespace Funnel {
             domain: DomainTable,
             variant: getTableColumns(FunnelVariantTable),
             draft: getTableColumns(FunnelVariantDraftTable),
+            publishedAt: FunnelVariantVersionTable.createdAt,
           })
           .from(FunnelTable)
           .leftJoin(DomainTable, eq(DomainTable.id, FunnelTable.domainId))
@@ -186,6 +187,15 @@ export namespace Funnel {
               eq(FunnelVariantDraftTable.workspaceId, FunnelVariantTable.workspaceId),
               eq(FunnelVariantDraftTable.funnelId, FunnelVariantTable.funnelId),
               eq(FunnelVariantDraftTable.funnelVariantId, FunnelVariantTable.id),
+            ),
+          )
+          .leftJoin(
+            FunnelVariantVersionTable,
+            and(
+              eq(FunnelVariantVersionTable.workspaceId, FunnelVariantTable.workspaceId),
+              eq(FunnelVariantVersionTable.funnelId, FunnelVariantTable.funnelId),
+              eq(FunnelVariantVersionTable.funnelVariantId, FunnelVariantTable.id),
+              eq(FunnelVariantVersionTable.number, FunnelVariantTable.publishedVersion),
             ),
           )
           .where(
@@ -211,7 +221,8 @@ export namespace Funnel {
         rules: result.draft.rules,
         variables: result.draft.variables,
         theme: result.draft.theme,
-        hasChanges: result.variant.hasDraft,
+        canPublish:
+          result.draft.editedAt !== null && (result.publishedAt === null || result.draft.editedAt > result.publishedAt),
         settings: { ...result.settings, ...result.domain?.settings },
         createdAt: result.createdAt,
       }
@@ -287,32 +298,23 @@ export namespace Funnel {
       theme: Theme.optional(),
     }),
     async (input) => {
-      await Database.use(async (tx) => {
-        await tx
+      await Database.use((tx) =>
+        tx
           .update(FunnelVariantDraftTable)
           .set({
             ...(input.pages && { pages: input.pages }),
             ...(input.rules && { rules: input.rules }),
             ...(input.variables && { variables: input.variables }),
             ...(input.theme && { theme: input.theme }),
+            editedAt: sql`NOW(3)`,
           })
           .where(
             and(
               eq(FunnelVariantDraftTable.workspaceId, Actor.workspaceId()),
               eq(FunnelVariantDraftTable.funnelVariantId, input.funnelVariantId),
             ),
-          )
-
-        await tx
-          .update(FunnelVariantTable)
-          .set({ hasDraft: true })
-          .where(
-            and(
-              eq(FunnelVariantTable.workspaceId, Actor.workspaceId()),
-              eq(FunnelVariantTable.id, input.funnelVariantId),
-            ),
-          )
-      })
+          ),
+      )
     },
   )
 
@@ -587,7 +589,6 @@ export namespace Funnel {
       id: row.id,
       funnelId: row.funnelId,
       title: row.title,
-      hasDraft: row.hasDraft,
       isMain: row.id === row.mainVariantId,
       createdAt: row.createdAt,
       updatedAt: row.updatedAt,
@@ -749,7 +750,6 @@ export namespace Funnel {
         await tx
           .update(FunnelVariantTable)
           .set({
-            hasDraft: false,
             publishedVersion: sql`COALESCE(${FunnelVariantTable.publishedVersion}, 0) + 1`,
           })
           .where(

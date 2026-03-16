@@ -95,7 +95,7 @@ export function FunnelProvider({ children, collection, activeVariantId }: Funnel
         if (values.theme) funnel.theme = values.theme
         if (values.title) funnel.title = values.title
         if (values.settings) funnel.settings = values.settings
-        funnel.hasChanges = true
+        funnel.canPublish = true
       })
     },
     mutationFn: async ({ transaction }) => {

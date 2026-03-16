@@ -246,17 +246,17 @@ function PublishButton() {
 
   return (
     <ButtonGroup.Root className="min-w-28">
-      <Tooltip.Root disabled={funnel.data.hasChanges || isPublishing}>
+      <Tooltip.Root disabled={funnel.data.canPublish || isPublishing}>
         <Tooltip.Trigger
           render={
             <Button
               className={cn(
                 'flex-1',
                 isPublishing && 'pointer-events-none',
-                !funnel.data.hasChanges && !funnel.isSaving && 'opacity-50',
+                !funnel.data.canPublish && !funnel.isSaving && 'opacity-50',
               )}
               disabled={funnel.isSaving}
-              onClick={funnel.data.hasChanges ? handlePublish : undefined}
+              onClick={funnel.data.canPublish ? handlePublish : undefined}
             >
               {isPublishing ? <LoaderIcon className="animate-spin" /> : 'Publish'}
             </Button>
@@ -302,7 +302,7 @@ function NavigationBlocker() {
 
 function DraftBadge() {
   const funnel = useFunnel()
-  if (!funnel.data.hasChanges) return null
+  if (!funnel.data.canPublish) return null
   return <Badge variant="secondary">Draft</Badge>
 }
 

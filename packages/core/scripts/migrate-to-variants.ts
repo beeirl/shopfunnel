@@ -121,7 +121,7 @@ for (const funnel of funnels) {
 
   const variantId = Identifier.create('funnel_variant')
   const isPublished = funnel.publishedVersion !== null && funnel.publishedVersion !== undefined
-  const hasDraft = funnel.currentVersion !== funnel.publishedVersion
+  const hasUnpublishedChanges = funnel.currentVersion !== funnel.publishedVersion
 
   console.log(
     `  Migrating ${funnel.title} (${funnel.id}): ` +
@@ -136,7 +136,6 @@ for (const funnel of funnels) {
         workspaceId: funnel.workspaceId,
         funnelId: funnel.id,
         title: 'Main',
-        hasDraft,
         publishedVersion: isPublished ? 1 : null,
       })
       variantsCreated++
@@ -151,6 +150,7 @@ for (const funnel of funnels) {
         rules: currentVersion.rules,
         variables: currentVersion.variables,
         theme: currentVersion.theme,
+        ...(hasUnpublishedChanges && { editedAt: currentVersion.updatedAt }),
       })
       draftsCreated++
 
