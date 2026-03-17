@@ -11,6 +11,17 @@ import { Identifier } from '../identifier'
 import { Question } from '../question'
 import { fn } from '../utils/fn'
 import {
+  FunnelExperimentAlreadyActiveError,
+  FunnelExperimentAlreadyEndedError,
+  FunnelExperimentAlreadyStartedError,
+  FunnelExperimentInvalidWeightsError,
+  FunnelExperimentNoVariantsError,
+  FunnelExperimentNotStartedError,
+  FunnelExperimentVariantInvalidError,
+  FunnelExperimentVariantNotPublishedError,
+  FunnelExperimentWinnerAlreadySelectedError,
+} from './error'
+import {
   FunnelExperimentTable,
   FunnelExperimentVariantTable,
   FunnelFileTable,
@@ -989,12 +1000,12 @@ export namespace Funnel {
 
     const experiment = experiments.find((e) => e.id === experimentId)
     if (!experiment) throw new Error('Experiment not found')
-    if (experiment.startedAt) throw new Error('Experiment is already started')
+    if (experiment.startedAt) throw new FunnelExperimentAlreadyStartedError()
 
     const activeExperiment = experiments.find(
       (e) => e.id !== experimentId && e.startedAt && !e.endedAt && e.funnelId === experiment.funnelId,
     )
-    if (activeExperiment) throw new Error('Another experiment is already active for this funnel')
+    if (activeExperiment) throw new FunnelExperimentAlreadyActiveError()
 
     // Fetch experiment variants + check if each has a published version
     const experimentVariants = await Database.use((tx) =>
@@ -1019,17 +1030,13 @@ export namespace Funnel {
           ),
         ),
     )
-    if (experimentVariants.length === 0) throw new Error('Experiment must have at least one variant')
+    if (experimentVariants.length === 0) throw new FunnelExperimentNoVariantsError()
 
     const totalWeight = experimentVariants.reduce((sum, v) => sum + v.weight, 0)
-    if (totalWeight !== 100) {
-      throw new Error(`Experiment variant weights must sum to 100, got ${totalWeight}`)
-    }
+    if (totalWeight !== 100) throw new FunnelExperimentInvalidWeightsError()
 
     for (const v of experimentVariants) {
-      if (v.publishedVersion === null) {
-        throw new Error(`Variant ${v.funnelVariantId} must be published before it can be used in an experiment`)
-      }
+      if (v.publishedVersion === null) throw new FunnelExperimentVariantNotPublishedError()
     }
 
     await Database.use((tx) =>
@@ -1052,8 +1059,8 @@ export namespace Funnel {
         )
         .then((rows) => rows[0])
       if (!experiment) throw new Error('Experiment not found')
-      if (!experiment.startedAt) throw new Error('Experiment has not been started')
-      if (experiment.endedAt) throw new Error('Experiment is already ended')
+      if (!experiment.startedAt) throw new FunnelExperimentNotStartedError()
+      if (experiment.endedAt) throw new FunnelExperimentAlreadyEndedError()
 
       await tx
         .update(FunnelExperimentTable)
@@ -1093,11 +1100,11 @@ export namespace Funnel {
         if (rows.length === 0) throw new Error('Experiment not found')
 
         const experiment = rows[0]!
-        if (!experiment.startedAt) throw new Error('Experiment has not been started')
-        if (experiment.winnerVariantId) throw new Error('A winner has already been selected for this experiment')
+        if (!experiment.startedAt) throw new FunnelExperimentNotStartedError()
+        if (experiment.winnerVariantId) throw new FunnelExperimentWinnerAlreadySelectedError()
 
         const isValid = rows.some((r) => r.experimentVariantId === input.funnelVariantId)
-        if (!isValid) throw new Error('Selected variant is not part of this experiment')
+        if (!isValid) throw new FunnelExperimentVariantInvalidError()
 
         await tx
           .update(FunnelExperimentTable)

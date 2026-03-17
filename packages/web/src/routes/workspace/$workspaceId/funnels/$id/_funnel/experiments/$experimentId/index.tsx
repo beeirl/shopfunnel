@@ -3,10 +3,22 @@ import { Button } from '@/components/ui/button'
 import { Dialog } from '@/components/ui/dialog'
 import { Spinner } from '@/components/ui/spinner'
 import { withActor } from '@/context/auth.withActor'
+import { toast } from '@/lib/toast'
 import { Heading } from '@/routes/workspace/$workspaceId/_dashboard/-components/heading'
 import { listVariantsQueryOptions } from '@/routes/workspace/$workspaceId/funnels/$id/-common'
 import { listExperimentsQueryOptions } from '@/routes/workspace/$workspaceId/funnels/$id/_funnel/experiments/-common'
 import { TrafficSplitInput } from '@/routes/workspace/$workspaceId/funnels/$id/_funnel/experiments/-traffic-split-input'
+import {
+  FunnelExperimentAlreadyActiveError,
+  FunnelExperimentAlreadyEndedError,
+  FunnelExperimentAlreadyStartedError,
+  FunnelExperimentInvalidWeightsError,
+  FunnelExperimentNotStartedError,
+  FunnelExperimentNoVariantsError,
+  FunnelExperimentVariantInvalidError,
+  FunnelExperimentVariantNotPublishedError,
+  FunnelExperimentWinnerAlreadySelectedError,
+} from '@shopfunnel/core/funnel/error'
 import { Funnel } from '@shopfunnel/core/funnel/index'
 import { Identifier } from '@shopfunnel/core/identifier'
 import {
@@ -119,6 +131,42 @@ function RouteComponent() {
         getExperimentQueryOptions({ workspaceId: params.workspaceId, experimentId: params.experimentId }),
       )
     },
+    onError: (error) => {
+      console.log(
+        error,
+        typeof error === 'object',
+        'name' in error,
+        error.name,
+        FunnelExperimentVariantNotPublishedError.isInstance(error),
+      )
+      if (FunnelExperimentAlreadyStartedError.isInstance(error)) {
+        toast.add({
+          title: 'Experiment already running',
+          description: 'This experiment is already started',
+          type: 'error',
+        })
+      } else if (FunnelExperimentAlreadyActiveError.isInstance(error)) {
+        toast.add({
+          title: 'Cannot start experiment',
+          description: 'Another experiment is already active for this funnel',
+          type: 'error',
+        })
+      } else if (FunnelExperimentNoVariantsError.isInstance(error)) {
+        toast.add({
+          title: 'Cannot start experiment',
+          description: 'Experiment must have at least one variant',
+          type: 'error',
+        })
+      } else if (FunnelExperimentInvalidWeightsError.isInstance(error)) {
+        toast.add({ title: 'Cannot start experiment', description: 'Variant weights must sum to 100%', type: 'error' })
+      } else if (FunnelExperimentVariantNotPublishedError.isInstance(error)) {
+        toast.add({
+          title: 'Cannot start experiment',
+          description: 'All variants must be published before starting',
+          type: 'error',
+        })
+      }
+    },
   })
 
   const endMutation = useMutation({
@@ -133,6 +181,17 @@ function RouteComponent() {
       queryClient.invalidateQueries(
         getExperimentQueryOptions({ workspaceId: params.workspaceId, experimentId: params.experimentId }),
       )
+    },
+    onError: (error) => {
+      if (FunnelExperimentNotStartedError.isInstance(error)) {
+        toast.add({ title: 'Cannot stop experiment', description: 'Experiment has not been started', type: 'error' })
+      } else if (FunnelExperimentAlreadyEndedError.isInstance(error)) {
+        toast.add({
+          title: 'Experiment already stopped',
+          description: 'This experiment has already ended',
+          type: 'error',
+        })
+      }
     },
   })
 
@@ -153,6 +212,19 @@ function RouteComponent() {
         listExperimentsQueryOptions({ workspaceId: params.workspaceId, funnelId: params.id }),
       )
       queryClient.invalidateQueries(listVariantsQueryOptions({ workspaceId: params.workspaceId, funnelId: params.id }))
+    },
+    onError: (error) => {
+      if (FunnelExperimentNotStartedError.isInstance(error)) {
+        toast.add({ title: 'Cannot select winner', description: 'Experiment has not been started', type: 'error' })
+      } else if (FunnelExperimentWinnerAlreadySelectedError.isInstance(error)) {
+        toast.add({ title: 'Cannot select winner', description: 'A winner has already been selected', type: 'error' })
+      } else if (FunnelExperimentVariantInvalidError.isInstance(error)) {
+        toast.add({
+          title: 'Cannot select winner',
+          description: 'Selected variant is not part of this experiment',
+          type: 'error',
+        })
+      }
     },
   })
 
