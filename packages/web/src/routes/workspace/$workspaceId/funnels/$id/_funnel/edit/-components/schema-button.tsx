@@ -1,14 +1,8 @@
 import { Button } from '@/components/ui/button'
 import { Dialog } from '@/components/ui/dialog'
 import { InputGroup } from '@/components/ui/input-group'
-import {
-  Block,
-  type ComparisonCondition,
-  type Condition,
-  type ConditionVar,
-  Page,
-  Rule,
-} from '@shopfunnel/core/funnel/types'
+import { FunnelClone } from '@shopfunnel/core/funnel/clone'
+import { Block, type ComparisonCondition, type Condition, Page, Rule } from '@shopfunnel/core/funnel/types'
 import { IconCheck as CheckIcon, IconCopy as CopyIcon } from '@tabler/icons-react'
 import * as React from 'react'
 import { isValid as isValidUlid, ulid } from 'ulid'
@@ -318,63 +312,17 @@ function getUpdatePrompt(data: { pages: z.infer<typeof Page>[]; rules: z.infer<t
 }
 
 function replaceIds(data: z.infer<typeof FunnelSchema>): z.infer<typeof FunnelSchema> {
-  type BlockWithOptions = Extract<Block, { properties: { options: unknown[] } }>
+  // Clone with preserved ULIDs (only replace placeholder IDs like "page_1", "opt_yes")
+  const result = FunnelClone.clone(data, (oldId) => (isValidUlid(oldId) ? oldId : ulid()))
 
-  const hasOptions = (block: Block): block is BlockWithOptions => 'options' in block.properties
-  const idMap = new Map<string, string>()
-
-  const getOrCreate = (oldId: string) => {
-    const existing = idMap.get(oldId)
-    if (existing) return existing
-    // Preserve existing ULIDs (e.g. from an update to a production funnel)
-    // Only generate new ULIDs for placeholder IDs (e.g. "page_1", "opt_yes")
-    const newId = isValidUlid(oldId) ? oldId : ulid()
-    idMap.set(oldId, newId)
-    return newId
-  }
-
-  // Pass 1: collect and assign new IDs for all pages, blocks, and options
-  for (const page of data.pages) {
-    getOrCreate(page.id)
-    for (const block of page.blocks) {
-      getOrCreate(block.id)
-      if (hasOptions(block)) {
-        for (const option of block.properties.options) {
-          getOrCreate(option.id)
-        }
-      }
-    }
-  }
-
-  // Pass 2: replace IDs in pages
-  const pages = data.pages.map((page) => ({
-    ...page,
-    id: idMap.get(page.id)!,
-    blocks: page.blocks.map((block) => {
-      const updated = { ...block, id: idMap.get(block.id)! }
-      if (hasOptions(updated)) {
-        return {
-          ...updated,
-          properties: {
-            ...updated.properties,
-            options: updated.properties.options.map((option) => ({
-              ...option,
-              id: idMap.get(option.id)!,
-            })),
-          },
-        } as Block
-      }
-      return updated
-    }),
-  }))
-
-  // Build a lookup: newBlockId -> (label -> newOptionId) for resolving label-based constants
+  // Resolve label-based constants in rules (AI sometimes outputs option labels instead of IDs)
   const blockLabelToOptionId = new Map<string, Map<string, string>>()
-  for (const page of pages) {
+  for (const page of result.pages) {
     for (const block of page.blocks) {
-      if (hasOptions(block)) {
+      if ('options' in block.properties) {
+        const typed = block as Extract<Block, { properties: { options: unknown[] } }>
         const labelMap = new Map<string, string>()
-        for (const option of block.properties.options) {
+        for (const option of typed.properties.options) {
           labelMap.set(option.label, option.id)
         }
         blockLabelToOptionId.set(block.id, labelMap)
@@ -382,77 +330,39 @@ function replaceIds(data: z.infer<typeof FunnelSchema>): z.infer<typeof FunnelSc
     }
   }
 
-  // Pass 3: replace references in rules
-  const remapComparison = (condition: ComparisonCondition): ComparisonCondition => {
+  const resolveComparison = (condition: ComparisonCondition): ComparisonCondition => {
     if (condition.op === 'always') return condition
-    const vars = condition.vars.map((v): ConditionVar => {
-      if (v.type === 'block' && typeof v.value === 'string' && idMap.has(v.value)) {
-        return { ...v, value: idMap.get(v.value)! }
-      }
-      return v
-    })
-
-    // Resolve constant values: remap placeholder IDs and convert labels to option IDs
-    const blockVar = vars.find((v) => v.type === 'block')
-    const constantVar = vars.find((v) => v.type === 'constant')
+    const blockVar = condition.vars.find((v) => v.type === 'block')
+    const constantVar = condition.vars.find((v) => v.type === 'constant')
     if (blockVar && constantVar && typeof constantVar.value === 'string') {
-      const blockId = String(blockVar.value)
-      const constantValue = String(constantVar.value)
-
-      // If the constant is a placeholder ID that was remapped, use the new ULID
-      if (idMap.has(constantValue)) {
-        return {
-          ...condition,
-          vars: vars.map((v) => (v === constantVar ? { ...v, value: idMap.get(constantValue)! } : v)),
-        }
-      }
-
-      // If the constant is a label, convert it to the corresponding option ID
-      const labelMap = blockLabelToOptionId.get(blockId)
+      const labelMap = blockLabelToOptionId.get(String(blockVar.value))
       if (labelMap) {
-        const optionId = labelMap.get(constantValue)
+        const optionId = labelMap.get(String(constantVar.value))
         if (optionId) {
-          return { ...condition, vars: vars.map((v) => (v === constantVar ? { ...v, value: optionId } : v)) }
+          return { ...condition, vars: condition.vars.map((v) => (v === constantVar ? { ...v, value: optionId } : v)) }
         }
       }
     }
-
-    return { ...condition, vars }
+    return condition
   }
 
-  const remapCondition = (condition: Condition): Condition => {
+  const resolveCondition = (condition: Condition): Condition => {
     if ('op' in condition && (condition.op === 'and' || condition.op === 'or')) {
-      return { ...condition, vars: condition.vars.map(remapComparison) }
+      return { ...condition, vars: condition.vars.map(resolveComparison) }
     }
-    return remapComparison(condition as ComparisonCondition)
+    return resolveComparison(condition as ComparisonCondition)
   }
 
-  const rules = data.rules.map((rule) => ({
-    ...rule,
-    pageId: idMap.get(rule.pageId) ?? rule.pageId,
-    actions: rule.actions.map((action) => ({
-      ...action,
-      condition: remapCondition(action.condition),
-      details: {
-        ...action.details,
-        ...(action.details.to && {
-          to: {
-            ...action.details.to,
-            value: idMap.get(action.details.to.value) ?? action.details.to.value,
-          },
-        }),
-        ...(action.details.target &&
-          action.details.target.type === 'block' && {
-            target: {
-              ...action.details.target,
-              value: idMap.get(action.details.target.value) ?? action.details.target.value,
-            },
-          }),
-      },
+  return {
+    pages: result.pages,
+    rules: result.rules.map((rule) => ({
+      ...rule,
+      actions: rule.actions.map((action) => ({
+        ...action,
+        condition: resolveCondition(action.condition),
+      })),
     })),
-  }))
-
-  return { pages, rules }
+  }
 }
 
 export function SchemaButton() {

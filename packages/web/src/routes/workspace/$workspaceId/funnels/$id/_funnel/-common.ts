@@ -1,18 +1,24 @@
 import { createCollection } from '@tanstack/db'
 import { queryCollectionOptions } from '@tanstack/query-db-collection'
 import type { QueryClient } from '@tanstack/react-query'
-import { getFunnelVariantDraft, updateFunnel } from '../-common'
+import { getFunnelVariantDraft, getFunnelVariantDraftQueryOptions, updateFunnel } from '../-common'
 
-export function createFunnelCollection(
+export function createFunnelVariantCollection(
   workspaceId: string,
   funnelId: string,
   variantId: string,
   queryClient: QueryClient,
 ) {
+  const { queryKey } = getFunnelVariantDraftQueryOptions({
+    workspaceId,
+    funnelId,
+    funnelVariantId: variantId,
+  })
+
   return createCollection(
     queryCollectionOptions({
       id: `funnel-${funnelId}-${variantId}`,
-      queryKey: ['funnel-variant-collection', workspaceId, funnelId, variantId],
+      queryKey,
       queryFn: async () => {
         const funnel = await getFunnelVariantDraft({
           data: { workspaceId, funnelId, funnelVariantId: variantId },
@@ -43,4 +49,4 @@ export function createFunnelCollection(
   )
 }
 
-export type FunnelCollection = ReturnType<typeof createFunnelCollection>
+export type FunnelVariantCollection = ReturnType<typeof createFunnelVariantCollection>

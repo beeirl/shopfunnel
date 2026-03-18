@@ -35,11 +35,11 @@ import {
   useBlocker,
 } from '@tanstack/react-router'
 import { createServerFn } from '@tanstack/react-start'
-import { formatDistanceToNow } from 'date-fns'
+import { formatDistanceToNowStrict } from 'date-fns'
 import * as React from 'react'
 import { z } from 'zod'
 import { getFunnelVariantDraftQueryOptions, listVariantsQueryOptions } from '../-common'
-import { createFunnelCollection } from './-common'
+import { createFunnelVariantCollection } from './-common'
 import { FunnelProvider, useFunnel } from './-context'
 import { CreateVariantDialog } from './-create-variant-dialog'
 import { SchemaButton } from './edit/-components/schema-button'
@@ -92,10 +92,15 @@ export const Route = createFileRoute('/workspace/$workspaceId/funnels/$id/_funne
       })
     }
 
-    const funnelCollection = createFunnelCollection(params.workspaceId, params.id, deps.variant, context.queryClient)
-    await funnelCollection.preload()
+    const funnelVariantCollection = createFunnelVariantCollection(
+      params.workspaceId,
+      params.id,
+      deps.variant,
+      context.queryClient,
+    )
+    await funnelVariantCollection.preload()
 
-    return { funnelCollection, activeVariantId: deps.variant }
+    return { funnelVariantCollection, activeVariantId: deps.variant }
   },
 })
 
@@ -226,7 +231,11 @@ function PublishButton() {
     setIsPublishing(true)
     await publishMutation.mutateAsync()
     await queryClient.invalidateQueries(
-      getFunnelVariantDraftQueryOptions({ workspaceId: params.workspaceId, funnelId: params.id }),
+      getFunnelVariantDraftQueryOptions({
+        workspaceId: params.workspaceId,
+        funnelId: params.id,
+        funnelVariantId: funnel.data.variantId,
+      }),
     )
     setIsPublishing(false)
     snackbar.add({ title: 'Funnel published', type: 'success' })
@@ -250,13 +259,10 @@ function PublishButton() {
         <Tooltip.Trigger
           render={
             <Button
-              className={cn(
-                'flex-1',
-                isPublishing && 'pointer-events-none',
-                !funnel.data.canPublish && !funnel.isSaving && 'opacity-50',
-              )}
-              disabled={funnel.isSaving}
-              onClick={funnel.data.canPublish ? handlePublish : undefined}
+              className="flex-1"
+              disabled={!funnel.data.canPublish || funnel.isSaving || isPublishing}
+              focusableWhenDisabled
+              onClick={handlePublish}
             >
               {isPublishing ? <LoaderIcon className="animate-spin" /> : 'Publish'}
             </Button>
@@ -356,12 +362,12 @@ function VariantSwitcher() {
         />
         <Popover.Content align="start" className="max-w-[600px] min-w-[380px] p-0">
           <div className="flex flex-col">
-            <div className="flex max-h-64 flex-col overflow-y-auto p-0.5">
+            <div className="flex max-h-64 flex-col gap-0.5 overflow-y-auto p-0.5">
               {variants.map((variant) => (
                 <Item.Root
                   key={variant.id}
                   size="xs"
-                  className={cn('cursor-pointer hover:bg-accent', variant.id === search.variant && 'bg-accent/50')}
+                  className={cn('cursor-pointer hover:bg-muted', variant.id === search.variant && 'bg-muted')}
                   render={
                     <Link
                       from={Route.fullPath}
@@ -383,7 +389,7 @@ function VariantSwitcher() {
                     </Item.Title>
                   </Item.Content>
                   <span className="shrink-0 text-xs text-muted-foreground">
-                    Updated {formatDistanceToNow(variant.updatedAt, { addSuffix: false })} ago
+                    Updated {formatDistanceToNowStrict(variant.updatedAt, { addSuffix: true })}
                   </span>
                   <span className="flex size-4 shrink-0 items-center justify-center">
                     {variant.id === search.variant && <CheckIcon className="size-3.5" />}
@@ -416,7 +422,7 @@ const tabs = [
 
 function RouteComponent() {
   const params = Route.useParams()
-  const { funnelCollection, activeVariantId } = Route.useLoaderData()
+  const { funnelVariantCollection, activeVariantId } = Route.useLoaderData()
 
   const sessionQuery = useSuspenseQuery(getSessionQueryOptions(params.workspaceId))
   const session = sessionQuery.data
@@ -424,7 +430,7 @@ function RouteComponent() {
   const visibleTabs = tabs.filter((tab) => !tab.adminOnly || session.isAdmin)
 
   return (
-    <FunnelProvider collection={funnelCollection} activeVariantId={activeVariantId}>
+    <FunnelProvider collection={funnelVariantCollection} activeVariantId={activeVariantId}>
       <NavigationBlocker />
       <div
         className="flex min-h-screen w-screen flex-col"

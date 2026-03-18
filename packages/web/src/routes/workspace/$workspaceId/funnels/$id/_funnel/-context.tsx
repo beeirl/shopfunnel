@@ -3,11 +3,10 @@ import { Funnel } from '@shopfunnel/core/funnel/index'
 import type { Settings } from '@shopfunnel/core/funnel/types'
 import { debounceStrategy, eq } from '@tanstack/db'
 import { usePacedMutations } from '@tanstack/react-db'
-import { useQueryClient } from '@tanstack/react-query'
 import { createServerFn } from '@tanstack/react-start'
 import * as React from 'react'
-import { type getFunnelVariantDraft, getFunnelVariantDraftQueryOptions, updateFunnel } from '../-common'
-import type { FunnelCollection } from './-common'
+import { type getFunnelVariantDraft, updateFunnel } from '../-common'
+import type { FunnelVariantCollection } from './-common'
 
 type FunnelData = NonNullable<Awaited<ReturnType<typeof getFunnelVariantDraft>>>
 
@@ -62,12 +61,11 @@ export function useFunnel() {
 
 interface FunnelProviderProps {
   children: React.ReactNode
-  collection: FunnelCollection
+  collection: FunnelVariantCollection
   activeVariantId: string
 }
 
 export function FunnelProvider({ children, collection, activeVariantId }: FunnelProviderProps) {
-  const queryClient = useQueryClient()
   const [funnel, setFunnel] = React.useState<FunnelData | null>(() => collection.get(activeVariantId) ?? null)
 
   const [isSaving, setIsSaving] = React.useState(false)
@@ -114,15 +112,8 @@ export function FunnelProvider({ children, collection, activeVariantId }: Funnel
             ...(mutation.changes.settings && { settings: mutation.changes.settings as Settings }),
           },
         })
-        await queryClient.invalidateQueries({
-          ...getFunnelVariantDraftQueryOptions({
-            workspaceId: original.workspaceId,
-            funnelId: original.id,
-            funnelVariantId: original.variantId,
-          }),
-          exact: true,
-        })
       }
+      await collection.utils.refetch()
       setFunnel(collection.get(activeVariantId) ?? null)
       setIsSaving(false)
     },
@@ -140,19 +131,10 @@ export function FunnelProvider({ children, collection, activeVariantId }: Funnel
         if (input.settings) draft.settings = input.settings
       })
       await tx.isPersisted.promise
-      const current = collection.get(activeVariantId) as FunnelData
-      await queryClient.invalidateQueries({
-        ...getFunnelVariantDraftQueryOptions({
-          workspaceId: current.workspaceId,
-          funnelId: current.id,
-          funnelVariantId: current.variantId,
-        }),
-        exact: true,
-      })
       setFunnel(collection.get(activeVariantId) ?? null)
       setIsSaving(false)
     },
-    [collection, activeVariantId, queryClient],
+    [collection, activeVariantId],
   )
 
   const maybeSave = React.useCallback(

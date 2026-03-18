@@ -12,6 +12,7 @@ import { Heading } from '@/routes/workspace/$workspaceId/_dashboard/-components/
 import { Funnel } from '@shopfunnel/core/funnel/index'
 import { Identifier } from '@shopfunnel/core/identifier'
 import {
+  IconCopy as CopyIcon,
   IconDots as DotsIcon,
   IconLink as LinkIcon,
   IconPencil as PencilIcon,
@@ -25,7 +26,7 @@ import { createServerFn } from '@tanstack/react-start'
 import { formatDistanceToNow } from 'date-fns'
 import * as React from 'react'
 import { z } from 'zod'
-import { listVariantsQueryOptions } from '../-common'
+import { createVariantFn, listVariantsQueryOptions } from '../-common'
 import { CreateVariantDialog } from './-create-variant-dialog'
 
 const setMainVariantFn = createServerFn({ method: 'POST' })
@@ -191,6 +192,22 @@ function RouteComponent() {
     },
   })
 
+  const duplicateMutation = useMutation({
+    mutationFn: (variant: { id: string; title: string }) =>
+      createVariantFn({
+        data: {
+          workspaceId: params.workspaceId,
+          funnelId: params.id,
+          title: `${variant.title} copy`,
+          fromId: variant.id,
+        },
+      }),
+    onSuccess: () => {
+      queryClient.invalidateQueries(listVariantsQueryOptions({ workspaceId: params.workspaceId, funnelId: params.id }))
+      snackbar.add({ title: 'Variant duplicated', type: 'success' })
+    },
+  })
+
   const handleCopyLink = (url: string) => {
     navigator.clipboard.writeText(url)
     snackbar.add({ title: 'Link copied to clipboard', type: 'success' })
@@ -264,6 +281,13 @@ function RouteComponent() {
                       >
                         <PencilIcon />
                         Rename
+                      </Menu.Item>
+                      <Menu.Item
+                        disabled={duplicateMutation.isPending}
+                        onClick={() => duplicateMutation.mutate({ id: variant.id, title: variant.title })}
+                      >
+                        <CopyIcon />
+                        Duplicate
                       </Menu.Item>
                     </Menu.Content>
                   </Menu.Root>

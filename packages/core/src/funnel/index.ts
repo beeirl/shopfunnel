@@ -10,6 +10,7 @@ import { File } from '../file'
 import { Identifier } from '../identifier'
 import { Question } from '../question'
 import { fn } from '../utils/fn'
+import { FunnelClone } from './clone'
 import {
   FunnelExperimentAlreadyActiveError,
   FunnelExperimentAlreadyEndedError,
@@ -164,7 +165,7 @@ export namespace Funnel {
     },
   )
 
-  export const getDraft = fn(
+  export const getVariantDraft = fn(
     z.object({
       id: Identifier.schema('funnel'),
       variantId: Identifier.schema('funnel_variant').optional(),
@@ -233,7 +234,7 @@ export namespace Funnel {
         variables: result.draft.variables,
         theme: result.draft.theme,
         canPublish:
-          result.draft.editedAt !== null && (result.publishedAt === null || result.draft.editedAt > result.publishedAt),
+          result.publishedAt === null || (result.draft.editedAt !== null && result.draft.editedAt > result.publishedAt),
         settings: { ...result.settings, ...result.domain?.settings },
         createdAt: result.createdAt,
       }
@@ -464,14 +465,16 @@ export namespace Funnel {
         }),
       )
 
+      const { pages, rules } = FunnelClone.clone({ pages: sourceDraft.pages, rules: sourceDraft.rules })
+
       await Database.use((tx) =>
         tx.insert(FunnelVariantDraftTable).values({
           id: Identifier.create('funnel_variant_draft'),
           workspaceId: Actor.workspaceId(),
           funnelId: newId,
           funnelVariantId: variantId,
-          pages: sourceDraft.pages,
-          rules: sourceDraft.rules,
+          pages,
+          rules,
           variables: sourceDraft.variables,
           theme: sourceDraft.theme,
         }),
@@ -661,13 +664,18 @@ export namespace Funnel {
           title: input.title,
         })
 
+        const { pages, rules } = FunnelClone.clone({
+          pages: sourceVariant.draft.pages,
+          rules: sourceVariant.draft.rules,
+        })
+
         await tx.insert(FunnelVariantDraftTable).values({
           id: Identifier.create('funnel_variant_draft'),
           workspaceId: Actor.workspaceId(),
           funnelId: input.funnelId,
           funnelVariantId: id,
-          pages: sourceVariant.draft.pages,
-          rules: sourceVariant.draft.rules,
+          pages,
+          rules,
           variables: sourceVariant.draft.variables,
           theme: sourceVariant.draft.theme,
         })
