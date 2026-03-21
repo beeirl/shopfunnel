@@ -62,12 +62,14 @@ export namespace Question {
             .where(
               and(
                 eq(AnswerTable.workspaceId, Actor.workspaceId()),
+                isNotNull(AnswerValueTable.optionId),
                 inArray(
                   AnswerTable.questionId,
                   existingQuestions.map((q) => q.id),
                 ),
               ),
             )
+            .groupBy(AnswerTable.questionId, AnswerValueTable.optionId)
 
           for (const row of rows) {
             if (!row.optionId) continue
