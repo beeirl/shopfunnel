@@ -1,5 +1,5 @@
 DESCRIPTION >
-    Parsed funnel_viewed events with session metadata.
+    Parsed funnel_viewed events with session metadata and landing attribution.
 
 TOKEN api READ
 
@@ -18,7 +18,29 @@ SQL >
         JSONExtractString(payload, 'country') AS country,
         JSONExtractString(payload, 'region') AS region,
         JSONExtractString(payload, 'city') AS city,
-        JSONExtractString(payload, 'referrer') AS referrer
+        JSONExtractString(payload, 'referrer') AS referrer,
+        JSONExtractString(payload, 'document_referrer') AS document_referrer,
+        JSONExtractString(payload, 'request_referrer') AS request_referrer,
+        JSONExtractString(payload, 'landing_url') AS landing_url,
+        JSONExtractString(payload, 'landing_path') AS landing_path,
+        JSONExtractString(payload, 'landing_query') AS landing_query,
+        JSONExtractString(payload, 'utm_source') AS utm_source,
+        JSONExtractString(payload, 'utm_medium') AS utm_medium,
+        JSONExtractString(payload, 'utm_campaign') AS utm_campaign,
+        JSONExtractString(payload, 'utm_content') AS utm_content,
+        JSONExtractString(payload, 'utm_term') AS utm_term,
+        JSONExtractString(payload, 'utm_id') AS utm_id,
+        JSONExtractString(payload, 'fbclid') AS fbclid,
+        JSONExtractString(payload, 'gclid') AS gclid,
+        JSONExtractString(payload, 'ttclid') AS ttclid,
+        JSONExtractString(payload, 'msclkid') AS msclkid,
+        JSONExtractString(payload, 'dclid') AS dclid,
+        JSONExtractString(payload, 'gbraid') AS gbraid,
+        JSONExtractString(payload, 'wbraid') AS wbraid,
+        JSONExtractString(payload, 'twclid') AS twclid,
+        JSONExtractString(payload, 'tw_source') AS tw_source,
+        JSONExtractString(payload, 'tw_campaign') AS tw_campaign,
+        JSONExtractString(payload, 'tw_adid') AS tw_adid
     FROM events
     WHERE type IN ('funnel_enter', 'funnel_viewed')
 

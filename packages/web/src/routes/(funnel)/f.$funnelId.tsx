@@ -11,7 +11,7 @@ import { Submission } from '@shopfunnel/core/submission/index'
 import { createFileRoute, notFound } from '@tanstack/react-router'
 import { createServerFn } from '@tanstack/react-start'
 import { getRequestHeader } from '@tanstack/react-start/server'
-import { useEffect, useRef, useState } from 'react'
+import * as React from 'react'
 import { ulid } from 'ulid'
 import { z } from 'zod'
 
@@ -94,17 +94,19 @@ function RouteComponent() {
 
   const shopifyIntegration = integrations.find((i) => i.provider === 'shopify')
 
-  const funnelEnteredRef = useRef(false)
-  const funnelStartedRef = useRef(false)
+  const funnelEnteredRef = React.useRef(false)
+  const funnelStartedRef = React.useRef(false)
 
-  const prevPageRef = useRef<{ id: string; index: number; name: string } | undefined>(undefined)
+  const prevPageRef = React.useRef<{ id: string; index: number; name: string } | undefined>(undefined)
 
-  const currentPageViewedAtRef = useRef<number | undefined>(undefined)
-  const [currentPage, setCurrentPage] = useState<{ id: string; index: number; name: string } | undefined>(undefined)
+  const currentPageViewedAtRef = React.useRef<number | undefined>(undefined)
+  const [currentPage, setCurrentPage] = React.useState<{ id: string; index: number; name: string } | undefined>(
+    undefined,
+  )
 
-  const pendingAnswerSubmissionsRef = useRef<Set<Promise<unknown>>>(new Set())
+  const pendingAnswerSubmissionsRef = React.useRef<Set<Promise<unknown>>>(new Set())
 
-  const [session] = useState(() => {
+  const [session] = React.useState(() => {
     let id: string | undefined
     const key = `sf_funnel_${funnel.shortId}_session_id`
     return {
@@ -129,7 +131,7 @@ function RouteComponent() {
     }
   })
 
-  const [visitor] = useState(() => {
+  const [visitor] = React.useState(() => {
     let id: string | undefined
     const key = 'sf_visitor_id'
     return {
@@ -148,14 +150,41 @@ function RouteComponent() {
     }
   })
 
-  useEffect(() => {
+  React.useEffect(() => {
     if (funnelEnteredRef.current) return
     funnelEnteredRef.current = true
-    trackEvent('funnel_viewed')
+
+    const url = new URL(window.location.href)
+    url.hash = ''
+    const searchParams = url.searchParams
+
+    trackEvent('funnel_viewed', {
+      document_referrer: document.referrer || undefined,
+      landing_url: url.toString(),
+      landing_path: url.pathname,
+      landing_query: url.search.slice(1) || undefined,
+      utm_source: searchParams.get('utm_source') || undefined,
+      utm_medium: searchParams.get('utm_medium') || undefined,
+      utm_campaign: searchParams.get('utm_campaign') || undefined,
+      utm_content: searchParams.get('utm_content') || undefined,
+      utm_term: searchParams.get('utm_term') || undefined,
+      utm_id: searchParams.get('utm_id') || undefined,
+      fbclid: searchParams.get('fbclid') || undefined,
+      gclid: searchParams.get('gclid') || undefined,
+      ttclid: searchParams.get('ttclid') || undefined,
+      msclkid: searchParams.get('msclkid') || undefined,
+      dclid: searchParams.get('dclid') || undefined,
+      gbraid: searchParams.get('gbraid') || undefined,
+      wbraid: searchParams.get('wbraid') || undefined,
+      twclid: searchParams.get('twclid') || undefined,
+      tw_source: searchParams.get('tw_source') || undefined,
+      tw_campaign: searchParams.get('tw_campaign') || undefined,
+      tw_adid: searchParams.get('tw_adid') || undefined,
+    })
     trackMetaPixelEvent('FunnelViewed')
   }, [])
 
-  useEffect(() => {
+  React.useEffect(() => {
     if (!currentPage) return
     if (prevPageRef.current?.id === currentPage.id) return
 

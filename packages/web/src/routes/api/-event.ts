@@ -12,11 +12,11 @@ export const EventRoute = new Hono()
     let event = c.req.valid('json')
 
     if (event.type === 'funnel_viewed') {
+      const referrer = c.req.header('referer') || undefined
       const userAgent = c.req.header('user-agent') || ''
       const country = (c.req.raw.cf?.country as string) || undefined
       const region = (c.req.raw.cf?.region as string) || undefined
       const city = (c.req.raw.cf?.city as string) || undefined
-      const referrer = c.req.header('referer') || undefined
 
       const parser = new UAParser(userAgent)
       const os = parser.getOS().name || undefined
@@ -34,7 +34,7 @@ export const EventRoute = new Hono()
           os,
           browser,
           device,
-          referrer,
+          request_referrer: referrer ?? event.payload.request_referrer,
         },
       }
     }
