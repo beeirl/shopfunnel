@@ -6,6 +6,9 @@ SQL >
     SELECT
         toDate(timestamp) AS date,
         workspace_id,
+        campaign_id,
+        experiment_id,
+        experiment_variant_id,
         funnel_id,
         funnel_version,
         session_id,
@@ -42,7 +45,7 @@ SQL >
         minSimpleState(timestamp) AS first_hit,
         maxSimpleState(timestamp) AS latest_hit
     FROM funnel_enter_events
-    GROUP BY date, workspace_id, funnel_id, funnel_version, session_id
+    GROUP BY date, workspace_id, campaign_id, experiment_id, experiment_variant_id, funnel_id, funnel_version, session_id
 
 TYPE MATERIALIZED
 DATASOURCE sessions_mv

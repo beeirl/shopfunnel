@@ -8,13 +8,13 @@ import { Menu } from '@/components/ui/menu'
 import { Tooltip } from '@/components/ui/tooltip'
 import { withActor } from '@/context/auth.withActor'
 import { snackbar } from '@/lib/snackbar'
-import { cn } from '@/lib/utils'
 import { getSessionQueryOptions } from '@/routes/workspace/$workspaceId/-common'
 import { Funnel } from '@shopfunnel/core/funnel/index'
 import { Identifier } from '@shopfunnel/core/identifier'
 import {
   IconChevronDown as ChevronDownIcon,
   IconChevronLeft as ChevronLeftIcon,
+  IconLink as LinkIcon,
   IconLoader2 as LoaderIcon,
 } from '@tabler/icons-react'
 import { mutationOptions, useMutation, useQueryClient, useSuspenseQuery } from '@tanstack/react-query'
@@ -41,22 +41,6 @@ const publishFunnel = createServerFn({ method: 'POST' })
 const publishFunnelMutationOptions = (workspaceId: string, funnelId: string) =>
   mutationOptions({
     mutationFn: () => publishFunnel({ data: { workspaceId, funnelId } }),
-  })
-
-const unpublishFunnel = createServerFn({ method: 'POST' })
-  .inputValidator(
-    z.object({
-      workspaceId: Identifier.schema('workspace'),
-      funnelId: Identifier.schema('funnel'),
-    }),
-  )
-  .handler(({ data }) => {
-    return withActor(() => Funnel.unpublish(data.funnelId), data.workspaceId)
-  })
-
-const unpublishFunnelMutationOptions = (workspaceId: string, funnelId: string) =>
-  mutationOptions({
-    mutationFn: () => unpublishFunnel({ data: { workspaceId, funnelId } }),
   })
 
 export const Route = createFileRoute('/workspace/$workspaceId/funnels/$id/_funnel')({
@@ -193,7 +177,6 @@ function PublishButton() {
   const [isPublishing, setIsPublishing] = React.useState(false)
 
   const publishMutation = useMutation(publishFunnelMutationOptions(params.workspaceId, params.id))
-  const unpublishMutation = useMutation(unpublishFunnelMutationOptions(params.workspaceId, params.id))
 
   const handlePublish = async () => {
     setIsPublishing(true)
@@ -203,17 +186,9 @@ function PublishButton() {
     snackbar.add({ title: 'Funnel published', type: 'success' })
   }
 
-  const handleCopyLink = () => {
+  const handleCopyShareLink = () => {
     navigator.clipboard.writeText(funnel.data.url)
     snackbar.add({ title: 'Link copied to clipboard', type: 'success' })
-  }
-
-  const handleUnpublish = async () => {
-    setIsPublishing(true)
-    await unpublishMutation.mutateAsync()
-    await queryClient.invalidateQueries(getFunnelQueryOptions(params.workspaceId, params.id))
-    setIsPublishing(false)
-    snackbar.add({ title: 'Funnel unpublished', type: 'success' })
   }
 
   return (
@@ -222,13 +197,10 @@ function PublishButton() {
         <Tooltip.Trigger
           render={
             <Button
-              className={cn(
-                'flex-1',
-                isPublishing && 'pointer-events-none',
-                !funnel.data.draft && !funnel.isSaving && 'opacity-50',
-              )}
-              disabled={funnel.isSaving}
-              onClick={funnel.data.draft ? handlePublish : undefined}
+              className="flex-1"
+              disabled={!funnel.data.draft || funnel.isSaving || isPublishing}
+              focusableWhenDisabled
+              onClick={handlePublish}
             >
               {isPublishing ? <LoaderIcon className="animate-spin" /> : 'Publish'}
             </Button>
@@ -247,9 +219,9 @@ function PublishButton() {
           }
         />
         <Menu.Content align="end">
-          <Menu.Item onClick={handleCopyLink}>Copy shareable link</Menu.Item>
-          <Menu.Item disabled={!funnel.data.published} onClick={handleUnpublish}>
-            Unpublish
+          <Menu.Item onClick={handleCopyShareLink}>
+            <LinkIcon />
+            Copy shareable link
           </Menu.Item>
         </Menu.Content>
       </Menu.Root>

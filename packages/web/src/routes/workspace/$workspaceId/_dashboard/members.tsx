@@ -8,6 +8,7 @@ import { Spinner } from '@/components/ui/spinner'
 import { withActor } from '@/context/auth.withActor'
 import { Identifier } from '@shopfunnel/core/identifier'
 import { User } from '@shopfunnel/core/user/index'
+import { IconPlus as PlusIcon } from '@tabler/icons-react'
 import { queryOptions, useMutation, useQueryClient, useSuspenseQuery } from '@tanstack/react-query'
 import { createFileRoute } from '@tanstack/react-router'
 import { createServerFn } from '@tanstack/react-start'
@@ -175,7 +176,8 @@ function MembersRoute() {
           <Heading.Title>Members</Heading.Title>
         </Heading.Content>
         <Heading.Actions>
-          <Button size="lg" onClick={() => setInviteDialogOpen(true)}>
+          <Button onClick={() => setInviteDialogOpen(true)}>
+            <PlusIcon />
             Invite member
           </Button>
         </Heading.Actions>

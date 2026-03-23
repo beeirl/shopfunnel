@@ -2,7 +2,7 @@ import { Actor } from '@shopfunnel/core/actor'
 import { Billing } from '@shopfunnel/core/billing/index'
 import { BillingTable } from '@shopfunnel/core/billing/index.sql'
 import { Database } from '@shopfunnel/core/database/index'
-import { Funnel } from '@shopfunnel/core/funnel/index'
+import { Workspace } from '@shopfunnel/core/workspace/index'
 import { Resource } from '@shopfunnel/resource'
 import { eq } from 'drizzle-orm'
 import { Hono } from 'hono'
@@ -120,7 +120,7 @@ export const StripeRoute = new Hono().post('/webhook', async (c) => {
       if (stripeSubscription.status === 'incomplete_expired') {
         await Actor.provide('system', { workspaceId }, async () => {
           await Billing.unsubscribe({ stripeSubscriptionId })
-          await Funnel.unpublishAll()
+          await Workspace.disable()
         })
       } else if (stripeSubscription.status === 'active' || stripeSubscription.status === 'trialing') {
         const stripeSubscriptionItems = stripeSubscription.items?.data ?? []
@@ -173,6 +173,7 @@ export const StripeRoute = new Hono().post('/webhook', async (c) => {
                 trialEndsAt: fromUnix(stripeSubscription.trial_end),
               }),
           })
+          await Workspace.enable()
         })
       }
     }
@@ -187,7 +188,7 @@ export const StripeRoute = new Hono().post('/webhook', async (c) => {
 
       await Actor.provide('system', { workspaceId }, async () => {
         await Billing.unsubscribe({ stripeSubscriptionId })
-        await Funnel.unpublishAll()
+        await Workspace.disable()
       })
     }
   })()

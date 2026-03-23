@@ -1,16 +1,20 @@
-import { Funnel, FunnelProps } from '@/components/funnel'
-import { listIntegrations } from '@/routes/(funnel)/-common'
-import { head } from '@/routes/(funnel)/-head'
+import { Funnel, type FunnelProps } from '@/components/funnel'
+import { listIntegrations } from '@/routes/(public)/-common'
+import { head } from '@/routes/(public)/-head'
 import { Actor } from '@shopfunnel/core/actor'
 import { Analytics } from '@shopfunnel/core/analytics/index'
 import { Answer } from '@shopfunnel/core/answer/index'
+import { CampaignTable } from '@shopfunnel/core/campaign/index.sql'
+import { Database } from '@shopfunnel/core/database/index'
+import { ExperimentTable, ExperimentVariantTable } from '@shopfunnel/core/experiment/index.sql'
 import { Funnel as FunnelCore } from '@shopfunnel/core/funnel/index'
 import { Identifier } from '@shopfunnel/core/identifier'
 import { Question } from '@shopfunnel/core/question/index'
 import { Submission } from '@shopfunnel/core/submission/index'
 import { createFileRoute, notFound } from '@tanstack/react-router'
 import { createServerFn } from '@tanstack/react-start'
-import { getRequestHeader } from '@tanstack/react-start/server'
+import { deleteCookie, getCookie, getRequestHeader, setCookie } from '@tanstack/react-start/server'
+import { and, eq, isNotNull, isNull } from 'drizzle-orm'
 import * as React from 'react'
 import { ulid } from 'ulid'
 import { z } from 'zod'
@@ -19,18 +23,114 @@ declare const fbq: ((command: 'trackCustom', eventName: string) => void) | undef
 declare const _upstack: ((command: 'track', eventName: string) => void) | undefined
 
 const getFunnel = createServerFn()
-  .inputValidator(z.object({ shortId: z.string().length(8) }))
+  .inputValidator(z.object({ campaignShortId: z.string().length(8) }))
   .handler(async ({ data }) => {
-    const funnel = await FunnelCore.getPublishedVersion(data.shortId)
+    const cookieName = `sf_campaign_${data.campaignShortId}_variant_id`
+
+    const rows = await Database.use((tx) =>
+      tx
+        .select({
+          campaignId: CampaignTable.id,
+          campaignShortId: CampaignTable.shortId,
+          workspaceId: CampaignTable.workspaceId,
+          defaultFunnelId: CampaignTable.defaultFunnelId,
+          experimentId: ExperimentTable.id,
+          experimentVariantId: ExperimentVariantTable.id,
+          experimentVariantFunnelId: ExperimentVariantTable.funnelId,
+          experimentVariantWeight: ExperimentVariantTable.weight,
+        })
+        .from(CampaignTable)
+        .leftJoin(
+          ExperimentTable,
+          and(
+            eq(ExperimentTable.workspaceId, CampaignTable.workspaceId),
+            eq(ExperimentTable.campaignId, CampaignTable.id),
+            isNotNull(ExperimentTable.startedAt),
+            isNull(ExperimentTable.endedAt),
+            isNull(ExperimentTable.archivedAt),
+          ),
+        )
+        .leftJoin(
+          ExperimentVariantTable,
+          and(
+            eq(ExperimentVariantTable.workspaceId, ExperimentTable.workspaceId),
+            eq(ExperimentVariantTable.experimentId, ExperimentTable.id),
+          ),
+        )
+        .where(and(eq(CampaignTable.shortId, data.campaignShortId), isNull(CampaignTable.archivedAt))),
+    )
+    if (rows.length === 0) throw notFound()
+
+    const campaign = rows[0]
+    if (!campaign) throw notFound()
+
+    const activeVariants = rows
+      .filter(
+        (row) =>
+          row.experimentId !== null &&
+          row.experimentVariantId !== null &&
+          row.experimentVariantFunnelId !== null &&
+          row.experimentVariantWeight !== null &&
+          row.experimentVariantWeight > 0,
+      )
+      .map((row) => ({
+        experimentId: row.experimentId!,
+        variantId: row.experimentVariantId!,
+        funnelId: row.experimentVariantFunnelId!,
+        weight: row.experimentVariantWeight!,
+      }))
+
+    let experimentId: string | null = null
+    let experimentVariantId: string | null = null
+    let funnelId = campaign.defaultFunnelId
+
+    if (activeVariants.length > 0) {
+      const assignedVariantId = getCookie(cookieName)
+      const assignedVariant = activeVariants.find((variant) => variant.variantId === assignedVariantId)
+
+      const variant = (() => {
+        if (assignedVariant) return assignedVariant
+
+        const totalWeight = activeVariants.reduce((sum, current) => sum + current.weight, 0)
+        const rand = Math.random() * totalWeight
+        let cumulative = 0
+
+        for (const current of activeVariants) {
+          cumulative += current.weight
+          if (rand < cumulative) return current
+        }
+
+        return activeVariants[activeVariants.length - 1] ?? null
+      })()
+
+      if (!variant) throw notFound()
+
+      experimentId = variant.experimentId
+      experimentVariantId = variant.variantId
+      funnelId = variant.funnelId
+
+      setCookie(cookieName, variant.variantId, {
+        maxAge: 60 * 60 * 24 * 365 * 10,
+        path: '/',
+        sameSite: 'lax',
+      })
+    }
+
+    if (!funnelId) throw notFound()
+
+    const funnel = await FunnelCore.getPublishedVersion(funnelId)
     if (!funnel) throw notFound()
 
     const host = getRequestHeader('host')
-    if (host) {
-      const funnelHost = new URL(funnel.url).host
-      if (host !== funnelHost) throw notFound()
-    }
+    if (host && host !== new URL(funnel.url).host) throw notFound()
 
-    return funnel
+    return {
+      campaignId: campaign.campaignId,
+      campaignShortId: campaign.campaignShortId,
+      experimentId,
+      experimentVariantId,
+      funnel,
+    }
   })
 
 const listQuestions = createServerFn()
@@ -58,33 +158,38 @@ const submitAnswers = createServerFn()
   })
 
 const completeSubmission = createServerFn()
-  .inputValidator(z.object({ sessionId: z.string(), workspaceId: Identifier.schema('workspace') }))
+  .inputValidator(
+    z.object({
+      campaignShortId: z.string().length(8),
+      workspaceId: Identifier.schema('workspace'),
+      sessionId: z.string(),
+    }),
+  )
   .handler(async ({ data }) => {
     await Actor.provide('system', { workspaceId: data.workspaceId }, async () => {
       const submissionId = await Submission.fromSessionId(data.sessionId)
-      if (submissionId) {
-        await Submission.complete(submissionId)
-      }
+      if (submissionId) await Submission.complete(submissionId)
     })
+    deleteCookie(`sf_campaign_${data.campaignShortId}_variant_id`)
   })
 
-export const Route = createFileRoute('/(funnel)/f/$funnelId')({
+export const Route = createFileRoute('/(public)/c/$campaignShortId')({
   component: RouteComponent,
   ssr: true,
   loader: async ({ params }) => {
-    const funnel = await getFunnel({ data: { shortId: params.funnelId } })
+    const funnel = await getFunnel({ data: { campaignShortId: params.campaignShortId } })
     if (!funnel) throw notFound()
 
     const [questions, integrations] = await Promise.all([
-      listQuestions({ data: { funnelId: funnel.id, workspaceId: funnel.workspaceId } }),
-      listIntegrations({ data: { workspaceId: funnel.workspaceId } }),
+      listQuestions({ data: { funnelId: funnel.funnel.id, workspaceId: funnel.funnel.workspaceId } }),
+      listIntegrations({ data: { workspaceId: funnel.funnel.workspaceId } }),
     ])
 
     return { funnel, questions, integrations }
   },
   head: ({ loaderData }) =>
     head({
-      domainSettings: loaderData?.funnel.settings,
+      domainSettings: loaderData?.funnel.funnel.settings,
       integrations: loaderData?.integrations,
     }),
 })
@@ -92,23 +197,21 @@ export const Route = createFileRoute('/(funnel)/f/$funnelId')({
 function RouteComponent() {
   const { funnel, questions, integrations } = Route.useLoaderData()
 
-  const shopifyIntegration = integrations.find((i) => i.provider === 'shopify')
+  const shopifyIntegration = integrations.find((integration) => integration.provider === 'shopify')
 
   const funnelEnteredRef = React.useRef(false)
   const funnelStartedRef = React.useRef(false)
-
   const prevPageRef = React.useRef<{ id: string; index: number; name: string } | undefined>(undefined)
-
   const currentPageViewedAtRef = React.useRef<number | undefined>(undefined)
   const [currentPage, setCurrentPage] = React.useState<{ id: string; index: number; name: string } | undefined>(
     undefined,
   )
-
   const pendingAnswerSubmissionsRef = React.useRef<Set<Promise<unknown>>>(new Set())
 
   const [session] = React.useState(() => {
     let id: string | undefined
-    const key = `sf_funnel_${funnel.shortId}_session_id`
+    const key = `sf_campaign_${funnel.campaignShortId}_session_id`
+
     return {
       id: () => {
         if (!id) {
@@ -120,6 +223,7 @@ function RouteComponent() {
             id = ulid()
           }
         }
+
         return id
       },
       clear: () => {
@@ -134,6 +238,7 @@ function RouteComponent() {
   const [visitor] = React.useState(() => {
     let id: string | undefined
     const key = 'sf_visitor_id'
+
     return {
       id: () => {
         if (!id) {
@@ -145,6 +250,7 @@ function RouteComponent() {
             id = ulid()
           }
         }
+
         return id
       },
     }
@@ -153,34 +259,7 @@ function RouteComponent() {
   React.useEffect(() => {
     if (funnelEnteredRef.current) return
     funnelEnteredRef.current = true
-
-    const url = new URL(window.location.href)
-    url.hash = ''
-    const searchParams = url.searchParams
-
-    trackEvent('funnel_viewed', {
-      document_referrer: document.referrer || undefined,
-      landing_url: url.toString(),
-      landing_path: url.pathname,
-      landing_query: url.search.slice(1) || undefined,
-      utm_source: searchParams.get('utm_source') || undefined,
-      utm_medium: searchParams.get('utm_medium') || undefined,
-      utm_campaign: searchParams.get('utm_campaign') || undefined,
-      utm_content: searchParams.get('utm_content') || undefined,
-      utm_term: searchParams.get('utm_term') || undefined,
-      utm_id: searchParams.get('utm_id') || undefined,
-      fbclid: searchParams.get('fbclid') || undefined,
-      gclid: searchParams.get('gclid') || undefined,
-      ttclid: searchParams.get('ttclid') || undefined,
-      msclkid: searchParams.get('msclkid') || undefined,
-      dclid: searchParams.get('dclid') || undefined,
-      gbraid: searchParams.get('gbraid') || undefined,
-      wbraid: searchParams.get('wbraid') || undefined,
-      twclid: searchParams.get('twclid') || undefined,
-      tw_source: searchParams.get('tw_source') || undefined,
-      tw_campaign: searchParams.get('tw_campaign') || undefined,
-      tw_adid: searchParams.get('tw_adid') || undefined,
-    })
+    trackEvent('funnel_viewed')
     trackMetaPixelEvent('FunnelViewed')
   }, [])
 
@@ -203,9 +282,12 @@ function RouteComponent() {
       type,
       visitor_id: visitor.id(),
       session_id: session.id(),
-      workspace_id: funnel.workspaceId,
-      funnel_id: funnel.id,
-      funnel_version: funnel.version,
+      workspace_id: funnel.funnel.workspaceId,
+      campaign_id: funnel.campaignId,
+      funnel_id: funnel.funnel.id,
+      funnel_version: funnel.funnel.version,
+      ...(funnel.experimentId && { experiment_id: funnel.experimentId }),
+      ...(funnel.experimentVariantId && { experiment_variant_id: funnel.experimentVariantId }),
       version: '1',
       payload,
       timestamp: new Date().toISOString(),
@@ -236,7 +318,7 @@ function RouteComponent() {
       trackMetaPixelEvent('FunnelStarted')
     }
 
-    const questionsByBlockId = new Map(questions.map((q) => [q.blockId, q]))
+    const questionsByBlockId = new Map(questions.map((question) => [question.blockId, question]))
     for (const [blockId, value] of Object.entries(page.values)) {
       const question = questionsByBlockId.get(blockId)
       if (!question) continue
@@ -261,8 +343,8 @@ function RouteComponent() {
     if (Object.keys(page.values).length > 0) {
       const promise = submitAnswers({
         data: {
-          workspaceId: funnel.workspaceId,
-          funnelId: funnel.id,
+          workspaceId: funnel.funnel.workspaceId,
+          funnelId: funnel.funnel.id,
           sessionId: session.id(),
           answers: Object.entries(page.values).map(([blockId, value]) => ({ blockId, value })),
         },
@@ -277,7 +359,13 @@ function RouteComponent() {
     const visitorId = visitor.id()
 
     await Promise.allSettled([...pendingAnswerSubmissionsRef.current])
-    await completeSubmission({ data: { sessionId, workspaceId: funnel.workspaceId } })
+    await completeSubmission({
+      data: {
+        campaignShortId: funnel.campaignShortId,
+        workspaceId: funnel.funnel.workspaceId,
+        sessionId,
+      },
+    })
 
     trackEvent('funnel_completed')
     trackMetaPixelEvent('FunnelCompleted')
@@ -305,9 +393,12 @@ function RouteComponent() {
             JSON.stringify({
               id: sessionId,
               visitorId,
-              workspaceId: funnel.workspaceId,
-              funnelId: funnel.id,
-              funnelVersion: funnel.version,
+              workspaceId: funnel.funnel.workspaceId,
+              campaignId: funnel.campaignId,
+              funnelId: funnel.funnel.id,
+              funnelVersion: funnel.funnel.version,
+              ...(funnel.experimentId && { experimentId: funnel.experimentId }),
+              ...(funnel.experimentVariantId && { experimentVariantId: funnel.experimentVariantId }),
               integrationId: shopifyIntegration.id,
               integrationProvider: shopifyIntegration.provider,
             }),
@@ -322,7 +413,7 @@ function RouteComponent() {
   return (
     <div className="flex min-h-dvh flex-col">
       <Funnel
-        funnel={funnel}
+        funnel={funnel.funnel}
         mode="live"
         onPageChange={handlePageChange}
         onPageComplete={handlePageComplete}

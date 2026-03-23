@@ -2,6 +2,7 @@ import { eq, sql } from 'drizzle-orm'
 import { z } from 'zod'
 import { Actor } from '../actor'
 import { BillingTable } from '../billing/index.sql'
+import { CampaignTable } from '../campaign/index.sql'
 import { Database } from '../database'
 import { setJson } from '../database/types'
 import { Identifier } from '../identifier'
@@ -47,6 +48,15 @@ export namespace Workspace {
           workspaceId,
           id: Identifier.create('billing'),
           ...(exemptBilling && { exempted: true }),
+        })
+
+        const campaignId = Identifier.create('campaign')
+
+        await tx.insert(CampaignTable).values({
+          id: campaignId,
+          workspaceId,
+          shortId: campaignId.slice(-8),
+          name: 'Default campaign',
         })
       })
       return workspaceId
@@ -113,6 +123,21 @@ export namespace Workspace {
           flags: setJson(WorkspaceTable.flags, { onboardingCompleted: true }),
         })
         .where(eq(WorkspaceTable.id, workspaceId)),
+    )
+  })
+
+  export const disable = fn(z.void(), async () => {
+    await Database.use(async (tx) =>
+      tx
+        .update(WorkspaceTable)
+        .set({ disabledAt: sql`NOW(3)` })
+        .where(eq(WorkspaceTable.id, Actor.workspace())),
+    )
+  })
+
+  export const enable = fn(z.void(), async () => {
+    await Database.use(async (tx) =>
+      tx.update(WorkspaceTable).set({ disabledAt: null }).where(eq(WorkspaceTable.id, Actor.workspace())),
     )
   })
 }

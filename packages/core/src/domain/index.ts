@@ -4,6 +4,7 @@ import { parse } from 'node-html-parser'
 import { z } from 'zod'
 import { Actor } from '../actor'
 import { Billing } from '../billing/index'
+import { CampaignTable } from '../campaign/index.sql'
 import { Database } from '../database'
 import { File } from '../file'
 import { FunnelTable } from '../funnel/index.sql'
@@ -195,6 +196,12 @@ export namespace Domain {
           .update(FunnelTable)
           .set({ domainId: id })
           .where(and(eq(FunnelTable.workspaceId, Actor.workspaceId()), isNull(FunnelTable.domainId)))
+
+        // Link all existing campaigns without a domain to the new domain
+        await tx
+          .update(CampaignTable)
+          .set({ domainId: id })
+          .where(and(eq(CampaignTable.workspaceId, Actor.workspaceId()), isNull(CampaignTable.domainId)))
       })
 
       return id

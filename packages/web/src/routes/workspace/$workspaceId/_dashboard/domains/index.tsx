@@ -10,7 +10,12 @@ import { Tooltip } from '@/components/ui/tooltip'
 import { withActor } from '@/context/auth.withActor'
 import { Domain } from '@shopfunnel/core/domain/index'
 import { Identifier } from '@shopfunnel/core/identifier'
-import { IconDots as DotsIcon, IconSettings as SettingsIcon, IconWorld as WorldIcon } from '@tabler/icons-react'
+import {
+  IconDots as DotsIcon,
+  IconPlus as PlusIcon,
+  IconSettings as SettingsIcon,
+  IconWorld as WorldIcon,
+} from '@tabler/icons-react'
 import { queryOptions, useMutation, useQueryClient, useSuspenseQuery } from '@tanstack/react-query'
 import { createFileRoute, Link } from '@tanstack/react-router'
 import { createServerFn } from '@tanstack/react-start'
@@ -162,8 +167,9 @@ function DomainsRoute() {
             <Heading.Title>Domains</Heading.Title>
           </Heading.Content>
           <Heading.Actions>
-            <Button size="lg" onClick={() => setDialogOpen(true)}>
-              Add a domain
+            <Button onClick={() => setDialogOpen(true)}>
+              <PlusIcon />
+              Add domain
             </Button>
           </Heading.Actions>
         </Heading.Root>

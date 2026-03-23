@@ -1,5 +1,6 @@
 DESCRIPTION >
     Page transitions for flow visualization.
+    Supports optional campaign and experiment filters.
 
 TOKEN api READ
 
@@ -16,6 +17,15 @@ SQL >
         uniqMerge(transitions) AS transition_count
     FROM paths_mv
     WHERE workspace_id = {{ String(workspace_id, required=True) }}
+        {% if defined(campaign_id) %}
+        AND campaign_id = {{ String(campaign_id) }}
+        {% end %}
+        {% if defined(experiment_id) %}
+        AND experiment_id = {{ String(experiment_id) }}
+        {% end %}
+        {% if defined(experiment_variant_id) %}
+        AND experiment_variant_id = {{ String(experiment_variant_id) }}
+        {% end %}
         AND funnel_id = {{ String(funnel_id, required=True) }}
         AND funnel_version = {{ UInt32(funnel_version, required=True) }}
         {% if defined(start_date) %}

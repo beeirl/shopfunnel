@@ -6,6 +6,9 @@ SQL >
     SELECT
         toStartOfHour(timestamp) AS date,
         workspace_id,
+        campaign_id,
+        experiment_id,
+        experiment_variant_id,
         funnel_id,
         funnel_version,
         prev_page_id,
@@ -18,7 +21,7 @@ SQL >
     FROM page_events
     WHERE type IN ('page_view', 'page_viewed')
         AND prev_page_id != ''
-    GROUP BY date, workspace_id, funnel_id, funnel_version, prev_page_id, page_id
+    GROUP BY date, workspace_id, campaign_id, experiment_id, experiment_variant_id, funnel_id, funnel_version, prev_page_id, page_id
 
 TYPE MATERIALIZED
 DATASOURCE paths_mv

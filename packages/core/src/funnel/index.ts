@@ -1,9 +1,9 @@
 import { and, desc, eq, isNotNull, isNull, sql } from 'drizzle-orm'
-import { groupBy, map, pipe, values } from 'remeda'
 import { ulid } from 'ulid'
 import z from 'zod'
 import { Actor } from '../actor'
 import { Billing } from '../billing/index'
+import { CampaignFunnelTable, CampaignTable } from '../campaign/index.sql'
 import { Database } from '../database'
 import { Domain } from '../domain/index'
 import { DomainTable } from '../domain/index.sql'
@@ -11,6 +11,8 @@ import { File } from '../file'
 import { Identifier } from '../identifier'
 import { Question } from '../question'
 import { fn } from '../utils/fn'
+import { WorkspaceTable } from '../workspace/index.sql'
+import { FunnelClone } from './clone'
 import { FunnelFileTable, FunnelTable, FunnelVersionTable } from './index.sql'
 import { type Info, Page, Rule, Theme, type Variables } from './types'
 
@@ -45,7 +47,29 @@ export namespace Funnel {
         .where(
           and(eq(FunnelTable.workspaceId, Actor.workspace()), eq(FunnelTable.id, id), isNull(FunnelTable.archivedAt)),
         )
-        .then((rows) => serializeVersion(rows)[0]),
+        .then((rows) => {
+          const row = rows[0]
+          if (!row) return
+
+          return {
+            id: row.funnel.id,
+            workspaceId: row.funnel.workspaceId,
+            domainId: row.funnel.domainId,
+            shortId: row.funnel.shortId,
+            title: row.funnel.title,
+            version: row.funnel_version.version,
+            pages: row.funnel_version.pages,
+            rules: row.funnel_version.rules,
+            variables: row.funnel_version.variables,
+            theme: row.funnel_version.theme,
+            settings: { ...row.funnel.settings, ...row.domain?.settings },
+            published: row.funnel.publishedVersion !== null,
+            draft: row.funnel.currentVersion !== row.funnel.publishedVersion,
+            url: getUrl(row.funnel.shortId, row.domain?.hostname),
+            createdAt: row.funnel.createdAt,
+            publishedAt: row.funnel.publishedAt,
+          } satisfies Info
+        }),
     ),
   )
 
@@ -63,11 +87,38 @@ export namespace Funnel {
             eq(FunnelVersionTable.version, FunnelTable.publishedVersion),
           ),
         )
+        .innerJoin(WorkspaceTable, eq(WorkspaceTable.id, FunnelTable.workspaceId))
         .leftJoin(DomainTable, eq(DomainTable.id, FunnelTable.domainId))
         .where(
-          and(isShortId ? eq(FunnelTable.shortId, input) : eq(FunnelTable.id, input), isNull(FunnelTable.archivedAt)),
+          and(
+            isShortId ? eq(FunnelTable.shortId, input) : eq(FunnelTable.id, input),
+            isNull(FunnelTable.archivedAt),
+            isNull(WorkspaceTable.disabledAt),
+          ),
         )
-        .then((rows) => serializeVersion(rows)[0]),
+        .then((rows) => {
+          const row = rows[0]
+          if (!row) return
+
+          return {
+            id: row.funnel.id,
+            workspaceId: row.funnel.workspaceId,
+            domainId: row.funnel.domainId,
+            shortId: row.funnel.shortId,
+            title: row.funnel.title,
+            version: row.funnel_version.version,
+            pages: row.funnel_version.pages,
+            rules: row.funnel_version.rules,
+            variables: row.funnel_version.variables,
+            theme: row.funnel_version.theme,
+            settings: { ...row.funnel.settings, ...row.domain?.settings },
+            published: row.funnel.publishedVersion !== null,
+            draft: row.funnel.currentVersion !== row.funnel.publishedVersion,
+            url: getUrl(row.funnel.shortId, row.domain?.hostname),
+            createdAt: row.funnel.createdAt,
+            publishedAt: row.funnel.publishedAt,
+          }
+        }),
     )
   })
 
@@ -94,62 +145,90 @@ export namespace Funnel {
         .select()
         .from(FunnelTable)
         .leftJoin(DomainTable, eq(DomainTable.id, FunnelTable.domainId))
+        .leftJoin(
+          CampaignFunnelTable,
+          and(
+            eq(CampaignFunnelTable.workspaceId, FunnelTable.workspaceId),
+            eq(CampaignFunnelTable.funnelId, FunnelTable.id),
+          ),
+        )
+        .leftJoin(
+          CampaignTable,
+          and(
+            eq(CampaignTable.workspaceId, CampaignFunnelTable.workspaceId),
+            eq(CampaignTable.id, CampaignFunnelTable.campaignId),
+            isNull(CampaignTable.archivedAt),
+          ),
+        )
         .where(and(eq(FunnelTable.workspaceId, Actor.workspace()), isNull(FunnelTable.archivedAt)))
         .orderBy(desc(FunnelTable.updatedAt))
         .then((rows) => rows.map(serialize)),
     ),
   )
 
-  export const create = async () => {
-    const id = Identifier.create('funnel')
-    const shortId = id.slice(-8)
-    const currentVersion = 1
-    const domain = await Domain.get()
+  export const create = fn(
+    z.object({
+      title: z.string().min(1).max(255),
+      campaignId: Identifier.schema('campaign'),
+    }),
+    async (input) => {
+      const id = Identifier.create('funnel')
+      const shortId = id.slice(-8)
+      const currentVersion = 1
+      const domain = await Domain.get()
 
-    await Database.use(async (tx) => {
-      await tx.insert(FunnelTable).values({
-        id,
-        workspaceId: Actor.workspace(),
-        shortId,
-        title: 'New funnel',
-        domainId: domain?.id,
-        currentVersion,
-      })
+      await Database.use(async (tx) => {
+        await tx.insert(FunnelTable).values({
+          id,
+          workspaceId: Actor.workspace(),
+          shortId,
+          title: input.title,
+          domainId: domain?.id,
+          currentVersion,
+        })
 
-      await tx.insert(FunnelVersionTable).values({
-        workspaceId: Actor.workspace(),
-        funnelId: id,
-        version: currentVersion,
-        pages: [
-          {
-            id: ulid(),
-            name: 'Page 1',
-            blocks: [],
-            properties: {
-              buttonText: 'Continue',
+        await tx.insert(FunnelVersionTable).values({
+          workspaceId: Actor.workspace(),
+          funnelId: id,
+          version: currentVersion,
+          pages: [
+            {
+              id: ulid(),
+              name: 'Page 1',
+              blocks: [],
+              properties: {
+                buttonText: 'Continue',
+              },
             },
-          },
-        ],
-        rules: [],
-        variables: {},
-        theme: DEFAULT_THEME,
-      })
-    })
+          ],
+          rules: [],
+          variables: {},
+          theme: DEFAULT_THEME,
+        })
 
-    return id
-  }
+        await Funnel.setCampaign({
+          campaignId: input.campaignId,
+          funnelId: id,
+        })
+      })
+
+      return id
+    },
+  )
 
   export const duplicate = fn(
     z.object({
       id: Identifier.schema('funnel'),
       title: z.string().optional(),
+      campaignId: Identifier.schema('campaign').optional(),
     }),
     async (input) => {
+      const id = Identifier.create('funnel')
+
       await Database.use(async (tx) => {
         const funnelToDuplicate = await Funnel.getCurrentVersion(input.id)
         if (!funnelToDuplicate) throw new Error('Funnel not found')
 
-        const id = Identifier.create('funnel')
         const shortId = id.slice(-8)
         const title = input.title || `${funnelToDuplicate.title} copy`
 
@@ -163,12 +242,17 @@ export namespace Funnel {
           currentVersion: 1,
         })
 
+        const { pages, rules } = FunnelClone.clone({
+          pages: funnelToDuplicate.pages,
+          rules: funnelToDuplicate.rules,
+        })
+
         await tx.insert(FunnelVersionTable).values({
           funnelId: id,
           workspaceId: Actor.workspace(),
           version: 1,
-          pages: funnelToDuplicate.pages,
-          rules: funnelToDuplicate.rules,
+          pages,
+          rules,
           variables: funnelToDuplicate.variables,
           theme: funnelToDuplicate.theme,
         })
@@ -187,7 +271,16 @@ export namespace Funnel {
             })),
           )
         }
+
+        if (input.campaignId) {
+          await Funnel.setCampaign({
+            campaignId: input.campaignId,
+            funnelId: id,
+          })
+        }
       })
+
+      return id
     },
   )
 
@@ -360,18 +453,6 @@ export namespace Funnel {
     await Question.sync({ funnelId: id })
   })
 
-  export const unpublish = fn(Identifier.schema('funnel'), async (id) => {
-    await Database.use(async (tx) => {
-      await tx
-        .update(FunnelTable)
-        .set({
-          publishedVersion: null,
-          publishedAt: null,
-        })
-        .where(and(eq(FunnelTable.workspaceId, Actor.workspace()), eq(FunnelTable.id, id)))
-    })
-  })
-
   export const unpublishAll = fn(z.void(), async () => {
     await Database.use(async (tx) => {
       await tx
@@ -403,55 +484,61 @@ export namespace Funnel {
     })
   })
 
-  function serialize(row: { funnel: typeof FunnelTable.$inferSelect; domain: typeof DomainTable.$inferSelect | null }) {
+  export const setCampaign = fn(
+    z.object({
+      campaignId: Identifier.schema('campaign'),
+      funnelId: Identifier.schema('funnel'),
+    }),
+    async (input) => {
+      await Database.use(async (tx) => {
+        const campaign = await tx
+          .select({ defaultFunnelId: CampaignTable.defaultFunnelId })
+          .from(CampaignTable)
+          .where(
+            and(
+              eq(CampaignTable.workspaceId, Actor.workspace()),
+              eq(CampaignTable.id, input.campaignId),
+              isNull(CampaignTable.archivedAt),
+            ),
+          )
+          .then((rows) => rows[0])
+        if (!campaign) throw new Error('Campaign not found')
+
+        await tx.insert(CampaignFunnelTable).values({
+          workspaceId: Actor.workspace(),
+          campaignId: input.campaignId,
+          funnelId: input.funnelId,
+        })
+
+        if (!campaign.defaultFunnelId) {
+          await tx
+            .update(CampaignTable)
+            .set({ defaultFunnelId: input.funnelId })
+            .where(and(eq(CampaignTable.workspaceId, Actor.workspace()), eq(CampaignTable.id, input.campaignId)))
+        }
+      })
+    },
+  )
+
+  function serialize(row: {
+    funnel: typeof FunnelTable.$inferSelect
+    domain: typeof DomainTable.$inferSelect | null
+    campaign: typeof CampaignTable.$inferSelect | null
+  }) {
     return {
       id: row.funnel.id,
       shortId: row.funnel.shortId,
       title: row.funnel.title,
       published: row.funnel.currentVersion === row.funnel.publishedVersion,
-      url: url(row.funnel.shortId, row.domain?.hostname),
+      url: getUrl(row.funnel.shortId, row.domain?.hostname),
+      campaign: row.campaign ? { id: row.campaign.id, name: row.campaign.name } : null,
       createdAt: row.funnel.createdAt,
       updatedAt: row.funnel.updatedAt,
       publishedAt: row.funnel.publishedAt,
     }
   }
 
-  function serializeVersion(
-    rows: {
-      funnel: typeof FunnelTable.$inferSelect
-      funnel_version: typeof FunnelVersionTable.$inferSelect
-      domain: typeof DomainTable.$inferSelect | null
-    }[],
-  ) {
-    return pipe(
-      rows,
-      groupBy((row) => row.funnel.id),
-      values(),
-      map(
-        (group): Info => ({
-          id: group[0].funnel.id,
-          workspaceId: group[0].funnel.workspaceId,
-          domainId: group[0].funnel.domainId,
-          shortId: group[0].funnel.shortId,
-          title: group[0].funnel.title,
-          version: group[0].funnel_version.version,
-          pages: group[0].funnel_version.pages,
-          rules: group[0].funnel_version.rules,
-          variables: group[0].funnel_version.variables,
-          theme: group[0].funnel_version.theme,
-          settings: { ...group[0].funnel.settings, ...group[0].domain?.settings },
-          published: group[0].funnel.publishedVersion !== null,
-          draft: group[0].funnel.currentVersion !== group[0].funnel.publishedVersion,
-          url: url(group[0].funnel.shortId, group[0].domain?.hostname),
-          createdAt: group[0].funnel.createdAt,
-          publishedAt: group[0].funnel.publishedAt,
-        }),
-      ),
-    )
-  }
-
-  function url(shortId: string, hostname?: string) {
-    if (process.env.DEV === 'true') return `http://localhost:3000/f/${shortId}`
-    return `https://${hostname ?? process.env.WEB_DOMAIN}/f/${shortId}`
+  export function getUrl(shortId: string, hostname?: string) {
+    return `https://${hostname ?? process.env.WEB_DOMAIN ?? 'localhost:3000'}/p/${shortId}`
   }
 }

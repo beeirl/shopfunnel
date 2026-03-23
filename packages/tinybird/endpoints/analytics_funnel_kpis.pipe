@@ -1,6 +1,7 @@
 DESCRIPTION >
     Per-funnel analytics KPIs: returns one row per funnel with computed metrics.
     When funnel_id is provided, filters to that single funnel.
+    Supports optional campaign and experiment filters.
     Supports date filtering.
 
 TOKEN api READ
@@ -17,6 +18,15 @@ SQL >
         sumMerge(total_revenue) AS total_revenue
     FROM kpis_mv
     WHERE workspace_id = {{ String(workspace_id, required=True) }}
+        {% if defined(campaign_id) %}
+        AND campaign_id = {{ String(campaign_id) }}
+        {% end %}
+        {% if defined(experiment_id) %}
+        AND experiment_id = {{ String(experiment_id) }}
+        {% end %}
+        {% if defined(experiment_variant_id) %}
+        AND experiment_variant_id = {{ String(experiment_variant_id) }}
+        {% end %}
         {% if defined(funnel_id) %}
         AND funnel_id = {{ String(funnel_id) }}
         {% end %}

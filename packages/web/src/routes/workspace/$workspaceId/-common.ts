@@ -300,6 +300,7 @@ const getAnalyticsFunnelKpis = createServerFn()
     z.object({
       workspaceId: z.string(),
       funnelId: z.string().optional(),
+      experimentId: z.string().optional(),
       filter: z.object({
         startDate: z.string(),
         endDate: z.string(),
@@ -314,6 +315,7 @@ const getAnalyticsFunnelKpis = createServerFn()
       end_date: data.filter.endDate,
     })
     if (data.funnelId) params.set('funnel_id', data.funnelId)
+    if (data.experimentId) params.set('experiment_id', data.experimentId)
 
     const response = await fetch(`https://api.us-east.aws.tinybird.co/v0/pipes/analytics_funnel_kpis.json?${params}`, {
       headers: { Authorization: `Bearer ${token}` },
@@ -326,10 +328,18 @@ export const getAnalyticsFunnelKpisQueryOptions = (
   workspaceId: string,
   funnelId: string | undefined,
   filter: { startDate: string; endDate: string },
+  experimentId?: string,
 ) =>
   queryOptions({
-    queryKey: ['analytics-funnel-kpis', workspaceId, funnelId ?? 'all', filter.startDate, filter.endDate],
-    queryFn: () => getAnalyticsFunnelKpis({ data: { workspaceId, funnelId, filter } }),
+    queryKey: [
+      'analytics-funnel-kpis',
+      workspaceId,
+      funnelId ?? 'all',
+      filter.startDate,
+      filter.endDate,
+      experimentId ?? 'all',
+    ],
+    queryFn: () => getAnalyticsFunnelKpis({ data: { workspaceId, funnelId, experimentId, filter } }),
   })
 
 type TimeseriesPoint = {

@@ -1,7 +1,7 @@
 import { AlertDialog } from '@/components/ui/alert-dialog'
+import { FunnelClone } from '@shopfunnel/core/funnel/clone'
 import type { Block, ComparisonCondition, Condition, Page, Rule, RuleAction } from '@shopfunnel/core/funnel/types'
 import * as React from 'react'
-import { ulid } from 'ulid'
 import { SaveFunnelInput, useFunnel } from '../-context'
 
 function checkBrokenRules(pages: Page[], rules: Rule[]): boolean {
@@ -88,26 +88,6 @@ function cleanBrokenRules(pages: Page[], rules: Rule[]): Rule[] {
       return { ...rule, actions: cleanedActions }
     })
     .filter((rule) => rule.actions.length > 0)
-}
-
-function cloneBlock(block: Block): Block {
-  const cloned = { ...block, id: ulid() }
-  if (
-    (cloned.type === 'multiple_choice' ||
-      cloned.type === 'picture_choice' ||
-      cloned.type === 'dropdown' ||
-      cloned.type === 'binary_choice') &&
-    'options' in cloned.properties
-  ) {
-    return {
-      ...cloned,
-      properties: {
-        ...cloned.properties,
-        options: cloned.properties.options.map((option) => ({ ...option, id: ulid() })),
-      },
-    } as Block
-  }
-  return cloned
 }
 
 interface FunnelEditorContextValue {
@@ -247,10 +227,8 @@ export function FunnelEditorProvider({ children }: { children: React.ReactNode }
     const page = funnel.data.pages[pageIndex]!
 
     const clonedPage: Page = {
-      ...page,
-      id: ulid(),
+      ...FunnelClone.clonePage(page),
       name: `${page.name} copy`,
-      blocks: page.blocks.map(cloneBlock),
     }
 
     const updatedPages = [...funnel.data.pages]
@@ -267,7 +245,7 @@ export function FunnelEditorProvider({ children }: { children: React.ReactNode }
     const blockIndex = page.blocks.findIndex((b) => b.id === blockId)
     if (blockIndex === -1) return
 
-    const clonedBlock = cloneBlock(page.blocks[blockIndex]!)
+    const clonedBlock = FunnelClone.cloneBlock(page.blocks[blockIndex]!)
     const updatedBlocks = [...page.blocks]
     updatedBlocks.splice(blockIndex + 1, 0, clonedBlock)
 

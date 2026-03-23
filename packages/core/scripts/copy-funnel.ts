@@ -3,6 +3,7 @@ import { and, eq, inArray } from 'drizzle-orm'
 import { Resource } from 'sst'
 import { Database } from '../src/database'
 import { FileTable } from '../src/file/index.sql'
+import { FunnelClone } from '../src/funnel/clone'
 import { FunnelFileTable, FunnelTable, FunnelVersionTable } from '../src/funnel/index.sql'
 import { Identifier } from '../src/identifier'
 import { WorkspaceTable } from '../src/workspace/index.sql'
@@ -160,12 +161,17 @@ await Database.transaction(async (tx) => {
   })
 
   // Version (only the current version, reset to version 1)
+  const { pages: clonedPages, rules: clonedRules } = FunnelClone.clone({
+    pages: currentVersionData.pages,
+    rules: currentVersionData.rules,
+  })
+
   await tx.insert(FunnelVersionTable).values({
     workspaceId: targetWorkspaceId,
     funnelId: newFunnelId,
     version: 1,
-    pages: transformPages(currentVersionData.pages),
-    rules: currentVersionData.rules,
+    pages: transformPages(clonedPages),
+    rules: clonedRules,
     variables: currentVersionData.variables,
     theme: currentVersionData.theme,
     publishedAt: null,

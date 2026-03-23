@@ -1,0 +1,1 @@
+ALTER TABLE `workspace` ADD `disabled_at` timestamp(3);

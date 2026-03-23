@@ -1,12 +1,17 @@
 import { DataGrid } from '@/components/data-grid'
 import { AlertDialog } from '@/components/ui/alert-dialog'
 import { Button } from '@/components/ui/button'
+import { Card } from '@/components/ui/card'
 import { Dialog } from '@/components/ui/dialog'
 import { Empty } from '@/components/ui/empty'
+import { Field } from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
 import { Menu } from '@/components/ui/menu'
+import { Select } from '@/components/ui/select'
+import { Spinner } from '@/components/ui/spinner'
 import { Tooltip } from '@/components/ui/tooltip'
 import { withActor } from '@/context/auth.withActor'
+import { Campaign } from '@shopfunnel/core/campaign/index'
 import { Funnel } from '@shopfunnel/core/funnel/index'
 import { Identifier } from '@shopfunnel/core/identifier'
 import {
@@ -14,7 +19,7 @@ import {
   IconDots as DotsIcon,
   IconFileText as FileTextIcon,
   IconLoader2 as LoaderIcon,
-  IconShare3 as ShareIcon,
+  IconPlus as PlusIcon,
   IconTrash as TrashIcon,
 } from '@tabler/icons-react'
 import { mutationOptions, queryOptions, useMutation, useQueryClient, useSuspenseQuery } from '@tanstack/react-query'
@@ -37,15 +42,28 @@ const listFunnelsQueryOptions = (workspaceId: string) =>
     queryFn: () => listFunnels({ data: workspaceId }),
   })
 
-const createFunnel = createServerFn({ method: 'POST' })
+const listCampaigns = createServerFn()
   .inputValidator(Identifier.schema('workspace'))
   .handler(({ data: workspaceId }) => {
-    return withActor(() => Funnel.create(), workspaceId)
+    return withActor(() => Campaign.list(), workspaceId)
   })
 
-const createFunnelMutationOptions = (workspaceId: string) =>
-  mutationOptions({
-    mutationFn: () => createFunnel({ data: workspaceId }),
+const listCampaignsQueryOptions = (workspaceId: string) =>
+  queryOptions({
+    queryKey: ['campaigns', workspaceId],
+    queryFn: () => listCampaigns({ data: workspaceId }),
+  })
+
+const createFunnel = createServerFn({ method: 'POST' })
+  .inputValidator(
+    z.object({
+      workspaceId: Identifier.schema('workspace'),
+      title: z.string().min(1).max(255),
+      campaignId: Identifier.schema('campaign'),
+    }),
+  )
+  .handler(({ data }) => {
+    return withActor(() => Funnel.create({ title: data.title, campaignId: data.campaignId }), data.workspaceId)
   })
 
 const duplicateFunnel = createServerFn({ method: 'POST' })
@@ -54,10 +72,14 @@ const duplicateFunnel = createServerFn({ method: 'POST' })
       workspaceId: Identifier.schema('workspace'),
       id: Identifier.schema('funnel'),
       title: z.string().optional(),
+      campaignId: Identifier.schema('campaign').optional(),
     }),
   )
   .handler(({ data }) => {
-    return withActor(() => Funnel.duplicate({ id: data.id, title: data.title }), data.workspaceId)
+    return withActor(
+      () => Funnel.duplicate({ id: data.id, title: data.title, campaignId: data.campaignId }),
+      data.workspaceId,
+    )
   })
 
 const removeFunnel = createServerFn({ method: 'POST' })
@@ -77,6 +99,11 @@ const removeFunnelMutationOptions = (workspaceId: string) =>
   })
 
 const deleteDialogHandle = AlertDialog.createHandle<{ id: string; title: string }>()
+const duplicateDialogHandle = Dialog.createHandle<{
+  id: string
+  title: string
+  campaign: { id: string; name: string } | null
+}>()
 
 export const Route = createFileRoute('/workspace/$workspaceId/_dashboard/funnels')({
   staticData: { title: 'Funnels' },
@@ -84,69 +111,98 @@ export const Route = createFileRoute('/workspace/$workspaceId/_dashboard/funnels
   loader: async ({ context, params }) => {
     await Promise.all([
       context.queryClient.ensureQueryData(listFunnelsQueryOptions(params.workspaceId)),
+      context.queryClient.ensureQueryData(listCampaignsQueryOptions(params.workspaceId)),
       context.queryClient.ensureQueryData(getSessionQueryOptions(params.workspaceId)),
     ])
   },
 })
 
-function DuplicateFunnelDialog({
-  open,
-  onOpenChange,
-  funnel,
-  onSuccess,
-}: {
-  open: boolean
-  onOpenChange: (open: boolean) => void
-  funnel: { id: string; title: string } | null
-  onSuccess: () => void
-}) {
+function CreateFunnelDialog({ open, onOpenChange }: { open: boolean; onOpenChange: (open: boolean) => void }) {
   const params = Route.useParams()
-  const [title, setTitle] = React.useState('')
+  const navigate = Route.useNavigate()
+  const queryClient = useQueryClient()
 
-  const duplicateFunnelMutation = useMutation({
-    mutationFn: (data: { id: string; title?: string }) =>
-      duplicateFunnel({ data: { workspaceId: params.workspaceId, ...data } }),
-    onSuccess: () => {
-      onSuccess()
+  const campaignsQuery = useSuspenseQuery(listCampaignsQueryOptions(params.workspaceId))
+  const campaigns = campaignsQuery.data ?? []
+
+  const [title, setTitle] = React.useState('')
+  const [campaignId, setCampaignId] = React.useState(campaigns[0]?.id ?? '')
+
+  const createFunnelMutation = useMutation({
+    mutationFn: (data: { title: string; campaignId: string }) =>
+      createFunnel({ data: { workspaceId: params.workspaceId, ...data } }),
+    onSuccess: async (id) => {
+      await queryClient.invalidateQueries(listFunnelsQueryOptions(params.workspaceId))
       onOpenChange(false)
+      await navigate({
+        to: '/workspace/$workspaceId/funnels/$id/edit',
+        params: { workspaceId: params.workspaceId, id },
+      })
     },
   })
 
-  const handleDuplicate = () => {
-    if (!funnel) return
-    duplicateFunnelMutation.mutate({
-      id: funnel.id,
-      title: title.trim() || undefined,
-    })
-  }
-
-  React.useEffect(() => {
-    if (open && funnel) {
-      setTitle(`${funnel.title} copy`)
-    }
-  }, [open, funnel])
-
-  React.useEffect(() => {
-    if (!open) {
-      setTitle('')
-    }
-  }, [open])
-
-  if (!funnel) return null
-
   return (
-    <Dialog.Root open={open} onOpenChange={onOpenChange}>
+    <Dialog.Root
+      open={open}
+      onOpenChange={(open) => {
+        onOpenChange(open)
+        if (!open) {
+          setTitle('')
+          setCampaignId(campaigns[0]?.id ?? '')
+        }
+      }}
+    >
       <Dialog.Content>
         <Dialog.Header>
-          <Dialog.Title>Duplicate Funnel</Dialog.Title>
-          <Dialog.Description>Enter a name for the duplicated funnel.</Dialog.Description>
+          <Dialog.Title>Create funnel</Dialog.Title>
         </Dialog.Header>
 
-        <Input placeholder={`${funnel.title} copy`} value={title} onValueChange={setTitle} />
+        <div className="flex flex-col gap-4">
+          <Field.Root>
+            <Field.Label>Title</Field.Label>
+            <Field.Content>
+              <Input placeholder="Funnel title" value={title} onValueChange={setTitle} />
+            </Field.Content>
+          </Field.Root>
+
+          <Field.Root>
+            <Field.Label>Campaign</Field.Label>
+            <Field.Content>
+              <Select.Root
+                items={campaigns.map((campaign) => ({ label: campaign.name, value: campaign.id }))}
+                value={campaignId}
+                onValueChange={(value) => setCampaignId(value ?? '')}
+              >
+                <Select.Trigger className="w-full">
+                  <Select.Value placeholder="Select a campaign" />
+                </Select.Trigger>
+                <Select.Content>
+                  <Select.Group>
+                    {campaigns.map((campaign) => (
+                      <Select.Item key={campaign.id} value={campaign.id}>
+                        {campaign.name}
+                      </Select.Item>
+                    ))}
+                  </Select.Group>
+                </Select.Content>
+              </Select.Root>
+            </Field.Content>
+          </Field.Root>
+        </div>
 
         <Dialog.Footer>
-          <Button onClick={handleDuplicate} disabled={duplicateFunnelMutation.isPending}>
-            Duplicate
+          <Dialog.Close render={<Button variant="outline" />}>Cancel</Dialog.Close>
+          <Button
+            disabled={createFunnelMutation.isPending || !title.trim() || !campaignId}
+            onClick={() => {
+              createFunnelMutation.mutate({
+                title: title.trim(),
+                campaignId,
+              })
+            }}
+          >
+            {createFunnelMutation.isPending && <Spinner />}
+            Create
           </Button>
         </Dialog.Footer>
       </Dialog.Content>
@@ -154,9 +210,102 @@ function DuplicateFunnelDialog({
   )
 }
 
+function DuplicateFunnelDialog() {
+  const params = Route.useParams()
+  const queryClient = useQueryClient()
+
+  const campaignsQuery = useSuspenseQuery(listCampaignsQueryOptions(params.workspaceId))
+  const campaigns = campaignsQuery.data ?? []
+
+  const [title, setTitle] = React.useState('')
+  const [campaignId, setCampaignId] = React.useState('')
+
+  const duplicateFunnelMutation = useMutation({
+    mutationFn: (data: { id: string; title?: string; campaignId?: string }) =>
+      duplicateFunnel({ data: { workspaceId: params.workspaceId, ...data } }),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries(listFunnelsQueryOptions(params.workspaceId))
+      duplicateDialogHandle.close()
+    },
+  })
+
+  return (
+    <Dialog.Root
+      handle={duplicateDialogHandle}
+      onOpenChange={(open) => {
+        if (open) {
+          const payload = duplicateDialogHandle.store.state.payload
+          setTitle(payload ? `${payload.title} copy` : '')
+          setCampaignId(payload?.campaign?.id ?? campaigns[0]?.id ?? '')
+        }
+      }}
+    >
+      {({ payload: funnel }) =>
+        funnel && (
+          <Dialog.Content>
+            <Dialog.Header>
+              <Dialog.Title>Duplicate Funnel</Dialog.Title>
+              <Dialog.Description>Enter a name for the duplicated funnel.</Dialog.Description>
+            </Dialog.Header>
+
+            <div className="flex flex-col gap-4">
+              <Field.Root>
+                <Field.Label>Title</Field.Label>
+                <Field.Content>
+                  <Input placeholder={`${funnel.title} copy`} value={title} onValueChange={setTitle} />
+                </Field.Content>
+              </Field.Root>
+
+              <Field.Root>
+                <Field.Label>Campaign</Field.Label>
+                <Field.Content>
+                  <Select.Root
+                    items={campaigns.map((campaign) => ({ label: campaign.name, value: campaign.id }))}
+                    value={campaignId}
+                    onValueChange={(value) => setCampaignId(value ?? '')}
+                  >
+                    <Select.Trigger className="w-full">
+                      <Select.Value placeholder="Select a campaign" />
+                    </Select.Trigger>
+                    <Select.Content>
+                      <Select.Group>
+                        {campaigns.map((campaign) => (
+                          <Select.Item key={campaign.id} value={campaign.id}>
+                            {campaign.name}
+                          </Select.Item>
+                        ))}
+                      </Select.Group>
+                    </Select.Content>
+                  </Select.Root>
+                </Field.Content>
+              </Field.Root>
+            </div>
+
+            <Dialog.Footer>
+              <Dialog.Close render={<Button variant="outline" />}>Cancel</Dialog.Close>
+              <Button
+                onClick={() => {
+                  duplicateFunnelMutation.mutate({
+                    id: funnel.id,
+                    title: title.trim() || undefined,
+                    campaignId: campaignId || undefined,
+                  })
+                }}
+                disabled={duplicateFunnelMutation.isPending}
+              >
+                {duplicateFunnelMutation.isPending && <LoaderIcon className="animate-spin" />}
+                Duplicate
+              </Button>
+            </Dialog.Footer>
+          </Dialog.Content>
+        )
+      }
+    </Dialog.Root>
+  )
+}
+
 function RouteComponent() {
   const params = Route.useParams()
-  const navigate = Route.useNavigate()
   const queryClient = useQueryClient()
 
   const listFunnelsQuery = useSuspenseQuery(listFunnelsQueryOptions(params.workspaceId))
@@ -165,46 +314,45 @@ function RouteComponent() {
   const sessionQuery = useSuspenseQuery(getSessionQueryOptions(params.workspaceId))
   const isAdmin = sessionQuery.data.isAdmin
 
-  const createFunnelMutation = useMutation(createFunnelMutationOptions(params.workspaceId))
   const removeFunnelMutation = useMutation(removeFunnelMutationOptions(params.workspaceId))
 
-  const [isCreating, setIsCreating] = React.useState(false)
   const [isRemoving, setIsRemoving] = React.useState(false)
-  const [duplicateDialogOpen, setDuplicateDialogOpen] = React.useState(false)
-  const [selectedFunnel, setSelectedFunnel] = React.useState<{ id: string; title: string } | null>(null)
-
-  async function handleFunnelCreate() {
-    setIsCreating(true)
-    try {
-      const id = await createFunnelMutation.mutateAsync()
-      await navigate({
-        to: '/workspace/$workspaceId/funnels/$id/edit',
-        params: { workspaceId: params.workspaceId, id },
-      })
-      queryClient.invalidateQueries(listFunnelsQueryOptions(params.workspaceId))
-    } catch {
-      setIsCreating(false)
-    }
-  }
+  const [createDialogOpen, setCreateDialogOpen] = React.useState(false)
 
   if (funnels.length === 0) {
     return (
-      <div className="flex h-full w-full flex-1 items-center justify-center">
-        <Empty.Root>
-          <Empty.Header>
-            <Empty.Media variant="icon">
-              <FileTextIcon />
-            </Empty.Media>
-            <Empty.Title>No funnels yet</Empty.Title>
-            {isAdmin && <Empty.Description>Create your first funnel to get started.</Empty.Description>}
-          </Empty.Header>
+      <div className="flex h-full w-full max-w-6xl flex-col gap-4">
+        <Heading.Root>
+          <Heading.Content>
+            <Heading.Title>Funnels</Heading.Title>
+          </Heading.Content>
           {isAdmin && (
-            <Button onClick={handleFunnelCreate} disabled={isCreating}>
-              {isCreating && <LoaderIcon className="animate-spin" />}
-              Create funnel
-            </Button>
+            <Heading.Actions>
+              <Button onClick={() => setCreateDialogOpen(true)}>
+                <PlusIcon />
+                Create funnel
+              </Button>
+            </Heading.Actions>
           )}
-        </Empty.Root>
+        </Heading.Root>
+
+        <div className="rounded-3xl bg-muted p-2">
+          <Card.Root>
+            <Card.Content>
+              <Empty.Root>
+                <Empty.Header>
+                  <Empty.Media variant="icon">
+                    <FileTextIcon />
+                  </Empty.Media>
+                  <Empty.Title>No funnels yet</Empty.Title>
+                  {isAdmin && <Empty.Description>Create your first funnel to get started.</Empty.Description>}
+                </Empty.Header>
+              </Empty.Root>
+            </Card.Content>
+          </Card.Root>
+        </div>
+
+        <CreateFunnelDialog open={createDialogOpen} onOpenChange={setCreateDialogOpen} />
       </div>
     )
   }
@@ -217,16 +365,17 @@ function RouteComponent() {
         </Heading.Content>
         {isAdmin && (
           <Heading.Actions>
-            <Button size="lg" onClick={handleFunnelCreate} disabled={isCreating}>
-              {isCreating && <LoaderIcon className="animate-spin" />}
-              Create a Funnel
+            <Button onClick={() => setCreateDialogOpen(true)}>
+              <PlusIcon />
+              Create funnel
             </Button>
           </Heading.Actions>
         )}
       </Heading.Root>
-      <DataGrid.Root className="grid-cols-[1fr_min-content] md:grid-cols-[auto_120px_120px_100px]">
+      <DataGrid.Root className="grid-cols-[1fr_min-content] md:grid-cols-[auto_150px_120px_120px_100px]">
         <DataGrid.Header>
           <DataGrid.Head>Name</DataGrid.Head>
+          <DataGrid.Head hideOnMobile>Campaign</DataGrid.Head>
           <DataGrid.Head hideOnMobile>Edited</DataGrid.Head>
           <DataGrid.Head hideOnMobile>Created</DataGrid.Head>
           <DataGrid.Head srOnly>Actions</DataGrid.Head>
@@ -236,18 +385,17 @@ function RouteComponent() {
           {funnels.map((funnel) => (
             <DataGrid.Row
               key={funnel.id}
-              render={
-                <Link
-                  to="/workspace/$workspaceId/funnels/$id/edit"
-                  params={{ workspaceId: params.workspaceId, id: funnel.id }}
-                />
-              }
+              render={<Link from={Route.fullPath} to="$id/edit" params={{ id: funnel.id }} />}
             >
               <DataGrid.Cell className="flex-col items-start justify-center overflow-hidden pr-2 md:pr-8">
                 <span className="truncate text-sm font-medium text-foreground">{funnel.title}</span>
                 <span className="truncate text-xs text-muted-foreground md:hidden">
                   {formatDateRelative(funnel.createdAt)}
                 </span>
+              </DataGrid.Cell>
+
+              <DataGrid.Cell hideOnMobile>
+                <span className="truncate text-sm text-foreground">{funnel.campaign?.name}</span>
               </DataGrid.Cell>
 
               <DataGrid.Cell hideOnMobile>
@@ -268,34 +416,29 @@ function RouteComponent() {
                 </Tooltip.Root>
               </DataGrid.Cell>
 
-              <DataGrid.Cell className="relative shrink-0 justify-end gap-1">
-                <Menu.Root>
-                  <Menu.Trigger render={<Button size="icon-sm" variant="ghost" />} onClick={(e) => e.preventDefault()}>
-                    <DotsIcon className="text-muted-foreground" />
-                  </Menu.Trigger>
-                  <Menu.Content align="end">
-                    <Menu.Item
-                      onClick={(e) => e.stopPropagation()}
-                      render={
-                        <a href={funnel.url} target="_blank" rel="noopener noreferrer">
-                          <ShareIcon />
-                          Share
-                        </a>
-                      }
-                    />
-                    {isAdmin && (
+              {isAdmin && (
+                <DataGrid.Cell className="relative shrink-0 justify-end gap-1">
+                  <Menu.Root>
+                    <Menu.Trigger
+                      render={<Button size="icon-sm" variant="ghost" />}
+                      onClick={(e) => e.preventDefault()}
+                    >
+                      <DotsIcon className="text-muted-foreground" />
+                    </Menu.Trigger>
+                    <Menu.Content align="end">
                       <Menu.Item
                         onClick={(e) => {
                           e.preventDefault()
-                          setSelectedFunnel({ id: funnel.id, title: funnel.title })
-                          setDuplicateDialogOpen(true)
+                          duplicateDialogHandle.openWithPayload({
+                            id: funnel.id,
+                            title: funnel.title,
+                            campaign: funnel.campaign,
+                          })
                         }}
                       >
                         <CopyIcon />
                         Duplicate
                       </Menu.Item>
-                    )}
-                    {isAdmin && (
                       <Menu.Item
                         variant="destructive"
                         onClick={(e) => {
@@ -306,21 +449,18 @@ function RouteComponent() {
                         <TrashIcon />
                         Delete
                       </Menu.Item>
-                    )}
-                  </Menu.Content>
-                </Menu.Root>
-              </DataGrid.Cell>
+                    </Menu.Content>
+                  </Menu.Root>
+                </DataGrid.Cell>
+              )}
             </DataGrid.Row>
           ))}
         </DataGrid.Body>
       </DataGrid.Root>
 
-      <DuplicateFunnelDialog
-        open={duplicateDialogOpen}
-        onOpenChange={setDuplicateDialogOpen}
-        funnel={selectedFunnel}
-        onSuccess={() => queryClient.invalidateQueries(listFunnelsQueryOptions(params.workspaceId))}
-      />
+      <CreateFunnelDialog open={createDialogOpen} onOpenChange={setCreateDialogOpen} />
+
+      <DuplicateFunnelDialog />
 
       <AlertDialog.Root handle={deleteDialogHandle}>
         {({ payload }) => (

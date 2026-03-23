@@ -20,8 +20,10 @@ import { Route as WorkspaceWorkspaceIdUpgradeRouteImport } from './routes/worksp
 import { Route as WorkspaceWorkspaceIdSubscribeRouteImport } from './routes/workspace/$workspaceId/subscribe'
 import { Route as WorkspaceWorkspaceIdOnboardingRouteImport } from './routes/workspace/$workspaceId/onboarding'
 import { Route as WorkspaceWorkspaceIdDowngradeRouteImport } from './routes/workspace/$workspaceId/downgrade'
-import { Route as funnelRSplatRouteImport } from './routes/(funnel)/r.$'
-import { Route as funnelFFunnelIdRouteImport } from './routes/(funnel)/f.$funnelId'
+import { Route as publicRSplatRouteImport } from './routes/(public)/r.$'
+import { Route as publicPFunnelShortIdRouteImport } from './routes/(public)/p.$funnelShortId'
+import { Route as publicFFunnelIdRouteImport } from './routes/(public)/f.$funnelId'
+import { Route as publicCCampaignShortIdRouteImport } from './routes/(public)/c.$campaignShortId'
 import { Route as WorkspaceWorkspaceIdDashboardRouteRouteImport } from './routes/workspace/$workspaceId/_dashboard/route'
 import { Route as WorkspaceWorkspaceIdDashboardIndexRouteImport } from './routes/workspace/$workspaceId/_dashboard/index'
 import { Route as WorkspaceWorkspaceIdDashboardMembersRouteImport } from './routes/workspace/$workspaceId/_dashboard/members'
@@ -29,12 +31,15 @@ import { Route as WorkspaceWorkspaceIdDashboardIntegrationsRouteImport } from '.
 import { Route as WorkspaceWorkspaceIdDashboardFunnelsRouteImport } from './routes/workspace/$workspaceId/_dashboard/funnels'
 import { Route as WorkspaceWorkspaceIdFunnelsIdRouteRouteImport } from './routes/workspace/$workspaceId/funnels/$id/route'
 import { Route as WorkspaceWorkspaceIdDashboardDomainsIndexRouteImport } from './routes/workspace/$workspaceId/_dashboard/domains/index'
+import { Route as WorkspaceWorkspaceIdDashboardCampaignsIndexRouteImport } from './routes/workspace/$workspaceId/_dashboard/campaigns/index'
 import { Route as WorkspaceWorkspaceIdFunnelsIdPreviewRouteImport } from './routes/workspace/$workspaceId/funnels/$id/preview'
 import { Route as WorkspaceWorkspaceIdFunnelsIdFunnelRouteRouteImport } from './routes/workspace/$workspaceId/funnels/$id/_funnel/route'
+import { Route as WorkspaceWorkspaceIdDashboardCampaignsCampaignIdIndexRouteImport } from './routes/workspace/$workspaceId/_dashboard/campaigns/$campaignId/index'
 import { Route as WorkspaceWorkspaceIdFunnelsIdFunnelResponsesRouteImport } from './routes/workspace/$workspaceId/funnels/$id/_funnel/responses'
 import { Route as WorkspaceWorkspaceIdFunnelsIdFunnelInsightsRouteImport } from './routes/workspace/$workspaceId/funnels/$id/_funnel/insights'
 import { Route as WorkspaceWorkspaceIdDashboardDomainsDomainIdSettingsRouteImport } from './routes/workspace/$workspaceId/_dashboard/domains/$domainId/settings'
 import { Route as WorkspaceWorkspaceIdFunnelsIdFunnelEditIndexRouteImport } from './routes/workspace/$workspaceId/funnels/$id/_funnel/edit/index'
+import { Route as WorkspaceWorkspaceIdDashboardCampaignsCampaignIdExperimentsExperimentIdRouteImport } from './routes/workspace/$workspaceId/_dashboard/campaigns/$campaignId/experiments/$experimentId'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -96,14 +101,24 @@ const WorkspaceWorkspaceIdDowngradeRoute =
     path: '/downgrade',
     getParentRoute: () => WorkspaceWorkspaceIdRouteRoute,
   } as any)
-const funnelRSplatRoute = funnelRSplatRouteImport.update({
-  id: '/(funnel)/r/$',
+const publicRSplatRoute = publicRSplatRouteImport.update({
+  id: '/(public)/r/$',
   path: '/r/$',
   getParentRoute: () => rootRouteImport,
 } as any)
-const funnelFFunnelIdRoute = funnelFFunnelIdRouteImport.update({
-  id: '/(funnel)/f/$funnelId',
+const publicPFunnelShortIdRoute = publicPFunnelShortIdRouteImport.update({
+  id: '/(public)/p/$funnelShortId',
+  path: '/p/$funnelShortId',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const publicFFunnelIdRoute = publicFFunnelIdRouteImport.update({
+  id: '/(public)/f/$funnelId',
   path: '/f/$funnelId',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const publicCCampaignShortIdRoute = publicCCampaignShortIdRouteImport.update({
+  id: '/(public)/c/$campaignShortId',
+  path: '/c/$campaignShortId',
   getParentRoute: () => rootRouteImport,
 } as any)
 const WorkspaceWorkspaceIdDashboardRouteRoute =
@@ -147,6 +162,12 @@ const WorkspaceWorkspaceIdDashboardDomainsIndexRoute =
     path: '/domains/',
     getParentRoute: () => WorkspaceWorkspaceIdDashboardRouteRoute,
   } as any)
+const WorkspaceWorkspaceIdDashboardCampaignsIndexRoute =
+  WorkspaceWorkspaceIdDashboardCampaignsIndexRouteImport.update({
+    id: '/campaigns/',
+    path: '/campaigns/',
+    getParentRoute: () => WorkspaceWorkspaceIdDashboardRouteRoute,
+  } as any)
 const WorkspaceWorkspaceIdFunnelsIdPreviewRoute =
   WorkspaceWorkspaceIdFunnelsIdPreviewRouteImport.update({
     id: '/preview',
@@ -157,6 +178,12 @@ const WorkspaceWorkspaceIdFunnelsIdFunnelRouteRoute =
   WorkspaceWorkspaceIdFunnelsIdFunnelRouteRouteImport.update({
     id: '/_funnel',
     getParentRoute: () => WorkspaceWorkspaceIdFunnelsIdRouteRoute,
+  } as any)
+const WorkspaceWorkspaceIdDashboardCampaignsCampaignIdIndexRoute =
+  WorkspaceWorkspaceIdDashboardCampaignsCampaignIdIndexRouteImport.update({
+    id: '/campaigns/$campaignId/',
+    path: '/campaigns/$campaignId/',
+    getParentRoute: () => WorkspaceWorkspaceIdDashboardRouteRoute,
   } as any)
 const WorkspaceWorkspaceIdFunnelsIdFunnelResponsesRoute =
   WorkspaceWorkspaceIdFunnelsIdFunnelResponsesRouteImport.update({
@@ -182,6 +209,14 @@ const WorkspaceWorkspaceIdFunnelsIdFunnelEditIndexRoute =
     path: '/edit/',
     getParentRoute: () => WorkspaceWorkspaceIdFunnelsIdFunnelRouteRoute,
   } as any)
+const WorkspaceWorkspaceIdDashboardCampaignsCampaignIdExperimentsExperimentIdRoute =
+  WorkspaceWorkspaceIdDashboardCampaignsCampaignIdExperimentsExperimentIdRouteImport.update(
+    {
+      id: '/campaigns/$campaignId/experiments/$experimentId',
+      path: '/campaigns/$campaignId/experiments/$experimentId',
+      getParentRoute: () => WorkspaceWorkspaceIdDashboardRouteRoute,
+    } as any,
+  )
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -191,8 +226,10 @@ export interface FileRoutesByFullPath {
   '/auth/callback': typeof AuthCallbackRoute
   '/auth/logout': typeof AuthLogoutRoute
   '/auth': typeof AuthIndexRoute
-  '/f/$funnelId': typeof funnelFFunnelIdRoute
-  '/r/$': typeof funnelRSplatRoute
+  '/c/$campaignShortId': typeof publicCCampaignShortIdRoute
+  '/f/$funnelId': typeof publicFFunnelIdRoute
+  '/p/$funnelShortId': typeof publicPFunnelShortIdRoute
+  '/r/$': typeof publicRSplatRoute
   '/workspace/$workspaceId/downgrade': typeof WorkspaceWorkspaceIdDowngradeRoute
   '/workspace/$workspaceId/onboarding': typeof WorkspaceWorkspaceIdOnboardingRoute
   '/workspace/$workspaceId/subscribe': typeof WorkspaceWorkspaceIdSubscribeRoute
@@ -203,10 +240,13 @@ export interface FileRoutesByFullPath {
   '/workspace/$workspaceId/members': typeof WorkspaceWorkspaceIdDashboardMembersRoute
   '/workspace/$workspaceId/': typeof WorkspaceWorkspaceIdDashboardIndexRoute
   '/workspace/$workspaceId/funnels/$id/preview': typeof WorkspaceWorkspaceIdFunnelsIdPreviewRoute
+  '/workspace/$workspaceId/campaigns': typeof WorkspaceWorkspaceIdDashboardCampaignsIndexRoute
   '/workspace/$workspaceId/domains': typeof WorkspaceWorkspaceIdDashboardDomainsIndexRoute
   '/workspace/$workspaceId/domains/$domainId/settings': typeof WorkspaceWorkspaceIdDashboardDomainsDomainIdSettingsRoute
   '/workspace/$workspaceId/funnels/$id/insights': typeof WorkspaceWorkspaceIdFunnelsIdFunnelInsightsRoute
   '/workspace/$workspaceId/funnels/$id/responses': typeof WorkspaceWorkspaceIdFunnelsIdFunnelResponsesRoute
+  '/workspace/$workspaceId/campaigns/$campaignId': typeof WorkspaceWorkspaceIdDashboardCampaignsCampaignIdIndexRoute
+  '/workspace/$workspaceId/campaigns/$campaignId/experiments/$experimentId': typeof WorkspaceWorkspaceIdDashboardCampaignsCampaignIdExperimentsExperimentIdRoute
   '/workspace/$workspaceId/funnels/$id/edit': typeof WorkspaceWorkspaceIdFunnelsIdFunnelEditIndexRoute
 }
 export interface FileRoutesByTo {
@@ -217,8 +257,10 @@ export interface FileRoutesByTo {
   '/auth/callback': typeof AuthCallbackRoute
   '/auth/logout': typeof AuthLogoutRoute
   '/auth': typeof AuthIndexRoute
-  '/f/$funnelId': typeof funnelFFunnelIdRoute
-  '/r/$': typeof funnelRSplatRoute
+  '/c/$campaignShortId': typeof publicCCampaignShortIdRoute
+  '/f/$funnelId': typeof publicFFunnelIdRoute
+  '/p/$funnelShortId': typeof publicPFunnelShortIdRoute
+  '/r/$': typeof publicRSplatRoute
   '/workspace/$workspaceId/downgrade': typeof WorkspaceWorkspaceIdDowngradeRoute
   '/workspace/$workspaceId/onboarding': typeof WorkspaceWorkspaceIdOnboardingRoute
   '/workspace/$workspaceId/subscribe': typeof WorkspaceWorkspaceIdSubscribeRoute
@@ -228,10 +270,13 @@ export interface FileRoutesByTo {
   '/workspace/$workspaceId/integrations': typeof WorkspaceWorkspaceIdDashboardIntegrationsRoute
   '/workspace/$workspaceId/members': typeof WorkspaceWorkspaceIdDashboardMembersRoute
   '/workspace/$workspaceId/funnels/$id/preview': typeof WorkspaceWorkspaceIdFunnelsIdPreviewRoute
+  '/workspace/$workspaceId/campaigns': typeof WorkspaceWorkspaceIdDashboardCampaignsIndexRoute
   '/workspace/$workspaceId/domains': typeof WorkspaceWorkspaceIdDashboardDomainsIndexRoute
   '/workspace/$workspaceId/domains/$domainId/settings': typeof WorkspaceWorkspaceIdDashboardDomainsDomainIdSettingsRoute
   '/workspace/$workspaceId/funnels/$id/insights': typeof WorkspaceWorkspaceIdFunnelsIdFunnelInsightsRoute
   '/workspace/$workspaceId/funnels/$id/responses': typeof WorkspaceWorkspaceIdFunnelsIdFunnelResponsesRoute
+  '/workspace/$workspaceId/campaigns/$campaignId': typeof WorkspaceWorkspaceIdDashboardCampaignsCampaignIdIndexRoute
+  '/workspace/$workspaceId/campaigns/$campaignId/experiments/$experimentId': typeof WorkspaceWorkspaceIdDashboardCampaignsCampaignIdExperimentsExperimentIdRoute
   '/workspace/$workspaceId/funnels/$id/edit': typeof WorkspaceWorkspaceIdFunnelsIdFunnelEditIndexRoute
 }
 export interface FileRoutesById {
@@ -244,8 +289,10 @@ export interface FileRoutesById {
   '/auth/logout': typeof AuthLogoutRoute
   '/auth/': typeof AuthIndexRoute
   '/workspace/$workspaceId/_dashboard': typeof WorkspaceWorkspaceIdDashboardRouteRouteWithChildren
-  '/(funnel)/f/$funnelId': typeof funnelFFunnelIdRoute
-  '/(funnel)/r/$': typeof funnelRSplatRoute
+  '/(public)/c/$campaignShortId': typeof publicCCampaignShortIdRoute
+  '/(public)/f/$funnelId': typeof publicFFunnelIdRoute
+  '/(public)/p/$funnelShortId': typeof publicPFunnelShortIdRoute
+  '/(public)/r/$': typeof publicRSplatRoute
   '/workspace/$workspaceId/downgrade': typeof WorkspaceWorkspaceIdDowngradeRoute
   '/workspace/$workspaceId/onboarding': typeof WorkspaceWorkspaceIdOnboardingRoute
   '/workspace/$workspaceId/subscribe': typeof WorkspaceWorkspaceIdSubscribeRoute
@@ -257,10 +304,13 @@ export interface FileRoutesById {
   '/workspace/$workspaceId/_dashboard/': typeof WorkspaceWorkspaceIdDashboardIndexRoute
   '/workspace/$workspaceId/funnels/$id/_funnel': typeof WorkspaceWorkspaceIdFunnelsIdFunnelRouteRouteWithChildren
   '/workspace/$workspaceId/funnels/$id/preview': typeof WorkspaceWorkspaceIdFunnelsIdPreviewRoute
+  '/workspace/$workspaceId/_dashboard/campaigns/': typeof WorkspaceWorkspaceIdDashboardCampaignsIndexRoute
   '/workspace/$workspaceId/_dashboard/domains/': typeof WorkspaceWorkspaceIdDashboardDomainsIndexRoute
   '/workspace/$workspaceId/_dashboard/domains/$domainId/settings': typeof WorkspaceWorkspaceIdDashboardDomainsDomainIdSettingsRoute
   '/workspace/$workspaceId/funnels/$id/_funnel/insights': typeof WorkspaceWorkspaceIdFunnelsIdFunnelInsightsRoute
   '/workspace/$workspaceId/funnels/$id/_funnel/responses': typeof WorkspaceWorkspaceIdFunnelsIdFunnelResponsesRoute
+  '/workspace/$workspaceId/_dashboard/campaigns/$campaignId/': typeof WorkspaceWorkspaceIdDashboardCampaignsCampaignIdIndexRoute
+  '/workspace/$workspaceId/_dashboard/campaigns/$campaignId/experiments/$experimentId': typeof WorkspaceWorkspaceIdDashboardCampaignsCampaignIdExperimentsExperimentIdRoute
   '/workspace/$workspaceId/funnels/$id/_funnel/edit/': typeof WorkspaceWorkspaceIdFunnelsIdFunnelEditIndexRoute
 }
 export interface FileRouteTypes {
@@ -273,7 +323,9 @@ export interface FileRouteTypes {
     | '/auth/callback'
     | '/auth/logout'
     | '/auth'
+    | '/c/$campaignShortId'
     | '/f/$funnelId'
+    | '/p/$funnelShortId'
     | '/r/$'
     | '/workspace/$workspaceId/downgrade'
     | '/workspace/$workspaceId/onboarding'
@@ -285,10 +337,13 @@ export interface FileRouteTypes {
     | '/workspace/$workspaceId/members'
     | '/workspace/$workspaceId/'
     | '/workspace/$workspaceId/funnels/$id/preview'
+    | '/workspace/$workspaceId/campaigns'
     | '/workspace/$workspaceId/domains'
     | '/workspace/$workspaceId/domains/$domainId/settings'
     | '/workspace/$workspaceId/funnels/$id/insights'
     | '/workspace/$workspaceId/funnels/$id/responses'
+    | '/workspace/$workspaceId/campaigns/$campaignId'
+    | '/workspace/$workspaceId/campaigns/$campaignId/experiments/$experimentId'
     | '/workspace/$workspaceId/funnels/$id/edit'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -299,7 +354,9 @@ export interface FileRouteTypes {
     | '/auth/callback'
     | '/auth/logout'
     | '/auth'
+    | '/c/$campaignShortId'
     | '/f/$funnelId'
+    | '/p/$funnelShortId'
     | '/r/$'
     | '/workspace/$workspaceId/downgrade'
     | '/workspace/$workspaceId/onboarding'
@@ -310,10 +367,13 @@ export interface FileRouteTypes {
     | '/workspace/$workspaceId/integrations'
     | '/workspace/$workspaceId/members'
     | '/workspace/$workspaceId/funnels/$id/preview'
+    | '/workspace/$workspaceId/campaigns'
     | '/workspace/$workspaceId/domains'
     | '/workspace/$workspaceId/domains/$domainId/settings'
     | '/workspace/$workspaceId/funnels/$id/insights'
     | '/workspace/$workspaceId/funnels/$id/responses'
+    | '/workspace/$workspaceId/campaigns/$campaignId'
+    | '/workspace/$workspaceId/campaigns/$campaignId/experiments/$experimentId'
     | '/workspace/$workspaceId/funnels/$id/edit'
   id:
     | '__root__'
@@ -325,8 +385,10 @@ export interface FileRouteTypes {
     | '/auth/logout'
     | '/auth/'
     | '/workspace/$workspaceId/_dashboard'
-    | '/(funnel)/f/$funnelId'
-    | '/(funnel)/r/$'
+    | '/(public)/c/$campaignShortId'
+    | '/(public)/f/$funnelId'
+    | '/(public)/p/$funnelShortId'
+    | '/(public)/r/$'
     | '/workspace/$workspaceId/downgrade'
     | '/workspace/$workspaceId/onboarding'
     | '/workspace/$workspaceId/subscribe'
@@ -338,10 +400,13 @@ export interface FileRouteTypes {
     | '/workspace/$workspaceId/_dashboard/'
     | '/workspace/$workspaceId/funnels/$id/_funnel'
     | '/workspace/$workspaceId/funnels/$id/preview'
+    | '/workspace/$workspaceId/_dashboard/campaigns/'
     | '/workspace/$workspaceId/_dashboard/domains/'
     | '/workspace/$workspaceId/_dashboard/domains/$domainId/settings'
     | '/workspace/$workspaceId/funnels/$id/_funnel/insights'
     | '/workspace/$workspaceId/funnels/$id/_funnel/responses'
+    | '/workspace/$workspaceId/_dashboard/campaigns/$campaignId/'
+    | '/workspace/$workspaceId/_dashboard/campaigns/$campaignId/experiments/$experimentId'
     | '/workspace/$workspaceId/funnels/$id/_funnel/edit/'
   fileRoutesById: FileRoutesById
 }
@@ -353,8 +418,10 @@ export interface RootRouteChildren {
   AuthCallbackRoute: typeof AuthCallbackRoute
   AuthLogoutRoute: typeof AuthLogoutRoute
   AuthIndexRoute: typeof AuthIndexRoute
-  funnelFFunnelIdRoute: typeof funnelFFunnelIdRoute
-  funnelRSplatRoute: typeof funnelRSplatRoute
+  publicCCampaignShortIdRoute: typeof publicCCampaignShortIdRoute
+  publicFFunnelIdRoute: typeof publicFFunnelIdRoute
+  publicPFunnelShortIdRoute: typeof publicPFunnelShortIdRoute
+  publicRSplatRoute: typeof publicRSplatRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -436,18 +503,32 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof WorkspaceWorkspaceIdDowngradeRouteImport
       parentRoute: typeof WorkspaceWorkspaceIdRouteRoute
     }
-    '/(funnel)/r/$': {
-      id: '/(funnel)/r/$'
+    '/(public)/r/$': {
+      id: '/(public)/r/$'
       path: '/r/$'
       fullPath: '/r/$'
-      preLoaderRoute: typeof funnelRSplatRouteImport
+      preLoaderRoute: typeof publicRSplatRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/(funnel)/f/$funnelId': {
-      id: '/(funnel)/f/$funnelId'
+    '/(public)/p/$funnelShortId': {
+      id: '/(public)/p/$funnelShortId'
+      path: '/p/$funnelShortId'
+      fullPath: '/p/$funnelShortId'
+      preLoaderRoute: typeof publicPFunnelShortIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/(public)/f/$funnelId': {
+      id: '/(public)/f/$funnelId'
       path: '/f/$funnelId'
       fullPath: '/f/$funnelId'
-      preLoaderRoute: typeof funnelFFunnelIdRouteImport
+      preLoaderRoute: typeof publicFFunnelIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/(public)/c/$campaignShortId': {
+      id: '/(public)/c/$campaignShortId'
+      path: '/c/$campaignShortId'
+      fullPath: '/c/$campaignShortId'
+      preLoaderRoute: typeof publicCCampaignShortIdRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/workspace/$workspaceId/_dashboard': {
@@ -499,6 +580,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof WorkspaceWorkspaceIdDashboardDomainsIndexRouteImport
       parentRoute: typeof WorkspaceWorkspaceIdDashboardRouteRoute
     }
+    '/workspace/$workspaceId/_dashboard/campaigns/': {
+      id: '/workspace/$workspaceId/_dashboard/campaigns/'
+      path: '/campaigns'
+      fullPath: '/workspace/$workspaceId/campaigns'
+      preLoaderRoute: typeof WorkspaceWorkspaceIdDashboardCampaignsIndexRouteImport
+      parentRoute: typeof WorkspaceWorkspaceIdDashboardRouteRoute
+    }
     '/workspace/$workspaceId/funnels/$id/preview': {
       id: '/workspace/$workspaceId/funnels/$id/preview'
       path: '/preview'
@@ -512,6 +600,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/workspace/$workspaceId/funnels/$id'
       preLoaderRoute: typeof WorkspaceWorkspaceIdFunnelsIdFunnelRouteRouteImport
       parentRoute: typeof WorkspaceWorkspaceIdFunnelsIdRouteRoute
+    }
+    '/workspace/$workspaceId/_dashboard/campaigns/$campaignId/': {
+      id: '/workspace/$workspaceId/_dashboard/campaigns/$campaignId/'
+      path: '/campaigns/$campaignId'
+      fullPath: '/workspace/$workspaceId/campaigns/$campaignId'
+      preLoaderRoute: typeof WorkspaceWorkspaceIdDashboardCampaignsCampaignIdIndexRouteImport
+      parentRoute: typeof WorkspaceWorkspaceIdDashboardRouteRoute
     }
     '/workspace/$workspaceId/funnels/$id/_funnel/responses': {
       id: '/workspace/$workspaceId/funnels/$id/_funnel/responses'
@@ -541,6 +636,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof WorkspaceWorkspaceIdFunnelsIdFunnelEditIndexRouteImport
       parentRoute: typeof WorkspaceWorkspaceIdFunnelsIdFunnelRouteRoute
     }
+    '/workspace/$workspaceId/_dashboard/campaigns/$campaignId/experiments/$experimentId': {
+      id: '/workspace/$workspaceId/_dashboard/campaigns/$campaignId/experiments/$experimentId'
+      path: '/campaigns/$campaignId/experiments/$experimentId'
+      fullPath: '/workspace/$workspaceId/campaigns/$campaignId/experiments/$experimentId'
+      preLoaderRoute: typeof WorkspaceWorkspaceIdDashboardCampaignsCampaignIdExperimentsExperimentIdRouteImport
+      parentRoute: typeof WorkspaceWorkspaceIdDashboardRouteRoute
+    }
   }
 }
 
@@ -549,8 +651,11 @@ interface WorkspaceWorkspaceIdDashboardRouteRouteChildren {
   WorkspaceWorkspaceIdDashboardIntegrationsRoute: typeof WorkspaceWorkspaceIdDashboardIntegrationsRoute
   WorkspaceWorkspaceIdDashboardMembersRoute: typeof WorkspaceWorkspaceIdDashboardMembersRoute
   WorkspaceWorkspaceIdDashboardIndexRoute: typeof WorkspaceWorkspaceIdDashboardIndexRoute
+  WorkspaceWorkspaceIdDashboardCampaignsIndexRoute: typeof WorkspaceWorkspaceIdDashboardCampaignsIndexRoute
   WorkspaceWorkspaceIdDashboardDomainsIndexRoute: typeof WorkspaceWorkspaceIdDashboardDomainsIndexRoute
   WorkspaceWorkspaceIdDashboardDomainsDomainIdSettingsRoute: typeof WorkspaceWorkspaceIdDashboardDomainsDomainIdSettingsRoute
+  WorkspaceWorkspaceIdDashboardCampaignsCampaignIdIndexRoute: typeof WorkspaceWorkspaceIdDashboardCampaignsCampaignIdIndexRoute
+  WorkspaceWorkspaceIdDashboardCampaignsCampaignIdExperimentsExperimentIdRoute: typeof WorkspaceWorkspaceIdDashboardCampaignsCampaignIdExperimentsExperimentIdRoute
 }
 
 const WorkspaceWorkspaceIdDashboardRouteRouteChildren: WorkspaceWorkspaceIdDashboardRouteRouteChildren =
@@ -563,10 +668,16 @@ const WorkspaceWorkspaceIdDashboardRouteRouteChildren: WorkspaceWorkspaceIdDashb
       WorkspaceWorkspaceIdDashboardMembersRoute,
     WorkspaceWorkspaceIdDashboardIndexRoute:
       WorkspaceWorkspaceIdDashboardIndexRoute,
+    WorkspaceWorkspaceIdDashboardCampaignsIndexRoute:
+      WorkspaceWorkspaceIdDashboardCampaignsIndexRoute,
     WorkspaceWorkspaceIdDashboardDomainsIndexRoute:
       WorkspaceWorkspaceIdDashboardDomainsIndexRoute,
     WorkspaceWorkspaceIdDashboardDomainsDomainIdSettingsRoute:
       WorkspaceWorkspaceIdDashboardDomainsDomainIdSettingsRoute,
+    WorkspaceWorkspaceIdDashboardCampaignsCampaignIdIndexRoute:
+      WorkspaceWorkspaceIdDashboardCampaignsCampaignIdIndexRoute,
+    WorkspaceWorkspaceIdDashboardCampaignsCampaignIdExperimentsExperimentIdRoute:
+      WorkspaceWorkspaceIdDashboardCampaignsCampaignIdExperimentsExperimentIdRoute,
   }
 
 const WorkspaceWorkspaceIdDashboardRouteRouteWithChildren =
@@ -647,8 +758,10 @@ const rootRouteChildren: RootRouteChildren = {
   AuthCallbackRoute: AuthCallbackRoute,
   AuthLogoutRoute: AuthLogoutRoute,
   AuthIndexRoute: AuthIndexRoute,
-  funnelFFunnelIdRoute: funnelFFunnelIdRoute,
-  funnelRSplatRoute: funnelRSplatRoute,
+  publicCCampaignShortIdRoute: publicCCampaignShortIdRoute,
+  publicFFunnelIdRoute: publicFFunnelIdRoute,
+  publicPFunnelShortIdRoute: publicPFunnelShortIdRoute,
+  publicRSplatRoute: publicRSplatRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

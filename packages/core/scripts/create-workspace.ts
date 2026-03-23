@@ -1,4 +1,5 @@
 import { BillingTable } from '../src/billing/index.sql'
+import { CampaignTable } from '../src/campaign/index.sql'
 import { Database } from '../src/database'
 import { Identifier } from '../src/identifier'
 import { WorkspaceTable } from '../src/workspace/index.sql'
@@ -33,6 +34,15 @@ await Database.use(async (tx) => {
     id: billingId,
     workspaceId,
     exempted: true,
+  })
+
+  const campaignId = Identifier.create('campaign')
+
+  await tx.insert(CampaignTable).values({
+    id: campaignId,
+    workspaceId,
+    shortId: campaignId.slice(-8),
+    name: 'Default campaign',
   })
 })
 

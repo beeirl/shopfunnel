@@ -18,6 +18,7 @@ import {
   IconFilter2 as FilterIcon,
   IconLogout as LogoutIcon,
   IconSelector as SelectorIcon,
+  IconTargetArrow as TargetArrowIcon,
   IconUsers as UsersIcon,
   IconWorld as WorldIcon,
 } from '@tabler/icons-react'
@@ -82,6 +83,12 @@ const navItems = [
     to: '/workspace/$workspaceId' as const,
     icon: DashboardIcon,
     exact: true,
+  },
+  {
+    title: 'Campaigns',
+    to: '/workspace/$workspaceId/campaigns' as const,
+    icon: TargetArrowIcon,
+    exact: false,
   },
   {
     title: 'Funnels',

@@ -2,6 +2,7 @@ DESCRIPTION >
     Page-level drop-off stats for a funnel.
     When funnel_version is not provided, aggregates across all versions
     but only includes pages that exist in the latest version.
+    Supports optional campaign and experiment filters.
 
 TOKEN api READ
 
@@ -23,6 +24,15 @@ SQL >
            0) AS dropoff_rate
     FROM pages_mv
     WHERE workspace_id = {{ String(workspace_id, required=True) }}
+        {% if defined(campaign_id) %}
+        AND campaign_id = {{ String(campaign_id) }}
+        {% end %}
+        {% if defined(experiment_id) %}
+        AND experiment_id = {{ String(experiment_id) }}
+        {% end %}
+        {% if defined(experiment_variant_id) %}
+        AND experiment_variant_id = {{ String(experiment_variant_id) }}
+        {% end %}
         AND funnel_id = {{ String(funnel_id, required=True) }}
         {% if defined(funnel_version) %}
         AND funnel_version = {{ UInt32(funnel_version) }}
@@ -62,6 +72,15 @@ SQL >
         toFloat64(0) AS dropoff_rate
     FROM kpis_mv
     WHERE workspace_id = {{ String(workspace_id, required=True) }}
+        {% if defined(campaign_id) %}
+        AND campaign_id = {{ String(campaign_id) }}
+        {% end %}
+        {% if defined(experiment_id) %}
+        AND experiment_id = {{ String(experiment_id) }}
+        {% end %}
+        {% if defined(experiment_variant_id) %}
+        AND experiment_variant_id = {{ String(experiment_variant_id) }}
+        {% end %}
         AND funnel_id = {{ String(funnel_id, required=True) }}
         {% if defined(funnel_version) %}
         AND funnel_version = {{ UInt32(funnel_version) }}

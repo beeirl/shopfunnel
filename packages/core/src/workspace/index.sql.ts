@@ -1,6 +1,6 @@
 import { json, mysqlTable, uniqueIndex, varchar } from 'drizzle-orm/mysql-core'
 import { z } from 'zod'
-import { id, timestampColumns } from '../database/types'
+import { id, timestamp, timestampColumns } from '../database/types'
 
 export const WorkspaceFlags = z.object({
   onboardingCompleted: z.boolean(),
@@ -35,6 +35,7 @@ export const WorkspaceTable = mysqlTable(
     name: varchar('name', { length: 255 }).notNull(),
     flags: json('flags').$type<WorkspaceFlags>().notNull(),
     survey: json('survey').$type<WorkspaceSurvey>(),
+    disabledAt: timestamp('disabled_at'),
     ...timestampColumns,
   },
   (table) => [uniqueIndex('slug').on(table.slug)],

@@ -8,6 +8,21 @@
   bun add package@latest --exact
   ```
 
+## Type Checking
+
+```sh
+bunx tsc --noEmit
+```
+
+Ignore errors from `.sst/platform/` — those are pre-existing and not part of the project source.
+
+## Do NOT Run
+
+- Database migrations (drizzle-kit push/migrate)
+- Tinybird deployments (`tb push`, `tb deploy`, etc.)
+- SST deployments (`sst deploy`, `sst dev`, etc.)
+- Editing or regenerating `routeTree.gen.ts` (TanStack Router manages this)
+
 ## Web Package
 
 ### React Version
@@ -108,61 +123,20 @@
 </div>
 ```
 
-## Icons
+### Server Functions
 
-- Use **Tabler Icons** (`@tabler/icons-react`)
-- Always alias icon imports with the `Icon` suffix:
+- Created with `createServerFn` from `@tanstack/react-start`
+- **Do not** suffix server function names with `Fn`:
 
   ```tsx
   // Correct
-  import { IconCircle as CircleIcon } from '@tabler/icons-react'
-  import { IconPlus as PlusIcon } from '@tabler/icons-react'
+  const createExperiment = createServerFn({ method: 'POST' })
+  const getExperiment = createServerFn()
 
   // Incorrect
-  import { IconCircle } from '@tabler/icons-react'
+  const createExperimentFn = createServerFn({ method: 'POST' })
+  const getExperimentFn = createServerFn()
   ```
-
-## UI Components
-
-- Use **shadcn/ui** components from `@/components/ui`
-  ```tsx
-  import { Button } from '@/components/ui/button'
-  import { Dialog } from '@/components/ui/dialog'
-  ```
-
-## Styling
-
-- Use **Tailwind CSS v4** for all styling
-- Use the design tokens defined in `@packages/web/src/styles.css`
-
-### Available Colors
-
-| Token                                | Description               |
-| ------------------------------------ | ------------------------- |
-| `background`                         | Page background           |
-| `foreground`                         | Primary text color        |
-| `card` / `card-foreground`           | Card surfaces             |
-| `popover` / `popover-foreground`     | Popover surfaces          |
-| `primary` / `primary-foreground`     | Primary actions           |
-| `secondary` / `secondary-foreground` | Secondary actions         |
-| `muted` / `muted-foreground`         | Muted/disabled states     |
-| `accent` / `accent-foreground`       | Accent highlights         |
-| `destructive`                        | Destructive/error actions |
-| `border`                             | Border color              |
-| `input`                              | Input border color        |
-| `ring`                               | Focus ring color          |
-| `chart-1` to `chart-5`               | Chart colors              |
-| `sidebar-*`                          | Sidebar-specific colors   |
-
-### Example Usage
-
-```tsx
-<div className="bg-background text-foreground border border-border rounded-lg p-4">
-  <h1 className="text-primary">Title</h1>
-  <p className="text-muted-foreground">Description</p>
-  <button className="bg-primary text-primary-foreground rounded-md px-4 py-2">Click me</button>
-</div>
-```
 
 ## File Structure
 
@@ -177,18 +151,4 @@
   // Incorrect - barrel file
   import { Button, Dialog, Input } from '@/components/ui'
   import { useAuth, useSession } from '@/context'
-  ```
-
-## Imports (Web Package)
-
-- Always use the `@` path alias for local imports in the web package:
-
-  ```tsx
-  // Correct
-  import { Button } from '@/components/ui/button'
-  import { cn } from '@/lib/utils'
-
-  // Incorrect
-  import { Button } from '../components/ui/button'
-  import { cn } from '../../utils/cn'
   ```

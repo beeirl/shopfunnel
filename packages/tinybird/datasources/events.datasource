@@ -8,12 +8,30 @@ SCHEMA >
     `visitor_id` String `json:$.visitor_id`,
     `session_id` String `json:$.session_id`,
     `workspace_id` String `json:$.workspace_id`,
+    `campaign_id` String `json:$.campaign_id`,
+    `experiment_id` String `json:$.experiment_id`,
+    `experiment_variant_id` String `json:$.experiment_variant_id`,
     `funnel_id` String `json:$.funnel_id`,
     `funnel_version` UInt32 `json:$.funnel_version`,
     `version` LowCardinality(String) `json:$.version`,
     `payload` String `json:$.payload`,
     `timestamp` DateTime64(3) `json:$.timestamp`
 
+FORWARD_QUERY >
+    SELECT
+        type,
+        visitor_id,
+        session_id,
+        workspace_id,
+        defaultValueOfTypeName('String') AS campaign_id,
+        defaultValueOfTypeName('String') AS experiment_id,
+        defaultValueOfTypeName('String') AS experiment_variant_id,
+        funnel_id,
+        funnel_version,
+        version,
+        payload,
+        timestamp
+
 ENGINE MergeTree
 ENGINE_PARTITION_KEY toYYYYMM(timestamp)
-ENGINE_SORTING_KEY workspace_id, funnel_id, funnel_version, timestamp
+ENGINE_SORTING_KEY workspace_id, campaign_id, experiment_id, experiment_variant_id, funnel_id, funnel_version, timestamp

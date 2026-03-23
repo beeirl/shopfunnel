@@ -1,6 +1,9 @@
 SCHEMA >
     `date` DateTime,
     `workspace_id` String,
+    `campaign_id` String,
+    `experiment_id` String,
+    `experiment_variant_id` String,
     `funnel_id` String,
     `funnel_version` UInt32,
     `visitors` AggregateFunction(uniq, String),
@@ -12,4 +15,4 @@ SCHEMA >
 
 ENGINE AggregatingMergeTree
 ENGINE_PARTITION_KEY toYYYYMM(date)
-ENGINE_SORTING_KEY workspace_id, funnel_id, funnel_version, date
+ENGINE_SORTING_KEY workspace_id, campaign_id, experiment_id, experiment_variant_id, funnel_id, funnel_version, date

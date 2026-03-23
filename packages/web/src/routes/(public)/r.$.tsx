@@ -1,5 +1,5 @@
-import { listIntegrations } from '@/routes/(funnel)/-common'
-import { head } from '@/routes/(funnel)/-head'
+import { listIntegrations } from '@/routes/(public)/-common'
+import { head } from '@/routes/(public)/-head'
 import { Domain } from '@shopfunnel/core/domain/index'
 import { createFileRoute, Outlet } from '@tanstack/react-router'
 import { createServerFn } from '@tanstack/react-start'
@@ -11,7 +11,7 @@ const getDomain = createServerFn().handler(async () => {
   return Domain.fromHostname(host)
 })
 
-export const Route = createFileRoute('/(funnel)/r/$')({
+export const Route = createFileRoute('/(public)/r/$')({
   component: Outlet,
   ssr: true,
   loader: async () => {

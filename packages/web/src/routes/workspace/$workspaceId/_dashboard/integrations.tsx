@@ -11,7 +11,7 @@ import { Tooltip } from '@/components/ui/tooltip'
 import { withActor } from '@/context/auth.withActor'
 import { Identifier } from '@shopfunnel/core/identifier'
 import { Integration } from '@shopfunnel/core/integration/index'
-import { IconBlocks as BlocksIcon, IconDots as DotsIcon } from '@tabler/icons-react'
+import { IconBlocks as BlocksIcon, IconDots as DotsIcon, IconPlus as PlusIcon } from '@tabler/icons-react'
 import { queryOptions, useMutation, useQueryClient, useSuspenseQuery } from '@tanstack/react-query'
 import { createFileRoute } from '@tanstack/react-router'
 import { createServerFn } from '@tanstack/react-start'
@@ -139,7 +139,10 @@ function IntegrationsRoute() {
         </Heading.Content>
         <Heading.Actions>
           <Dialog.Root open={addIntegrationDialogOpen} onOpenChange={setAddIntegrationDialogOpen}>
-            <Dialog.Trigger render={<Button size="lg" />}>Add a integration</Dialog.Trigger>
+            <Dialog.Trigger render={<Button />}>
+              <PlusIcon />
+              Add integration
+            </Dialog.Trigger>
             <Dialog.Content>
               <Dialog.Header>
                 <Dialog.Title>Add Integration</Dialog.Title>
