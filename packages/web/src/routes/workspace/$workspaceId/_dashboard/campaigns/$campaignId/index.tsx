@@ -415,7 +415,7 @@ function ExperimentDialog(props: ExperimentDialogProps) {
         <Dialog.Header>
           <Dialog.Title>{mode === 'create' ? 'Create experiment' : 'Edit experiment'}</Dialog.Title>
         </Dialog.Header>
-        <div className="flex flex-col gap-4">
+        <div className="flex w-full min-w-0 flex-col gap-4">
           <Field.Root>
             <Field.Label>Name</Field.Label>
             <Field.Content>
@@ -461,7 +461,7 @@ function ExperimentDialog(props: ExperimentDialogProps) {
                     return (
                       <div
                         key={funnel.id}
-                        className="flex max-h-9 min-h-9 items-center justify-between gap-4 overflow-hidden pr-0 pl-1"
+                        className="flex max-h-9 min-h-9 min-w-0 items-center justify-between gap-4 overflow-hidden pr-0 pl-1"
                       >
                         <span className="flex min-w-0 flex-1 items-center gap-1">
                           {isControl ? (

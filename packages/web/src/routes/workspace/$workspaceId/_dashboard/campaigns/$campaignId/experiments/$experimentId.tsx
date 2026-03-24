@@ -240,7 +240,7 @@ function RouteComponent() {
               <Table.Root>
                 <Table.Header>
                   <Table.Row className="hover:bg-transparent">
-                    <Table.Head>Variant</Table.Head>
+                    <Table.Head className="w-full">Variant</Table.Head>
                     <Table.Head className="text-right">Visits</Table.Head>
                     <Table.Head className="text-right">Orders</Table.Head>
                     <Table.Head className="text-right">Start Rate</Table.Head>
@@ -252,7 +252,7 @@ function RouteComponent() {
                 <Table.Body>
                   {funnelRows.map((row) => (
                     <Table.Row key={row.funnel_id} className="hover:bg-transparent">
-                      <Table.Cell className="truncate font-medium">
+                      <Table.Cell className="max-w-0 truncate font-medium">
                         <Link
                           className="hover:underline"
                           to="/workspace/$workspaceId/funnels/$id/insights"

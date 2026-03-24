@@ -416,7 +416,7 @@ function RouteComponent() {
                 <Table.Root>
                   <Table.Header>
                     <Table.Row className="hover:bg-transparent">
-                      <Table.Head>Funnel</Table.Head>
+                      <Table.Head className="w-full">Funnel</Table.Head>
                       <Table.Head className="text-right">Visits</Table.Head>
                       <Table.Head className="text-right">Orders</Table.Head>
                       <Table.Head className="text-right">Start Rate</Table.Head>
@@ -435,7 +435,7 @@ function RouteComponent() {
                     ) : (
                       funnelRows.map((funnel) => (
                         <Table.Row key={funnel.funnel_id} className="hover:bg-transparent">
-                          <Table.Cell className="truncate font-medium">
+                          <Table.Cell className="max-w-0 truncate font-medium">
                             <Link
                               className="hover:underline"
                               to="/workspace/$workspaceId/funnels/$id/insights"
