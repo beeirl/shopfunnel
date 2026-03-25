@@ -1,6 +1,7 @@
 import { CopyObjectCommand, S3Client } from '@aws-sdk/client-s3'
 import { and, eq, inArray } from 'drizzle-orm'
 import { Resource } from 'sst'
+import { CampaignFunnelTable, CampaignTable } from '../src/campaign/index.sql'
 import { Database } from '../src/database'
 import { FileTable } from '../src/file/index.sql'
 import { FunnelClone } from '../src/funnel/clone'
@@ -11,11 +12,18 @@ import { WorkspaceTable } from '../src/workspace/index.sql'
 // Parse arguments
 const funnelId = process.argv[2]
 const targetWorkspaceId = process.argv[3]
+const campaignId = process.argv[4]
 
 if (!funnelId?.startsWith('fun_') || !targetWorkspaceId?.startsWith('wrk_')) {
-  console.error('Usage: bun scripts/copy-funnel.ts <funnel-id> <target-workspace-id>')
+  console.error('Usage: bun scripts/copy-funnel.ts <funnel-id> <target-workspace-id> [campaign-id]')
   console.error('  funnel-id: fun_xxxx...')
   console.error('  target-workspace-id: wrk_xxxx...')
+  console.error('  campaign-id (optional): cmp_xxxx...')
+  process.exit(1)
+}
+
+if (campaignId && !campaignId.startsWith('cmp_')) {
+  console.error('campaign-id must start with cmp_')
   process.exit(1)
 }
 
@@ -41,6 +49,21 @@ const targetWorkspace = await Database.use((tx) =>
 if (!targetWorkspace) {
   console.error(`Target workspace ${targetWorkspaceId} not found`)
   process.exit(1)
+}
+
+// Verify campaign exists in target workspace (if provided)
+if (campaignId) {
+  const campaign = await Database.use((tx) =>
+    tx
+      .select()
+      .from(CampaignTable)
+      .where(and(eq(CampaignTable.id, campaignId), eq(CampaignTable.workspaceId, targetWorkspaceId)))
+      .then((r) => r[0]),
+  )
+  if (!campaign) {
+    console.error(`Campaign ${campaignId} not found in workspace ${targetWorkspaceId}`)
+    process.exit(1)
+  }
 }
 
 // Fetch source funnel
@@ -191,6 +214,17 @@ await Database.transaction(async (tx) => {
       })),
     )
   }
+
+  // CampaignFunnel junction (if campaign specified)
+  if (campaignId) {
+    await tx.insert(CampaignFunnelTable).values({
+      workspaceId: targetWorkspaceId,
+      campaignId,
+      funnelId: newFunnelId,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    })
+  }
 })
 
 // Print summary
@@ -204,4 +238,7 @@ console.log(`Workspace: ${targetWorkspaceId} (${targetWorkspace.name})`)
 console.log('─'.repeat(40))
 console.log(`Version:       ${funnel.currentVersion} -> 1 (draft)`)
 console.log(`Files:         ${files.length}`)
+if (campaignId) {
+  console.log(`Campaign:      ${campaignId}`)
+}
 console.log('─'.repeat(40))
