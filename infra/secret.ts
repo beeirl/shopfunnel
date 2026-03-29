@@ -10,6 +10,7 @@ export const secret = {
   SHOPIFY_CLIENT_ID: new sst.Secret('SHOPIFY_CLIENT_ID'),
   SHOPIFY_CLIENT_SECRET: new sst.Secret('SHOPIFY_CLIENT_SECRET'),
   STRIPE_SECRET_KEY: new sst.Secret('STRIPE_SECRET_KEY', process.env.STRIPE_SECRET_KEY),
+  EXCHANGE_RATE_API_KEY: new sst.Secret('EXCHANGE_RATE_API_KEY'),
   TINYBIRD_TOKEN: new sst.Secret('TINYBIRD_TOKEN'),
 }
 export const allSecrets = Object.values(secret)

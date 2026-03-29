@@ -21,6 +21,7 @@ export default $config({
     await import('./infra/storage')
     await import('./infra/analytics')
     await import('./infra/billing')
+    await import('./infra/exchange-rate')
     await import('./infra/domain')
     await import('./infra/web')
   },

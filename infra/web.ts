@@ -2,6 +2,7 @@ import { analyticsQueue } from './analytics'
 import { auth } from './auth'
 import { BILLING, STRIPE_WEBHOOK_SECRET } from './billing'
 import { database } from './database'
+import { exchangeRateKv } from './exchange-rate'
 import { allSecrets, secret } from './secret'
 import { domain } from './stage'
 import { storage, STORAGE_URL } from './storage'
@@ -21,6 +22,7 @@ export const web = new sst.cloudflare.x.SolidStart('Web', {
   domain,
   link: [
     analyticsQueue,
+    exchangeRateKv,
     database,
     storage,
     BILLING,

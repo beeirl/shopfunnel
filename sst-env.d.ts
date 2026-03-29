@@ -76,6 +76,17 @@ declare module "sst" {
       "type": "sst.sst.Linkable"
       "username": string
     }
+    "EXCHANGE_RATE_API_KEY": {
+      "type": "sst.sst.Secret"
+      "value": string
+    }
+    "ExchangeRateCronHandler": {
+      "type": "sst.cloudflare.Worker"
+    }
+    "ExchangeRateKv": {
+      "namespaceId": string
+      "type": "sst.cloudflare.Kv"
+    }
     "GOOGLE_CLIENT_ID": {
       "type": "sst.sst.Secret"
       "value": string

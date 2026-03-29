@@ -1,5 +1,6 @@
 import { zValidator } from '@hono/zod-validator'
 import { Analytics } from '@shopfunnel/core/analytics/index'
+import { ExchangeRate } from '@shopfunnel/core/exchange-rate/index'
 import { Resource } from '@shopfunnel/resource'
 import { Hono } from 'hono'
 import { cors } from 'hono/cors'
@@ -35,6 +36,30 @@ export const EventRoute = new Hono()
           browser,
           device,
           request_referrer: referrer ?? event.payload.request_referrer,
+        },
+      }
+    }
+
+    if (event.type === 'external_checkout_completed') {
+      let amount = event.payload.amount
+      let currency = (event.payload.currency || 'USD').toUpperCase()
+
+      if (currency !== 'USD') {
+        try {
+          const exchangeRate = await ExchangeRate.get(currency)
+          amount = Math.round(event.payload.amount / exchangeRate)
+          currency = 'USD'
+        } catch {}
+      }
+
+      event = {
+        ...event,
+        payload: {
+          integration_id: event.payload.integration_id,
+          integration_provider: event.payload.integration_provider,
+          external_id: event.payload.external_id,
+          amount,
+          currency,
         },
       }
     }
