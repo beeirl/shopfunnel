@@ -340,10 +340,16 @@ function RouteComponent() {
                   label: 'Conversion Rate',
                   value: formatPercentage(Math.min(kpis.conversion_rate, 100)),
                   secondary: formatPercentage(
-                    Math.min(kpis.total_starts > 0 ? (kpis.total_orders / kpis.total_starts) * 100 : 0, 100),
+                    Math.min(kpis.total_completions > 0 ? (kpis.total_orders / kpis.total_completions) * 100 : 0, 100),
                   ),
                 },
-                { label: 'Revenue per Visitor', value: formatCurrency(kpis.revenue_per_visitor) },
+                {
+                  label: 'Revenue per Visitor',
+                  value: formatCurrency(kpis.revenue_per_visitor),
+                  secondary: formatCurrency(
+                    kpis.total_completions > 0 ? kpis.total_revenue / kpis.total_completions : 0,
+                  ),
+                },
                 { label: 'Average Order Value', value: formatCurrency(kpis.avg_order_value) },
               ].map((card) => (
                 <Card.Root key={card.label} size="sm">
@@ -455,9 +461,12 @@ function RouteComponent() {
                           </Table.Cell>
                           <Table.Cell className="text-right whitespace-nowrap">
                             {formatPercentage(Math.min(funnel.conversion_rate, 100))}
-                            <span className="text-muted-foreground">{` (${formatPercentage(Math.min(funnel.total_starts > 0 ? (funnel.total_orders / funnel.total_starts) * 100 : 0, 100))})`}</span>
+                            <span className="text-muted-foreground">{` (${formatPercentage(Math.min(funnel.total_completions > 0 ? (funnel.total_orders / funnel.total_completions) * 100 : 0, 100))})`}</span>
                           </Table.Cell>
-                          <Table.Cell className="text-right">{formatCurrency(funnel.revenue_per_visitor)}</Table.Cell>
+                          <Table.Cell className="text-right whitespace-nowrap">
+                            {formatCurrency(funnel.revenue_per_visitor)}
+                            <span className="text-muted-foreground">{` (${formatCurrency(funnel.total_completions > 0 ? funnel.total_revenue / funnel.total_completions : 0)})`}</span>
+                          </Table.Cell>
                         </Table.Row>
                       ))
                     )}

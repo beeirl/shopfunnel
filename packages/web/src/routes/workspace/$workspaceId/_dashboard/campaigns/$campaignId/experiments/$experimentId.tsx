@@ -275,9 +275,12 @@ function RouteComponent() {
                       </Table.Cell>
                       <Table.Cell className="text-right whitespace-nowrap">
                         {formatPercentage(Math.min(row.conversion_rate, 100))}
-                        <span className="text-muted-foreground">{` (${formatPercentage(Math.min(row.total_starts > 0 ? (row.total_orders / row.total_starts) * 100 : 0, 100))})`}</span>
+                        <span className="text-muted-foreground">{` (${formatPercentage(Math.min(row.total_completions > 0 ? (row.total_orders / row.total_completions) * 100 : 0, 100))})`}</span>
                       </Table.Cell>
-                      <Table.Cell className="text-right">{formatCurrency(row.revenue_per_visitor)}</Table.Cell>
+                      <Table.Cell className="text-right whitespace-nowrap">
+                        {formatCurrency(row.revenue_per_visitor)}
+                        <span className="text-muted-foreground">{` (${formatCurrency(row.total_completions > 0 ? row.total_revenue / row.total_completions : 0)})`}</span>
+                      </Table.Cell>
                     </Table.Row>
                   ))}
                 </Table.Body>

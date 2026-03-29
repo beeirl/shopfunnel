@@ -273,10 +273,14 @@ function RouteComponent() {
           label: 'Conversion Rate',
           value: formatPercentage(Math.min(kpis.conversion_rate, 100)),
           secondary: formatPercentage(
-            Math.min(kpis.total_starts > 0 ? (kpis.total_orders / kpis.total_starts) * 100 : 0, 100),
+            Math.min(kpis.total_completions > 0 ? (kpis.total_orders / kpis.total_completions) * 100 : 0, 100),
           ),
         },
-        { label: 'Revenue per Visitor', value: formatCurrency(kpis.revenue_per_visitor) },
+        {
+          label: 'Revenue per Visitor',
+          value: formatCurrency(kpis.revenue_per_visitor),
+          secondary: formatCurrency(kpis.total_completions > 0 ? kpis.total_revenue / kpis.total_completions : 0),
+        },
         { label: 'Average Order Value', value: formatCurrency(kpis.avg_order_value) },
       ]
     : []
