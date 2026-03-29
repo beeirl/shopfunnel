@@ -1,6 +1,7 @@
 DESCRIPTION >
     Unified analytics time series: workspace-level or per-funnel metrics.
     When funnel_id is provided, filters to that funnel (across all versions).
+    Orders/revenue are attributed to funnel completion date when available.
     Supports optional campaign and experiment filters.
     Supports date filtering and granularity (hour or day).
 

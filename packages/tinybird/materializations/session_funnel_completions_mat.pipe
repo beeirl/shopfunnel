@@ -1,0 +1,20 @@
+NODE session_funnel_completions_node
+DESCRIPTION >
+    Track the earliest funnel completion timestamp per session
+
+SQL >
+    SELECT
+        workspace_id,
+        session_id,
+        argMinState(campaign_id, timestamp) AS campaign_id,
+        argMinState(experiment_id, timestamp) AS experiment_id,
+        argMinState(experiment_variant_id, timestamp) AS experiment_variant_id,
+        argMinState(funnel_id, timestamp) AS funnel_id,
+        argMinState(funnel_version, timestamp) AS funnel_version,
+        minSimpleState(timestamp) AS completion_timestamp
+    FROM events
+    WHERE type IN ('funnel_end', 'funnel_completed')
+    GROUP BY workspace_id, session_id
+
+TYPE MATERIALIZED
+DATASOURCE session_funnel_completions_mv

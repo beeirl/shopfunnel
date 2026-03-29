@@ -1,6 +1,7 @@
 DESCRIPTION >
     Per-funnel analytics KPIs: returns one row per funnel with computed metrics.
     When funnel_id is provided, filters to that single funnel.
+    Orders/revenue are attributed to funnel completion date when available.
     Supports optional campaign and experiment filters.
     Supports date filtering.
 

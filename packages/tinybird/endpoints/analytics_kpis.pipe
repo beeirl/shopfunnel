@@ -1,6 +1,7 @@
 DESCRIPTION >
     Unified analytics KPIs: workspace-level or per-funnel metrics.
     When funnel_id is provided, filters to that funnel (across all versions).
+    Orders/revenue are attributed to funnel completion date when available.
     Supports date filtering.
 
 TOKEN api READ

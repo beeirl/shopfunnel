@@ -4,20 +4,59 @@ DESCRIPTION >
 
 SQL >
     SELECT
-        toStartOfHour(timestamp) AS date,
-        workspace_id,
-        campaign_id,
-        experiment_id,
-        experiment_variant_id,
-        funnel_id,
-        funnel_version,
-        uniqStateIf(session_id, type IN ('funnel_enter', 'funnel_viewed')) AS visitors,
-        uniqStateIf(session_id, type IN ('funnel_start', 'funnel_started')) AS starts,
-        uniqStateIf(session_id, type IN ('funnel_end', 'funnel_completed')) AS completions,
-        uniqStateIf(session_id, type IN ('external_checkout_complete', 'external_checkout_completed')) AS orders,
-        uniqStateIf(session_id, type IN ('external_page_view', 'external_page_viewed')) AS external_page_views,
-        sumStateIf(JSONExtractFloat(payload, 'amount'), type IN ('external_checkout_complete', 'external_checkout_completed')) AS total_revenue
-    FROM events
+        if(
+            e.type IN ('external_checkout_complete', 'external_checkout_completed') AND c.session_id != '',
+            toStartOfHour(c.completion_timestamp),
+            toStartOfHour(e.timestamp)
+        ) AS date,
+        e.workspace_id AS workspace_id,
+        if(
+            e.type IN ('external_checkout_complete', 'external_checkout_completed') AND c.session_id != '',
+            c.campaign_id,
+            e.campaign_id
+        ) AS campaign_id,
+        if(
+            e.type IN ('external_checkout_complete', 'external_checkout_completed') AND c.session_id != '',
+            c.experiment_id,
+            e.experiment_id
+        ) AS experiment_id,
+        if(
+            e.type IN ('external_checkout_complete', 'external_checkout_completed') AND c.session_id != '',
+            c.experiment_variant_id,
+            e.experiment_variant_id
+        ) AS experiment_variant_id,
+        if(
+            e.type IN ('external_checkout_complete', 'external_checkout_completed') AND c.session_id != '',
+            c.funnel_id,
+            e.funnel_id
+        ) AS funnel_id,
+        if(
+            e.type IN ('external_checkout_complete', 'external_checkout_completed') AND c.session_id != '',
+            c.funnel_version,
+            e.funnel_version
+        ) AS funnel_version,
+        uniqStateIf(e.session_id, e.type IN ('funnel_enter', 'funnel_viewed')) AS visitors,
+        uniqStateIf(e.session_id, e.type IN ('funnel_start', 'funnel_started')) AS starts,
+        uniqStateIf(e.session_id, e.type IN ('funnel_end', 'funnel_completed')) AS completions,
+        uniqStateIf(e.session_id, e.type IN ('external_checkout_complete', 'external_checkout_completed')) AS orders,
+        uniqStateIf(e.session_id, e.type IN ('external_page_view', 'external_page_viewed')) AS external_page_views,
+        sumStateIf(JSONExtractFloat(e.payload, 'amount'), e.type IN ('external_checkout_complete', 'external_checkout_completed')) AS total_revenue
+    FROM events AS e
+    LEFT JOIN (
+        SELECT
+            workspace_id,
+            session_id,
+            argMinMerge(campaign_id) AS campaign_id,
+            argMinMerge(experiment_id) AS experiment_id,
+            argMinMerge(experiment_variant_id) AS experiment_variant_id,
+            argMinMerge(funnel_id) AS funnel_id,
+            argMinMerge(funnel_version) AS funnel_version,
+            min(completion_timestamp) AS completion_timestamp
+        FROM session_funnel_completions_mv
+        GROUP BY workspace_id, session_id
+    ) AS c
+        ON e.workspace_id = c.workspace_id
+        AND e.session_id = c.session_id
     GROUP BY date, workspace_id, campaign_id, experiment_id, experiment_variant_id, funnel_id, funnel_version
 
 TYPE MATERIALIZED

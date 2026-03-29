@@ -1,0 +1,12 @@
+SCHEMA >
+    `workspace_id` String,
+    `session_id` String,
+    `campaign_id` AggregateFunction(argMin, String, DateTime64(3)),
+    `experiment_id` AggregateFunction(argMin, String, DateTime64(3)),
+    `experiment_variant_id` AggregateFunction(argMin, String, DateTime64(3)),
+    `funnel_id` AggregateFunction(argMin, String, DateTime64(3)),
+    `funnel_version` AggregateFunction(argMin, UInt32, DateTime64(3)),
+    `completion_timestamp` SimpleAggregateFunction(min, DateTime64(3))
+
+ENGINE AggregatingMergeTree
+ENGINE_SORTING_KEY workspace_id, session_id
