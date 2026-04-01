@@ -15,7 +15,19 @@ import * as React from 'react'
 import { ulid } from 'ulid'
 import { z } from 'zod'
 
-declare const fbq: ((command: 'trackCustom', eventName: string) => void) | undefined
+declare function fbq(command: 'init', pixelId: string, advancedMatching?: { external_id?: string }): void
+declare function fbq(
+  command: 'track',
+  eventName: string,
+  params?: Record<string, unknown>,
+  options?: { eventID?: string },
+): void
+declare function fbq(
+  command: 'trackCustom',
+  eventName: string,
+  params?: Record<string, unknown>,
+  options?: { eventID?: string },
+): void
 declare const _upstack: ((command: 'track', eventName: string) => void) | undefined
 
 const getFunnel = createServerFn()
@@ -92,6 +104,7 @@ function RouteComponent() {
   const { funnel, questions, integrations } = Route.useLoaderData()
 
   const shopifyIntegration = integrations.find((i) => i.provider === 'shopify')
+  const metaPixelIntegration = integrations.find((i) => i.provider === 'meta_pixel')
 
   const funnelEnteredRef = React.useRef(false)
   const funnelStartedRef = React.useRef(false)
@@ -150,6 +163,13 @@ function RouteComponent() {
   })
 
   React.useEffect(() => {
+    const pixelId = (metaPixelIntegration?.metadata as { pixelId: string } | undefined)?.pixelId
+    if (typeof fbq !== 'undefined' && pixelId) {
+      fbq('init', pixelId, { external_id: visitor.id() })
+    }
+  }, [])
+
+  React.useEffect(() => {
     if (funnelEnteredRef.current) return
     funnelEnteredRef.current = true
 
@@ -180,7 +200,7 @@ function RouteComponent() {
       tw_campaign: searchParams.get('tw_campaign') || undefined,
       tw_adid: searchParams.get('tw_adid') || undefined,
     })
-    trackMetaPixelEvent('FunnelViewed')
+    trackCustomPixelEvent('ViewQuiz', { id: 'view_quiz' })
   }, [])
 
   React.useEffect(() => {
@@ -194,6 +214,11 @@ function RouteComponent() {
       page_id: currentPage.id,
       page_index: currentPage.index,
       page_name: currentPage.name,
+    })
+    trackPixelEvent('ViewContent', {
+      id: `view_content_${currentPage.index}`,
+      contentName: currentPage.name,
+      contentCategory: `step_${currentPage.index + 1}_of_${funnel.pages.length}`,
     })
   }, [currentPage])
 
@@ -214,11 +239,41 @@ function RouteComponent() {
     if (!success) fetch('/api/event', { method: 'POST', body: blob, keepalive: true })
   }
 
-  const trackMetaPixelEvent = (eventName: string) => {
+  const trackPixelEvent = (
+    eventName: string,
+    properties: { id: string; contentName?: string; contentCategory?: string },
+  ) => {
     if (typeof _upstack !== 'undefined') {
       _upstack('track', eventName)
     } else if (typeof fbq !== 'undefined') {
-      fbq('trackCustom', eventName)
+      fbq(
+        'track',
+        eventName,
+        {
+          ...(properties.contentName && { content_name: properties.contentName }),
+          ...(properties.contentCategory && { content_category: properties.contentCategory }),
+        },
+        { eventID: `${session.id()}_${properties.id}_std` },
+      )
+    }
+  }
+
+  const trackCustomPixelEvent = (
+    eventName: string,
+    properties: { id: string; contentName?: string; contentCategory?: string },
+  ) => {
+    if (typeof _upstack !== 'undefined') {
+      _upstack('track', eventName)
+    } else if (typeof fbq !== 'undefined') {
+      fbq(
+        'trackCustom',
+        eventName,
+        {
+          ...(properties.contentName && { content_name: properties.contentName }),
+          ...(properties.contentCategory && { content_category: properties.contentCategory }),
+        },
+        { eventID: `${session.id()}_${properties.id}` },
+      )
     }
   }
 
@@ -232,7 +287,7 @@ function RouteComponent() {
     if (!funnelStartedRef.current) {
       funnelStartedRef.current = true
       trackEvent('funnel_started')
-      trackMetaPixelEvent('FunnelStarted')
+      trackCustomPixelEvent('StartQuiz', { id: 'start_quiz' })
     }
 
     const questionsByBlockId = new Map(questions.map((q) => [q.blockId, q]))
@@ -256,6 +311,11 @@ function RouteComponent() {
       page_name: page.name,
       page_duration: currentPageViewedAtRef.current ? Date.now() - currentPageViewedAtRef.current : 0,
     })
+    trackCustomPixelEvent('CompleteQuizStep', {
+      id: `complete_quiz_step_${page.index}`,
+      contentName: page.name,
+      contentCategory: `step_${page.index + 1}_of_${funnel.pages.length}`,
+    })
 
     if (Object.keys(page.values).length > 0) {
       const promise = submitAnswers({
@@ -275,11 +335,12 @@ function RouteComponent() {
     const sessionId = session.id()
     const visitorId = visitor.id()
 
+    trackEvent('funnel_completed')
+    trackPixelEvent('Lead', { id: 'complete_quiz' })
+    trackCustomPixelEvent('CompleteQuiz', { id: 'complete_quiz' })
+
     await Promise.allSettled([...pendingAnswerSubmissionsRef.current])
     await completeSubmission({ data: { sessionId, workspaceId: funnel.workspaceId } })
-
-    trackEvent('funnel_completed')
-    trackMetaPixelEvent('FunnelCompleted')
 
     funnelEnteredRef.current = false
     funnelStartedRef.current = false

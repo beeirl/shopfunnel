@@ -1,4 +1,4 @@
-import { and, eq, getTableColumns, isNull, or } from 'drizzle-orm'
+import { and, asc, eq, getTableColumns, isNull, or } from 'drizzle-orm'
 import { z } from 'zod'
 import { Actor } from '../actor'
 import { AuthProvider, AuthTable } from '../auth/index.sql'
@@ -107,7 +107,8 @@ export namespace Account {
             isNull(UserTable.archivedAt),
             isNull(WorkspaceTable.archivedAt),
           ),
-        ),
+        )
+        .orderBy(asc(WorkspaceTable.name)),
     )
   }
 }
