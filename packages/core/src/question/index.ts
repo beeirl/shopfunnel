@@ -1,7 +1,7 @@
 import { and, eq, inArray, isNotNull, isNull, sql } from 'drizzle-orm'
 import { z } from 'zod'
 import { Actor } from '../actor'
-import { AnswerTable, AnswerValueTable } from '../answer/index.sql'
+import { AnswerTable } from '../answer/index.sql'
 import { Database } from '../database'
 import { Funnel } from '../funnel'
 import { INPUT_BLOCKS, type Block, type InputBlock } from '../funnel/types'
@@ -49,36 +49,37 @@ export namespace Question {
           const rows = await tx
             .select({
               questionId: AnswerTable.questionId,
-              optionId: AnswerValueTable.optionId,
+              value: AnswerTable.value,
             })
-            .from(AnswerValueTable)
-            .innerJoin(
-              AnswerTable,
-              and(
-                eq(AnswerValueTable.workspaceId, AnswerTable.workspaceId),
-                eq(AnswerValueTable.answerId, AnswerTable.id),
-              ),
-            )
+            .from(AnswerTable)
             .where(
               and(
                 eq(AnswerTable.workspaceId, Actor.workspaceId()),
-                isNotNull(AnswerValueTable.optionId),
                 inArray(
                   AnswerTable.questionId,
                   existingQuestions.map((q) => q.id),
                 ),
               ),
             )
-            .groupBy(AnswerTable.questionId, AnswerValueTable.optionId)
 
           for (const row of rows) {
-            if (!row.optionId) continue
+            const optionIds = Array.isArray(row.value)
+              ? row.value.filter((value): value is string => typeof value === 'string')
+              : typeof row.value === 'string'
+                ? [row.value]
+                : []
+
+            if (optionIds.length === 0) continue
+
             let set = answeredOptions.get(row.questionId)
             if (!set) {
               set = new Set()
               answeredOptions.set(row.questionId, set)
             }
-            set.add(row.optionId)
+
+            for (const optionId of optionIds) {
+              set.add(optionId)
+            }
           }
         }
 

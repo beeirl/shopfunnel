@@ -86,20 +86,6 @@ export namespace Analytics {
     }),
   })
 
-  const QuestionAnsweredEvent = z.object({
-    ...EventBase.shape,
-    type: z.literal('question_answered'),
-    payload: z.object({
-      page_id: z.string(),
-      question_id: z.string(),
-      question_title: z.string(),
-      question_type: z.string(),
-      answer_value_text: z.string().optional(),
-      answer_value_number: z.number().optional(),
-      answer_value_option_ids: z.array(z.string()).optional(),
-    }),
-  })
-
   const ExternalPageViewedEvent = z.object({
     ...EventBase.shape,
     type: z.literal('external_page_viewed'),
@@ -127,7 +113,6 @@ export namespace Analytics {
     FunnelCompletedEvent,
     PageViewedEvent,
     PageCompletedEvent,
-    QuestionAnsweredEvent,
     ExternalCheckoutCompletedEvent,
     ExternalPageViewedEvent,
   ])

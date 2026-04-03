@@ -8,24 +8,23 @@ export interface PictureChoiceBlockProps {
   block: BlockType
   static?: boolean
   variant?: 'outline' | 'soft'
-  value?: string | string[] | null
-  onValueChange?: (value: string | string[] | null) => void
+  value?: string[]
+  onValueChange?: (value: string[]) => void
 }
 
 export function PictureChoiceBlock(props: PictureChoiceBlockProps) {
+  const value = Array.isArray(props.value) ? props.value : props.value ? [props.value] : []
+
   return (
     <div className="group-not-data-first/block:mt-6">
       <ReactAriaListbox
         className="grid grid-cols-2 gap-3"
         disallowEmptySelection={props.static ? false : !props.block.properties.multiple}
         selectionMode={props.static ? 'none' : props.block.properties.multiple ? 'multiple' : 'single'}
-        selectedKeys={
-          props.static ? undefined : Array.isArray(props.value) ? props.value : props.value ? [props.value] : []
-        }
+        selectedKeys={props.static ? undefined : value}
         onSelectionChange={(selection) => {
           if (props.static || selection === 'all') return
-          const value = Array.from(selection) as string[]
-          props.onValueChange?.(props.block.properties.multiple ? value : (value[0] ?? null))
+          props.onValueChange?.(Array.from(selection) as string[])
         }}
       >
         {props.block.properties.options.map((choice) => (
@@ -34,12 +33,12 @@ export function PictureChoiceBlock(props: PictureChoiceBlockProps) {
             id={choice.id}
             isDisabled={props.static}
             onClick={() => {
-              if (!props.block.properties.multiple && props.value === choice.id) {
-                props.onValueChange?.(choice.id)
+              if (!props.block.properties.multiple && value[0] === choice.id) {
+                props.onValueChange?.([choice.id])
               }
             }}
             onPointerDown={(e) => {
-              if (!props.block.properties.multiple && props.value === choice.id) {
+              if (!props.block.properties.multiple && value[0] === choice.id) {
                 e.preventDefault()
               }
             }}

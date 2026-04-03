@@ -1,5 +1,7 @@
-import { bigint, index, mysqlTable, uniqueIndex, varchar } from 'drizzle-orm/mysql-core'
+import { bigint, index, json, mysqlTable, uniqueIndex, varchar } from 'drizzle-orm/mysql-core'
 import { id, timestampColumns, ulid, workspaceColumns, workspaceIndexes } from '../database/types'
+
+export type AnswerValue = string | number | string[]
 
 export const AnswerTable = mysqlTable(
   'answer',
@@ -8,6 +10,7 @@ export const AnswerTable = mysqlTable(
     ...workspaceColumns,
     submissionId: id('submission_id').notNull(),
     questionId: id('question_id').notNull(),
+    value: json('value').$type<AnswerValue>().notNull(),
   },
   (table) => [
     ...workspaceIndexes(table),

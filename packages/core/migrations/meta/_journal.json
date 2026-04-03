@@ -127,6 +127,20 @@
       "when": 1774294136778,
       "tag": "0017_friendly_thor",
       "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "5",
+      "when": 1775164705915,
+      "tag": "0018_organic_zzzax",
+      "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "5",
+      "when": 1775212325364,
+      "tag": "0019_regular_fenris",
+      "breakpoints": true
     }
   ]
 }

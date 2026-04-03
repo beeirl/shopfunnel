@@ -1,7 +1,7 @@
 import { and, desc, eq, inArray, sql } from 'drizzle-orm'
 import { z } from 'zod'
 import { Actor } from '../actor'
-import { AnswerTable, AnswerValueTable } from '../answer/index.sql'
+import { AnswerTable } from '../answer/index.sql'
 import { Database } from '../database'
 import { Identifier } from '../identifier'
 import { Question } from '../question'
@@ -59,6 +59,7 @@ export namespace Submission {
       const offset = (page - 1) * limit
 
       const questions = await Question.list(funnelId)
+      const questionById = new Map(questions.map((q) => [q.id, q]))
 
       // Get total count
       const countResult = await Database.use((tx) =>
@@ -105,18 +106,9 @@ export namespace Submission {
           .select({
             submissionId: AnswerTable.submissionId,
             questionId: AnswerTable.questionId,
-            text: AnswerValueTable.text,
-            number: AnswerValueTable.number,
-            optionId: AnswerValueTable.optionId,
+            value: AnswerTable.value,
           })
           .from(AnswerTable)
-          .innerJoin(
-            AnswerValueTable,
-            and(
-              eq(AnswerValueTable.workspaceId, AnswerTable.workspaceId),
-              eq(AnswerValueTable.answerId, AnswerTable.id),
-            ),
-          )
           .where(
             and(eq(AnswerTable.workspaceId, Actor.workspaceId()), inArray(AnswerTable.submissionId, submissionIds)),
           ),
@@ -140,15 +132,30 @@ export namespace Submission {
           submissionAnswers.set(answer.questionId, questionAnswers)
         }
 
-        // Resolve the answer value
-        if (answer.text !== null) {
-          questionAnswers.push(answer.text)
-        } else if (answer.optionId !== null) {
+        const question = questionById.get(answer.questionId)
+        if (!question) continue
+
+        if (typeof answer.value === 'string') {
+          if (
+            question.type === 'dropdown' ||
+            question.type === 'binary_choice' ||
+            question.type === 'multiple_choice' ||
+            question.type === 'picture_choice'
+          ) {
+            const options = questionOptionByQuestionId.get(answer.questionId)
+            const label = options?.find((o) => o.id === answer.value)?.label
+            questionAnswers.push(label ?? answer.value)
+          } else {
+            questionAnswers.push(answer.value)
+          }
+        } else if (typeof answer.value === 'number') {
+          questionAnswers.push(String(answer.value))
+        } else if (Array.isArray(answer.value)) {
           const options = questionOptionByQuestionId.get(answer.questionId)
-          const label = options?.find((o) => o.id === answer.optionId)?.label ?? answer.optionId
-          questionAnswers.push(label)
-        } else if (answer.number !== null) {
-          questionAnswers.push(String(answer.number))
+          for (const optionId of answer.value) {
+            const label = options?.find((o) => o.id === optionId)?.label ?? optionId
+            questionAnswers.push(label)
+          }
         }
       }
 
@@ -163,9 +170,9 @@ export namespace Submission {
           const submissionAnswers = answersBySubmission.get(s.id)
           const answers: Record<string, string[]> = {}
           if (submissionAnswers) {
-            for (const [questionId, values] of submissionAnswers) {
+            submissionAnswers.forEach((values, questionId) => {
               answers[questionId] = values
-            }
+            })
           }
           return {
             id: s.id,

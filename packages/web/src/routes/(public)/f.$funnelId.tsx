@@ -6,7 +6,6 @@ import { Analytics } from '@shopfunnel/core/analytics/index'
 import { Answer } from '@shopfunnel/core/answer/index'
 import { Funnel as FunnelCore } from '@shopfunnel/core/funnel/index'
 import { Identifier } from '@shopfunnel/core/identifier'
-import { Question } from '@shopfunnel/core/question/index'
 import { Submission } from '@shopfunnel/core/submission/index'
 import { createFileRoute, notFound } from '@tanstack/react-router'
 import { createServerFn } from '@tanstack/react-start'
@@ -42,12 +41,6 @@ const getFunnel = createServerFn()
     }
 
     return funnel
-  })
-
-const listQuestions = createServerFn()
-  .inputValidator(z.object({ funnelId: Identifier.schema('funnel'), workspaceId: Identifier.schema('workspace') }))
-  .handler(async ({ data }) => {
-    return Actor.provide('system', { workspaceId: data.workspaceId }, () => Question.list(data.funnelId))
   })
 
 const submitAnswers = createServerFn()
@@ -86,12 +79,9 @@ export const Route = createFileRoute('/(public)/f/$funnelId')({
     const funnel = await getFunnel({ data: { shortId: params.funnelId } })
     if (!funnel) throw notFound()
 
-    const [questions, integrations] = await Promise.all([
-      listQuestions({ data: { funnelId: funnel.id, workspaceId: funnel.workspaceId } }),
-      listIntegrations({ data: { workspaceId: funnel.workspaceId } }),
-    ])
+    const integrations = await listIntegrations({ data: { workspaceId: funnel.workspaceId } })
 
-    return { funnel, questions, integrations }
+    return { funnel, integrations }
   },
   head: ({ loaderData }) =>
     head({
@@ -101,7 +91,7 @@ export const Route = createFileRoute('/(public)/f/$funnelId')({
 })
 
 function RouteComponent() {
-  const { funnel, questions, integrations } = Route.useLoaderData()
+  const { funnel, integrations } = Route.useLoaderData()
 
   const shopifyIntegration = integrations.find((i) => i.provider === 'shopify')
   const metaPixelIntegration = integrations.find((i) => i.provider === 'meta_pixel')
@@ -288,21 +278,6 @@ function RouteComponent() {
       funnelStartedRef.current = true
       trackEvent('funnel_started')
       trackCustomPixelEvent('StartQuiz', { id: 'start_quiz' })
-    }
-
-    const questionsByBlockId = new Map(questions.map((q) => [q.blockId, q]))
-    for (const [blockId, value] of Object.entries(page.values)) {
-      const question = questionsByBlockId.get(blockId)
-      if (!question) continue
-      trackEvent('question_answered', {
-        page_id: page.id,
-        question_id: question.id,
-        question_type: question.type,
-        question_title: question.title,
-        ...(typeof value === 'string' && { answer_value_text: value }),
-        ...(typeof value === 'number' && { answer_value_number: value }),
-        ...(Array.isArray(value) && { answer_value_option_ids: value }),
-      })
     }
 
     trackEvent('page_completed', {

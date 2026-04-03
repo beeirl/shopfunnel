@@ -172,8 +172,8 @@ BLOCKS['multiple_choice'] = (props) => (
     block={props.block as MultipleChoiceBlockType}
     static={props.static}
     variant={props.variant}
-    value={props.value as string | string[] | null}
-    onValueChange={props.onValueChange as (value: string | string[] | null) => void}
+    value={props.value as string[] | undefined}
+    onValueChange={props.onValueChange as (value: string[]) => void}
   />
 )
 
@@ -182,8 +182,8 @@ BLOCKS['picture_choice'] = (props) => (
     block={props.block as PictureChoiceBlockType}
     static={props.static}
     variant={props.variant}
-    value={props.value as string | string[] | null}
-    onValueChange={props.onValueChange as (value: string | string[] | null) => void}
+    value={props.value as string[] | undefined}
+    onValueChange={props.onValueChange as (value: string[]) => void}
   />
 )
 

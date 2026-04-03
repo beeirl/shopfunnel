@@ -1,0 +1,1 @@
+ALTER TABLE `answer` MODIFY COLUMN `value` json NOT NULL;

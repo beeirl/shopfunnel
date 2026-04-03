@@ -1,4 +1,4 @@
-import { and, eq, inArray, isNull } from 'drizzle-orm'
+import { and, eq, inArray, isNull, sql } from 'drizzle-orm'
 import { z } from 'zod'
 import { Actor } from '../actor'
 import { Database } from '../database'
@@ -6,7 +6,7 @@ import { Identifier } from '../identifier'
 import { QuestionTable } from '../question/index.sql'
 import { SubmissionTable } from '../submission/index.sql'
 import { fn } from '../utils/fn'
-import { AnswerTable, AnswerValueTable } from './index.sql'
+import { AnswerTable, type AnswerValue } from './index.sql'
 
 export namespace Answer {
   export const submit = fn(
@@ -54,6 +54,8 @@ export namespace Answer {
         )
       })()
 
+      const blockIds = Array.from(new Set(input.answers.map((answer) => answer.blockId)))
+
       const questions = await Database.use((tx) =>
         tx
           .select({ id: QuestionTable.id, blockId: QuestionTable.blockId, type: QuestionTable.type })
@@ -62,6 +64,7 @@ export namespace Answer {
             and(
               eq(QuestionTable.workspaceId, Actor.workspaceId()),
               eq(QuestionTable.funnelId, input.funnelId),
+              inArray(QuestionTable.blockId, blockIds),
               isNull(QuestionTable.archivedAt),
             ),
           ),
@@ -76,87 +79,44 @@ export namespace Answer {
         .filter((a): a is typeof a & { question: NonNullable<typeof a.question> } => !!a.question)
       if (answersWithQuestion.length === 0) return
 
-      const questionIds = answersWithQuestion.map((a) => a.question.id)
+      const answersToUpsert = answersWithQuestion
+        .map((entry) => {
+          const value = (() => {
+            if (entry.question.type === 'text_input') {
+              return String(entry.value ?? '') as AnswerValue
+            }
+            if (entry.question.type === 'dropdown' || entry.question.type === 'binary_choice') {
+              return String(entry.value ?? '') as AnswerValue
+            }
+            if (entry.question.type === 'multiple_choice' || entry.question.type === 'picture_choice') {
+              const choiceIds = Array.isArray(entry.value) ? entry.value : [entry.value]
+              return choiceIds.map((choiceId) => String(choiceId)) as AnswerValue
+            }
+            return null
+          })()
+          if (value === null) return null
+
+          return {
+            id: Identifier.create('answer'),
+            workspaceId: Actor.workspaceId(),
+            submissionId,
+            questionId: entry.question.id,
+            value,
+          }
+        })
+        .filter((answer): answer is NonNullable<typeof answer> => answer !== null)
+      if (answersToUpsert.length === 0) return
 
       await Database.use((tx) =>
         tx
           .insert(AnswerTable)
-          .ignore()
-          .values(
-            answersWithQuestion.map((a) => ({
-              id: Identifier.create('answer'),
-              workspaceId: Actor.workspaceId(),
-              submissionId,
-              questionId: a.question.id,
-            })),
-          ),
+          .values(answersToUpsert)
+          .onDuplicateKeyUpdate({
+            set: {
+              value: sql`VALUES(${AnswerTable.value})`,
+            },
+          }),
       )
-
-      const answers = await Database.use((tx) =>
-        tx
-          .select({ id: AnswerTable.id, questionId: AnswerTable.questionId })
-          .from(AnswerTable)
-          .where(
-            and(
-              eq(AnswerTable.workspaceId, Actor.workspaceId()),
-              eq(AnswerTable.submissionId, submissionId),
-              inArray(AnswerTable.questionId, questionIds),
-            ),
-          ),
-      )
-      const answerIdByQuestionId = new Map(answers.map((a) => [a.questionId, a.id]))
-      const answerIds = answers.map((a) => a.id)
-
-      const allAnswerValues: {
-        id: string
-        workspaceId: string
-        answerId: string
-        text?: string
-        number?: number
-        optionId?: string
-      }[] = []
-
-      for (const entry of answersWithQuestion) {
-        const answerId = answerIdByQuestionId.get(entry.question.id)
-        if (!answerId) continue
-
-        const answerValues = (() => {
-          if (entry.question.type === 'text_input') {
-            return [{ text: String(entry.value ?? '') }]
-          }
-          if (entry.question.type === 'dropdown' || entry.question.type === 'binary_choice') {
-            return [{ optionId: entry.value as string }]
-          }
-          if (entry.question.type === 'multiple_choice' || entry.question.type === 'picture_choice') {
-            const choiceIds = Array.isArray(entry.value) ? (entry.value as string[]) : [entry.value as string]
-            return choiceIds.map((choiceId) => ({ optionId: choiceId }))
-          }
-          return []
-        })()
-
-        for (const answerValue of answerValues) {
-          allAnswerValues.push({
-            id: Identifier.create('answer_value'),
-            workspaceId: Actor.workspaceId(),
-            answerId,
-            ...answerValue,
-          })
-        }
-      }
-
-      if (allAnswerValues.length === 0) return
-
-      if (answerIds.length > 0) {
-        await Database.use((tx) =>
-          tx
-            .delete(AnswerValueTable)
-            .where(
-              and(eq(AnswerValueTable.workspaceId, Actor.workspaceId()), inArray(AnswerValueTable.answerId, answerIds)),
-            ),
-        )
-      }
-
-      await Database.use((tx) => tx.insert(AnswerValueTable).values(allAnswerValues))
     },
   )
 }
