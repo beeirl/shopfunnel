@@ -266,7 +266,7 @@ export interface FunnelProps {
 }
 
 export function Funnel({ funnel, mode = 'live', onPageChange, onPageComplete, onComplete }: FunnelProps) {
-  const VALUES_STORAGE_KEY = `sf_funnel_${funnel.id}_values`
+  const VALUES_STORAGE_KEY = `sf_funnel_${funnel.shortId}_values`
 
   const canChangePageRef = useRef(true)
   const [currentPageIndex, setCurrentPageIndex] = useState(0)
