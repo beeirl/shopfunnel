@@ -113,8 +113,8 @@ export const ADDONS = [
     id: 'managed',
     name: 'Managed Service',
     description: 'We create up to 4 new funnels per month including continuous A/B testing and optimization.',
-    monthlyPrice: 1500,
-    yearlyPrice: 18000,
+    monthlyPrice: 3000,
+    yearlyPrice: 36000,
   },
 ] as const
 

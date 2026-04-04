@@ -248,7 +248,7 @@ const managedServiceProduct = new stripe.Product('ManagedServiceProduct', {
 const managedServiceMonthlyPrice = new stripe.Price('ManagedServicePrice', {
   product: managedServiceProduct.id,
   currency: 'usd',
-  unitAmount: 150000,
+  unitAmount: 300000,
   recurring: {
     interval: 'month',
     intervalCount: 1,
@@ -258,7 +258,7 @@ const managedServiceMonthlyPrice = new stripe.Price('ManagedServicePrice', {
 const managedServiceYearlyPrice = new stripe.Price('ManagedServiceYearlyPrice', {
   product: managedServiceProduct.id,
   currency: 'usd',
-  unitAmount: 1800000,
+  unitAmount: 3600000,
   recurring: {
     interval: 'year',
     intervalCount: 1,
