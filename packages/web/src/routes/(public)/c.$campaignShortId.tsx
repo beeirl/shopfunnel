@@ -213,7 +213,7 @@ function RouteComponent() {
 
   const [session] = React.useState(() => {
     let id: string | undefined
-    const key = `sf_campaign_${funnel.campaignShortId}_session_id`
+    const key = `sf_funnel_${funnel.funnel.shortId}_session_id`
 
     return {
       id: () => {
