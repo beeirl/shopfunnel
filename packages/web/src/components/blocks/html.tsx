@@ -106,7 +106,7 @@ export function HtmlBlock(props: HtmlBlockProps) {
       <iframe
         className={cn('block w-full overflow-hidden border-none', !ready && 'invisible')}
         ref={iframeRef}
-        sandbox="allow-same-origin"
+        sandbox="allow-same-origin allow-scripts"
         srcDoc={content}
       />
     </div>
