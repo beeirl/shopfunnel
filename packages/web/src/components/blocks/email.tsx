@@ -1,4 +1,3 @@
-import { EmailConsentText } from '@/components/blocks/consent-text'
 import { cn } from '@/lib/utils'
 import { Input as BaseInput } from '@base-ui/react/input'
 import type { EmailBlock as BlockType } from '@shopfunnel/core/funnel/types'
@@ -36,7 +35,30 @@ export function EmailBlock(props: EmailBlockProps) {
         value={props.static ? undefined : (props.value ?? '')}
         onValueChange={props.static ? undefined : props.onValueChange}
       />
-      {showConsent && <EmailConsentText privacyUrl={props.privacyUrl} termsUrl={props.termsUrl} />}
+      {showConsent && (
+        <p className="mt-2 text-center text-xs text-(--sf-muted-foreground)">
+          By entering your email, you agree to receive marketing emails. You can unsubscribe at any time using the link
+          in our emails.
+          {(props.termsUrl || props.privacyUrl) && (
+            <>
+              {' '}
+              See our{' '}
+              {props.termsUrl && (
+                <a className="underline" href={props.termsUrl} target="_blank" rel="noopener noreferrer">
+                  Terms
+                </a>
+              )}
+              {props.termsUrl && props.privacyUrl && ' & '}
+              {props.privacyUrl && (
+                <a className="underline" href={props.privacyUrl} target="_blank" rel="noopener noreferrer">
+                  Privacy Policy
+                </a>
+              )}
+              .
+            </>
+          )}
+        </p>
+      )}
     </div>
   )
 }

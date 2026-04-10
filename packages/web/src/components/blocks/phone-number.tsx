@@ -1,4 +1,3 @@
-import { PhoneConsentText } from '@/components/blocks/consent-text'
 import { cn } from '@/lib/utils'
 import { Input as BaseInput } from '@base-ui/react/input'
 import type { PhoneNumberBlock as BlockType } from '@shopfunnel/core/funnel/types'
@@ -35,7 +34,36 @@ export function PhoneNumberBlock(props: PhoneNumberBlockProps) {
         value={props.static ? undefined : (props.value ?? '')}
         onValueChange={props.static ? undefined : props.onValueChange}
       />
-      {showConsent && <PhoneConsentText privacyUrl={props.privacyUrl} termsUrl={props.termsUrl} />}
+      {showConsent && (
+        <p className="mt-2 text-center text-xs text-(--sf-muted-foreground)">
+          By providing your number and clicking the button, you agree to receive recurring auto-dialed marketing SMS
+          (including cart reminders; AI content; artificial or prerecorded voices)
+          {props.termsUrl ? (
+            <>
+              {' '}
+              and our{' '}
+              <a className="underline" href={props.termsUrl} target="_blank" rel="noopener noreferrer">
+                Terms of Service
+              </a>{' '}
+              (including arbitration).
+            </>
+          ) : (
+            '.'
+          )}{' '}
+          Consent is not required to purchase. Msg & data rates may apply. Msg frequency varies. Reply HELP for help;
+          STOP to opt-out.
+          {props.privacyUrl && (
+            <>
+              {' '}
+              View{' '}
+              <a className="underline" href={props.privacyUrl} target="_blank" rel="noopener noreferrer">
+                Privacy Policy
+              </a>
+              .
+            </>
+          )}
+        </p>
+      )}
     </div>
   )
 }
