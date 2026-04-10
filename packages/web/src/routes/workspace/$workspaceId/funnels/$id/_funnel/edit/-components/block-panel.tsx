@@ -3,6 +3,7 @@ import { useFunnelEditor } from '../-context'
 import { useFunnel } from '../../-context'
 import { BinaryChoiceBlockPanel } from './block-panels/binary-choice'
 import { DropdownBlockPanel } from './block-panels/dropdown'
+import { EmailBlockPanel } from './block-panels/email'
 import { GaugeBlockPanel } from './block-panels/gauge'
 import { HeadingBlockPanel } from './block-panels/heading'
 import { HtmlBlockPanel } from './block-panels/html'
@@ -10,6 +11,7 @@ import { ImageBlockPanel } from './block-panels/image'
 import { LoaderBlockPanel } from './block-panels/loader'
 import { MultipleChoiceBlockPanel } from './block-panels/multiple-choice'
 import { ParagraphBlockPanel } from './block-panels/paragraph'
+import { PhoneNumberBlockPanel } from './block-panels/phone-number'
 import { PictureChoiceBlockPanel } from './block-panels/picture-choice'
 import { SpacerBlockPanel } from './block-panels/spacer'
 import { TextInputBlockPanel } from './block-panels/text-input'
@@ -71,6 +73,10 @@ export function BlockPanel() {
           onHtmlChange={handleHtmlChange}
         />
       )
+    case 'email':
+      return <EmailBlockPanel block={block} onBlockUpdate={handleBlockUpdate} />
+    case 'phone_number':
+      return <PhoneNumberBlockPanel block={block} onBlockUpdate={handleBlockUpdate} />
     case 'binary_choice':
       return <BinaryChoiceBlockPanel block={block} theme={funnel.theme} onBlockUpdate={handleBlockUpdate} />
   }

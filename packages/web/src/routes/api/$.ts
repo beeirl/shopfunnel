@@ -1,12 +1,14 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { Hono } from 'hono'
 import { EventRoute } from './-event'
+import { KlaviyoRoute } from './-klaviyo'
 import { ShopifyRoute } from './-shopify'
 import { StripeRoute } from './-stripe'
 
 const app = new Hono()
   .basePath('/api')
   .route('/event', EventRoute)
+  .route('/klaviyo', KlaviyoRoute)
   .route('/shopify', ShopifyRoute)
   .route('/stripe', StripeRoute)
 

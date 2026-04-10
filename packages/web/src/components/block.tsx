@@ -1,5 +1,6 @@
 import { BinaryChoiceBlock } from '@/components/blocks/binary-choice'
 import { DropdownBlock } from '@/components/blocks/dropdown'
+import { EmailBlock } from '@/components/blocks/email'
 import { GaugeBlock } from '@/components/blocks/gauge'
 import { HeadingBlock } from '@/components/blocks/heading'
 import { HtmlBlock } from '@/components/blocks/html'
@@ -7,6 +8,7 @@ import { ImageBlock } from '@/components/blocks/image'
 import { LoaderBlock } from '@/components/blocks/loader'
 import { MultipleChoiceBlock } from '@/components/blocks/multiple-choice'
 import { ParagraphBlock } from '@/components/blocks/paragraph'
+import { PhoneNumberBlock } from '@/components/blocks/phone-number'
 import { PictureChoiceBlock } from '@/components/blocks/picture-choice'
 import { SpacerBlock } from '@/components/blocks/spacer'
 import { TextInputBlock } from '@/components/blocks/text-input'
@@ -14,6 +16,7 @@ import type {
   BinaryChoiceBlock as BinaryChoiceBlockType,
   Block as BlockType,
   DropdownBlock as DropdownBlockType,
+  EmailBlock as EmailBlockType,
   GaugeBlock as GaugeBlockType,
   HeadingBlock as HeadingBlockType,
   HtmlBlock as HtmlBlockType,
@@ -21,7 +24,9 @@ import type {
   LoaderBlock as LoaderBlockType,
   MultipleChoiceBlock as MultipleChoiceBlockType,
   ParagraphBlock as ParagraphBlockType,
+  PhoneNumberBlock as PhoneNumberBlockType,
   PictureChoiceBlock as PictureChoiceBlockType,
+  Settings,
   SpacerBlock as SpacerBlockType,
   TextInputBlock as TextInputBlockType,
 } from '@shopfunnel/core/funnel/types'
@@ -36,7 +41,9 @@ import {
   IconLetterCase as LetterCaseIcon,
   IconListLetters as ListLettersIcon,
   IconLoader as LoaderIcon,
+  IconMail as MailIcon,
   IconMenu as MenuIcon,
+  IconPhone as PhoneIcon,
   IconPhoto as PhotoIcon,
 } from '@tabler/icons-react'
 import * as React from 'react'
@@ -44,6 +51,7 @@ import * as React from 'react'
 export interface BlockProps {
   block: BlockType
   index?: number
+  settings?: Pick<Settings, 'privacyUrl' | 'termsUrl'>
   static?: boolean
   variant?: 'outline' | 'soft'
   value?: unknown
@@ -139,12 +147,26 @@ export function getBlockInfo(type: BlockType['type']): BlockInfo {
         description: 'Embed custom HTML content in a sandboxed iframe.',
         icon: CodeIcon,
       }
+    case 'email':
+      return {
+        type: 'email',
+        name: 'Email',
+        description: 'Collect an email address from the user with built-in email validation.',
+        icon: MailIcon,
+      }
     case 'binary_choice':
       return {
         type: 'binary_choice',
         name: 'Binary Choice',
         description: 'Display two large side-by-side buttons sticky at the bottom of the page.',
         icon: ColumnsIcon,
+      }
+    case 'phone_number':
+      return {
+        type: 'phone_number',
+        name: 'Phone Number',
+        description: 'Collect an international phone number using E.164-style validation.',
+        icon: PhoneIcon,
       }
   }
 }
@@ -216,6 +238,30 @@ BLOCKS['loader'] = (props) => (
 BLOCKS['spacer'] = (props) => <SpacerBlock block={props.block as SpacerBlockType} static={props.static} />
 
 BLOCKS['html'] = (props) => <HtmlBlock block={props.block as HtmlBlockType} static={props.static} />
+
+BLOCKS['email'] = (props) => (
+  <EmailBlock
+    block={props.block as EmailBlockType}
+    privacyUrl={props.settings?.privacyUrl}
+    static={props.static}
+    termsUrl={props.settings?.termsUrl}
+    variant={props.variant}
+    value={props.value as string}
+    onValueChange={props.onValueChange as (value: string) => void}
+  />
+)
+
+BLOCKS['phone_number'] = (props) => (
+  <PhoneNumberBlock
+    block={props.block as PhoneNumberBlockType}
+    privacyUrl={props.settings?.privacyUrl}
+    static={props.static}
+    termsUrl={props.settings?.termsUrl}
+    variant={props.variant}
+    value={props.value as string}
+    onValueChange={props.onValueChange as (value: string) => void}
+  />
+)
 
 BLOCKS['binary_choice'] = (props) => (
   <BinaryChoiceBlock

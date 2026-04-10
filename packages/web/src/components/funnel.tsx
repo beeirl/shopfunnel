@@ -161,6 +161,18 @@ function validateBlocks(blocks: BlockType[], values: Values) {
       if (!value) return null
       return new RegExp(pattern as string).test(String(value)) ? null : 'Invalid format'
     },
+    email: (value) => {
+      if (!value) return null
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+      return emailRegex.test(String(value)) ? null : 'Please enter a valid email address'
+    },
+    phone: (value) => {
+      if (!value) return null
+      const normalized = String(value)
+        .trim()
+        .replace(/[\s()-]/g, '')
+      return /^\+[1-9]\d{6,14}$/.test(normalized) ? null : 'Please enter a valid phone number'
+    },
   }
 
   const errors: Record<string, string> = {}
@@ -215,6 +227,8 @@ function shouldAutoAdvance(blocks: BlockType[]): boolean {
     block.type === 'multiple_choice' ||
     block.type === 'dropdown' ||
     block.type === 'picture_choice' ||
+    block.type === 'email' ||
+    block.type === 'phone_number' ||
     block.type === 'binary_choice'
 
   const advancesAutomatically = (block: BlockType) =>
@@ -468,6 +482,7 @@ export function Funnel({ funnel, mode = 'live', onPageChange, onPageComplete, on
                         <Block
                           block={block}
                           index={index}
+                          settings={funnel.settings}
                           variant={funnel.theme.style}
                           value={values[block.id]}
                           onValueChange={(value) => handleBlockValueChange(block.id, value)}

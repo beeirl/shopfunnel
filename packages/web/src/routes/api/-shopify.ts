@@ -148,15 +148,17 @@ export const ShopifyRoute = new Hono()
       if (!shopResponse.ok) return c.json({ error: 'Failed to fetch shop info' }, 500)
       const shopResponseJson = (await shopResponse.json()) as any
 
-      await Actor.provide('system', { workspaceId }, () =>
-        Integration.connect({
+      await Actor.provide('system', { workspaceId }, async () => {
+        await Integration.disconnect({ provider: 'shopify' })
+
+        return Integration.connect({
           provider: 'shopify',
           externalId: String(shopResponseJson.shop.id),
           title: shopResponseJson.shop.name,
           credentials: { accessToken: tokenResponseJson.access_token },
           metadata: { shopDomain: query.shop, shopName: shopResponseJson.shop.name },
-        }),
-      )
+        })
+      })
 
       // Create/update web pixel with settings
       const pixelResponse = await fetch(`https://${query.shop}/admin/api/2024-10/graphql.json`, {

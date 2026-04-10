@@ -91,6 +91,17 @@ declare module "sst" {
       "type": "sst.sst.Secret"
       "value": string
     }
+    "KLAVIYO_CLIENT_ID": {
+      "type": "sst.sst.Secret"
+      "value": string
+    }
+    "KLAVIYO_CLIENT_SECRET": {
+      "type": "sst.sst.Secret"
+      "value": string
+    }
+    "KlaviyoSyncCronHandler": {
+      "type": "sst.cloudflare.Worker"
+    }
     "POSTHOG_API_KEY": {
       "type": "sst.sst.Secret"
       "value": string

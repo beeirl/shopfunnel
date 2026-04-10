@@ -11,6 +11,7 @@ import { Tooltip } from '@/components/ui/tooltip'
 import { withActor } from '@/context/auth.withActor'
 import { Identifier } from '@shopfunnel/core/identifier'
 import { Integration } from '@shopfunnel/core/integration/index'
+import { Recart } from '@shopfunnel/core/integration/recart'
 import { IconBlocks as BlocksIcon, IconDots as DotsIcon, IconPlus as PlusIcon } from '@tabler/icons-react'
 import { queryOptions, useMutation, useQueryClient, useSuspenseQuery } from '@tanstack/react-query'
 import { createFileRoute } from '@tanstack/react-router'
@@ -20,10 +21,12 @@ import { z } from 'zod'
 import { formatDate, formatDateRelative } from '../-common'
 import { Heading } from './-components/heading'
 
-const providerIcons = {
-  shopify: 'shopify',
-  meta_pixel: 'meta',
-} satisfies Record<string, IconName>
+const PROVIDER_META = {
+  shopify: { name: 'Shopify', icon: 'shopify' },
+  meta_pixel: { name: 'Meta Pixel', icon: 'meta' },
+  klaviyo: { name: 'Klaviyo', icon: 'klaviyo' },
+  recart: { name: 'Recart', icon: 'recart' },
+} satisfies Record<string, { name: string; icon: IconName }>
 
 const listIntegrations = createServerFn()
   .inputValidator(Identifier.schema('workspace'))
@@ -45,17 +48,17 @@ const connectMetaPixelIntegration = createServerFn()
     }),
   )
   .handler(({ data }) => {
-    return withActor(
-      () =>
-        Integration.connect({
-          provider: 'meta_pixel',
-          externalId: data.pixelId,
-          title: 'Meta Pixel',
-          credentials: {},
-          metadata: { pixelId: data.pixelId },
-        }),
-      data.workspaceId,
-    )
+    return withActor(async () => {
+      await Integration.disconnect({ provider: 'meta_pixel' })
+
+      return Integration.connect({
+        provider: 'meta_pixel',
+        externalId: data.pixelId,
+        title: data.pixelId,
+        credentials: {},
+        metadata: { pixelId: data.pixelId },
+      })
+    }, data.workspaceId)
   })
 
 const disconnectIntegration = createServerFn()
@@ -67,6 +70,20 @@ const disconnectIntegration = createServerFn()
   )
   .handler(({ data }) => {
     return withActor(() => Integration.disconnect({ integrationId: data.integrationId }), data.workspaceId)
+  })
+
+const connectRecartIntegration = createServerFn()
+  .inputValidator(
+    z.object({
+      workspaceId: Identifier.schema('workspace'),
+      apiKey: z.string().min(1),
+    }),
+  )
+  .handler(({ data }) => {
+    return withActor(async () => {
+      await Integration.disconnect({ provider: 'recart' })
+      await Recart.connect({ apiKey: data.apiKey })
+    }, data.workspaceId)
   })
 
 export const Route = createFileRoute('/workspace/$workspaceId/_dashboard/integrations')({
@@ -93,7 +110,7 @@ function IntegrationCard({
       className="flex w-full flex-col items-start rounded-2xl border border-border p-4 pb-3 text-left text-sm font-medium whitespace-normal text-foreground transition-colors duration-200 hover:bg-accent active:bg-accent"
       {...props}
     >
-      <div className="relative flex size-7 shrink-0 items-center justify-center rounded-lg border border-border bg-background p-[0.3rem]">
+      <div className="relative flex size-7 shrink-0 items-center justify-center rounded-lg border border-border bg-background">
         {icon}
       </div>
       <div className="mt-2 flex w-full flex-col space-y-1">
@@ -110,6 +127,7 @@ function IntegrationsRoute() {
 
   const [addIntegrationDialogOpen, setAddIntegrationDialogOpen] = React.useState(false)
   const [metaPixelId, setMetaPixelId] = React.useState('')
+  const [recartApiKey, setRecartApiKey] = React.useState('')
 
   const integrationsQuery = useSuspenseQuery(listIntegrationsQueryOptions(params.workspaceId))
   const integrations = integrationsQuery.data
@@ -131,6 +149,15 @@ function IntegrationsRoute() {
     },
   })
 
+  const connectRecartMutation = useMutation({
+    mutationFn: (apiKey: string) => connectRecartIntegration({ data: { workspaceId: params.workspaceId, apiKey } }),
+    onSuccess: () => {
+      queryClient.invalidateQueries(listIntegrationsQueryOptions(params.workspaceId))
+      setRecartApiKey('')
+      setAddIntegrationDialogOpen(false)
+    },
+  })
+
   return (
     <div className="flex h-full w-full max-w-6xl flex-col gap-4">
       <Heading.Root>
@@ -146,38 +173,16 @@ function IntegrationsRoute() {
             <Dialog.Content>
               <Dialog.Header>
                 <Dialog.Title>Add Integration</Dialog.Title>
-                <Dialog.Description>Select an integration to connect.</Dialog.Description>
               </Dialog.Header>
               <div className="grid grid-cols-2 gap-3">
-                <Dialog.Root>
-                  <Dialog.Trigger
-                    render={
-                      <IntegrationCard
-                        icon={<Icon name="shopify" className="size-5 text-foreground" />}
-                        title="Shopify"
-                        description="Track conversions and orders."
-                      />
-                    }
-                  />
-                  <Dialog.Content>
-                    <Dialog.Header>
-                      <Dialog.Title>Shopify Integration</Dialog.Title>
-                      <Dialog.Description>
-                        Automatically track page views and conversions when visitors from your funnels complete a
-                        checkout on Shopify.
-                      </Dialog.Description>
-                    </Dialog.Header>
-                    <Button
-                      size="lg"
-                      nativeButton={false}
-                      render={
-                        <a href="https://apps.shopify.com/shopfunnel-1" target="_blank" rel="noopener noreferrer" />
-                      }
-                    >
-                      Connect shop
-                    </Button>
-                  </Dialog.Content>
-                </Dialog.Root>
+                <IntegrationCard
+                  icon={<Icon name="shopify" className="size-5 text-foreground" />}
+                  title="Shopify"
+                  description="Track conversions and orders."
+                  onClick={() => {
+                    window.open('https://apps.shopify.com/shopfunnel-1', '_blank')
+                  }}
+                />
 
                 <Dialog.Root
                   onOpenChange={(open) => {
@@ -195,10 +200,7 @@ function IntegrationsRoute() {
                   />
                   <Dialog.Content>
                     <Dialog.Header>
-                      <Dialog.Title>Meta Pixel Integration</Dialog.Title>
-                      <Dialog.Description>
-                        Track page views and conversions by connecting your Meta Pixel.
-                      </Dialog.Description>
+                      <Dialog.Title>Meta Pixel</Dialog.Title>
                     </Dialog.Header>
                     <form
                       className="flex flex-col gap-4"
@@ -225,6 +227,59 @@ function IntegrationsRoute() {
                     </form>
                   </Dialog.Content>
                 </Dialog.Root>
+
+                <IntegrationCard
+                  icon={<Icon name="klaviyo" className="size-5 text-foreground" />}
+                  title="Klaviyo"
+                  description="Sync leads to your Klaviyo account."
+                  onClick={() => {
+                    window.location.href = '/api/klaviyo/authorize'
+                  }}
+                />
+
+                {/* <Dialog.Root
+                  onOpenChange={(open) => {
+                    if (!open) setRecartApiKey('')
+                  }}
+                >
+                  <Dialog.Trigger
+                    render={
+                      <IntegrationCard
+                        icon={<Icon name="recart" className="size-5 text-foreground" />}
+                        title="Recart"
+                        description="Sync phone leads to your Recart account."
+                      />
+                    }
+                  />
+                  <Dialog.Content>
+                    <Dialog.Header>
+                      <Dialog.Title>Recart</Dialog.Title>
+                    </Dialog.Header>
+                    <form
+                      className="flex flex-col gap-4"
+                      onSubmit={(e) => {
+                        e.preventDefault()
+                        if (recartApiKey.trim()) {
+                          connectRecartMutation.mutate(recartApiKey.trim())
+                        }
+                      }}
+                    >
+                      <Input
+                        placeholder="Enter your Recart API key"
+                        value={recartApiKey}
+                        onValueChange={setRecartApiKey}
+                      />
+                      <Button
+                        size="lg"
+                        type="submit"
+                        disabled={!recartApiKey.trim() || connectRecartMutation.isPending}
+                      >
+                        {connectRecartMutation.isPending && <Spinner />}
+                        Connect
+                      </Button>
+                    </form>
+                  </Dialog.Content>
+                </Dialog.Root> */}
               </div>
             </Dialog.Content>
           </Dialog.Root>
@@ -241,7 +296,9 @@ function IntegrationsRoute() {
                     <BlocksIcon />
                   </Empty.Media>
                   <Empty.Title>No integrations yet</Empty.Title>
-                  <Empty.Description>Connect your Shopify store or Meta Pixel to track conversions.</Empty.Description>
+                  <Empty.Description>
+                    Connect Shopify, Meta Pixel, Klaviyo, or Recart to track conversions and sync leads.
+                  </Empty.Description>
                 </Empty.Header>
               </Empty.Root>
             </Card.Content>
@@ -257,30 +314,27 @@ function IntegrationsRoute() {
 
           <DataGrid.Body>
             {integrations.map((integration) => {
-              const subtitle =
-                integration.provider === 'shopify'
-                  ? (integration.metadata as { shopDomain?: string })?.shopDomain
-                  : (integration.metadata as { pixelId?: string })?.pixelId
+              const providerMeta = PROVIDER_META[integration.provider as keyof typeof PROVIDER_META]
+              const subtitle = integration.provider === 'recart' ? undefined : integration.title
 
               return (
                 <DataGrid.Row key={integration.id}>
                   <DataGrid.Cell className="gap-3 overflow-hidden pr-2 md:pr-8">
-                    {integration.provider in providerIcons && (
-                      <div className="flex size-7 shrink-0 items-center justify-center rounded-lg border border-border bg-background p-[0.3rem]">
-                        <Icon
-                          name={providerIcons[integration.provider as keyof typeof providerIcons]}
-                          className="size-5 text-foreground"
-                        />
+                    {providerMeta && (
+                      <div className="flex size-7 shrink-0 items-center justify-center rounded-lg border border-border bg-background">
+                        <Icon name={providerMeta.icon} className="size-5 text-foreground" />
                       </div>
                     )}
                     <div className="flex min-w-0 flex-col">
                       <span className="truncate text-sm font-medium text-foreground">{integration.title}</span>
-                      <span className="truncate text-sm text-muted-foreground">
-                        <span className="md:hidden">
-                          {subtitle} &middot; {formatDateRelative(integration.createdAt)}
+                      {subtitle && (
+                        <span className="truncate text-sm text-muted-foreground">
+                          <span className="md:hidden">
+                            {subtitle} &middot; {formatDateRelative(integration.createdAt)}
+                          </span>
+                          <span className="hidden md:inline">{subtitle}</span>
                         </span>
-                        <span className="hidden md:inline">{subtitle}</span>
-                      </span>
+                      )}
                     </div>
                   </DataGrid.Cell>
 

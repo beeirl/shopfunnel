@@ -87,6 +87,7 @@ export namespace Integration {
     z.union([
       z.object({ integrationId: z.string() }),
       z.object({ provider: z.enum(IntegrationProvider), externalId: z.string() }),
+      z.object({ provider: z.enum(IntegrationProvider) }),
     ]),
     async (input) => {
       await Database.use((tx) =>
@@ -97,7 +98,12 @@ export namespace Integration {
             and(
               ...('integrationId' in input
                 ? [eq(IntegrationTable.workspaceId, Actor.workspaceId()), eq(IntegrationTable.id, input.integrationId)]
-                : [eq(IntegrationTable.provider, input.provider), eq(IntegrationTable.externalId, input.externalId)]),
+                : 'externalId' in input
+                  ? [eq(IntegrationTable.provider, input.provider), eq(IntegrationTable.externalId, input.externalId)]
+                  : [
+                      eq(IntegrationTable.workspaceId, Actor.workspaceId()),
+                      eq(IntegrationTable.provider, input.provider),
+                    ]),
               isNull(IntegrationTable.archivedAt),
             ),
           ),

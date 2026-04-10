@@ -81,6 +81,20 @@ function createBlock(type: Block['type']): Block {
       return { id: ulid(), type: 'spacer', properties: { size: 'md' } }
     case 'html':
       return { id: ulid(), type: 'html', properties: { html: '', media: [] } }
+    case 'email':
+      return {
+        id: ulid(),
+        type: 'email',
+        properties: { name: 'Email', placeholder: 'Enter your email...', showConsent: false },
+        validations: { required: false, email: true },
+      }
+    case 'phone_number':
+      return {
+        id: ulid(),
+        type: 'phone_number',
+        properties: { name: 'Phone Number', placeholder: '+14155550123', showConsent: true },
+        validations: { required: false, phone: true },
+      }
     case 'binary_choice':
       return {
         id: ulid(),

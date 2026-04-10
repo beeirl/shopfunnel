@@ -86,6 +86,28 @@ export namespace Analytics {
     }),
   })
 
+  const EmailCapturedEvent = z.object({
+    ...EventBase.shape,
+    type: z.literal('email_captured'),
+    payload: z.object({
+      block_id: z.string(),
+      page_id: z.string(),
+      page_name: z.string(),
+      page_index: z.number(),
+    }),
+  })
+
+  const PhoneCapturedEvent = z.object({
+    ...EventBase.shape,
+    type: z.literal('phone_captured'),
+    payload: z.object({
+      block_id: z.string(),
+      page_id: z.string(),
+      page_name: z.string(),
+      page_index: z.number(),
+    }),
+  })
+
   const ExternalPageViewedEvent = z.object({
     ...EventBase.shape,
     type: z.literal('external_page_viewed'),
@@ -113,6 +135,8 @@ export namespace Analytics {
     FunnelCompletedEvent,
     PageViewedEvent,
     PageCompletedEvent,
+    EmailCapturedEvent,
+    PhoneCapturedEvent,
     ExternalCheckoutCompletedEvent,
     ExternalPageViewedEvent,
   ])

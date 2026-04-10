@@ -1,7 +1,7 @@
 import { json, mysqlEnum, mysqlTable, uniqueIndex, varchar } from 'drizzle-orm/mysql-core'
 import { timestampColumns, workspaceColumns, workspaceIndexes } from '../database/types'
 
-export const IntegrationProvider = ['shopify', 'meta_pixel'] as const
+export const IntegrationProvider = ['shopify', 'meta_pixel', 'klaviyo', 'recart'] as const
 export type IntegrationProvider = (typeof IntegrationProvider)[number]
 
 export type ShopifyCredentials = { accessToken: string }
@@ -10,8 +10,14 @@ export type ShopifyMetadata = { shopDomain: string; shopName: string }
 export type MetaPixelCredentials = {}
 export type MetaPixelMetadata = { pixelId: string }
 
-export type IntegrationCredentials = ShopifyCredentials | MetaPixelCredentials
-export type IntegrationMetadata = ShopifyMetadata | MetaPixelMetadata
+export type KlaviyoCredentials = { accessToken: string; refreshToken: string; expiresAt: number }
+export type KlaviyoMetadata = {}
+
+export type RecartCredentials = { apiKey: string }
+export type RecartMetadata = {}
+
+export type IntegrationCredentials = ShopifyCredentials | MetaPixelCredentials | KlaviyoCredentials | RecartCredentials
+export type IntegrationMetadata = ShopifyMetadata | MetaPixelMetadata | KlaviyoMetadata | RecartMetadata
 
 export const IntegrationTable = mysqlTable(
   'integration',

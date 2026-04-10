@@ -141,6 +141,20 @@
       "when": 1775212325364,
       "tag": "0019_regular_fenris",
       "breakpoints": true
+    },
+    {
+      "idx": 20,
+      "version": "5",
+      "when": 1775300864441,
+      "tag": "0020_numerous_squirrel_girl",
+      "breakpoints": true
+    },
+    {
+      "idx": 21,
+      "version": "5",
+      "when": 1775464207932,
+      "tag": "0021_little_greymalkin",
+      "breakpoints": true
     }
   ]
 }

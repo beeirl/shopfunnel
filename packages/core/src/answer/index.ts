@@ -3,6 +3,7 @@ import { z } from 'zod'
 import { Actor } from '../actor'
 import { Database } from '../database'
 import { Identifier } from '../identifier'
+import { Lead } from '../lead'
 import { QuestionTable } from '../question/index.sql'
 import { SubmissionTable } from '../submission/index.sql'
 import { fn } from '../utils/fn'
@@ -82,7 +83,11 @@ export namespace Answer {
       const answersToUpsert = answersWithQuestion
         .map((entry) => {
           const value = (() => {
-            if (entry.question.type === 'text_input') {
+            if (
+              entry.question.type === 'text_input' ||
+              entry.question.type === 'email' ||
+              entry.question.type === 'phone_number'
+            ) {
               return String(entry.value ?? '') as AnswerValue
             }
             if (entry.question.type === 'dropdown' || entry.question.type === 'binary_choice') {
@@ -117,6 +122,22 @@ export namespace Answer {
             },
           }),
       )
+
+      let email: string | undefined
+      let phone: string | undefined
+      for (const a of answersWithQuestion) {
+        if (a.question.type === 'email') {
+          const value = String(a.value ?? '').trim()
+          email = value || undefined
+        }
+        if (a.question.type === 'phone_number') {
+          const value = String(a.value ?? '').trim()
+          phone = value || undefined
+        }
+      }
+      if (email !== undefined || phone !== undefined) {
+        await Lead.upsert({ submissionId, email, phone })
+      }
     },
   )
 }

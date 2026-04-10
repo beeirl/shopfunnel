@@ -176,6 +176,36 @@ export const HtmlBlock = z.object({
 })
 export type HtmlBlock = z.infer<typeof HtmlBlock>
 
+export const EmailBlock = z.object({
+  id: z.string(),
+  type: z.literal('email'),
+  properties: z.object({
+    name: z.string(),
+    placeholder: z.string().optional(),
+    showConsent: z.boolean(),
+  }),
+  validations: z.object({
+    required: z.boolean().optional(),
+    email: z.literal(true).optional(),
+  }),
+})
+export type EmailBlock = z.infer<typeof EmailBlock>
+
+export const PhoneNumberBlock = z.object({
+  id: z.string(),
+  type: z.literal('phone_number'),
+  properties: z.object({
+    name: z.string(),
+    placeholder: z.string().optional(),
+    showConsent: z.boolean(),
+  }),
+  validations: z.object({
+    required: z.boolean().optional(),
+    phone: z.literal(true).optional(),
+  }),
+})
+export type PhoneNumberBlock = z.infer<typeof PhoneNumberBlock>
+
 export const BinaryChoiceBlock = z.object({
   id: z.string(),
   type: z.literal('binary_choice'),
@@ -206,11 +236,21 @@ export const Block = z.discriminatedUnion('type', [
   LoaderBlock,
   SpacerBlock,
   HtmlBlock,
+  EmailBlock,
+  PhoneNumberBlock,
   BinaryChoiceBlock,
 ])
 export type Block = z.infer<typeof Block>
 
-export const INPUT_BLOCKS = ['text_input', 'multiple_choice', 'picture_choice', 'dropdown', 'binary_choice'] as const
+export const INPUT_BLOCKS = [
+  'text_input',
+  'multiple_choice',
+  'picture_choice',
+  'dropdown',
+  'email',
+  'phone_number',
+  'binary_choice',
+] as const
 export type InputBlock = (typeof INPUT_BLOCKS)[number]
 
 // ============================================

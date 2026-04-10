@@ -12,5 +12,7 @@ export const secret = {
   STRIPE_SECRET_KEY: new sst.Secret('STRIPE_SECRET_KEY', process.env.STRIPE_SECRET_KEY),
   EXCHANGE_RATE_API_KEY: new sst.Secret('EXCHANGE_RATE_API_KEY'),
   TINYBIRD_TOKEN: new sst.Secret('TINYBIRD_TOKEN'),
+  KLAVIYO_CLIENT_ID: new sst.Secret('KLAVIYO_CLIENT_ID'),
+  KLAVIYO_CLIENT_SECRET: new sst.Secret('KLAVIYO_CLIENT_SECRET'),
 }
 export const allSecrets = Object.values(secret)

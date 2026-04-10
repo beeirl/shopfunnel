@@ -12,6 +12,7 @@ import type {
   Block as BlockType,
   Page as PageType,
   Rule,
+  Settings,
 } from '@shopfunnel/core/funnel/types'
 import {
   IconArrowsSplit2 as BranchIcon,
@@ -58,12 +59,13 @@ type CanvasMode = 'select' | 'panzoom'
 interface SelectableBlockProps {
   block: BlockType
   index: number
+  settings?: Pick<Settings, 'privacyUrl' | 'termsUrl'>
   selected: boolean
   variant?: 'outline' | 'soft'
   onSelect: () => void
 }
 
-function SelectableBlock({ block, index, selected, variant, onSelect }: SelectableBlockProps) {
+function SelectableBlock({ block, index, settings, selected, variant, onSelect }: SelectableBlockProps) {
   const blockInfo = getBlockInfo(block.type)
 
   const handleClick = (e: React.MouseEvent) => {
@@ -86,7 +88,7 @@ function SelectableBlock({ block, index, selected, variant, onSelect }: Selectab
 
         {/* Block content */}
         <div className="relative w-full select-none">
-          <Block block={block} index={index} variant={variant} static />
+          <Block block={block} index={index} settings={settings} variant={variant} static />
         </div>
       </div>
     </div>
@@ -100,6 +102,7 @@ function SelectableBlock({ block, index, selected, variant, onSelect }: Selectab
 interface PageNodeData extends Record<string, unknown> {
   page: PageType
   variant?: 'outline' | 'soft'
+  settings?: Pick<Settings, 'privacyUrl' | 'termsUrl'>
   pageIndex: number
   selected: boolean
   selectedBlockId: string | null
@@ -168,6 +171,7 @@ function PageNode({ data }: { data: PageNodeData }) {
                     key={block.id}
                     block={block}
                     index={index}
+                    settings={data.settings}
                     selected={selectedBlockId === block.id}
                     variant={variant}
                     onSelect={() => handleBlockSelect(block.id)}
@@ -431,7 +435,7 @@ export function Canvas() {
     showLogic,
   } = useFunnelEditor()
 
-  const { pages, rules, theme } = funnel
+  const { pages, rules, settings, theme } = funnel
 
   const [mode, setMode] = React.useState<CanvasMode>('select')
 
@@ -526,6 +530,7 @@ export function Canvas() {
         data: {
           page: node.data.page,
           variant: theme.style,
+          settings,
           pageIndex: index,
           selected: selectedPageId === node.id,
           selectedBlockId,
@@ -537,7 +542,17 @@ export function Canvas() {
         },
       }),
     )
-  }, [layoutedNodes, edges, rules, theme.style, selectedPageId, selectedBlockId, handleBlockSelect, showLogic])
+  }, [
+    layoutedNodes,
+    edges,
+    rules,
+    settings,
+    theme.style,
+    selectedPageId,
+    selectedBlockId,
+    handleBlockSelect,
+    showLogic,
+  ])
 
   return (
     <>

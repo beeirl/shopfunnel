@@ -69,6 +69,14 @@ declare module "sst" {
       "type": "sst.sst.Secret"
       "value": string
     }
+    "KLAVIYO_CLIENT_ID": {
+      "type": "sst.sst.Secret"
+      "value": string
+    }
+    "KLAVIYO_CLIENT_SECRET": {
+      "type": "sst.sst.Secret"
+      "value": string
+    }
     "POSTHOG_API_KEY": {
       "type": "sst.sst.Secret"
       "value": string
@@ -125,6 +133,7 @@ declare module "sst" {
     "AuthStorage": cloudflare.KVNamespace
     "ExchangeRateCronHandler": cloudflare.Service
     "ExchangeRateKv": cloudflare.KVNamespace
+    "KlaviyoSyncCronHandler": cloudflare.Service
     "Storage": cloudflare.R2Bucket
   }
 }

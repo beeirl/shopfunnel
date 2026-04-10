@@ -1,0 +1,1 @@
+ALTER TABLE `integration` MODIFY COLUMN `provider` enum('shopify','meta_pixel','klaviyo','recart') NOT NULL;

@@ -201,6 +201,10 @@ function RouteComponent() {
 
   const shopifyIntegration = integrations.find((integration) => integration.provider === 'shopify')
   const metaPixelIntegration = integrations.find((i) => i.provider === 'meta_pixel')
+  const blockTypeById = React.useMemo(
+    () => new Map(funnel.funnel.pages.flatMap((page) => page.blocks.map((block) => [block.id, block.type] as const))),
+    [funnel.funnel.pages],
+  )
 
   const funnelEnteredRef = React.useRef(false)
   const funnelStartedRef = React.useRef(false)
@@ -374,6 +378,28 @@ function RouteComponent() {
       contentName: page.name,
       contentCategory: `step_${page.index + 1}_of_${funnel.funnel.pages.length}`,
     })
+
+    for (const [blockId, value] of Object.entries(page.values)) {
+      const blockType = blockTypeById.get(blockId)
+      const hasValue = Array.isArray(value) ? value.length > 0 : String(value ?? '').trim() !== ''
+      if (!hasValue) continue
+      if (blockType === 'email') {
+        trackEvent('email_captured', {
+          block_id: blockId,
+          page_id: page.id,
+          page_index: page.index,
+          page_name: page.name,
+        })
+      }
+      if (blockType === 'phone_number') {
+        trackEvent('phone_captured', {
+          block_id: blockId,
+          page_id: page.id,
+          page_index: page.index,
+          page_name: page.name,
+        })
+      }
+    }
 
     if (Object.keys(page.values).length > 0) {
       const promise = submitAnswers({

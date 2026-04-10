@@ -12,6 +12,7 @@ export namespace Identifier {
     file: 'fil',
     funnel: 'fun',
     integration: 'int',
+    lead: 'led',
     question: 'qst',
     submission: 'sbm',
     campaign: 'cmp',
