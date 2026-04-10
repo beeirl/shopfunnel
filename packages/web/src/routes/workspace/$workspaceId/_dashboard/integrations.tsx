@@ -326,7 +326,9 @@ function IntegrationsRoute() {
                       </div>
                     )}
                     <div className="flex min-w-0 flex-col">
-                      <span className="truncate text-sm font-medium text-foreground">{integration.title}</span>
+                      <span className="truncate text-sm font-medium text-foreground">
+                        {providerMeta?.name ?? integration.provider}
+                      </span>
                       {subtitle && (
                         <span className="truncate text-sm text-muted-foreground">
                           <span className="md:hidden">
