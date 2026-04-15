@@ -155,6 +155,13 @@
       "when": 1775464207932,
       "tag": "0021_little_greymalkin",
       "breakpoints": true
+    },
+    {
+      "idx": 22,
+      "version": "5",
+      "when": 1776286771982,
+      "tag": "0022_amazing_mariko_yashida",
+      "breakpoints": true
     }
   ]
 }

@@ -1,0 +1,1 @@
+ALTER TABLE `billing` MODIFY COLUMN `interval` enum('month','quarter','year');

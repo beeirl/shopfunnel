@@ -12,7 +12,7 @@ export const BillingPlan = [
   'standard2M',
 ] as const
 
-export const BillingInterval = ['month', 'year'] as const
+export const BillingInterval = ['month', 'quarter', 'year'] as const
 
 export const BillingTable = mysqlTable(
   'billing',

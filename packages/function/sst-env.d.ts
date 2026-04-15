@@ -9,29 +9,38 @@ declare module "sst" {
     "BILLING": {
       "managedServiceMonthlyPriceId": string
       "managedServiceProductId": string
+      "managedServiceQuarterlyPriceId": string
       "managedServiceYearlyPriceId": string
       "standard100KMonthlyPriceId": string
+      "standard100KQuarterlyPriceId": string
       "standard100KVisitorsPriceId": string
       "standard100KYearlyPriceId": string
       "standard1MMonthlyPriceId": string
+      "standard1MQuarterlyPriceId": string
       "standard1MVisitorsPriceId": string
       "standard1MYearlyPriceId": string
       "standard250KMonthlyPriceId": string
+      "standard250KQuarterlyPriceId": string
       "standard250KVisitorsPriceId": string
       "standard250KYearlyPriceId": string
       "standard25KMonthlyPriceId": string
+      "standard25KQuarterlyPriceId": string
       "standard25KVisitorsPriceId": string
       "standard25KYearlyPriceId": string
       "standard2MMonthlyPriceId": string
+      "standard2MQuarterlyPriceId": string
       "standard2MVisitorsPriceId": string
       "standard2MYearlyPriceId": string
       "standard500KMonthlyPriceId": string
+      "standard500KQuarterlyPriceId": string
       "standard500KVisitorsPriceId": string
       "standard500KYearlyPriceId": string
       "standard50KMonthlyPriceId": string
+      "standard50KQuarterlyPriceId": string
       "standard50KVisitorsPriceId": string
       "standard50KYearlyPriceId": string
       "standard5KMonthlyPriceId": string
+      "standard5KQuarterlyPriceId": string
       "standard5KVisitorsPriceId": string
       "standard5KYearlyPriceId": string
       "standardProductId": string

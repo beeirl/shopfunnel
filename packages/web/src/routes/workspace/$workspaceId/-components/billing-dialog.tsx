@@ -76,6 +76,9 @@ export function BillingDialog({ open, onOpenChange }: { open: boolean; onOpenCha
 
   const currentPlanPrice = (() => {
     if (!currentPlan || !currentPlan.monthlyPrice) return '$0'
+    if (billing.interval === 'quarter' && currentPlan.quarterlyPrice) {
+      return `$${currentPlan.quarterlyPrice}/quarter`
+    }
     if (billing.interval === 'year' && currentPlan.yearlyPrice) {
       return `$${currentPlan.yearlyPrice}/year`
     }
@@ -84,9 +87,11 @@ export function BillingDialog({ open, onOpenChange }: { open: boolean; onOpenCha
 
   const managedAddon = ADDONS.find((a) => a.id === 'managed')!
   const managedAddonPrice =
-    billing.interval === 'year'
-      ? `${formatPrice(managedAddon.yearlyPrice)}/year`
-      : `${formatPrice(managedAddon.monthlyPrice)}/month`
+    billing.interval === 'quarter'
+      ? `${formatPrice(managedAddon.quarterlyPrice)}/quarter`
+      : billing.interval === 'year'
+        ? `${formatPrice(managedAddon.yearlyPrice)}/year`
+        : `${formatPrice(managedAddon.monthlyPrice)}/month`
 
   const trialDaysRemaining =
     billing.onTrial && billing.trialEndsAt
@@ -100,6 +105,9 @@ export function BillingDialog({ open, onOpenChange }: { open: boolean; onOpenCha
     : null
   const pendingDowngradePrice = (() => {
     if (!pendingDowngradePlan || !pendingDowngradePlan.monthlyPrice) return '$0'
+    if (billing.interval === 'quarter' && pendingDowngradePlan.quarterlyPrice) {
+      return `$${pendingDowngradePlan.quarterlyPrice}/quarter`
+    }
     if (billing.interval === 'year' && pendingDowngradePlan.yearlyPrice) {
       return `$${pendingDowngradePlan.yearlyPrice}/year`
     }

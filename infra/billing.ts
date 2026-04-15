@@ -70,6 +70,16 @@ const standardMonthlyPriceBase = {
     intervalCount: 1,
   },
 }
+
+const standardQuarterlyPriceBase = {
+  product: standardProduct.id,
+  currency: 'usd',
+  recurring: {
+    interval: 'month',
+    intervalCount: 3,
+  },
+}
+
 const standard5KMonthlyPrice = new stripe.Price('Standard5KMonthlyPrice', {
   ...standardMonthlyPriceBase,
   unitAmount: 7400,
@@ -108,6 +118,47 @@ const standard1MMonthlyPrice = new stripe.Price('Standard1MMonthlyPrice', {
 const standard2MMonthlyPrice = new stripe.Price('Standard2MMonthlyPrice', {
   ...standardMonthlyPriceBase,
   unitAmount: 1200000,
+  nickname: '2M Visitors',
+})
+
+const standard5KQuarterlyPrice = new stripe.Price('Standard5KQuarterlyPrice', {
+  ...standardQuarterlyPriceBase,
+  unitAmount: 22200,
+  nickname: '5K Visitors',
+})
+const standard25KQuarterlyPrice = new stripe.Price('Standard25KQuarterlyPrice', {
+  ...standardQuarterlyPriceBase,
+  unitAmount: 74700,
+  nickname: '25K Visitors',
+})
+const standard50KQuarterlyPrice = new stripe.Price('Standard50KQuarterlyPrice', {
+  ...standardQuarterlyPriceBase,
+  unitAmount: 119700,
+  nickname: '50K Visitors',
+})
+const standard100KQuarterlyPrice = new stripe.Price('Standard100KQuarterlyPrice', {
+  ...standardQuarterlyPriceBase,
+  unitAmount: 209700,
+  nickname: '100K Visitors',
+})
+const standard250KQuarterlyPrice = new stripe.Price('Standard250KQuarterlyPrice', {
+  ...standardQuarterlyPriceBase,
+  unitAmount: 509700,
+  nickname: '250K Visitors',
+})
+const standard500KQuarterlyPrice = new stripe.Price('Standard500KQuarterlyPrice', {
+  ...standardQuarterlyPriceBase,
+  unitAmount: 1049700,
+  nickname: '500K Visitors',
+})
+const standard1MQuarterlyPrice = new stripe.Price('Standard1MQuarterlyPrice', {
+  ...standardQuarterlyPriceBase,
+  unitAmount: 1950000,
+  nickname: '1M Visitors',
+})
+const standard2MQuarterlyPrice = new stripe.Price('Standard2MQuarterlyPrice', {
+  ...standardQuarterlyPriceBase,
+  unitAmount: 3600000,
   nickname: '2M Visitors',
 })
 
@@ -255,6 +306,16 @@ const managedServiceMonthlyPrice = new stripe.Price('ManagedServicePrice', {
   },
 })
 
+const managedServiceQuarterlyPrice = new stripe.Price('ManagedServiceQuarterlyPrice', {
+  product: managedServiceProduct.id,
+  currency: 'usd',
+  unitAmount: 900000,
+  recurring: {
+    interval: 'month',
+    intervalCount: 3,
+  },
+})
+
 const managedServiceYearlyPrice = new stripe.Price('ManagedServiceYearlyPrice', {
   product: managedServiceProduct.id,
   currency: 'usd',
@@ -278,6 +339,15 @@ export const BILLING = new sst.Linkable('BILLING', {
     standard1MMonthlyPriceId: standard1MMonthlyPrice.id,
     standard2MMonthlyPriceId: standard2MMonthlyPrice.id,
 
+    standard5KQuarterlyPriceId: standard5KQuarterlyPrice.id,
+    standard25KQuarterlyPriceId: standard25KQuarterlyPrice.id,
+    standard50KQuarterlyPriceId: standard50KQuarterlyPrice.id,
+    standard100KQuarterlyPriceId: standard100KQuarterlyPrice.id,
+    standard250KQuarterlyPriceId: standard250KQuarterlyPrice.id,
+    standard500KQuarterlyPriceId: standard500KQuarterlyPrice.id,
+    standard1MQuarterlyPriceId: standard1MQuarterlyPrice.id,
+    standard2MQuarterlyPriceId: standard2MQuarterlyPrice.id,
+
     standard5KYearlyPriceId: standard5KYearlyPrice.id,
     standard25KYearlyPriceId: standard25KYearlyPrice.id,
     standard50KYearlyPriceId: standard50KYearlyPrice.id,
@@ -299,6 +369,7 @@ export const BILLING = new sst.Linkable('BILLING', {
     managedServiceProductId: managedServiceProduct.id,
 
     managedServiceMonthlyPriceId: managedServiceMonthlyPrice.id,
+    managedServiceQuarterlyPriceId: managedServiceQuarterlyPrice.id,
     managedServiceYearlyPriceId: managedServiceYearlyPrice.id,
   },
 })

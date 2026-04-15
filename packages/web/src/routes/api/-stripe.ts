@@ -64,7 +64,7 @@ export const StripeRoute = new Hono().post('/webhook', async (c) => {
       const stripeSubscriptionItems = stripeSubscription.items?.data ?? []
       const stripePlanItem = stripeSubscriptionItems.find((item) => Billing.stripePriceIdToPlan(item.price.id))
       const plan = stripePlanItem ? Billing.stripePriceIdToPlan(stripePlanItem.price.id) : null
-      const interval = (stripePlanItem?.price.recurring?.interval ?? null) as 'month' | 'year' | null
+      const interval = Billing.stripeRecurringToInterval(stripePlanItem?.price.recurring) ?? null
       const managed = stripeSubscriptionItems.some((item) => Billing.stripePriceIdToAddon(item.price.id) === 'managed')
 
       if (!plan) throw new Error('Plan not found')
@@ -127,7 +127,7 @@ export const StripeRoute = new Hono().post('/webhook', async (c) => {
         const stripePlanItem = stripeSubscriptionItems.find((item) => Billing.stripePriceIdToPlan(item.price.id))
         const stripeUsageItem = stripeSubscriptionItems.find((item) => Billing.stripeUsagePriceIdToPlan(item.price.id))
         const plan = stripePlanItem ? Billing.stripePriceIdToPlan(stripePlanItem.price.id) : null
-        const interval = (stripePlanItem?.price.recurring?.interval ?? null) as 'month' | 'year' | null
+        const interval = Billing.stripeRecurringToInterval(stripePlanItem?.price.recurring) ?? null
         const managed = stripeSubscriptionItems.some(
           (item) => Billing.stripePriceIdToAddon(item.price.id) === 'managed',
         )

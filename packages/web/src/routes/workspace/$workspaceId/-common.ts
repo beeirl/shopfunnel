@@ -18,6 +18,7 @@ export const PLANS = [
     name: 'Starter',
     visitors: 5_000,
     monthlyPrice: 74,
+    quarterlyPrice: 222,
     yearlyPrice: 740,
     overageRate: 0.03,
     features: [
@@ -34,6 +35,7 @@ export const PLANS = [
     name: 'Growth',
     visitors: 25_000,
     monthlyPrice: 249,
+    quarterlyPrice: 747,
     yearlyPrice: 2490,
     overageRate: 0.02,
     defaultPopular: true,
@@ -51,6 +53,7 @@ export const PLANS = [
     name: 'Business',
     visitors: 50_000,
     monthlyPrice: 399,
+    quarterlyPrice: 1197,
     yearlyPrice: 3990,
     overageRate: 0.02,
     features: [
@@ -68,6 +71,7 @@ export const PLANS = [
     name: 'Pro',
     visitors: 100_000,
     monthlyPrice: 699,
+    quarterlyPrice: 2097,
     yearlyPrice: 6990,
     overageRate: 0.02,
     features: [
@@ -85,6 +89,7 @@ export const PLANS = [
     name: 'Scale',
     visitors: 250_000,
     monthlyPrice: 1699,
+    quarterlyPrice: 5097,
     yearlyPrice: 16990,
     overageRate: 0.02,
     features: [
@@ -102,6 +107,7 @@ export const PLANS = [
     name: 'Enterprise',
     visitors: null,
     monthlyPrice: null,
+    quarterlyPrice: null,
     yearlyPrice: null,
     overageRate: null,
     features: ['Fully customizable', 'Volume discounts', 'Flexible terms'],
@@ -114,6 +120,7 @@ export const ADDONS = [
     name: 'Managed Service',
     description: 'We create up to 4 new funnels per month including continuous A/B testing and optimization.',
     monthlyPrice: 3000,
+    quarterlyPrice: 9000,
     yearlyPrice: 36000,
   },
 ] as const

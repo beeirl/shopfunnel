@@ -4,7 +4,6 @@ import { Stripe } from 'stripe'
 import { z } from 'zod'
 import { Actor } from '../actor'
 import { Database } from '../database'
-import { User } from '../user/index'
 import { fn } from '../utils/fn'
 import { BillingInterval, BillingPlan, BillingTable } from './index.sql'
 
@@ -80,9 +79,6 @@ export namespace Billing {
       cancelUrl: z.string(),
     }),
     async (input) => {
-      const user = Actor.assert('user')
-
-      const email = await User.getAuthEmail(user.properties.userId)
       const billing = await Billing.get()
 
       const session = await Billing.stripe().checkout.sessions.create({
@@ -102,17 +98,13 @@ export namespace Billing {
               ]
             : []),
         ],
-        ...(billing?.stripeCustomerId
-          ? {
-              customer: billing.stripeCustomerId,
-              customer_update: {
-                address: 'auto',
-                name: 'auto',
-              },
-            }
-          : {
-              customer_email: email!,
-            }),
+        ...(billing?.stripeCustomerId && {
+          customer: billing.stripeCustomerId,
+          customer_update: {
+            address: 'auto',
+            name: 'auto',
+          },
+        }),
         adaptive_pricing: {
           enabled: false,
         },
@@ -447,7 +439,7 @@ export namespace Billing {
                   'recurring' in stripePlanItem.price &&
                   stripePlanItem.price
                 const interval =
-                  Billing.Interval.safeParse(stripePlanPrice && stripePlanPrice.recurring?.interval).data ??
+                  Billing.stripeRecurringToInterval(stripePlanPrice ? stripePlanPrice.recurring : undefined) ??
                   billing.interval!
                 return Billing.addonToStripePriceId({ addon: input.addon, interval })
               })()
@@ -575,6 +567,15 @@ export namespace Billing {
         if (input.plan === 'standard500K') return Resource.BILLING.standard500KMonthlyPriceId
         if (input.plan === 'standard1M') return Resource.BILLING.standard1MMonthlyPriceId
         if (input.plan === 'standard2M') return Resource.BILLING.standard2MMonthlyPriceId
+      } else if (input.interval === 'quarter') {
+        if (input.plan === 'standard5K') return Resource.BILLING.standard5KQuarterlyPriceId
+        if (input.plan === 'standard25K') return Resource.BILLING.standard25KQuarterlyPriceId
+        if (input.plan === 'standard50K') return Resource.BILLING.standard50KQuarterlyPriceId
+        if (input.plan === 'standard100K') return Resource.BILLING.standard100KQuarterlyPriceId
+        if (input.plan === 'standard250K') return Resource.BILLING.standard250KQuarterlyPriceId
+        if (input.plan === 'standard500K') return Resource.BILLING.standard500KQuarterlyPriceId
+        if (input.plan === 'standard1M') return Resource.BILLING.standard1MQuarterlyPriceId
+        if (input.plan === 'standard2M') return Resource.BILLING.standard2MQuarterlyPriceId
       } else if (input.interval === 'year') {
         if (input.plan === 'standard5K') return Resource.BILLING.standard5KYearlyPriceId
         if (input.plan === 'standard25K') return Resource.BILLING.standard25KYearlyPriceId
@@ -596,6 +597,8 @@ export namespace Billing {
     (input) => {
       if (input.interval === 'month') {
         if (input.addon === 'managed') return Resource.BILLING.managedServiceMonthlyPriceId
+      } else if (input.interval === 'quarter') {
+        if (input.addon === 'managed') return Resource.BILLING.managedServiceQuarterlyPriceId
       } else if (input.interval === 'year') {
         if (input.addon === 'managed') return Resource.BILLING.managedServiceYearlyPriceId
       }
@@ -611,6 +614,14 @@ export namespace Billing {
     if (stripePriceId === Resource.BILLING.standard500KMonthlyPriceId) return 'standard500K'
     if (stripePriceId === Resource.BILLING.standard1MMonthlyPriceId) return 'standard1M'
     if (stripePriceId === Resource.BILLING.standard2MMonthlyPriceId) return 'standard2M'
+    if (stripePriceId === Resource.BILLING.standard5KQuarterlyPriceId) return 'standard5K'
+    if (stripePriceId === Resource.BILLING.standard25KQuarterlyPriceId) return 'standard25K'
+    if (stripePriceId === Resource.BILLING.standard50KQuarterlyPriceId) return 'standard50K'
+    if (stripePriceId === Resource.BILLING.standard100KQuarterlyPriceId) return 'standard100K'
+    if (stripePriceId === Resource.BILLING.standard250KQuarterlyPriceId) return 'standard250K'
+    if (stripePriceId === Resource.BILLING.standard500KQuarterlyPriceId) return 'standard500K'
+    if (stripePriceId === Resource.BILLING.standard1MQuarterlyPriceId) return 'standard1M'
+    if (stripePriceId === Resource.BILLING.standard2MQuarterlyPriceId) return 'standard2M'
     if (stripePriceId === Resource.BILLING.standard5KYearlyPriceId) return 'standard5K'
     if (stripePriceId === Resource.BILLING.standard25KYearlyPriceId) return 'standard25K'
     if (stripePriceId === Resource.BILLING.standard50KYearlyPriceId) return 'standard50K'
@@ -623,6 +634,7 @@ export namespace Billing {
 
   export const stripePriceIdToAddon = fn(z.string(), (stripePriceId): Addon | undefined => {
     if (stripePriceId === Resource.BILLING.managedServiceMonthlyPriceId) return 'managed'
+    if (stripePriceId === Resource.BILLING.managedServiceQuarterlyPriceId) return 'managed'
     if (stripePriceId === Resource.BILLING.managedServiceYearlyPriceId) return 'managed'
   })
 
@@ -647,4 +659,13 @@ export namespace Billing {
     if (plan === 'standard1M') return Resource.BILLING.standard1MVisitorsPriceId
     if (plan === 'standard2M') return Resource.BILLING.standard2MVisitorsPriceId
   })
+
+  export const stripeRecurringToInterval = (
+    recurring: Stripe.Price.Recurring | null | undefined,
+  ): Interval | undefined => {
+    if (!recurring) return
+    if (recurring.interval === 'month' && recurring.interval_count === 1) return 'month'
+    if (recurring.interval === 'month' && recurring.interval_count === 3) return 'quarter'
+    if (recurring.interval === 'year' && recurring.interval_count === 1) return 'year'
+  }
 }

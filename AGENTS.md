@@ -1,154 +1,64 @@
 # Agent Guidelines
 
+## General Approach
+
+- Prefer the smallest correct change.
+- Prefer modifying existing code in place over introducing new helpers.
+- Do not create helper functions that are only called once unless extraction clearly improves readability, captures a real domain concept, or is reused.
+- Do not introduce one-off helper variables for values that are used once and remain readable inline.
+- Avoid wrapper helpers that only rename a short expression or a single function call.
+- Match the surrounding file's style and level of abstraction. Do not refactor nearby code into helpers unless needed for the task.
+
 ## Package Manager
 
-- Use **bun** as the package manager
-- When installing dependencies, always use the latest version with a fixed version (no `^` or `~`)
-  ```bash
-  bun add package@latest --exact
-  ```
+- Use `bun`.
+- Install dependencies with `bun add package@latest --exact`.
 
 ## Type Checking
 
-```sh
-bunx tsc --noEmit
-```
+- Run `bunx tsc --noEmit`.
+- Ignore errors from `.sst/platform/`; they are pre-existing and not part of the project source.
 
-Ignore errors from `.sst/platform/` — those are pre-existing and not part of the project source.
+## Do Not Run
 
-## Do NOT Run
-
-- Database migrations (drizzle-kit push/migrate)
+- Database migrations (`drizzle-kit push/migrate`)
 - Tinybird deployments (`tb push`, `tb deploy`, etc.)
 - SST deployments (`sst deploy`, `sst dev`, etc.)
-- Editing or regenerating `routeTree.gen.ts` (TanStack Router manages this)
+- Edit or regenerate `routeTree.gen.ts`; TanStack Router manages it
 
 ## Web Package
 
-### React Version
+### React
 
-- Using **React 19** - do not use deprecated patterns:
-  - No `forwardRef` - use `ref` as a regular prop instead
-  - No `useContext` - use `use(Context)` instead
+- Use React 19 patterns only.
+- Do not use `forwardRef`; use `ref` as a regular prop instead.
+- Do not use `useContext`; use `use(Context)` instead.
+- Always import React as `import * as React from 'react'`.
 
 ### Imports
 
-- Always import React using namespace import:
-
-  ```tsx
-  // Correct
-  import * as React from 'react'
-
-  // Incorrect
-  import React from 'react'
-  ```
-
-- Always use the `@` path alias for local imports:
-
-  ```tsx
-  // Correct
-  import { Button } from '@/components/ui/button'
-  import { cn } from '@/lib/utils'
-
-  // Incorrect
-  import { Button } from '../components/ui/button'
-  import { cn } from '../../utils/cn'
-  ```
+- Always use the `@` path alias for local imports.
+- Never use barrel files or `index.ts` re-export imports.
+- Import directly from the source file.
 
 ### Icons
 
-- Use **Tabler Icons** (`@tabler/icons-react`)
-- Always alias icon imports with the `Icon` suffix:
-
-  ```tsx
-  // Correct
-  import { IconCircle as CircleIcon } from '@tabler/icons-react'
-  import { IconPlus as PlusIcon } from '@tabler/icons-react'
-
-  // Incorrect
-  import { IconCircle } from '@tabler/icons-react'
-  ```
+- Use `@tabler/icons-react`.
+- Alias icon imports with the `Icon` suffix.
 
 ### UI Components
 
-- Use **shadcn/ui** components from `@/components/ui`
-  ```tsx
-  import { Button } from '@/components/ui/button'
-  import { Dialog } from '@/components/ui/dialog'
-  ```
-- Components are built on **Base UI** (not Radix). Use **render props** instead of `asChild`:
-
-  ```tsx
-  // Correct - Base UI render props
-  <Dialog.Trigger render={<Button />}>Open Dialog</Dialog.Trigger>
-  <Tooltip.Trigger render={<IconButton />} />
-
-  // Incorrect - Radix asChild pattern
-  <Dialog.Trigger asChild>
-    <Button>Open Dialog</Button>
-  </Dialog.Trigger>
-  ```
+- Use shadcn/ui components from `@/components/ui`.
+- Components are built on Base UI, not Radix.
+- Use render props such as `Dialog.Trigger render={<Button />}` instead of `asChild`.
 
 ### Styling
 
-- Use **Tailwind CSS v4** for all styling
-- Use the design tokens defined in `packages/web/src/styles.css`
-
-#### Available Colors
-
-| Token                                | Description               |
-| ------------------------------------ | ------------------------- |
-| `background`                         | Page background           |
-| `foreground`                         | Primary text color        |
-| `card` / `card-foreground`           | Card surfaces             |
-| `popover` / `popover-foreground`     | Popover surfaces          |
-| `primary` / `primary-foreground`     | Primary actions           |
-| `secondary` / `secondary-foreground` | Secondary actions         |
-| `muted` / `muted-foreground`         | Muted/disabled states     |
-| `accent` / `accent-foreground`       | Accent highlights         |
-| `destructive`                        | Destructive/error actions |
-| `border`                             | Border color              |
-| `input`                              | Input border color        |
-| `ring`                               | Focus ring color          |
-| `chart-1` to `chart-5`               | Chart colors              |
-| `sidebar-*`                          | Sidebar-specific colors   |
-
-#### Example Usage
-
-```tsx
-<div className="bg-background text-foreground border border-border rounded-lg p-4">
-  <h1 className="text-primary">Title</h1>
-  <p className="text-muted-foreground">Description</p>
-  <button className="bg-primary text-primary-foreground rounded-md px-4 py-2">Click me</button>
-</div>
-```
+- Use Tailwind CSS v4.
+- Use the design tokens defined in `packages/web/src/styles.css`.
+- Prefer semantic tokens like `bg-background`, `text-foreground`, `border-border`, `text-muted-foreground`, `bg-primary`, and `text-primary-foreground` over hardcoded colors.
 
 ### Server Functions
 
-- Created with `createServerFn` from `@tanstack/react-start`
-- **Do not** suffix server function names with `Fn`:
-
-  ```tsx
-  // Correct
-  const createExperiment = createServerFn({ method: 'POST' })
-  const getExperiment = createServerFn()
-
-  // Incorrect
-  const createExperimentFn = createServerFn({ method: 'POST' })
-  const getExperimentFn = createServerFn()
-  ```
-
-## File Structure
-
-- **Never use barrel files** (index.ts files that re-export from other files)
-- Always import directly from the source file:
-
-  ```tsx
-  // Correct
-  import { Button } from '@/components/ui/button'
-  import { useAuth } from '@/context/auth'
-
-  // Incorrect - barrel file
-  import { Button, Dialog, Input } from '@/components/ui'
-  import { useAuth, useSession } from '@/context'
-  ```
+- Create server functions with `createServerFn` from `@tanstack/react-start`.
+- Do not suffix server function names with `Fn`.

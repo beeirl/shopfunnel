@@ -1,6 +1,7 @@
 import { AlertDialog } from '@/components/ui/alert-dialog'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
+import { SegmentedControl } from '@/components/ui/segmented-control'
 import { Spinner } from '@/components/ui/spinner'
 import { Switch } from '@/components/ui/switch'
 import { withActor } from '@/context/auth.withActor'
@@ -76,7 +77,7 @@ export function PricingTable({ animate, mode }: { animate?: boolean; mode: 'crea
   const billingQuery = useSuspenseQuery(getBillingQueryOptions(params.workspaceId))
   const billing = billingQuery.data
 
-  const [isYearly, setIsYearly] = React.useState(false)
+  const [interval, setInterval] = React.useState<BillingType.Interval>('month')
   const [isLoading, setIsLoading] = React.useState(false)
   const [managed, setManaged] = React.useState(true)
   const [selectedPlan, setSelectedPlan] = React.useState<BillingType.Plan | null>(null)
@@ -104,7 +105,7 @@ export function PricingTable({ animate, mode }: { animate?: boolean; mode: 'crea
     if (mode === 'downgrade') return 'Select a lower plan'
     return 'Get more visitors as your shop grows'
   })()
-  const intervalLabel = isYearly ? 'Yearly' : 'Monthly'
+  const isYearly = interval === 'year'
 
   React.useEffect(() => {
     const el = scrollRef.current
@@ -142,7 +143,7 @@ export function PricingTable({ animate, mode }: { animate?: boolean; mode: 'crea
         data: {
           workspaceId: params.workspaceId,
           plan,
-          interval: isYearly ? 'year' : 'month',
+          interval,
           managed,
           successUrl: `${window.location.origin}/workspace/${params.workspaceId}`,
           cancelUrl: window.location.href,
@@ -165,7 +166,7 @@ export function PricingTable({ animate, mode }: { animate?: boolean; mode: 'crea
         data: {
           workspaceId: params.workspaceId,
           plan: selectedPlan,
-          interval: isYearly ? 'year' : 'month',
+          interval,
         },
       })
       await queryClient.invalidateQueries({ queryKey: ['billing', params.workspaceId] })
@@ -188,7 +189,7 @@ export function PricingTable({ animate, mode }: { animate?: boolean; mode: 'crea
         data: {
           workspaceId: params.workspaceId,
           plan: selectedPlan,
-          interval: isYearly ? 'year' : 'month',
+          interval,
         },
       })
       await queryClient.invalidateQueries({ queryKey: ['billing', params.workspaceId] })
@@ -226,16 +227,21 @@ export function PricingTable({ animate, mode }: { animate?: boolean; mode: 'crea
           <p className="mt-1 text-sm font-medium text-muted-foreground sm:mt-2">{subtitle}</p>
         </div>
 
-        <div className="flex items-center gap-2 max-sm:mt-2">
-          <label className="text-sm font-medium" htmlFor="billing-interval">
+        <SegmentedControl.Root
+          className="w-fit max-sm:mt-2"
+          value={interval}
+          onValueChange={(v) => setInterval(v as BillingType.Interval)}
+        >
+          <SegmentedControl.Segment className="px-2" value="month">
             Monthly
-          </label>
-          <Switch id="billing-interval" checked={isYearly} onCheckedChange={setIsYearly} />
-          <label className="text-sm font-medium" htmlFor="billing-interval">
+          </SegmentedControl.Segment>
+          <SegmentedControl.Segment className="px-2" value="quarter">
+            Quarterly
+          </SegmentedControl.Segment>
+          <SegmentedControl.Segment className="px-2" value="year">
             Yearly
-          </label>
-          <Badge className="bg-emerald-100 text-emerald-900">2 months free</Badge>
-        </div>
+          </SegmentedControl.Segment>
+        </SegmentedControl.Root>
       </div>
 
       <div className="relative w-full lg:mx-auto lg:max-w-[1126px] lg:overflow-x-clip">
@@ -311,7 +317,25 @@ export function PricingTable({ animate, mode }: { animate?: boolean; mode: 'crea
                               <div
                                 className={cn(
                                   'flex items-baseline transition-opacity duration-300',
-                                  isYearly ? 'pointer-events-none absolute inset-0 opacity-0' : 'opacity-100',
+                                  interval === 'month'
+                                    ? 'opacity-100'
+                                    : 'pointer-events-none absolute inset-0 opacity-0',
+                                )}
+                              >
+                                <span className="text-3xl font-bold text-foreground">
+                                  {formatPrice(plan.monthlyPrice)}
+                                </span>
+                                <span className="text-base font-medium text-foreground">/month</span>
+                              </div>
+                            )}
+
+                            {plan.monthlyPrice && (
+                              <div
+                                className={cn(
+                                  'flex items-baseline transition-opacity duration-300',
+                                  interval === 'quarter'
+                                    ? 'opacity-100'
+                                    : 'pointer-events-none absolute inset-0 opacity-0',
                                 )}
                               >
                                 <span className="text-3xl font-bold text-foreground">
@@ -350,7 +374,7 @@ export function PricingTable({ animate, mode }: { animate?: boolean; mode: 'crea
                           <div
                             className={cn(
                               'grid transition-all duration-300',
-                              isYearly ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0',
+                              interval !== 'month' ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0',
                             )}
                           >
                             <div className="overflow-hidden">
@@ -360,7 +384,7 @@ export function PricingTable({ animate, mode }: { animate?: boolean; mode: 'crea
                                   plan.monthlyPrice === null && plan.yearlyPrice === null && 'invisible',
                                 )}
                               >
-                                Billed yearly
+                                {interval === 'quarter' ? 'Billed quarterly' : 'Billed yearly'}
                               </p>
                             </div>
                           </div>
@@ -502,14 +526,16 @@ export function PricingTable({ animate, mode }: { animate?: boolean; mode: 'crea
             <AlertDialog.Description>
               Upgrade from <span className="font-medium text-foreground">{currentPlan?.name}</span> to{' '}
               <span className="font-medium text-foreground">{targetPlan?.name}</span>
-              {targetPlan && (isYearly ? targetPlan.yearlyPrice : targetPlan.monthlyPrice) && (
+              {targetPlan && targetPlan.monthlyPrice && (
                 <>
                   {' '}
                   at{' '}
                   <span className="font-medium text-foreground">
-                    {isYearly
-                      ? `${formatPrice(Math.round(targetPlan.yearlyPrice! / 12))}/month`
-                      : `${formatPrice(targetPlan.monthlyPrice!)}/month`}
+                    {interval === 'quarter'
+                      ? `${formatPrice(targetPlan.quarterlyPrice!)}/quarter`
+                      : isYearly
+                        ? `${formatPrice(Math.round(targetPlan.yearlyPrice! / 12))}/month`
+                        : `${formatPrice(targetPlan.monthlyPrice!)}/month`}
                   </span>
                   {isYearly && <> (billed yearly at {formatPrice(targetPlan.yearlyPrice!)})</>}
                 </>
@@ -539,14 +565,16 @@ export function PricingTable({ animate, mode }: { animate?: boolean; mode: 'crea
             <AlertDialog.Description>
               Downgrade from <span className="font-medium text-foreground">{currentPlan?.name}</span> to{' '}
               <span className="font-medium text-foreground">{targetPlan?.name}</span>
-              {targetPlan && (isYearly ? targetPlan.yearlyPrice : targetPlan.monthlyPrice) && (
+              {targetPlan && targetPlan.monthlyPrice && (
                 <>
                   {' '}
                   at{' '}
                   <span className="font-medium text-foreground">
-                    {isYearly
-                      ? `${formatPrice(Math.round(targetPlan.yearlyPrice! / 12))}/month`
-                      : `${formatPrice(targetPlan.monthlyPrice!)}/month`}
+                    {interval === 'quarter'
+                      ? `${formatPrice(targetPlan.quarterlyPrice!)}/quarter`
+                      : isYearly
+                        ? `${formatPrice(Math.round(targetPlan.yearlyPrice! / 12))}/month`
+                        : `${formatPrice(targetPlan.monthlyPrice!)}/month`}
                   </span>
                   {isYearly && <> (billed yearly at {formatPrice(targetPlan.yearlyPrice!)})</>}
                 </>
