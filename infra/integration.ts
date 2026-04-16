@@ -9,10 +9,10 @@ export const klaviyoSyncCron = new sst.cloudflare.Cron('KlaviyoSyncCron', {
   schedules: ['*/5 * * * *'],
 })
 
-// export const recartSyncCron = new sst.cloudflare.Cron('RecartSyncCron', {
-//   job: {
-//     handler: 'packages/function/src/recart-sync.ts',
-//     link: [database],
-//   },
-//   schedules: ['*/5 * * * *'],
-// })
+export const recartSyncCron = new sst.cloudflare.Cron('RecartSyncCron', {
+  job: {
+    handler: 'packages/function/src/recart-sync.ts',
+    link: [database],
+  },
+  schedules: ['*/5 * * * *'],
+})

@@ -119,6 +119,9 @@ declare module "sst" {
       "type": "sst.sst.Secret"
       "value": string
     }
+    "RecartSyncCronHandler": {
+      "type": "sst.cloudflare.Worker"
+    }
     "SESSION_SECRET": {
       "type": "sst.sst.Secret"
       "value": string

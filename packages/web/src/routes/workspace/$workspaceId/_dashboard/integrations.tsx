@@ -237,7 +237,7 @@ function IntegrationsRoute() {
                   }}
                 />
 
-                {/* <Dialog.Root
+                <Dialog.Root
                   onOpenChange={(open) => {
                     if (!open) setRecartApiKey('')
                   }}
@@ -279,7 +279,7 @@ function IntegrationsRoute() {
                       </Button>
                     </form>
                   </Dialog.Content>
-                </Dialog.Root> */}
+                </Dialog.Root>
               </div>
             </Dialog.Content>
           </Dialog.Root>

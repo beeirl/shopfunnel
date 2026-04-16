@@ -143,6 +143,7 @@ declare module "sst" {
     "ExchangeRateCronHandler": cloudflare.Service
     "ExchangeRateKv": cloudflare.KVNamespace
     "KlaviyoSyncCronHandler": cloudflare.Service
+    "RecartSyncCronHandler": cloudflare.Service
     "Storage": cloudflare.R2Bucket
   }
 }
