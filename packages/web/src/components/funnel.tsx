@@ -168,10 +168,8 @@ function validateBlocks(blocks: BlockType[], values: Values) {
     },
     phone: (value) => {
       if (!value) return null
-      const normalized = String(value)
-        .trim()
-        .replace(/[\s()-]/g, '')
-      return /^\+[1-9]\d{6,14}$/.test(normalized) ? null : 'Please enter a valid phone number'
+      const digits = String(value).replace(/\D/g, '')
+      return digits.length >= 6 ? null : 'Please enter a valid phone number'
     },
   }
 

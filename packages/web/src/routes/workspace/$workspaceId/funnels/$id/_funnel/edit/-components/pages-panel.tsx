@@ -92,7 +92,7 @@ function createBlock(type: Block['type']): Block {
       return {
         id: ulid(),
         type: 'phone_number',
-        properties: { name: 'Phone Number', placeholder: '+14155550123', showConsent: true },
+        properties: { name: 'Phone Number', placeholder: '(555) 123-4567', showConsent: true },
         validations: { required: false, phone: true },
       }
     case 'binary_choice':

@@ -4,7 +4,7 @@ import type { RecartCredentials } from '@shopfunnel/core/integration/index.sql'
 import { IntegrationTable } from '@shopfunnel/core/integration/index.sql'
 import { Recart } from '@shopfunnel/core/integration/recart'
 import { LeadTable } from '@shopfunnel/core/lead/index.sql'
-import { and, eq, gte, isNull } from 'drizzle-orm'
+import { and, eq, gte, isNull, lt } from 'drizzle-orm'
 
 export default {
   async scheduled() {
@@ -19,6 +19,10 @@ export default {
         .where(and(eq(IntegrationTable.provider, 'recart'), isNull(IntegrationTable.archivedAt))),
     )
 
+    const windowEnd = new Date()
+    windowEnd.setSeconds(0, 0)
+    const windowStart = new Date(windowEnd.getTime() - 60_000)
+
     for (const integration of integrations) {
       try {
         await Actor.provide('system', { workspaceId: integration.workspaceId }, async () => {
@@ -29,7 +33,8 @@ export default {
               .where(
                 and(
                   eq(LeadTable.workspaceId, integration.workspaceId),
-                  gte(LeadTable.updatedAt, new Date(Date.now() - 6 * 60 * 1000)),
+                  gte(LeadTable.updatedAt, windowStart),
+                  lt(LeadTable.updatedAt, windowEnd),
                 ),
               ),
           )

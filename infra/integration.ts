@@ -14,5 +14,5 @@ export const recartSyncCron = new sst.cloudflare.Cron('RecartSyncCron', {
     handler: 'packages/function/src/recart-sync.ts',
     link: [database],
   },
-  schedules: ['*/5 * * * *'],
+  schedules: ['*/1 * * * *'],
 })

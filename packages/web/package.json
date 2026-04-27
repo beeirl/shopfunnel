@@ -45,6 +45,7 @@
     "drizzle-orm": "catalog:",
     "frimousse": "0.3.0",
     "hono": "4.11.4",
+    "libphonenumber-js": "1.12.42",
     "luxon": "3.7.2",
     "motion": "12.24.0",
     "node-html-parser": "7.0.2",
